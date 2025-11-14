@@ -11,13 +11,13 @@ const OptionsApp: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabView>('scripts');
   const [scripts, setScripts] = useState<UserScript[]>([]);
   const [selectedScript, setSelectedScript] = useState<UserScript | null>(null);
-  const [scriptFiles, setScriptFiles] = useState<ScriptFile[]>([]);
   const [selectedFile, setSelectedFile] = useState<ScriptFile | null>(null);
   const [modules, setModules] = useState<GlobalModule[]>([]);
   const [settings, setSettings] = useState<AppSettings | null>(null);
   const [compileOutput, setCompileOutput] = useState<string>('');
   const [typeCheckErrors, setTypeCheckErrors] = useState<string[]>([]);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const editorRef = useRef<any>(null);
 
   useEffect(() => {
@@ -37,7 +37,6 @@ const OptionsApp: React.FC = () => {
 
   const loadScriptFiles = async (scriptId: string) => {
     const files = await StorageManager.getScriptFiles(scriptId);
-    setScriptFiles(files);
     if (files.length > 0) {
       const mainFile = files.find((f) => f.isMain) || files[0];
       setSelectedFile(mainFile);
@@ -87,7 +86,6 @@ const OptionsApp: React.FC = () => {
     if (confirm('Are you sure you want to delete this script?')) {
       await StorageManager.deleteScript(scriptId);
       setSelectedScript(null);
-      setScriptFiles([]);
       setSelectedFile(null);
       await loadData();
     }
