@@ -41,11 +41,12 @@ function matchesUrlPattern(url: string, patterns: string[]): boolean {
   }
 
   return patterns.some((pattern) => {
-    // Convert glob pattern to regex
+    // Convert glob pattern to regex with proper escaping
+    // First escape all regex special characters except * and ?
     const regexPattern = pattern
-      .replace(/\./g, '\\.')
-      .replace(/\*/g, '.*')
-      .replace(/\?/g, '.');
+      .replace(/[.+^${}()|[\]\\]/g, '\\$&') // Escape regex special chars including backslash
+      .replace(/\*/g, '.*') // Convert * to .*
+      .replace(/\?/g, '.'); // Convert ? to .
     
     const regex = new RegExp(`^${regexPattern}$`);
     return regex.test(url);
