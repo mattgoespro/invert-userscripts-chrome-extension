@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { StorageManager } from '@/utils/storage';
+import { IDEStorageManager } from '@/utils/storage';
 import { UserScript } from '@/types';
 import './popup.scss';
 
@@ -14,7 +14,7 @@ const Popup: React.FC = () => {
 
   const loadScripts = async () => {
     try {
-      const allScripts = await StorageManager.getScripts();
+      const allScripts = await IDEStorageManager.getScripts();
       setScripts(allScripts);
     } catch (error) {
       console.error('Error loading scripts:', error);
@@ -25,9 +25,9 @@ const Popup: React.FC = () => {
 
   const toggleScript = async (script: UserScript) => {
     const updated = { ...script, enabled: !script.enabled };
-    await StorageManager.saveScript(updated);
-    loadScripts();
-    
+    await IDEStorageManager.saveScript(updated);
+    await loadScripts();
+
     // Notify background to reload scripts
     chrome.runtime.sendMessage({ action: 'reloadScripts' });
   };
@@ -69,9 +69,7 @@ const Popup: React.FC = () => {
                 <div className="script-description">{script.description}</div>
                 <div className="script-patterns">
                   {script.urlPatterns.length > 0 ? (
-                    <span className="pattern-count">
-                      {script.urlPatterns.length} pattern(s)
-                    </span>
+                    <span className="pattern-count">{script.urlPatterns.length} pattern(s)</span>
                   ) : (
                     <span className="no-patterns">No patterns</span>
                   )}
@@ -100,6 +98,7 @@ const Popup: React.FC = () => {
 };
 
 const container = document.getElementById('root');
+
 if (container) {
   const root = createRoot(container);
   root.render(<Popup />);

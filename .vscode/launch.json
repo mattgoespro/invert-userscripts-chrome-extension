@@ -1,0 +1,17 @@
+{
+  "configurations": [
+    {
+      "name": "debug",
+      "type": "node",
+      "request": "attach",
+      "sourceMaps": true,
+      "sourceMapRenames": true,
+      "outFiles": ["${workspaceFolder}/dist/**/*.js"],
+      "resolveSourceMapLocations": ["${workspaceFolder}/dist/**/*.map.js"],
+      "env": {
+        "NODE_ENV": "development"
+      },
+      "preLaunchTask": "dev"
+    }
+  ]
+}

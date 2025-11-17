@@ -1,16 +1,13 @@
-const sharp = require('sharp');
-const fs = require('fs');
-const path = require('path');
+import sharp from 'sharp';
+import fs from 'fs-extra';
+import path from 'path';
 
 const iconDir = path.join(__dirname, '..', 'public', 'icons');
 
-// Create icons directory if it doesn't exist
-if (!fs.existsSync(iconDir)) {
-  fs.mkdirSync(iconDir, { recursive: true });
-}
+fs.ensureDirSync(iconDir);
 
 // Create a simple blue square with white code symbol
-const createIcon = async (size) => {
+const createIcon = async (size: number) => {
   const svg = `
     <svg width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">
       <rect width="${size}" height="${size}" fill="#4285f4"/>

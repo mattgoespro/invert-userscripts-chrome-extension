@@ -1,9 +1,11 @@
-const path = require('path');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
-const CopyWebpackPlugin = require('copy-webpack-plugin');
-const { CleanWebpackPlugin } = require('clean-webpack-plugin');
+import CopyWebpackPlugin from 'copy-webpack-plugin';
+import HtmlWebpackPlugin from 'html-webpack-plugin';
+import path from 'path';
+import MonacoEditorWebpackPlugin from 'monaco-editor-webpack-plugin';
+import type { Configuration } from 'webpack';
+import { ChromeExtensionReloaderPlugin } from './tools/webpack-extension-reloader.ts';
 
-module.exports = {
+export default {
   mode: 'development',
   devtool: 'cheap-module-source-map',
   entry: {
@@ -13,35 +15,41 @@ module.exports = {
     content: './src/content/content.ts',
   },
   output: {
-    path: path.resolve(__dirname, 'dist'),
+    path: path.resolve(import.meta.dirname, 'dist'),
     filename: '[name].js',
+    publicPath: '',
     clean: true,
   },
   module: {
     rules: [
       {
         test: /\.tsx?$/,
-        use: 'ts-loader',
+        use: {
+          loader: 'ts-loader',
+          options: { transpileOnly: true },
+        },
+        include: /src/,
         exclude: /node_modules/,
       },
       {
         test: /\.scss$/,
         use: ['style-loader', 'css-loader', 'sass-loader'],
+        include: /src/,
       },
       {
         test: /\.css$/,
         use: ['style-loader', 'css-loader'],
+        include: /src/,
       },
     ],
   },
   resolve: {
     extensions: ['.tsx', '.ts', '.js', '.jsx'],
     alias: {
-      '@': path.resolve(__dirname, 'src'),
+      '@': path.resolve(import.meta.dirname, 'src'),
     },
   },
   plugins: [
-    new CleanWebpackPlugin(),
     new HtmlWebpackPlugin({
       template: './src/popup/popup.html',
       filename: 'popup.html',
@@ -51,6 +59,14 @@ module.exports = {
       template: './src/options/options.html',
       filename: 'options.html',
       chunks: ['options'],
+    }),
+    new MonacoEditorWebpackPlugin({
+      languages: ['typescript', 'scss', 'javascript', 'css'],
+      publicPath: '/',
+    }),
+    new ChromeExtensionReloaderPlugin({
+      extensionDir: 'dist',
+      // launch: true,
     }),
     new CopyWebpackPlugin({
       patterns: [
@@ -78,4 +94,4 @@ module.exports = {
       },
     },
   },
-};
+} satisfies Configuration;

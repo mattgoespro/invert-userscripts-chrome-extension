@@ -2,9 +2,4 @@ node_modules/
 dist/
 build/
 *.log
-.DS_Store
-*.swp
-*.swo
-.vscode/
-.idea/
 *.zip

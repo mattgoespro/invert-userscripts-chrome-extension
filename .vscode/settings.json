@@ -1,0 +1,74 @@
+{
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnPaste": true,
+    "editor.formatOnSave": true
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnPaste": true,
+    "editor.formatOnSave": true
+  },
+  "debug.toolBarLocation": "commandCenter",
+  "editor.codeActionsOnSave": {
+    "source.addMissingImports.ts": "always",
+    "source.fixAll.eslint": "always",
+    "source.removeUnusedImports": "never"
+  },
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.fontFamily": "Fira Code, Ubuntu Mono, monospace",
+  "editor.fontSize": 11,
+  "editor.letterSpacing": -0.3,
+  "eslint.enable": true,
+  "eslint.format.enable": false,
+  "eslint.probe": ["typescript", "typescriptreact", "html"],
+  "eslint.useFlatConfig": true,
+  "eslint.validate": ["typescript", "typescriptreact", "html"],
+  "explorer.confirmDragAndDrop": false,
+  "files.exclude": {
+    "**/.buildcache/**": true,
+    "**/.git/**": true,
+    "**/node_modules/**": true
+  },
+  "files.watcherExclude": {
+    "**/.buildcache/**": true,
+    "**/.git/**": true,
+    "**/dist/**": true,
+    "**/node_modules/**": true
+  },
+  "prettier.configPath": "prettier.config.mjs",
+  "search.exclude": {
+    "**/.vscode/**": true,
+    "**/dist/**": true,
+    "*.json": true,
+    "*.{ts,js,mjs}": true
+  },
+  "terminal.integrated.automationProfile.windows": {
+    "path": "C:\\Program Files\\Git\\bin\\bash.exe",
+    "args": ["-l"],
+    "env": {
+      "PATH": "${workspaceFolder}\\node_modules\\.bin;${env:PATH}"
+    }
+  },
+  "terminal.integrated.defaultProfile.windows": "bash-node",
+  "terminal.integrated.fontFamily": "Hack, Fira Code, Ubuntu Mono, monospace",
+  "terminal.integrated.fontSize": 11,
+  "terminal.integrated.profiles.windows": {
+    "bash-node": {
+      "args": ["-l"],
+      "env": {
+        "PATH": "${workspaceFolder}\\node_modules\\.bin;${env:PATH}"
+      },
+      "icon": "terminal-bash",
+      "overrideName": true,
+      "path": "C:\\Program Files\\Git\\bin\\bash.exe"
+    }
+  },
+  "typescript.format.enable": false,
+  "typescript.preferences.importModuleSpecifier": "relative",
+  "typescript.suggest.autoImports": true,
+  "typescript.tsc.autoDetect": "off",
+  "typescript.tsdk": "node_modules\\typescript\\lib",
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "workbench.iconTheme": "helium-icon-theme"
+}

@@ -1,9 +1,9 @@
 import React, { useEffect, useState, useRef } from 'react';
 import Editor from '@monaco-editor/react';
-import { StorageManager } from '@/utils/storage';
 import { TypeScriptCompiler } from '@/utils/compiler';
 import { UserScript, ScriptFile, GlobalModule, AppSettings } from '@/types';
 import './options.scss';
+import { IDEStorageManager } from '@/utils/storage';
 
 type TabView = 'scripts' | 'modules' | 'settings';
 
@@ -26,9 +26,9 @@ const OptionsApp: React.FC = () => {
 
   const loadData = async () => {
     const [loadedScripts, loadedModules, loadedSettings] = await Promise.all([
-      StorageManager.getScripts(),
-      StorageManager.getModules(),
-      StorageManager.getSettings(),
+      IDEStorageManager.getScripts(),
+      IDEStorageManager.getModules(),
+      IDEStorageManager.getSettings(),
     ]);
     setScripts(loadedScripts);
     setModules(loadedModules);
@@ -36,7 +36,7 @@ const OptionsApp: React.FC = () => {
   };
 
   const loadScriptFiles = async (scriptId: string) => {
-    const files = await StorageManager.getScriptFiles(scriptId);
+    const files = await IDEStorageManager.getScriptFiles(scriptId);
     if (files.length > 0) {
       const mainFile = files.find((f) => f.isMain) || files[0];
       setSelectedFile(mainFile);
@@ -65,8 +65,8 @@ const OptionsApp: React.FC = () => {
       updatedAt: Date.now(),
     };
 
-    await StorageManager.saveScript(newScript);
-    
+    await IDEStorageManager.saveScript(newScript);
+
     // Create default main file
     const mainFile: ScriptFile = {
       id: `${newScript.id}-main`,
@@ -76,15 +76,15 @@ const OptionsApp: React.FC = () => {
       content: '// Start coding your userscript here\nconsole.log("Hello from Vertex IDE!");',
       isMain: true,
     };
-    
-    await StorageManager.saveScriptFile(mainFile);
+
+    await IDEStorageManager.saveScriptFile(mainFile);
     await loadData();
     handleScriptSelect(newScript);
   };
 
   const handleDeleteScript = async (scriptId: string) => {
     if (confirm('Are you sure you want to delete this script?')) {
-      await StorageManager.deleteScript(scriptId);
+      await IDEStorageManager.deleteScript(scriptId);
       setSelectedScript(null);
       setSelectedFile(null);
       await loadData();
@@ -95,10 +95,10 @@ const OptionsApp: React.FC = () => {
     if (selectedFile && value !== undefined) {
       const updated = { ...selectedFile, content: value };
       setSelectedFile(updated);
-      
+
       // Auto-save if enabled
       if (settings?.autoSave) {
-        StorageManager.saveScriptFile(updated);
+        IDEStorageManager.saveScriptFile(updated);
       }
 
       // Type check if enabled
@@ -111,7 +111,7 @@ const OptionsApp: React.FC = () => {
 
   const handleSaveFile = async () => {
     if (selectedFile) {
-      await StorageManager.saveScriptFile(selectedFile);
+      await IDEStorageManager.saveScriptFile(selectedFile);
       alert('File saved successfully!');
     }
   };
@@ -120,12 +120,12 @@ const OptionsApp: React.FC = () => {
     if (!selectedFile) return;
 
     setCompileOutput('Compiling...');
-    
+
     const result = TypeScriptCompiler.compile(selectedFile.content, selectedFile.name);
-    
+
     if (result.success && result.code) {
       setCompileOutput(`// Compiled successfully\n${result.code}`);
-      
+
       if (result.warnings && result.warnings.length > 0) {
         setCompileOutput(
           `// Warnings:\n${result.warnings.map((w) => `// ${w}`).join('\n')}\n\n${result.code}`
@@ -135,7 +135,7 @@ const OptionsApp: React.FC = () => {
       // Update the script's compiled code
       if (selectedScript) {
         const updated = { ...selectedScript, code: result.code, updatedAt: Date.now() };
-        await StorageManager.saveScript(updated);
+        await IDEStorageManager.saveScript(updated);
         setSelectedScript(updated);
       }
     } else {
@@ -146,7 +146,7 @@ const OptionsApp: React.FC = () => {
   const handleUpdateScriptMeta = async (updates: Partial<UserScript>) => {
     if (selectedScript) {
       const updated = { ...selectedScript, ...updates, updatedAt: Date.now() };
-      await StorageManager.saveScript(updated);
+      await IDEStorageManager.saveScript(updated);
       setSelectedScript(updated);
       await loadData();
     }
@@ -172,7 +172,7 @@ const OptionsApp: React.FC = () => {
   const handleCreateModule = async () => {
     const name = prompt('Module name:');
     if (!name) return;
-    
+
     const url = prompt('CDN URL:');
     if (!url) return;
 
@@ -183,27 +183,27 @@ const OptionsApp: React.FC = () => {
       enabled: true,
     };
 
-    await StorageManager.saveModule(newModule);
+    await IDEStorageManager.saveModule(newModule);
     await loadData();
   };
 
   const handleDeleteModule = async (moduleId: string) => {
     if (confirm('Delete this module?')) {
-      await StorageManager.deleteModule(moduleId);
+      await IDEStorageManager.deleteModule(moduleId);
       await loadData();
     }
   };
 
   const handleToggleModule = async (module: GlobalModule) => {
     const updated = { ...module, enabled: !module.enabled };
-    await StorageManager.saveModule(updated);
+    await IDEStorageManager.saveModule(updated);
     await loadData();
   };
 
   const handleUpdateSettings = async (updates: Partial<AppSettings>) => {
     if (settings) {
       const updated = { ...settings, ...updates };
-      await StorageManager.saveSettings(updated);
+      await IDEStorageManager.saveSettings(updated);
       setSettings(updated);
     }
   };
@@ -214,7 +214,7 @@ const OptionsApp: React.FC = () => {
         <div className="sidebar-header">
           <h2>Scripts</h2>
           <button className="btn-icon" onClick={handleCreateScript} title="Create new script">
-            ➕
+            &#x002b;
           </button>
         </div>
         <div className="scripts-list">
@@ -237,14 +237,11 @@ const OptionsApp: React.FC = () => {
                   🗑️
                 </button>
               </div>
-              <div className="script-status">
-                {script.enabled ? '✅ Enabled' : '⭕ Disabled'}
-              </div>
+              <div className="script-status">{script.enabled ? '✅ Enabled' : '⭕ Disabled'}</div>
             </div>
           ))}
         </div>
       </div>
-
       <div className="editor-area">
         {selectedScript ? (
           <>
@@ -281,17 +278,13 @@ const OptionsApp: React.FC = () => {
                 </button>
               </div>
             </div>
-
             <div className="url-patterns">
               <h3>URL Patterns</h3>
               <div className="patterns-list">
                 {selectedScript.urlPatterns.map((pattern, index) => (
                   <div key={index} className="pattern-item">
                     <span>{pattern}</span>
-                    <button
-                      className="btn-remove"
-                      onClick={() => handleRemoveUrlPattern(index)}
-                    >
+                    <button className="btn-remove" onClick={() => handleRemoveUrlPattern(index)}>
                       ✖
                     </button>
                   </div>
@@ -301,12 +294,13 @@ const OptionsApp: React.FC = () => {
                 </button>
               </div>
             </div>
-
             <div className="editor-container">
               {selectedFile && (
                 <Editor
                   height="400px"
-                  language={selectedFile.language === 'typescript' ? 'typescript' : selectedFile.language}
+                  language={
+                    selectedFile.language === 'typescript' ? 'typescript' : selectedFile.language
+                  }
                   value={selectedFile.content}
                   onChange={handleEditorChange}
                   theme={settings?.editorTheme || 'vs-dark'}
@@ -324,7 +318,6 @@ const OptionsApp: React.FC = () => {
                 />
               )}
             </div>
-
             {typeCheckErrors.length > 0 && (
               <div className="type-check-errors">
                 <h4>Type Check Errors:</h4>
@@ -335,7 +328,6 @@ const OptionsApp: React.FC = () => {
                 ))}
               </div>
             )}
-
             {compileOutput && (
               <div className="compile-output">
                 <h4>Compiled Output:</h4>
@@ -377,10 +369,7 @@ const OptionsApp: React.FC = () => {
                 />
                 <span className="toggle-slider"></span>
               </label>
-              <button
-                className="btn-delete"
-                onClick={() => handleDeleteModule(module.id)}
-              >
+              <button className="btn-delete" onClick={() => handleDeleteModule(module.id)}>
                 🗑️
               </button>
             </div>
@@ -475,9 +464,7 @@ const OptionsApp: React.FC = () => {
     <div className="options-container">
       <div className="options-header">
         <h1>⚡ Vertex IDE Userscripts</h1>
-        <div className="header-subtitle">
-          Browser-based IDE for TypeScript userscripts
-        </div>
+        <div className="header-subtitle">Browser-based IDE for TypeScript userscripts</div>
       </div>
 
       <div className="tabs">

@@ -1,5 +1,7 @@
-// Content script - currently minimal as script injection is handled by background worker
-// This can be extended for additional features like communication with injected scripts
+/**
+ * Content script - currently minimal as script injection is handled by background worker
+ * This can be extended for additional features like communication with injected scripts
+ */
 
 console.log('Vertex IDE content script loaded');
 
