@@ -1,9 +1,9 @@
-import React, { useEffect, useState, useRef } from 'react';
+import { TypeScriptCompiler } from '@/shared/compiler';
+import { AppSettings, GlobalModule, ScriptFile, UserScript } from '@/shared/model';
+import { IDEStorageManager } from '@/shared/storage';
 import Editor from '@monaco-editor/react';
-import { TypeScriptCompiler } from '@/utils/compiler';
-import { UserScript, ScriptFile, GlobalModule, AppSettings } from '@/types';
-import './options.scss';
-import { IDEStorageManager } from '@/utils/storage';
+import React, { useEffect, useRef, useState } from 'react';
+import './VertexIde.scss';
 
 type TabView = 'scripts' | 'modules' | 'settings';
 

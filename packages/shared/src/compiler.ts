@@ -1,5 +1,5 @@
 import * as ts from 'typescript';
-import { CompileResult } from '@/types';
+import { CompileResult } from './model';
 
 export class TypeScriptCompiler {
   static compile(code: string, fileName: string = 'script.ts'): CompileResult {
@@ -11,7 +11,7 @@ export class TypeScriptCompiler {
         esModuleInterop: true,
         skipLibCheck: true,
         forceConsistentCasingInFileNames: true,
-        moduleResolution: ts.ModuleResolutionKind.NodeJs,
+        moduleResolution: ts.ModuleResolutionKind.Node10,
         allowJs: true,
       };
 
@@ -21,7 +21,7 @@ export class TypeScriptCompiler {
       });
 
       const warnings: string[] = [];
-      
+
       if (result.diagnostics && result.diagnostics.length > 0) {
         result.diagnostics.forEach((diagnostic) => {
           if (diagnostic.file && diagnostic.start !== undefined) {
@@ -77,9 +77,7 @@ export class TypeScriptCompiler {
 
     diagnostics.forEach((diagnostic) => {
       if (diagnostic.file && diagnostic.start !== undefined) {
-        const { line, character } = diagnostic.file.getLineAndCharacterOfPosition(
-          diagnostic.start
-        );
+        const { line, character } = diagnostic.file.getLineAndCharacterOfPosition(diagnostic.start);
         const message = ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n');
         errors.push(`Line ${line + 1}, Col ${character + 1}: ${message}`);
       } else {

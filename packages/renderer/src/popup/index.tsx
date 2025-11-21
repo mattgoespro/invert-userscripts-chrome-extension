@@ -1,8 +1,8 @@
+import { UserScript } from '@/shared/model';
+import { IDEStorageManager } from '@/shared/storage';
 import React, { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { IDEStorageManager } from '@/utils/storage';
-import { UserScript } from '@/types';
-import './popup.scss';
+import './index.scss';
 
 const Popup: React.FC = () => {
   const [scripts, setScripts] = useState<UserScript[]>([]);

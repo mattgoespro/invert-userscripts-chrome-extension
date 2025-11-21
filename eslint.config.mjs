@@ -1,33 +1,14 @@
-import html from '@html-eslint/eslint-plugin';
-import react from 'eslint-plugin-react';
-import defineConfig from 'eslint/config';
+import { defineConfig } from 'eslint/config';
 import tseslint from 'typescript-eslint';
 
-export default defineConfig(
-  {
-    ignores: ['temp', 'node_modules', 'out', 'dist'],
-  },
-  {
-    ...react.configs.flat.recommended,
-    files: ['src/renderer/**/*.ts', 'src/renderer/**/*.tsx'],
-    settings: {
-      react: {
-        version: 'detect',
-      },
-      ecmaFeatures: {
-        jsx: true,
-        modules: true,
+function configureTsEslintConfig(rootDir, files) {
+  return {
+    files,
+    languageOptions: {
+      parserOptions: {
+        tsconfigRootDir: rootDir,
       },
     },
-    rules: {
-      'react/react-in-jsx-scope': 'off',
-      'react/jsx-uses-react': 'off',
-    },
-  },
-  html.configs['flat/recommended'],
-  tseslint.configs.recommended,
-  {
-    files: ['src/**/*.ts', 'src/**/*.tsx', 'scripts/**/*.ts', 'tools/**/*.ts', '*.ts', '*.mts'],
     rules: {
       'no-unused-vars': 'off',
       'no-explicit-any': 'off',
@@ -40,5 +21,24 @@ export default defineConfig(
       ],
       '@typescript-eslint/no-explicit-any': 'warn',
     },
-  }
-);
+  };
+}
+
+export default {
+  config: defineConfig(
+    {
+      ignores: ['temp', 'node_modules', 'out', 'dist'],
+    },
+    tseslint.configs.recommended,
+    {
+      files: ['tools/**/*.ts'],
+      languageOptions: {
+        parserOptions: {
+          tsconfigRootDir: import.meta.dirname,
+        },
+      },
+      ...configureTsEslintConfig(import.meta.dirname, ['**/*.ts']),
+    }
+  ),
+  configureTsEslintConfig,
+};

@@ -1,5 +1,5 @@
-import { UserScript } from '@/types';
-import { IDEStorageManager } from '@/utils/storage';
+import { IDEStorageManager } from '@/shared/storage';
+import { UserScript } from '../../../shared/src/model';
 
 export async function injectMatchingScripts(tabId: number, url: string): Promise<void> {
   try {

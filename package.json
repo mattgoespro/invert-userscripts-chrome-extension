@@ -9,8 +9,6 @@
   "scripts": {
     "build": "webpack --mode production",
     "dev": "webpack --mode development --watch",
-    "launch-chrome": "chrome --remote-debugging-port=9222 --user-data-dir=\"$LOCALAPPDATA\\Google\\Chrome\\User\\ Data\\RemoteDebuggingProfile\"",
-    "echo": "echo %0%",
     "icons": "tsx scripts/create-icons.ts",
     "lint": "eslint src --ext .ts,.tsx",
     "test": "echo \"No tests yet\" && exit 0"
@@ -34,6 +32,8 @@
     "css-loader": "^7.1.2",
     "eslint": "^9.39.1",
     "eslint-plugin-react": "^7.37.5",
+    "favicons": "^7.2.0",
+    "favicons-webpack-plugin": "^6.0.1",
     "fs-extra": "^11.3.2",
     "html-webpack-plugin": "^5.6.4",
     "monaco-editor-webpack-plugin": "^7.1.1",
@@ -45,6 +45,7 @@
     "style-loader": "^4.0.0",
     "ts-loader": "^9.5.4",
     "ts-node": "^10.9.2",
+    "tsconfig-paths-webpack-plugin": "^4.2.0",
     "tsx": "^4.20.6",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.46.4",

@@ -18,7 +18,7 @@
     "yoavbls.pretty-ts-errors",
     "amodio.tsl-problem-matcher",
     "naumovs.color-highlight",
-    "helgardrichard.helium-icon-theme",
-    "aaron-bond.better-comments"
+    "aaron-bond.better-comments",
+    "vscode-icons-team.vscode-icons"
   ]
 }

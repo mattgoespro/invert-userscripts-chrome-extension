@@ -1,0 +1,16 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "include": ["**/*.ts", "**/*.tsx"],
+  "compilerOptions": {
+    "composite": true,
+    "lib": ["es2020", "dom", "dom.iterable"],
+    "jsx": "react-jsx",
+    "types": ["chrome", "react", "react-dom"],
+    "outDir": "dist/packages/renderer"
+  },
+  "references": [
+    {
+      "path": "../shared"
+    }
+  ]
+}

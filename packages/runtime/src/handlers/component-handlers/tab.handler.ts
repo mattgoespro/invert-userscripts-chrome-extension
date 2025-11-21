@@ -1,4 +1,4 @@
-import { injectMatchingScripts } from '@/background/ide/scripts';
+import { injectMatchingScripts } from '../../ide/scripts';
 
 export const onTabUpdated = async (
   tabId: number,
