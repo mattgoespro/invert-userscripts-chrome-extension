@@ -1,13 +1,13 @@
 import { TypeScriptCompiler } from '@/shared/compiler';
 import { AppSettings, GlobalModule, ScriptFile, UserScript } from '@/shared/model';
 import { IDEStorageManager } from '@/shared/storage';
-import Editor from '@monaco-editor/react';
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import './VertexIde.scss';
+import { CodeEditor } from './code-editor/CodeEditor';
 
 type TabView = 'scripts' | 'modules' | 'settings';
 
-const OptionsApp: React.FC = () => {
+export function OptionsApp() {
   const [activeTab, setActiveTab] = useState<TabView>('scripts');
   const [scripts, setScripts] = useState<UserScript[]>([]);
   const [selectedScript, setSelectedScript] = useState<UserScript | null>(null);
@@ -16,9 +16,6 @@ const OptionsApp: React.FC = () => {
   const [settings, setSettings] = useState<AppSettings | null>(null);
   const [compileOutput, setCompileOutput] = useState<string>('');
   const [typeCheckErrors, setTypeCheckErrors] = useState<string[]>([]);
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const editorRef = useRef<any>(null);
 
   useEffect(() => {
     loadData();
@@ -295,28 +292,7 @@ const OptionsApp: React.FC = () => {
               </div>
             </div>
             <div className="editor-container">
-              {selectedFile && (
-                <Editor
-                  height="400px"
-                  language={
-                    selectedFile.language === 'typescript' ? 'typescript' : selectedFile.language
-                  }
-                  value={selectedFile.content}
-                  onChange={handleEditorChange}
-                  theme={settings?.editorTheme || 'vs-dark'}
-                  options={{
-                    minimap: { enabled: false },
-                    fontSize: settings?.fontSize || 14,
-                    tabSize: settings?.tabSize || 2,
-                    automaticLayout: true,
-                    formatOnPaste: settings?.autoFormat,
-                    formatOnType: settings?.autoFormat,
-                  }}
-                  onMount={(editor) => {
-                    editorRef.current = editor;
-                  }}
-                />
-              )}
+              {selectedFile && <CodeEditor value={selectedFile.content} />}
             </div>
             {typeCheckErrors.length > 0 && (
               <div className="type-check-errors">
@@ -466,7 +442,6 @@ const OptionsApp: React.FC = () => {
         <h1>⚡ Vertex IDE Userscripts</h1>
         <div className="header-subtitle">Browser-based IDE for TypeScript userscripts</div>
       </div>
-
       <div className="tabs">
         <button
           className={`tab ${activeTab === 'scripts' ? 'active' : ''}`}
@@ -487,7 +462,6 @@ const OptionsApp: React.FC = () => {
           ⚙️ Settings
         </button>
       </div>
-
       <div className="tab-content">
         {activeTab === 'scripts' && renderScriptsTab()}
         {activeTab === 'modules' && renderModulesTab()}
@@ -495,6 +469,6 @@ const OptionsApp: React.FC = () => {
       </div>
     </div>
   );
-};
+}
 
 export default OptionsApp;

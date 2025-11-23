@@ -102,7 +102,7 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
    */
   private async reload(): Promise<void> {
     if (this._options.launch && !this.isBrowserOpen()) {
-      this.log('Launching Chrome with remote debugging enabled...');
+      this._log('Launching Chrome with remote debugging enabled...');
       await this.launchChromeWithRemoteDebugging();
     }
 
@@ -295,7 +295,7 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
     }
   }
 
-  private log(message: string, type: 'debug' | 'info' | 'warn' | 'error' | 'verbose' = 'info') {
+  private _log(message: string, type: 'debug' | 'info' | 'warn' | 'error' | 'verbose' = 'info') {
     const createPrefix = () => {
       return `${this._colors.bold(this._colors.green('['))}${this._colors.bold(
         this._colors.green(this.name)
@@ -330,22 +330,22 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
   }
 
   private logInfo(message: string) {
-    this.log(message, 'info');
+    this._log(message, 'info');
   }
 
   private logWarn(message: string) {
-    this.log(message, 'warn');
+    this._log(message, 'warn');
   }
 
   private logError(message: string) {
-    this.log(message, 'error');
+    this._log(message, 'error');
   }
 
   private logDebug(message: string) {
-    this.log(message, 'debug');
+    this._log(message, 'debug');
   }
 
   private logVerbose(message: string) {
-    this.log(message, 'verbose');
+    this._log(message, 'verbose');
   }
 }

@@ -70,17 +70,26 @@ export default (args: Record<string, any>, { mode }: { mode: 'development' | 'pr
         {
           test: /\.scss$/,
           use: ['style-loader', 'css-loader', 'sass-loader'],
-          include: /packages/,
         },
         {
           test: /\.css$/,
           use: ['style-loader', 'css-loader'],
-          include: /packages/,
+        },
+        {
+          test: /node_modules\/monaco-editor\/esm\/vs/,
+          type: 'javascript/auto',
+          generator: {
+            filename: 'monaco/[path][name][ext]',
+          },
         },
       ],
     },
     resolve: {
-      extensions: ['.tsx', '.ts', '.js'],
+      extensions: ['.tsx', '.ts', '.js', '.scss'],
+      alias: {
+        'monaco-editor': 'monaco-editor/esm/vs/editor/editor.api',
+        '~': path.resolve(__dirname, 'packages/renderer/src/assets/'),
+      },
       plugins: [
         new TsConfigPathsWebpackPlugin({
           configFile: path.join(__dirname, 'tsconfig.base.json'),
@@ -99,7 +108,11 @@ export default (args: Record<string, any>, { mode }: { mode: 'development' | 'pr
         chunks: ['options'],
       }),
       new MonacoEditorWebpackPlugin({
-        languages: ['typescript', 'scss', 'javascript', 'css'],
+        languages: ['javascript', 'typescript', 'css', 'html', 'json'],
+        filename: 'monaco/[name].worker.js',
+        globalAPI: true,
+        monacoEditorPath: path.join(__dirname, 'node_modules', 'monaco-editor'),
+        publicPath: '',
       }),
       new FaviconsWebpackPlugin({
         logo: path.resolve(__dirname, 'public', 'assets', 'icon.png'),
@@ -139,21 +152,4 @@ export default (args: Record<string, any>, { mode }: { mode: 'development' | 'pr
         ],
       }),
     ],
-    optimization: {
-      splitChunks: {
-        chunks: 'all',
-        cacheGroups: {
-          vendor: {
-            test: /[\\/]node_modules[\\/]/,
-            name: 'vendors',
-            priority: 10,
-          },
-          monaco: {
-            test: /[\\/]node_modules[\\/]monaco-editor[\\/]/,
-            name: 'monaco',
-            priority: 20,
-          },
-        },
-      },
-    },
   }) satisfies Configuration;

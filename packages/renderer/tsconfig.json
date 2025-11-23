@@ -6,7 +6,8 @@
     "lib": ["es2020", "dom", "dom.iterable"],
     "jsx": "react-jsx",
     "types": ["chrome", "react", "react-dom"],
-    "outDir": "dist/packages/renderer"
+    "outDir": "dist/packages/renderer",
+    "noEmit": true
   },
   "references": [
     {

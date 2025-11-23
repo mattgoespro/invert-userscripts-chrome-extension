@@ -1,4 +1,9 @@
 {
+  "[scss]": {
+    "editor.defaultFormatter": "sibiraj-s.vscode-scss-formatter",
+    "editor.formatOnPaste": true,
+    "editor.formatOnSave": true
+  },
   "[typescript]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.formatOnPaste": true,
@@ -44,11 +49,11 @@
     "*.{ts,js,mjs}": true
   },
   "terminal.integrated.automationProfile.windows": {
-    "path": "C:\\Program Files\\Git\\bin\\bash.exe",
     "args": ["-l"],
     "env": {
       "PATH": "${workspaceFolder}\\node_modules\\.bin;${env:PATH}"
-    }
+    },
+    "path": "C:\\Program Files\\Git\\bin\\bash.exe"
   },
   "terminal.integrated.defaultProfile.windows": "bash-node",
   "terminal.integrated.fontFamily": "Hack, Fira Code, Ubuntu Mono, monospace",

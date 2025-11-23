@@ -1,10 +1,10 @@
 import { UserScript } from '@/shared/model';
 import { IDEStorageManager } from '@/shared/storage';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import './index.scss';
 
-const Popup: React.FC = () => {
+export function Popup() {
   const [scripts, setScripts] = useState<UserScript[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -95,7 +95,7 @@ const Popup: React.FC = () => {
       </div>
     </div>
   );
-};
+}
 
 const container = document.getElementById('root');
 

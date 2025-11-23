@@ -3,6 +3,12 @@
   "include": ["src/**/*.ts"],
   "compilerOptions": {
     "composite": true,
-    "outDir": "dist/packages/runtime"
-  }
+    "outDir": "dist/packages/runtime",
+    "noEmit": true
+  },
+  "references": [
+    {
+      "path": "../shared"
+    }
+  ]
 }
