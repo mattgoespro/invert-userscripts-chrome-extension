@@ -1,8 +1,8 @@
 /**
  * Example 2: GitHub Dark Mode Toggle
- * 
+ *
  * Adds a dark mode toggle button to GitHub pages.
- * 
+ *
  * URL Pattern: https://github.com/*
  * Run At: document_idle
  */
@@ -13,7 +13,7 @@ interface DarkModeState {
 
 class GitHubDarkMode {
   private state: DarkModeState = { enabled: false };
-  private button: HTMLButtonElement | null = null;
+  private button: HTMLButtonElement = null;
 
   constructor() {
     this.loadState();

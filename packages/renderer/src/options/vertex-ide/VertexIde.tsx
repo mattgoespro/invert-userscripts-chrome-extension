@@ -10,10 +10,10 @@ type TabView = 'scripts' | 'modules' | 'settings';
 export function OptionsApp() {
   const [activeTab, setActiveTab] = useState<TabView>('scripts');
   const [scripts, setScripts] = useState<UserScript[]>([]);
-  const [selectedScript, setSelectedScript] = useState<UserScript | null>(null);
-  const [selectedFile, setSelectedFile] = useState<ScriptFile | null>(null);
+  const [selectedScript, setSelectedScript] = useState<UserScript>(null);
+  const [selectedFile, setSelectedFile] = useState<ScriptFile>(null);
   const [modules, setModules] = useState<GlobalModule[]>([]);
-  const [settings, setSettings] = useState<AppSettings | null>(null);
+  const [settings, setSettings] = useState<AppSettings>(null);
   const [compileOutput, setCompileOutput] = useState<string>('');
   const [typeCheckErrors, setTypeCheckErrors] = useState<string[]>([]);
 
@@ -88,7 +88,7 @@ export function OptionsApp() {
     }
   };
 
-  const handleEditorChange = (value: string | undefined) => {
+  const handleEditorChange = (value: string) => {
     if (selectedFile && value !== undefined) {
       const updated = { ...selectedFile, content: value };
       setSelectedFile(updated);

@@ -1,8 +1,8 @@
 /**
  * Example 3: YouTube Speed Controller
- * 
+ *
  * Adds custom playback speed controls to YouTube videos.
- * 
+ *
  * URL Pattern: https://www.youtube.com/*
  * Run At: document_idle
  */
@@ -10,7 +10,7 @@
 class YouTubeSpeedController {
   private speeds: number[] = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3];
   private currentSpeed: number = 1;
-  private container: HTMLDivElement | null = null;
+  private container: HTMLDivElement = null;
 
   constructor() {
     this.init();

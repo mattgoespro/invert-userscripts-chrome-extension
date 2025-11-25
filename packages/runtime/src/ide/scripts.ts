@@ -1,4 +1,4 @@
-import { IDEStorageManager } from '@/shared/storage';
+import { IDEStorageManager } from '@shared/storage';
 import { UserScript } from '../../../shared/src/model';
 
 export async function injectMatchingScripts(tabId: number, url: string): Promise<void> {
