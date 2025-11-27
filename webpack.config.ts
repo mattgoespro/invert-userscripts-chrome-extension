@@ -134,6 +134,7 @@ export default (args: Record<string, any>, { mode }: { mode: 'development' | 'pr
           extensionDir: 'dist',
           backgroundScriptEntryId: backgroundEntryFilename,
           launch: true,
+          verbose: true,
         }),
       new CopyWebpackPlugin({
         patterns: [

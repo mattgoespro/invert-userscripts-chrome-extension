@@ -1,6 +1,6 @@
-import { TypeScriptCompiler } from '@/shared/compiler';
-import { AppSettings, GlobalModule, ScriptFile, UserScript } from '@/shared/model';
-import { IDEStorageManager } from '@/shared/storage';
+import { TypeScriptCompiler } from '@shared/compiler';
+import { AppSettings, GlobalModule, ScriptFile, UserScript } from '@shared/model';
+import { IDEStorageManager } from '@shared/storage';
 import { useEffect, useState } from 'react';
 import './VertexIde.scss';
 import { CodeEditor } from './code-editor/CodeEditor';

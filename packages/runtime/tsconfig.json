@@ -4,7 +4,10 @@
   "compilerOptions": {
     "composite": true,
     "outDir": "dist/packages/runtime",
-    "noEmit": true
+    "paths": {
+      "@/*": ["./src/*"],
+      "@shared/*": ["packages/shared/src/*"]
+    }
   },
   "references": [
     {

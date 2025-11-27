@@ -9,11 +9,10 @@
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
-    "allowImportingTsExtensions": true,
     "skipLibCheck": true,
     "strict": false,
     "paths": {
-      "@/shared/*": ["packages/shared/src/*"]
+      "@shared/*": ["packages/shared/src/*"]
     }
   },
   "exclude": ["node_modules", "dist"],

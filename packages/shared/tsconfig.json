@@ -3,9 +3,6 @@
   "include": ["src/**/*.ts"],
   "compilerOptions": {
     "composite": true,
-    "outDir": "dist/packages/shared",
-    "paths": {
-      "@shared/*": ["./src/*"]
-    }
+    "outDir": "dist/packages/shared"
   }
 }

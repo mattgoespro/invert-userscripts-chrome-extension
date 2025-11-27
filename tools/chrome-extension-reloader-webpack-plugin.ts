@@ -1,6 +1,7 @@
 import { execSync } from 'child_process';
 import { apps, openApp } from 'open';
 import path from 'path';
+import { text } from 'stream/consumers';
 import webpack from 'webpack';
 import WebSocket from 'ws';
 
@@ -21,28 +22,53 @@ export interface ChromeExtensionReloaderPluginOptions {
   extensionDir: string;
   backgroundScriptEntryId: string;
   remoteDebugPort?: number;
-  manifestPath?: string;
   launch?: boolean;
   timeoutMs?: number;
   reloadDebounceMs?: number;
   verbose?: boolean;
-  debug?: boolean;
 }
+
+const createLogger = (options: { prefix: string; verbose?: boolean }) => {
+  const colors = webpack.cli.createColors();
+
+  const createPrefix = (level: string, color: (text: string) => string) =>
+    colors.bold(color(level));
+
+  return {
+    info: (message: string) => {
+      console.info(`${createPrefix('INFO', colors.green)} ${colors.greenBright(message)}`);
+    },
+    warn: (message: string) => {
+      console.warn(`${createPrefix('WARN', colors.yellow)} ${colors.yellowBright(message)}`);
+    },
+    error: (message: string) => {
+      console.error(`${createPrefix('ERROR', colors.red)} ${colors.redBright(message)}`);
+    },
+    verbose: (message: string) => {
+      if (!options.verbose) {
+        return;
+      }
+
+      console.info(`${createPrefix('VERBOSE', colors.gray)} ${colors.gray(message)}`);
+    },
+  };
+};
 
 export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPluginInstance {
   private readonly name = 'ChromeExtensionReloaderWebpackPlugin';
 
   private _options: ChromeExtensionReloaderPluginOptions;
-  private _colors = webpack.cli.createColors();
 
   private _sockets: { extension: WebSocket; activeTab: WebSocket } = {
     extension: null,
     activeTab: null,
   };
   private _extensionReloadTimer: NodeJS.Timeout = null;
+  private _log: ReturnType<typeof createLogger>;
 
   constructor(options: ChromeExtensionReloaderPluginOptions) {
     this._options = this.normalizeOptions(options);
+    this._log = createLogger({ prefix: this.name, verbose: this._options.verbose });
   }
 
   private normalizeOptions(options: ChromeExtensionReloaderPluginOptions) {
@@ -50,7 +76,6 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
       backgroundScriptEntryId: options.backgroundScriptEntryId,
       extensionDir: options.extensionDir,
       remoteDebugPort: options.remoteDebugPort ?? 9222,
-      manifestPath: options.manifestPath ?? path.join(options.extensionDir, 'manifest.json'),
       launch: options.launch ?? false,
       reloadDebounceMs: options.reloadDebounceMs ?? 300,
       timeoutMs: options.timeoutMs ?? 30000,
@@ -65,67 +90,78 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
    */
   async apply(compiler: webpack.Compiler) {
     compiler.hooks.initialize.tap(this.name, () => {
-      this.logInfo(`Initialized.`);
+      this._log.verbose(`Initialized.`);
     });
 
-    compiler.hooks.afterCompile.tapAsync(
-      this.name,
-      (compilation: webpack.Compilation, done: () => void) => {
-        const changedAssets = Object.keys(compilation.assets);
+    compiler.hooks.done.tapAsync(this.name, (stats, done) => {
+      const changedAssets = Object.keys(stats.compilation.assets);
 
-        if (changedAssets.length > 0) {
-          this.logVerbose(`Rebuild detected, scheduling extension reload...`);
-          this.scheduleReload();
-        }
-
-        done();
+      if (changedAssets.length > 0) {
+        this._log.verbose(`Rebuild detected, scheduling extension reload...`);
+        this.scheduleReload();
       }
-    );
+
+      done();
+    });
 
     compiler.hooks.shutdown.tap(this.name, () => {
-      if (this._sockets.extension != null) {
-        this._sockets.extension.close();
-        this._sockets.extension = null;
-        this.logVerbose(`Extension websocket connection closed.`);
-      }
+      this.disconnect();
+    });
 
-      if (this._sockets.activeTab != null) {
-        this._sockets.activeTab.close();
-        this._sockets.activeTab = null;
-        this.logVerbose(`Active tab websocket connection closed.`);
-      }
+    compiler.hooks.watchClose.tap(this.name, () => {
+      this.disconnect();
     });
   }
 
+  private disconnect() {
+    if (this._sockets.extension != null) {
+      this._sockets.extension.close();
+      this._sockets.extension = null;
+      this._log.verbose(`Extension websocket connection closed.`);
+    }
+
+    if (this._sockets.activeTab != null) {
+      this._sockets.activeTab.close();
+      this._sockets.activeTab = null;
+      this._log.verbose(`Active tab websocket connection closed.`);
+    }
+  }
+
   /**
-   * Main workflow to reload the extension and active tab.
+   * Main extension workflow.
    */
   private async reload(): Promise<void> {
     if (this._options.launch && !this.isBrowserOpen()) {
-      this._log('Launching Chrome with remote debugging enabled...');
+      this._log.info('Launching Chrome with remote debugging enabled...');
       await this.launchChromeWithRemoteDebugging();
     }
 
     const targets = await this.fetchBrowserDevToolsTargets();
-    this.logDebug(`Successfully retrieved DevTools targets.`);
+    this._log.verbose(`Retrieved ${targets.length} devtools targets.`);
 
     const extensionTarget = this.resolveDevToolsExtensionTarget(targets);
 
     if (extensionTarget == null) {
-      this.logError(
-        `Could not resolve the extension from the DevTools targets. Has the unpacked extension been loaded from the Extensions page?`
+      this._log.error(
+        `Could not resolve the extension from the list of devtools targets. Has the unpacked extension been loaded from the Extensions page?`
       );
       return;
     }
+    this._log.verbose(`Resolved extension target:`);
+    this._log.verbose(`- id: ${extensionTarget.id}`);
+    this._log.verbose(`- title: ${extensionTarget.title}`);
+    this._log.verbose(`- url: ${extensionTarget.url}`);
+    this._log.verbose(`- webSocketDebuggerUrl: ${extensionTarget.webSocketDebuggerUrl}`);
 
     if (
       this._sockets.extension == null ||
       this.getSocketConnectionStatus(this._sockets.extension) === 'unavailable'
     ) {
-      this.logVerbose(`Connecting to extension...`);
       await this.connectWebSocket('extension', extensionTarget.webSocketDebuggerUrl);
+      this._log.verbose(`Connected to extension.`);
     }
 
+    this._log.info(`Reloading extension...`);
     await this.executeExtensionReload();
 
     const activeTabTarget = this.resolveDevToolsActiveTabTarget(targets);
@@ -135,23 +171,30 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
         this._sockets.activeTab == null ||
         this.getSocketConnectionStatus(this._sockets.activeTab) === 'unavailable'
       ) {
-        this.logVerbose(`Connecting to active tab...`);
         await this.connectWebSocket('activeTab', activeTabTarget.webSocketDebuggerUrl);
+        this._log.verbose(`Connected to active tab.`);
       }
 
+      this._log.info(`Reloading active tab...`);
       await this.executeBrowserActiveTabReload();
     }
 
-    this.logInfo(`Reload succeeded.`);
+    this._log.info(`Reload finished.`);
   }
 
   private scheduleReload(): void {
     if (this._extensionReloadTimer != null) {
       clearTimeout(this._extensionReloadTimer);
+      this._log.verbose(`Cleared existing reload timer.`);
     }
 
-    this._extensionReloadTimer = setTimeout(() => {
-      this.reload().catch((err) => this.logError(`Reload failed: ${err.message}`));
+    this._extensionReloadTimer = setTimeout(async () => {
+      try {
+        await this.reload();
+        this._log.info(`Extension reloaded.`);
+      } catch (error) {
+        this._log.error(`Reload failed: ${error.message}`);
+      }
     }, this._options.reloadDebounceMs);
   }
 
@@ -170,21 +213,25 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
     await Promise.race([
       new Promise<void>((resolve, reject) => {
         this._sockets[socketName].once('open', () => {
-          this.logVerbose(`Websocket connected to ${socketName}.`);
+          this._log.verbose(`Connected to websocket '${socketName}'.`);
           resolve();
         });
-        this._sockets[socketName].once('error', reject);
+        this._sockets[socketName].once('error', (error) => {
+          this._log.error(`WebSocket '${socketName}' connection error: ${error.message}`);
+          reject(
+            new Error(`Failed to connect to ${socketName} DevTools WebSocket: ${error.message}.`)
+          );
+        });
       }),
       new Promise<void>((_, reject) =>
-        setTimeout(
-          () =>
-            reject(
-              new Error(
-                `Connection to ${socketName} DevTools WebSocket timed out after ${this._options.timeoutMs}ms.`
-              )
-            ),
-          this._options.timeoutMs
-        )
+        setTimeout(() => {
+          reject(
+            new Error(
+              `Connection to ${socketName} DevTools WebSocket timed out after ${this._options.timeoutMs}ms.`
+            )
+          );
+          this._log.error(`Timed out connecting to websocket '${socketName}'.`);
+        }, this._options.timeoutMs)
       ),
     ]);
   }
@@ -293,59 +340,5 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
       default:
         throw new Error(`${socket.url} - Unknown WebSocket state: ${socket.readyState}`);
     }
-  }
-
-  private _log(message: string, type: 'debug' | 'info' | 'warn' | 'error' | 'verbose' = 'info') {
-    const createPrefix = () => {
-      return `${this._colors.bold(this._colors.green('['))}${this._colors.bold(
-        this._colors.green(this.name)
-      )}${this._colors.bold(this._colors.green(']'))}`;
-    };
-
-    switch (type) {
-      case 'debug': {
-        if (!this._options.debug) {
-          return;
-        }
-
-        console.log(createPrefix(), this._colors.dim(this._colors.gray(message)));
-      }
-      case 'verbose': {
-        if (!this._options.verbose) {
-          return;
-        }
-
-        console.log(createPrefix(), this._colors.gray(message));
-      }
-      case 'info':
-        console.log(createPrefix(), this._colors.blue(message));
-        break;
-      case 'warn':
-        console.warn(this._colors.bold(`${this._colors.yellow(createPrefix())} ${message}`));
-        break;
-      case 'error':
-        console.error(this._colors.bold(`${this._colors.red(createPrefix())} ${message}`));
-        break;
-    }
-  }
-
-  private logInfo(message: string) {
-    this._log(message, 'info');
-  }
-
-  private logWarn(message: string) {
-    this._log(message, 'warn');
-  }
-
-  private logError(message: string) {
-    this._log(message, 'error');
-  }
-
-  private logDebug(message: string) {
-    this._log(message, 'debug');
-  }
-
-  private logVerbose(message: string) {
-    this._log(message, 'verbose');
   }
 }
