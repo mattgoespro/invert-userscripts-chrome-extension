@@ -11,7 +11,7 @@ const __dirname = import.meta.dirname;
 
 const backgroundEntryFilename = `vertext-ide-service-worker.js`;
 
-export default (args: Record<string, any>, { mode }: { mode: 'development' | 'production' }) =>
+export default (_args: Record<string, any>, { mode }: { mode: 'development' | 'production' }) =>
   ({
     mode,
     devtool: mode === 'production' ? false : 'inline-source-map',

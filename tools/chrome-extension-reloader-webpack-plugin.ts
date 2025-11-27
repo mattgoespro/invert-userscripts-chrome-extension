@@ -24,7 +24,6 @@ export interface ChromeExtensionReloaderPluginOptions {
   remoteDebugPort?: number;
   launch?: boolean;
   timeoutMs?: number;
-  reloadDebounceMs?: number;
   verbose?: boolean;
 }
 
@@ -49,7 +48,9 @@ const createLogger = (options: { prefix: string; verbose?: boolean }) => {
         return;
       }
 
-      console.info(`${createPrefix('VERBOSE', colors.gray)} ${colors.gray(message)}`);
+      console.info(
+        `${createPrefix('VERBOSE', colors.gray)} ${colors.gray(colors.italic(message))}`
+      );
     },
   };
 };
@@ -63,7 +64,6 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
     extension: null,
     activeTab: null,
   };
-  private _extensionReloadTimer: NodeJS.Timeout = null;
   private _log: ReturnType<typeof createLogger>;
 
   constructor(options: ChromeExtensionReloaderPluginOptions) {
@@ -77,7 +77,6 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
       extensionDir: options.extensionDir,
       remoteDebugPort: options.remoteDebugPort ?? 9222,
       launch: options.launch ?? false,
-      reloadDebounceMs: options.reloadDebounceMs ?? 300,
       timeoutMs: options.timeoutMs ?? 30000,
       verbose: options.verbose ?? false,
     };
@@ -93,12 +92,18 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
       this._log.verbose(`Initialized.`);
     });
 
-    compiler.hooks.done.tapAsync(this.name, (stats, done) => {
+    compiler.hooks.done.tapAsync(this.name, async (stats, done) => {
       const changedAssets = Object.keys(stats.compilation.assets);
 
       if (changedAssets.length > 0) {
-        this._log.verbose(`Rebuild detected, scheduling extension reload...`);
-        this.scheduleReload();
+        this._log.verbose(`Reloading extension...`);
+
+        try {
+          await this.reload();
+          this._log.info(`Reload finished.`);
+        } catch (error) {
+          this._log.error(`Reload failed: ${error.message}`);
+        }
       }
 
       done();
@@ -142,16 +147,12 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
     const extensionTarget = this.resolveDevToolsExtensionTarget(targets);
 
     if (extensionTarget == null) {
-      this._log.error(
-        `Could not resolve the extension from the list of devtools targets. Has the unpacked extension been loaded from the Extensions page?`
-      );
+      this._log.error(`The devtools target for the extension could not be found.`);
       return;
     }
+
     this._log.verbose(`Resolved extension target:`);
-    this._log.verbose(`- id: ${extensionTarget.id}`);
-    this._log.verbose(`- title: ${extensionTarget.title}`);
-    this._log.verbose(`- url: ${extensionTarget.url}`);
-    this._log.verbose(`- webSocketDebuggerUrl: ${extensionTarget.webSocketDebuggerUrl}`);
+    this._log.verbose(JSON.stringify(extensionTarget, null, 2));
 
     if (
       this._sockets.extension == null ||
@@ -182,27 +183,11 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
     this._log.info(`Reload finished.`);
   }
 
-  private scheduleReload(): void {
-    if (this._extensionReloadTimer != null) {
-      clearTimeout(this._extensionReloadTimer);
-      this._log.verbose(`Cleared existing reload timer.`);
-    }
-
-    this._extensionReloadTimer = setTimeout(async () => {
-      try {
-        await this.reload();
-        this._log.info(`Extension reloaded.`);
-      } catch (error) {
-        this._log.error(`Reload failed: ${error.message}`);
-      }
-    }, this._options.reloadDebounceMs);
-  }
-
   private async launchChromeWithRemoteDebugging() {
     return openApp(apps.browser, {
       arguments: [
         `--remote-debugging-port=${this._options.remoteDebugPort}`,
-        `--user-data-dir="${path.join(process.env.LOCALAPPDATA, 'Google', 'Chrome', 'User Data', 'RemoteDebugProfile')}"`,
+        `--user-data-dir="${path.join(process.env.LOCALAPPDATA, 'Google', 'Chrome', 'User Data', 'RemoteDebuggingProfile')}"`,
       ],
     });
   }
@@ -212,25 +197,26 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
 
     await Promise.race([
       new Promise<void>((resolve, reject) => {
-        this._sockets[socketName].once('open', () => {
-          this._log.verbose(`Connected to websocket '${socketName}'.`);
-          resolve();
-        });
-        this._sockets[socketName].once('error', (error) => {
-          this._log.error(`WebSocket '${socketName}' connection error: ${error.message}`);
-          reject(
-            new Error(`Failed to connect to ${socketName} DevTools WebSocket: ${error.message}.`)
-          );
-        });
+        this._sockets[socketName]
+          .once('open', () => {
+            this._log.verbose(`Connected to websocket '${socketName}'.`);
+            resolve();
+          })
+          .once('error', (error) => {
+            this._log.error(`Error connecting to websocket '${socketName}': ${error.message}`);
+            reject(new Error(`Error connecting to websocket '${socketName}': ${error.message}`));
+          });
       }),
       new Promise<void>((_, reject) =>
         setTimeout(() => {
           reject(
             new Error(
-              `Connection to ${socketName} DevTools WebSocket timed out after ${this._options.timeoutMs}ms.`
+              `Timed out connecting to websocket '${socketName}' after ${this._options.timeoutMs}ms.`
             )
           );
-          this._log.error(`Timed out connecting to websocket '${socketName}'.`);
+          this._log.error(
+            `Timed out connecting to websocket '${socketName}' after ${this._options.timeoutMs}ms.`
+          );
         }, this._options.timeoutMs)
       ),
     ]);
@@ -247,14 +233,14 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
 
           resolve(JSON.parse(output));
         } catch (err) {
-          reject(new Error(`Failed to fetch targets from browser: ${err.message}.`));
+          reject(new Error(`Failed to fetch Chrome browser devtools targets: ${err.message}.`));
         }
       }),
       new Promise<DevToolsTarget[]>((_, reject) =>
         setTimeout(
           () =>
             reject(
-              new Error(`Timed out fetching DevTools targets after ${this._options.timeoutMs}ms.`)
+              new Error(`Timed out fetching devtools targets after ${this._options.timeoutMs}ms.`)
             ),
           this._options.timeoutMs
         )
