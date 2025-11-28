@@ -292,7 +292,9 @@ export function OptionsApp() {
               </div>
             </div>
             <div className="editor-container">
-              {selectedFile && <CodeEditor value={selectedFile.content} />}
+              {selectedFile && (
+                <CodeEditor value={selectedFile.content} onChange={handleEditorChange} />
+              )}
             </div>
             {typeCheckErrors.length > 0 && (
               <div className="type-check-errors">

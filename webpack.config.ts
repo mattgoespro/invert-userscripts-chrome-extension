@@ -6,6 +6,8 @@ import path from 'path';
 import TsConfigPathsWebpackPlugin from 'tsconfig-paths-webpack-plugin';
 import type { Configuration } from 'webpack';
 import { ChromeExtensionReloaderWebpackPlugin } from './tools/chrome-extension-reloader-webpack-plugin.ts';
+import prettier from 'prettier';
+import prettierConfig from './prettier.config.mjs';
 
 const __dirname = import.meta.dirname;
 
@@ -139,15 +141,23 @@ export default (_args: Record<string, any>, { mode }: { mode: 'development' | 'p
       new CopyWebpackPlugin({
         patterns: [
           {
-            from: path.join(import.meta.dirname, 'public', 'manifest.json'),
-            to: path.join(import.meta.dirname, 'dist'),
+            from: path.join(__dirname, 'public', 'manifest.json'),
+            to: path.join(__dirname, 'dist'),
             transform: (content) => {
-              const manifest = JSON.parse(content.toString());
+              const manifest: chrome.runtime.ManifestV3 = JSON.parse(content.toString());
 
               manifest.background.service_worker = backgroundEntryFilename;
               delete manifest.$schema;
 
-              return JSON.stringify(manifest, null, 2);
+              return prettier.format(JSON.stringify(manifest), {
+                parser: 'json',
+                semi: true,
+                trailingComma: 'es5',
+                singleQuote: true,
+                printWidth: 100,
+                tabWidth: 2,
+                useTabs: false,
+              });
             },
           },
         ],

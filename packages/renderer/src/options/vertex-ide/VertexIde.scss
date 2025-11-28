@@ -31,6 +31,7 @@
   padding: 1rem;
 
   .tab {
+    color: #666;
     padding: 12px 24px;
     background: none;
     border: none;
@@ -65,7 +66,6 @@
 
 .scripts-sidebar {
   width: 280px;
-  background: white;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   overflow: hidden;
@@ -75,8 +75,7 @@
     justify-content: space-between;
     align-items: center;
     padding: 16px;
-    background: #f8f9fa;
-    border-bottom: 1px solid #e0e0e0;
+    border-bottom: 1px solid #303030;
 
     h2 {
       margin: 0;
@@ -108,12 +107,12 @@
 
   .script-item {
     padding: 12px 16px;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid #2b2b2b;
     cursor: pointer;
     transition: background 0.2s;
 
     &:hover {
-      background: #f8f9fa;
+      background: #314152;
     }
 
     &.active {
@@ -505,9 +504,9 @@
 
 .btn-secondary {
   padding: 10px 20px;
-  background: #f8f9fa;
+  background: #914680;
   color: #333;
-  border: 1px solid #e0e0e0;
+  border: none;
   border-radius: 6px;
   font-size: 14px;
   font-weight: 500;
@@ -515,7 +514,7 @@
   transition: all 0.2s;
 
   &:hover {
-    background: #e8e9ea;
+    background: #764ba2;
   }
 }
 

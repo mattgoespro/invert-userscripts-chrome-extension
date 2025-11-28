@@ -87,12 +87,6 @@ export function Popup() {
           ))
         )}
       </div>
-
-      <div className="popup-footer">
-        <button className="btn-secondary" onClick={openOptions}>
-          Manage Scripts
-        </button>
-      </div>
     </div>
   );
 }

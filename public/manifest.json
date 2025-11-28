@@ -1,5 +1,14 @@
 {
   "$schema": "https://json.schemastore.org/chrome-manifest.json",
+  "manifest_version": 3,
+  "name": "Vertex IDE Userscripts",
+  "description": "A Chrome extension that provides an integrated browser IDE for bundling and injecting TypeScript userscripts",
+  "version": "1.0.0",
+  "icons": {
+    "16": "assets/favicon-16x16.png",
+    "32": "assets/favicon-32x32.png",
+    "48": "assets/favicon-48x48.png"
+  },
   "action": {
     "default_icon": {
       "16": "assets/favicon-16x16.png",
@@ -11,25 +20,16 @@
   "background": {
     "service_worker": "vertext-ide-service-worker.js"
   },
-  "content_security_policy": {
-    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
-  },
-  "description": "A Chrome extension that provides an integrated browser IDE for bundling and injecting TypeScript userscripts",
-  "host_permissions": ["<all_urls>"],
-  "icons": {
-    "16": "assets/favicon-16x16.png",
-    "32": "assets/favicon-32x32.png",
-    "48": "assets/favicon-48x48.png"
-  },
-  "manifest_version": 3,
-  "name": "Vertex IDE Userscripts",
-  "options_page": "options.html",
   "permissions": ["storage", "activeTab", "scripting", "webNavigation"],
-  "version": "1.0.0",
+  "host_permissions": ["<all_urls>"],
+  "options_page": "options.html",
   "web_accessible_resources": [
     {
       "matches": ["<all_urls>"],
       "resources": ["*.js.map"]
     }
-  ]
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'; style-src 'self' 'unsafe-inline' https:; font-src 'self' data: https:;"
+  }
 }

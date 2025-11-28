@@ -4,34 +4,49 @@ import './CodeEditor.scss';
 
 type CodeEditorProps = {
   value: string;
+  onChange: (value: string) => void;
 };
 
-export function CodeEditor(props: CodeEditorProps) {
+export function CodeEditor({ value, onChange }: CodeEditorProps) {
   const [_editor, setEditor] = useState<monaco.editor.IStandaloneCodeEditor>(null);
   const editorRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (editorRef.current && _editor == null) {
-      setEditor(
-        monaco.editor.create(editorRef.current, {
-          value: props.value,
-          language: 'typescript',
-          automaticLayout: true,
-          theme: 'vs-dark',
-          minimap: { enabled: true },
-        })
-      );
-    }
+    if (editorRef.current != null && _editor == null) {
+      const editorInstance = monaco.editor.create(editorRef.current, {
+        value: value,
+        language: 'typescript',
+        automaticLayout: true,
+        theme: 'vs-dark',
+        minimap: { enabled: true },
+      });
 
-    if (props.value) {
-      const model = monaco.editor.createModel(props.value, 'typescript');
-      _editor?.setModel(model);
+      editorInstance.getModel().onDidChangeContent(() => {
+        const newValue = editorInstance.getModel().getValue();
+        onChange(newValue);
+      });
+
+      setEditor(editorInstance);
     }
 
     return () => {
       _editor?.dispose();
     };
-  }, [monaco, props.value]);
+  }, [monaco, value]);
+
+  useEffect(() => {
+    if (_editor) {
+      const model = _editor.getModel();
+      const subscription = model.onDidChangeContent(() => {
+        const newValue = model.getValue();
+        onChange(newValue);
+      });
+
+      return () => {
+        subscription.dispose();
+      };
+    }
+  }, [_editor, onChange]);
 
   return <div style={{ height: '100%' }} ref={editorRef} className="editor"></div>;
 }

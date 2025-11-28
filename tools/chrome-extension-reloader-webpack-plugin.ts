@@ -1,4 +1,6 @@
 import { execSync } from 'child_process';
+import crypto from 'crypto';
+import fs from 'fs';
 import { apps, openApp } from 'open';
 import path from 'path';
 import { text } from 'stream/consumers';
@@ -60,6 +62,9 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
 
   private _options: ChromeExtensionReloaderPluginOptions;
 
+  private _extensionId: string;
+  private _manifestKey: string;
+
   private _sockets: { extension: WebSocket; activeTab: WebSocket } = {
     extension: null,
     activeTab: null,
@@ -90,6 +95,27 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
   async apply(compiler: webpack.Compiler) {
     compiler.hooks.initialize.tap(this.name, () => {
       this._log.verbose(`Initialized.`);
+      this.generateCertificate();
+    });
+
+    compiler.hooks.thisCompilation.tap(this.name, (compilation) => {
+      compilation.hooks.processAssets.tap(
+        {
+          name: this.name,
+          stage: webpack.Compilation.PROCESS_ASSETS_STAGE_SUMMARIZE,
+        },
+        (assets) => {
+          const manifestAsset = assets['manifest.json'];
+          if (manifestAsset) {
+            const content = manifestAsset.source().toString();
+            const manifest = JSON.parse(content);
+            manifest.key = this._manifestKey;
+            const newContent = JSON.stringify(manifest, null, 2);
+            compilation.updateAsset('manifest.json', new webpack.sources.RawSource(newContent));
+            this._log.info(`Injected key into manifest.json. Extension ID: ${this._extensionId}`);
+          }
+        }
+      );
     });
 
     compiler.hooks.done.tapAsync(this.name, async (stats, done) => {
@@ -130,6 +156,48 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
       this._sockets.activeTab = null;
       this._log.verbose(`Active tab websocket connection closed.`);
     }
+  }
+
+  private generateCertificate() {
+    const keyPath = path.join(this._options.extensionDir, 'key.pem');
+
+    if (fs.existsSync(keyPath)) {
+      try {
+        const privateKeyPem = fs.readFileSync(keyPath, 'utf8');
+        const keyObject = crypto.createPrivateKey(privateKeyPem);
+        const publicKeyObject = crypto.createPublicKey(keyObject);
+        const publicKeyDer = publicKeyObject.export({ type: 'spki', format: 'der' });
+        this._manifestKey = publicKeyDer.toString('base64');
+        this._extensionId = this.calculateExtensionId(publicKeyDer);
+        this._log.info(`Loaded existing key. Extension ID: ${this._extensionId}`);
+        return;
+      } catch (e) {
+        this._log.warn(`Failed to load existing key: ${e.message}. Generating new one.`);
+      }
+    }
+
+    const keyPair = crypto.generateKeyPairSync('rsa', {
+      modulusLength: 2048,
+      publicKeyEncoding: { type: 'spki', format: 'der' },
+      privateKeyEncoding: { type: 'pkcs8', format: 'pem' },
+    });
+
+    this._manifestKey = keyPair.publicKey.toString('base64');
+    this._extensionId = this.calculateExtensionId(keyPair.publicKey);
+    this._log.info(`Generated new key. Extension ID: ${this._extensionId}`);
+  }
+
+  private calculateExtensionId(publicKey: Buffer): string {
+    const hash = crypto.createHash('sha256').update(publicKey).digest('hex');
+    const first128Bits = hash.slice(0, 32);
+
+    return first128Bits
+      .split('')
+      .map((char) => {
+        const code = parseInt(char, 16);
+        return String.fromCharCode(97 + code);
+      })
+      .join('');
   }
 
   /**
@@ -250,7 +318,8 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
 
   private resolveDevToolsExtensionTarget(targets: DevToolsTarget[]) {
     return targets.find(
-      (t) => t.type === 'service_worker' && t.url.includes(this._options.backgroundScriptEntryId)
+      (t) =>
+        t.type === 'service_worker' && t.url.startsWith(`chrome-extension://${this._extensionId}`)
     );
   }
 
