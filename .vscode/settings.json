@@ -69,9 +69,9 @@
       "path": "C:\\Program Files\\Git\\bin\\bash.exe"
     }
   },
+  "terminal.integrated.shellIntegration.enabled": true,
   "typescript.format.enable": false,
-  "typescript.preferences.importModuleSpecifier": "relative",
-  "typescript.suggest.autoImports": true,
+  "typescript.preferences.importModuleSpecifier": "shortest",
   "typescript.tsc.autoDetect": "off",
   "typescript.tsdk": "node_modules\\typescript\\lib",
   "typescript.updateImportsOnFileMove.enabled": "always",

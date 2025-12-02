@@ -3,11 +3,11 @@ import FaviconsWebpackPlugin from 'favicons-webpack-plugin';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import MonacoEditorWebpackPlugin from 'monaco-editor-webpack-plugin';
 import path from 'path';
+import prettier from 'prettier';
+import TerserPlugin from 'terser-webpack-plugin';
 import TsConfigPathsWebpackPlugin from 'tsconfig-paths-webpack-plugin';
 import type { Configuration } from 'webpack';
 import { ChromeExtensionReloaderWebpackPlugin } from './tools/chrome-extension-reloader-webpack-plugin.ts';
-import prettier from 'prettier';
-import prettierConfig from './prettier.config.mjs';
 
 const __dirname = import.meta.dirname;
 
@@ -24,6 +24,11 @@ export default (_args: Record<string, any>, { mode }: { mode: 'development' | 'p
       },
       popup: { import: './packages/renderer/src/popup/index.tsx', filename: 'popup.js' },
       options: { import: './packages/renderer/src/options/index.tsx', filename: 'options.js' },
+      'monaco/json.worker': 'monaco-editor/esm/vs/language/json/json.worker',
+      'monaco/css.worker': 'monaco-editor/esm/vs/language/css/css.worker',
+      'monaco/html.worker': 'monaco-editor/esm/vs/language/html/html.worker',
+      'monaco/ts.worker': 'monaco-editor/esm/vs/language/typescript/ts.worker',
+      'monaco/editor.worker': 'monaco-editor/esm/vs/editor/editor.worker',
     },
     stats: 'errors-warnings',
     output: {
@@ -78,18 +83,15 @@ export default (_args: Record<string, any>, { mode }: { mode: 'development' | 'p
           use: ['style-loader', 'css-loader'],
         },
         {
-          test: /node_modules\/monaco-editor\/esm\/vs/,
-          type: 'javascript/auto',
-          generator: {
-            filename: 'monaco/[path][name][ext]',
-          },
+          // For monaco editor
+          test: /\.ttf$/,
+          type: 'asset/resource',
         },
       ],
     },
     resolve: {
       extensions: ['.tsx', '.ts', '.js', '.scss'],
       alias: {
-        'monaco-editor': 'monaco-editor/esm/vs/editor/editor.api',
         '~': path.resolve(__dirname, 'packages/renderer/src/assets/'),
       },
       plugins: [
@@ -109,13 +111,11 @@ export default (_args: Record<string, any>, { mode }: { mode: 'development' | 'p
         filename: 'options.html',
         chunks: ['options'],
       }),
-      new MonacoEditorWebpackPlugin({
-        languages: ['javascript', 'typescript', 'css', 'html', 'json'],
-        filename: 'monaco/[name].worker.js',
-        globalAPI: true,
-        monacoEditorPath: path.join(__dirname, 'node_modules', 'monaco-editor'),
-        publicPath: '',
-      }),
+      // new MonacoEditorWebpackPlugin({
+      //   languages: ['typescript', 'scss', 'javascript', 'css'],
+      //   filename: `monaco/[name].worker.js`,
+      //   monacoEditorPath: path.join(__dirname, 'node_modules', 'monaco-editor'),
+      // }),
       new FaviconsWebpackPlugin({
         logo: path.resolve(__dirname, 'public', 'assets', 'icon.png'),
         mode: 'webapp',
@@ -131,13 +131,12 @@ export default (_args: Record<string, any>, { mode }: { mode: 'development' | 'p
           },
         },
       }),
-      mode === 'development' &&
-        new ChromeExtensionReloaderWebpackPlugin({
-          extensionDir: 'dist',
-          backgroundScriptEntryId: backgroundEntryFilename,
-          launch: true,
-          verbose: true,
-        }),
+      mode === 'development'
+        ? new ChromeExtensionReloaderWebpackPlugin({
+            launchBrowser: true,
+            verbose: true,
+          })
+        : false,
       new CopyWebpackPlugin({
         patterns: [
           {
@@ -163,4 +162,32 @@ export default (_args: Record<string, any>, { mode }: { mode: 'development' | 'p
         ],
       }),
     ],
+    optimization: {
+      minimize: true,
+      minimizer: [
+        new TerserPlugin({
+          extractComments: false,
+        }),
+      ],
+      splitChunks: {
+        cacheGroups: {
+          default: false,
+          vendors: {
+            test: /[\\/]node_modules[\\/]/,
+            name: 'vendors',
+            chunks: (chunk) => {
+              return (
+                chunk.name !== 'monaco/json.worker' &&
+                chunk.name !== 'monaco/css.worker' &&
+                chunk.name !== 'monaco/html.worker' &&
+                chunk.name !== 'monaco/ts.worker' &&
+                chunk.name !== 'monaco/editor.worker'
+              );
+            },
+            priority: -10,
+          },
+        },
+      },
+    },
+    cache: true,
   }) satisfies Configuration;

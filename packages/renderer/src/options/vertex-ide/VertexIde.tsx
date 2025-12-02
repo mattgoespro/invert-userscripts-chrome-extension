@@ -1,14 +1,17 @@
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
 import { TypeScriptCompiler } from '@shared/compiler';
 import { AppSettings, GlobalModule, ScriptFile, UserScript } from '@shared/model';
 import { IDEStorageManager } from '@shared/storage';
 import { useEffect, useState } from 'react';
+import { FlexColumn } from '../../shared/components/flex-column';
+import TabView from '../../shared/components/tab-view/tab-view';
+import { TabViewContent } from '../../shared/components/tab-view/tab-view-content';
+import { uuid } from '../../shared/utils';
 import './VertexIde.scss';
 import { CodeEditor } from './code-editor/CodeEditor';
 
-type TabView = 'scripts' | 'modules' | 'settings';
-
-export function OptionsApp() {
-  const [activeTab, setActiveTab] = useState<TabView>('scripts');
+export function VertexIde() {
   const [scripts, setScripts] = useState<UserScript[]>([]);
   const [selectedScript, setSelectedScript] = useState<UserScript>(null);
   const [selectedFile, setSelectedFile] = useState<ScriptFile>(null);
@@ -438,39 +441,27 @@ export function OptionsApp() {
     </div>
   );
 
+  const tabs = [
+    { label: 'Scripts', content: renderScriptsTab() },
+    { label: 'Modules', content: renderModulesTab() },
+    { label: 'Settings', content: renderSettingsTab() },
+  ];
+
   return (
-    <div className="options-container">
-      <div className="options-header">
-        <h1>⚡ Vertex IDE Userscripts</h1>
-        <div className="header-subtitle">Browser-based IDE for TypeScript userscripts</div>
-      </div>
-      <div className="tabs">
-        <button
-          className={`tab ${activeTab === 'scripts' ? 'active' : ''}`}
-          onClick={() => setActiveTab('scripts')}
-        >
-          📝 Scripts
-        </button>
-        <button
-          className={`tab ${activeTab === 'modules' ? 'active' : ''}`}
-          onClick={() => setActiveTab('modules')}
-        >
-          📦 Global Modules
-        </button>
-        <button
-          className={`tab ${activeTab === 'settings' ? 'active' : ''}`}
-          onClick={() => setActiveTab('settings')}
-        >
-          ⚙️ Settings
-        </button>
-      </div>
-      <div className="tab-content">
-        {activeTab === 'scripts' && renderScriptsTab()}
-        {activeTab === 'modules' && renderModulesTab()}
-        {activeTab === 'settings' && renderSettingsTab()}
-      </div>
-    </div>
+    <Box>
+      <FlexColumn>
+        <Typography variant="h1">⚡ Vertex IDE Userscripts</Typography>
+        <Typography variant="h2">Browser-based IDE for TypeScript userscripts</Typography>
+      </FlexColumn>
+      <TabView numTabs={tabs.length}>
+        {tabs.map((tab) => (
+          <TabViewContent key={uuid()} label={tab.label}>
+            {tab.content}
+          </TabViewContent>
+        ))}
+      </TabView>
+    </Box>
   );
 }
 
-export default OptionsApp;
+export default VertexIde;

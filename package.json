@@ -10,13 +10,17 @@
     "build": "webpack --mode production",
     "dev": "webpack --mode development --watch",
     "icons": "tsx scripts/create-icons.ts",
-    "lint": "eslint src --ext .ts,.tsx",
-    "test": "echo \"No tests yet\" && exit 0"
+    "lint": "eslint src --ext .ts,.tsx"
   },
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/icons-material": "^7.3.5",
+    "@mui/material": "^7.3.5",
     "monaco-editor": "^0.55.1",
     "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "react-dom": "^19.2.0",
+    "uuid": "^13.0.0"
   },
   "devDependencies": {
     "@html-eslint/eslint-plugin": "^0.50.0",
@@ -39,6 +43,7 @@
     "sass": "^1.94.2",
     "sass-loader": "^16.0.6",
     "style-loader": "^4.0.0",
+    "terser-webpack-plugin": "^5.3.14",
     "ts-loader": "^9.5.4",
     "ts-node": "^10.9.2",
     "tsconfig-paths-webpack-plugin": "^4.2.0",
