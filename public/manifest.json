@@ -18,7 +18,7 @@
     "default_popup": "popup.html"
   },
   "background": {
-    "service_worker": "vertext-ide-service-worker.js"
+    "service_worker": "background.js"
   },
   "permissions": ["storage", "activeTab", "scripting", "webNavigation"],
   "host_permissions": ["<all_urls>"],

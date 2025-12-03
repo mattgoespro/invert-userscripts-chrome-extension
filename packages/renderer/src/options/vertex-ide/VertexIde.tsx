@@ -8,7 +8,6 @@ import { FlexColumn } from '../../shared/components/flex-column';
 import TabView from '../../shared/components/tab-view/tab-view';
 import { TabViewContent } from '../../shared/components/tab-view/tab-view-content';
 import { uuid } from '../../shared/utils';
-import './VertexIde.scss';
 import { CodeEditor } from './code-editor/CodeEditor';
 
 export function VertexIde() {

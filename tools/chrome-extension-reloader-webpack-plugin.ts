@@ -69,11 +69,6 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
    * @param compiler The Webpack compiler instance.
    */
   async apply(compiler: webpack.Compiler) {
-    compiler.hooks.initialize.tap(this.name, () => {
-      this._log.verbose(`Initialized.`);
-      this.generateManifestCertificate();
-    });
-
     compiler.hooks.thisCompilation.tap(this.name, (compilation) => {
       compilation.hooks.processAssets.tap(
         {
@@ -88,7 +83,7 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
           }
 
           const manifest = JSON.parse(manifestAsset.source().toString());
-
+          console.log(manifest.key);
           manifest.key = this._manifestKey;
           compilation.updateAsset(
             'manifest.json',

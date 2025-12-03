@@ -3,15 +3,12 @@ import FaviconsWebpackPlugin from 'favicons-webpack-plugin';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import MonacoEditorWebpackPlugin from 'monaco-editor-webpack-plugin';
 import path from 'path';
-import prettier from 'prettier';
 import TerserPlugin from 'terser-webpack-plugin';
 import TsConfigPathsWebpackPlugin from 'tsconfig-paths-webpack-plugin';
 import type { Configuration } from 'webpack';
 import { ChromeExtensionReloaderWebpackPlugin } from './tools/chrome-extension-reloader-webpack-plugin.ts';
 
 const __dirname = import.meta.dirname;
-
-const backgroundEntryFilename = `vertext-ide-service-worker.js`;
 
 export default (_args: Record<string, any>, { mode }: { mode: 'development' | 'production' }) =>
   ({
@@ -20,7 +17,7 @@ export default (_args: Record<string, any>, { mode }: { mode: 'development' | 'p
     entry: {
       background: {
         import: './packages/runtime/src/background.ts',
-        filename: backgroundEntryFilename,
+        filename: 'background.js',
       },
       popup: { import: './packages/renderer/src/popup/index.tsx', filename: 'popup.js' },
       options: { import: './packages/renderer/src/options/index.tsx', filename: 'options.js' },
@@ -34,6 +31,8 @@ export default (_args: Record<string, any>, { mode }: { mode: 'development' | 'p
     output: {
       path: path.join(__dirname, 'dist'),
       filename: '[name].js',
+      chunkFilename: 'chunks/[name].js',
+      publicPath: '/',
       clean: true,
     },
     module: {
@@ -86,6 +85,9 @@ export default (_args: Record<string, any>, { mode }: { mode: 'development' | 'p
           // For monaco editor
           test: /\.ttf$/,
           type: 'asset/resource',
+          generator: {
+            filename: 'assets/[name][ext]',
+          },
         },
       ],
     },
@@ -135,6 +137,7 @@ export default (_args: Record<string, any>, { mode }: { mode: 'development' | 'p
         ? new ChromeExtensionReloaderWebpackPlugin({
             launchBrowser: true,
             verbose: true,
+            timeoutMs: 2000,
           })
         : false,
       new CopyWebpackPlugin({
@@ -145,49 +148,43 @@ export default (_args: Record<string, any>, { mode }: { mode: 'development' | 'p
             transform: (content) => {
               const manifest: chrome.runtime.ManifestV3 = JSON.parse(content.toString());
 
-              manifest.background.service_worker = backgroundEntryFilename;
               delete manifest.$schema;
 
-              return prettier.format(JSON.stringify(manifest), {
-                parser: 'json',
-                semi: true,
-                trailingComma: 'es5',
-                singleQuote: true,
-                printWidth: 100,
-                tabWidth: 2,
-                useTabs: false,
-              });
+              return JSON.stringify(manifest);
             },
           },
         ],
       }),
     ],
-    optimization: {
-      minimize: true,
-      minimizer: [
-        new TerserPlugin({
-          extractComments: false,
-        }),
-      ],
-      splitChunks: {
-        cacheGroups: {
-          default: false,
-          vendors: {
-            test: /[\\/]node_modules[\\/]/,
-            name: 'vendors',
-            chunks: (chunk) => {
-              return (
-                chunk.name !== 'monaco/json.worker' &&
-                chunk.name !== 'monaco/css.worker' &&
-                chunk.name !== 'monaco/html.worker' &&
-                chunk.name !== 'monaco/ts.worker' &&
-                chunk.name !== 'monaco/editor.worker'
-              );
+    optimization:
+      mode === 'production'
+        ? {
+            minimize: true,
+            minimizer: [
+              new TerserPlugin({
+                extractComments: false,
+              }),
+            ],
+            splitChunks: {
+              cacheGroups: {
+                defaultVendors: false,
+                vendors: {
+                  test: /[\\/]node_modules[\\/]/,
+                  name: 'vendors',
+                  chunks: (chunk) => ['popup', 'options', 'background'].includes(chunk.name ?? ''),
+                  priority: -10,
+                  enforce: true,
+                },
+                monacoEditor: {
+                  test: /[\\/]node_modules[\\/]monaco-editor[\\/]/,
+                  name: 'monaco/editor.lib',
+                  chunks: (chunk) => ['popup', 'options'].includes(chunk.name ?? ''),
+                  priority: 20,
+                  enforce: true,
+                },
+              },
             },
-            priority: -10,
-          },
-        },
-      },
-    },
+          }
+        : undefined,
     cache: true,
   }) satisfies Configuration;
