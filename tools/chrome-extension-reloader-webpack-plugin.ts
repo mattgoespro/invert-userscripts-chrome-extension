@@ -1,11 +1,11 @@
-import { execSync } from 'child_process';
+import { spawn } from 'child_process';
 import crypto from 'crypto';
 import fs from 'fs-extra';
 import path from 'path';
 import webpack from 'webpack';
 import WebSocket from 'ws';
 import type { Logger } from './utils.ts';
-import { createLogger, launchChromeWithRemoteDebugging } from './utils.ts';
+import { createLogger, getChromePath } from './utils.ts';
 
 export interface DevToolsTarget {
   id: string;
@@ -29,23 +29,22 @@ export interface ChromeExtensionReloaderPluginOptions {
 
 export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPluginInstance {
   private readonly name = 'ChromeExtensionReloaderWebpackPlugin';
-  private readonly dataDir = path.join(process.env.LOCALAPPDATA || '', 'ChromeExtensionReloader');
+  private readonly dataDir = path.join(process.cwd(), '.cache', 'chrome-extension-reloader');
 
   private _options: ChromeExtensionReloaderPluginOptions;
 
   private _extensionId: string;
   private _manifestKey: string;
 
-  private _sockets: { extension: WebSocket; activeTab: WebSocket } = {
-    extension: null,
-    activeTab: null,
-  };
+  private _extensionConnection: WebSocket = null;
+  private _activeTabConnection: WebSocket = null;
   private _log: Logger;
 
   constructor(options: ChromeExtensionReloaderPluginOptions) {
     this._options = this.normalizeOptions(options);
     this._log = createLogger(this.name, { prefix: this.name, verbose: this._options.verbose });
-    fs.ensureDirSync(this.dataDir);
+
+    this.setExtensionId();
   }
 
   get manifestKey(): string {
@@ -69,38 +68,13 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
    * @param compiler The Webpack compiler instance.
    */
   async apply(compiler: webpack.Compiler) {
-    compiler.hooks.thisCompilation.tap(this.name, (compilation) => {
-      compilation.hooks.processAssets.tap(
-        {
-          name: this.name,
-          stage: webpack.Compilation.PROCESS_ASSETS_STAGE_SUMMARIZE,
-        },
-        (assets) => {
-          const manifestAsset = assets['manifest.json'];
-
-          if (manifestAsset == null) {
-            return;
-          }
-
-          const manifest = JSON.parse(manifestAsset.source().toString());
-          console.log(manifest.key);
-          manifest.key = this._manifestKey;
-          compilation.updateAsset(
-            'manifest.json',
-            new webpack.sources.RawSource(JSON.stringify(manifest, null, 2))
-          );
-
-          this._log.verbose(`Injected key into extension manifest.`);
-        }
-      );
-    });
-
     compiler.hooks.done.tapAsync(this.name, async (stats, done) => {
       if (Object.keys(stats.compilation.assets).length > 0) {
         try {
           await this.reload();
           this._log.info(`Reload finished.`);
         } catch (error) {
+          console.error(error);
           this._log.error(`Reload failed: ${error.message}`);
         }
       }
@@ -126,11 +100,16 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
 
     if (this._options.launchBrowser && !isBrowserOpen) {
       this._log.info('Launching Chrome with remote debugging enabled...');
-      await launchChromeWithRemoteDebugging(this._options.remoteDebugPort);
-      await this.waitForBrowser();
+      await this.launchChromeWithRemoteDebugging();
     }
 
     const targets = await this.fetchBrowserDevToolsTargets();
+
+    if (targets == null) {
+      this._log.warn(`Could not connect to browser devtools within ${this._options.timeoutMs}ms.`);
+      return;
+    }
+
     this._log.verbose(`Retrieved ${targets.length} devtools targets.`);
 
     const extensionTarget = this.resolveDevToolsExtensionTarget(targets);
@@ -142,17 +121,27 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
     this._log.verbose(`Resolved extension target:`);
     this._log.verbose(extensionTarget);
 
-    if (
-      this._sockets.extension == null ||
-      this.getSocketConnectionStatus(this._sockets.extension) === 'unavailable'
-    ) {
-      await this.connectWebSocket('extension', extensionTarget.webSocketDebuggerUrl);
-      this._log.verbose(`Connected to extension.`);
+    if (this._extensionConnection == null) {
+      this._log.verbose(`Connecting to extension...`);
+      this._extensionConnection = new WebSocket(extensionTarget.webSocketDebuggerUrl);
+
+      await new Promise<void>((resolve, reject) => {
+        this._extensionConnection.on('open', () => {
+          this._log.verbose(`Connected to extension.`);
+          resolve();
+        });
+        this._extensionConnection.on('error', (err) => {
+          this._log.error(`Failed to connect to extension: ${err.message}`);
+          reject(err);
+        });
+      });
     }
 
-    this._log.info(`Reloading extension target...`);
+    this._log.info(`Executing extension reload...`);
 
     await this.executeExtensionReload();
+
+    this._log.info(`Extension reloaded.`);
 
     const activeTabTarget = this.resolveDevToolsActiveTabTarget(targets);
 
@@ -160,34 +149,42 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
       this._log.verbose(`Resolved active tab target:`);
       this._log.verbose(activeTabTarget);
 
-      if (
-        this._sockets.activeTab == null ||
-        this.getSocketConnectionStatus(this._sockets.activeTab) === 'unavailable'
-      ) {
-        await this.connectWebSocket('activeTab', activeTabTarget.webSocketDebuggerUrl);
-        this._log.verbose(`Connected to active tab.`);
+      if (this._activeTabConnection == null) {
+        this._activeTabConnection = new WebSocket(activeTabTarget.webSocketDebuggerUrl);
+        await new Promise<void>((resolve, reject) => {
+          this._activeTabConnection.on('open', () => {
+            this._log.verbose(`Connected to active tab.`);
+            resolve();
+          });
+          this._activeTabConnection.on('error', (err) => {
+            this._log.error(`Failed to connect to active tab: ${err.message}`);
+            reject(err);
+          });
+        });
       }
 
-      this._log.info(`Reloading active tab target...`);
+      this._log.info(`Executing active tab reload...`);
       await this.executeBrowserActiveTabReload();
     }
   }
 
   private disconnect() {
-    if (this._sockets.extension != null) {
-      this._sockets.extension.close();
-      this._sockets.extension = null;
+    if (this._extensionConnection != null) {
+      this._extensionConnection.close(0);
+      this._extensionConnection = null;
       this._log.verbose(`Extension websocket connection closed.`);
     }
 
-    if (this._sockets.activeTab != null) {
-      this._sockets.activeTab.close();
-      this._sockets.activeTab = null;
+    if (this._activeTabConnection != null) {
+      this._activeTabConnection.close(0);
+      this._activeTabConnection = null;
       this._log.verbose(`Active tab websocket connection closed.`);
     }
   }
 
-  private generateManifestCertificate() {
+  private setExtensionId() {
+    fs.ensureDirSync(this.dataDir);
+
     const keyPath = path.join(this.dataDir, 'key.pem');
 
     if (fs.existsSync(keyPath)) {
@@ -200,26 +197,25 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
         this._manifestKey = publicKeyDer.toString('base64');
         this._extensionId = this.calculateExtensionId(publicKeyDer);
 
-        this._log.verbose(`Calculated Extension ID: ${this._extensionId}`);
-        return;
+        this._log.verbose(`Extension ID: ${this._extensionId}`);
+        this._log.verbose(`Manifest key: ${this._manifestKey}`);
       } catch (error) {
         this._log.warn(
-          `Failed to load existing manifest key: ${error.message}. Generating new one...`
+          `Failed to load existing manifest key: ${error.message}. Generating a new one...`
         );
+        const keyPair = crypto.generateKeyPairSync('rsa', {
+          modulusLength: 2048,
+          publicKeyEncoding: { type: 'spki', format: 'der' },
+          privateKeyEncoding: { type: 'pkcs8', format: 'pem' },
+        });
+        fs.writeFileSync(keyPath, keyPair.privateKey);
+
+        this._manifestKey = keyPair.publicKey.toString('base64');
+        this._extensionId = this.calculateExtensionId(keyPair.publicKey);
+
+        this._log.info(`Generated new manifest key.`);
       }
     }
-
-    const keyPair = crypto.generateKeyPairSync('rsa', {
-      modulusLength: 2048,
-      publicKeyEncoding: { type: 'spki', format: 'der' },
-      privateKeyEncoding: { type: 'pkcs8', format: 'pem' },
-    });
-    fs.writeFileSync(keyPath, keyPair.privateKey);
-
-    this._manifestKey = keyPair.publicKey.toString('base64');
-    this._extensionId = this.calculateExtensionId(keyPair.publicKey);
-
-    this._log.verbose(`Generated new manifest key.`);
   }
 
   private calculateExtensionId(publicKey: Buffer): string {
@@ -235,86 +231,57 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
       .join('');
   }
 
-  private async connectWebSocket(socketName: keyof typeof this._sockets, debuggerUrl: string) {
-    this._sockets[socketName] = new WebSocket(debuggerUrl);
+  private async fetchBrowserDevToolsTargets(): Promise<DevToolsTarget[]> {
+    let attempts = 1;
+    const maxAttempts = 10;
 
-    await Promise.race([
-      new Promise<void>((resolve, reject) => {
-        this._sockets[socketName]
-          .once('open', () => {
-            this._log.verbose(`Connected to websocket '${socketName}'.`);
-            resolve();
-          })
-          .once('error', (error) => {
-            this._log.error(`Error connecting to websocket '${socketName}': ${error.message}`);
-            reject(new Error(`Error connecting to websocket '${socketName}': ${error.message}`));
-          });
-      }),
-      new Promise<void>((_, reject) =>
-        setTimeout(() => {
-          reject(
-            new Error(
-              `Timed out connecting to websocket '${socketName}' after ${this._options.timeoutMs}ms.`
-            )
-          );
-          this._log.error(
-            `Timed out connecting to websocket '${socketName}' after ${this._options.timeoutMs}ms.`
-          );
-        }, this._options.timeoutMs)
-      ),
-    ]);
-  }
+    while (attempts <= maxAttempts) {
+      try {
+        const response = await fetch(this.getDevtoolsTargetsUrl('/json'), {
+          method: 'GET',
+          headers: { Accept: 'application/json' },
+        });
 
-  private async fetchBrowserDevToolsTargets() {
-    return Promise.race([
-      new Promise<DevToolsTarget[]>((resolve, reject) => {
-        fetch(this.getDevtoolsTargetsUrl('/json'))
-          .then((response) => {
-            if (!response.ok) {
-              throw new Error(
-                `Failed to fetch devtools targets: ${response.status} ${response.statusText}`
-              );
-            }
-            return response.json();
-          })
-          .then((data: DevToolsTarget[]) => {
-            resolve(data);
-          })
-          .catch((error) => {
-            this._log.error(`Error fetching devtools targets: ${error.message}`);
-            reject(new Error(`Error fetching devtools targets: ${error.message}`));
-          });
-      }),
-      new Promise<DevToolsTarget[]>((_, reject) =>
-        setTimeout(
-          () =>
-            reject(
-              new Error(`Timed out fetching devtools targets after ${this._options.timeoutMs}ms.`)
-            ),
-          this._options.timeoutMs
-        )
-      ),
-    ]);
-  }
-
-  private waitForBrowser(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const startTime = Date.now();
-
-      const checkBrowser = () => {
-        if (this.isBrowserOpen()) {
-          resolve();
-        } else if (Date.now() - startTime > this._options.timeoutMs) {
-          reject(
-            new Error(`Timed out waiting for browser to open after ${this._options.timeoutMs}ms.`)
-          );
-        } else {
-          setTimeout(checkBrowser, 500);
+        if (response.ok) {
+          return (await response.json()) as DevToolsTarget[];
         }
-      };
+      } catch (error) {
+        this._log.verbose(`Waiting for browser...`);
+        attempts += 1;
+      }
+    }
 
-      checkBrowser();
+    return null;
+  }
+
+  private async launchChromeWithRemoteDebugging() {
+    const userDataDir = path.resolve(path.join(process.cwd(), '.cache', 'chrome-user-data-v2'));
+    const extensionPath = path.resolve(path.join(process.cwd(), 'dist'));
+    const chromePath = getChromePath();
+
+    if (!chromePath) {
+      throw new Error('Could not find Chrome executable.');
+    }
+
+    const args = [
+      `--remote-debugging-port=${this._options.remoteDebugPort}`,
+      `--user-data-dir=${userDataDir}`,
+      '--no-first-run',
+      '--no-default-browser-check',
+      `--load-extension=${extensionPath}`,
+      'about:blank',
+    ];
+
+    const child = spawn(chromePath, args, {
+      detached: true,
+      stdio: 'ignore',
     });
+
+    child.on('error', (err) => {
+      this._log.error(`Failed to start Chrome: ${err.message}`);
+    });
+
+    child.unref();
   }
 
   private resolveDevToolsExtensionTarget(targets: DevToolsTarget[]) {
@@ -333,14 +300,14 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
   }
 
   private executeExtensionReload(): Promise<void> {
-    return this.executeBrowserDevToolsCommand(this._sockets.extension, {
+    return this.executeBrowserDevToolsCommand(this._extensionConnection, {
       method: 'Runtime.evaluate',
       params: { expression: 'chrome.runtime.reload()' },
     });
   }
 
   private executeBrowserActiveTabReload(): Promise<void> {
-    return this.executeBrowserDevToolsCommand(this._sockets.activeTab, {
+    return this.executeBrowserDevToolsCommand(this._activeTabConnection, {
       method: 'Page.reload',
       params: { ignoreCache: true },
     });
@@ -352,15 +319,21 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
   ): Promise<void> {
     return new Promise((resolve, reject) => {
       if (socket == null || this.getSocketConnectionStatus(socket) === 'unavailable') {
+        this._log.warn(`WebSocket connection is unavailable.`);
         return reject(new Error('Failed to execute command: socket is unavailable.'));
       }
 
       socket
         .once('message', () => {
+          this._log.verbose(`Command executed: ${command.method}`);
           resolve();
         })
-        .on('error', reject)
-        .send(JSON.stringify({ id: 1, ...command }));
+        .on('error', (err) => {
+          this._log.error(`Failed to execute command ${command.method}: ${err.message}`);
+          reject(err);
+        });
+
+      socket.send(JSON.stringify({ id: 1, ...command }));
     });
   }
 

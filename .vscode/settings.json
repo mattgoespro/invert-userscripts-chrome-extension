@@ -48,11 +48,15 @@
     "*.json": true,
     "*.{ts,js,mjs}": true
   },
+  "tailwindCSS.experimental.configFile": "${workspaceFolder}/tailwind.config.js",
   "terminal.integrated.automationProfile.windows": {
     "args": ["-l"],
+    "color": "terminal.ansiMagenta",
     "env": {
       "PATH": "${workspaceFolder}\\node_modules\\.bin;${env:PATH}"
     },
+    "icon": "terminal-linux",
+    "overrideName": true,
     "path": "C:\\Program Files\\Git\\bin\\bash.exe"
   },
   "terminal.integrated.defaultProfile.windows": "bash-node",
@@ -61,10 +65,11 @@
   "terminal.integrated.profiles.windows": {
     "bash-node": {
       "args": ["-l"],
+      "color": "terminal.ansiGreen",
       "env": {
         "PATH": "${workspaceFolder}\\node_modules\\.bin;${env:PATH}"
       },
-      "icon": "terminal-bash",
+      "icon": "terminal-git-bash",
       "overrideName": true,
       "path": "C:\\Program Files\\Git\\bin\\bash.exe"
     }

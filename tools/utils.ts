@@ -1,6 +1,7 @@
 import { apps, openApp } from 'open';
 import webpack from 'webpack';
 import path from 'path';
+import fs from 'fs-extra';
 
 export const createLogger = (name: string, options: { prefix: string; verbose?: boolean }) => {
   const colors = webpack.cli.createColors();
@@ -43,11 +44,26 @@ export const createLogger = (name: string, options: { prefix: string; verbose?: 
 
 export type Logger = ReturnType<typeof createLogger>;
 
-export async function launchChromeWithRemoteDebugging(remoteDebugPort: number) {
-  return openApp(apps.browser, {
-    arguments: [
-      `--remote-debugging-port=${remoteDebugPort}`,
-      `--user-data-dir="${path.join(process.env.LOCALAPPDATA, 'Google', 'Chrome', 'User Data', 'RemoteDebuggingProfile')}"`,
-    ],
-  });
+export function getChromePath(): string | undefined {
+  const suffixes = [
+    '\\Google\\Chrome\\Application\\chrome.exe',
+    '\\Google\\Chrome SxS\\Application\\chrome.exe',
+    '\\Chromium\\Application\\chrome.exe',
+  ];
+  const prefixes = [
+    process.env.LOCALAPPDATA,
+    process.env.PROGRAMFILES,
+    process.env['PROGRAMFILES(X86)'],
+  ].filter(Boolean) as string[];
+
+  for (const prefix of prefixes) {
+    for (const suffix of suffixes) {
+      const chromePath = path.join(prefix, suffix);
+      if (fs.existsSync(chromePath)) {
+        return chromePath;
+      }
+    }
+  }
+
+  return undefined;
 }

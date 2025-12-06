@@ -1,14 +1,10 @@
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
 import { TypeScriptCompiler } from '@shared/compiler';
 import { AppSettings, GlobalModule, ScriptFile, UserScript } from '@shared/model';
 import { IDEStorageManager } from '@shared/storage';
 import { useEffect, useState } from 'react';
-import { FlexColumn } from '../../shared/components/flex-column';
-import TabView from '../../shared/components/tab-view/tab-view';
-import { TabViewContent } from '../../shared/components/tab-view/tab-view-content';
-import { uuid } from '../../shared/utils';
 import { CodeEditor } from './code-editor/CodeEditor';
+import { uuid } from '../../lib/utils';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@radix-ui/react-tabs';
 
 export function VertexIde() {
   const [scripts, setScripts] = useState<UserScript[]>([]);
@@ -447,19 +443,26 @@ export function VertexIde() {
   ];
 
   return (
-    <Box>
-      <FlexColumn>
-        <Typography variant="h1">⚡ Vertex IDE Userscripts</Typography>
-        <Typography variant="h2">Browser-based IDE for TypeScript userscripts</Typography>
-      </FlexColumn>
-      <TabView numTabs={tabs.length}>
+    <div className="flex">
+      <div className="flex flex-col">
+        <h1>⚡ Vertex IDE Userscripts</h1>
+        <h2>Browser-based IDE for TypeScript userscripts</h2>
+      </div>
+      <Tabs>
+        <TabsList>
+          {tabs.map((tab) => (
+            <TabsTrigger key={tab.label} value={tab.label}>
+              {tab.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
         {tabs.map((tab) => (
-          <TabViewContent key={uuid()} label={tab.label}>
+          <TabsContent key={uuid()} value={tab.label}>
             {tab.content}
-          </TabViewContent>
+          </TabsContent>
         ))}
-      </TabView>
-    </Box>
+      </Tabs>
+    </div>
   );
 }
 

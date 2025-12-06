@@ -3,13 +3,14 @@
   "include": ["**/*.ts", "**/*.tsx"],
   "compilerOptions": {
     "composite": true,
+    "baseUrl": ".",
     "lib": ["es2020", "dom", "dom.iterable"],
     "jsx": "react-jsx",
     "types": ["chrome", "react", "react-dom"],
     "outDir": "dist/packages/renderer",
     "paths": {
       "@/*": ["./src/*"],
-      "@shared/*": ["packages/shared/src/*"]
+      "@shared/*": ["../shared/src/*"]
     }
   },
   "references": [

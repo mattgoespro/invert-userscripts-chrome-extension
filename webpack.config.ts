@@ -1,7 +1,7 @@
 import CopyWebpackPlugin from 'copy-webpack-plugin';
 import FaviconsWebpackPlugin from 'favicons-webpack-plugin';
+import fs from 'fs-extra';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
-import MonacoEditorWebpackPlugin from 'monaco-editor-webpack-plugin';
 import path from 'path';
 import TerserPlugin from 'terser-webpack-plugin';
 import TsConfigPathsWebpackPlugin from 'tsconfig-paths-webpack-plugin';
@@ -10,8 +10,17 @@ import { ChromeExtensionReloaderWebpackPlugin } from './tools/chrome-extension-r
 
 const __dirname = import.meta.dirname;
 
-export default (_args: Record<string, any>, { mode }: { mode: 'development' | 'production' }) =>
-  ({
+export default (_args: Record<string, any>, { mode }: { mode: 'development' | 'production' }) => {
+  const reloaderPlugin =
+    mode === 'development'
+      ? new ChromeExtensionReloaderWebpackPlugin({
+          launchBrowser: true,
+          verbose: true,
+          timeoutMs: 2000,
+        })
+      : undefined;
+
+  return {
     mode,
     devtool: mode === 'production' ? false : 'inline-source-map',
     entry: {
@@ -33,7 +42,7 @@ export default (_args: Record<string, any>, { mode }: { mode: 'development' | 'p
       filename: '[name].js',
       chunkFilename: 'chunks/[name].js',
       publicPath: '/',
-      clean: true,
+      clean: mode === 'production',
     },
     module: {
       rules: [
@@ -75,7 +84,13 @@ export default (_args: Record<string, any>, { mode }: { mode: 'development' | 'p
         },
         {
           test: /\.scss$/,
-          use: ['style-loader', 'css-loader', 'sass-loader'],
+          include: path.resolve(__dirname, 'packages/renderer/src'),
+          use: [
+            'style-loader',
+            'css-loader',
+            'postcss-loader', // applies tailwind + autoprefixer,
+            'sass-loader',
+          ],
         },
         {
           test: /\.css$/,
@@ -99,6 +114,11 @@ export default (_args: Record<string, any>, { mode }: { mode: 'development' | 'p
       plugins: [
         new TsConfigPathsWebpackPlugin({
           configFile: path.join(__dirname, 'tsconfig.base.json'),
+          references: [
+            './packages/shared/tsconfig.json',
+            './packages/runtime/tsconfig.json',
+            './packages/renderer/tsconfig.json',
+          ],
         }),
       ],
     },
@@ -133,13 +153,7 @@ export default (_args: Record<string, any>, { mode }: { mode: 'development' | 'p
           },
         },
       }),
-      mode === 'development'
-        ? new ChromeExtensionReloaderWebpackPlugin({
-            launchBrowser: true,
-            verbose: true,
-            timeoutMs: 2000,
-          })
-        : false,
+      ...(reloaderPlugin ? [reloaderPlugin] : []),
       new CopyWebpackPlugin({
         patterns: [
           {
@@ -150,7 +164,11 @@ export default (_args: Record<string, any>, { mode }: { mode: 'development' | 'p
 
               delete manifest.$schema;
 
-              return JSON.stringify(manifest);
+              if (reloaderPlugin) {
+                manifest.key = reloaderPlugin.manifestKey;
+              }
+
+              return JSON.stringify(manifest, null, 2);
             },
           },
         ],
@@ -187,4 +205,5 @@ export default (_args: Record<string, any>, { mode }: { mode: 'development' | 'p
           }
         : undefined,
     cache: true,
-  }) satisfies Configuration;
+  } satisfies Configuration;
+};
