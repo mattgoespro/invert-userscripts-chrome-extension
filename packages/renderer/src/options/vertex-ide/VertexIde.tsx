@@ -4,7 +4,7 @@ import { TypeScriptCompiler } from '@shared/compiler';
 import { AppSettings, GlobalModule, ScriptFile, UserScript } from '@shared/model';
 import { IDEStorageManager } from '@shared/storage';
 import { useEffect, useState } from 'react';
-import { FlexColumn } from '../../shared/components/flex-column';
+import { FlexColumn } from '../../shared/components/flex-containers/flex-column';
 import TabView from '../../shared/components/tab-view/tab-view';
 import { TabViewContent } from '../../shared/components/tab-view/tab-view-content';
 import { uuid } from '../../shared/utils';
