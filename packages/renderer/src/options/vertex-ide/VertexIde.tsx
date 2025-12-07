@@ -441,22 +441,22 @@ export function VertexIde() {
   );
 
   return (
-    <FlexRow padding={0} margin={0} gap={0} wrap={false} width="100%">
-      <SideNavBar activeTab={activeTab} onTabChange={setActiveTab} />
-      <FlexColumn>
-        <Box sx={{ p: 2, borderBottom: '1px solid rgba(0, 0, 0, 0.12)' }}>
-          <Typography variant="h5">⚡ Vertex IDE Userscripts</Typography>
-          <Typography variant="subtitle2" color="textSecondary">
-            Browser-based IDE for TypeScript userscripts
-          </Typography>
-        </Box>
-        <Box sx={{ flexGrow: 1, overflow: 'auto', p: 2 }}>
+    <FlexColumn>
+      <Box sx={{ p: 2, borderBottom: '1px solid rgba(0, 0, 0, 0.12)' }}>
+        <Typography variant="h5">⚡ Vertex IDE Userscripts</Typography>
+        <Typography variant="subtitle2" color="textSecondary">
+          Browser-based IDE for TypeScript userscripts
+        </Typography>
+      </Box>
+      <FlexRow>
+        <SideNavBar activeTab={activeTab} onTabChange={setActiveTab} />
+        <Box sx={{ flex: 1, p: 2 }}>
           {activeTab === IdeTab.Scripts && renderScriptsTab()}
           {activeTab === IdeTab.Modules && renderModulesTab()}
           {activeTab === IdeTab.Settings && renderSettingsTab()}
         </Box>
-      </FlexColumn>
-    </FlexRow>
+      </FlexRow>
+    </FlexColumn>
   );
 }
 

@@ -5,18 +5,18 @@ import { CSSProperties } from '@mui/material';
 type FlexRowProps = {
   wrap?: boolean;
   gap?: number;
+  grow?: boolean;
 } & CSSProperties;
 
 export const FlexRow = createStyled(Box, {
   label: 'FlexRow',
   name: 'FlexRow',
-  shouldForwardProp: (prop) => prop !== 'gap' && prop !== 'wrap' && prop !== 'margin',
-})<FlexRowProps>(({ margin = 7, gap = 0, wrap = true, padding = 0, theme }) => ({
+  shouldForwardProp: (prop) => !['gap', 'wrap', 'grow'].includes(prop.toString()),
+})<FlexRowProps>(({ wrap = true, gap = 0, grow = true, theme }) => ({
   display: 'flex',
   flexDirection: 'row',
   justifyContent: 'center',
   gap: theme.spacing(gap) ?? 0,
-  padding: `${padding ?? 0}rem`,
-  margin: `${margin ?? 0}rem`,
   flexWrap: wrap ? 'wrap' : undefined,
+  flexGrow: grow ? 1 : undefined,
 }));

@@ -98,10 +98,6 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
     compiler.hooks.shutdown.tap(this.name, () => {
       this.disconnect();
     });
-
-    compiler.hooks.watchClose.tap(this.name, () => {
-      this.disconnect();
-    });
   }
 
   private scheduleReload(): void {
@@ -150,7 +146,10 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
     this._log.verbose(`Resolved extension runtime target:`);
     this._log.verbose(extensionTarget);
 
-    if (this._extensionConnection == null) {
+    if (
+      this._extensionConnection == null ||
+      this.getSocketConnectionStatus(this._extensionConnection) === 'unavailable'
+    ) {
       this._log.verbose(`Connecting to extension runtime...`);
       this._extensionConnection = new WebSocket(extensionTarget.webSocketDebuggerUrl);
 
@@ -166,11 +165,11 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
       });
     }
 
-    this._log.info(`Executing extension runtime reload...`);
+    this._log.verbose(`Executing extension runtime reload...`);
 
     await this.executeExtensionReload();
 
-    this._log.info(`Extension runtime reloaded.`);
+    this._log.verbose(`Extension runtime reloaded.`);
 
     const activeTabTarget = this.resolveDevToolsActiveTabTarget(targets);
 
@@ -178,7 +177,10 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
       this._log.verbose(`Resolved active tab target:`);
       this._log.verbose(activeTabTarget);
 
-      if (this._activeTabConnection == null) {
+      if (
+        this._activeTabConnection == null ||
+        this.getSocketConnectionStatus(this._activeTabConnection) === 'unavailable'
+      ) {
         this._activeTabConnection = new WebSocket(activeTabTarget.webSocketDebuggerUrl);
         await new Promise<void>((resolve, reject) => {
           this._activeTabConnection
@@ -192,8 +194,9 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
         });
       }
 
-      this._log.info(`Executing active tab reload...`);
+      this._log.verbose(`Executing active tab reload...`);
       await this.executeBrowserActiveTabReload();
+      this._log.verbose(`Active tab reloaded.`);
     }
   }
 

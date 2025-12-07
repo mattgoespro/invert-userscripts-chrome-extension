@@ -17,7 +17,7 @@ export const FlexColumn = createStyled(Box, {
 })<FlexColumnProps>(({ centerVertical, centerHorizontal, grow }) => ({
   display: 'flex',
   flexDirection: 'column',
-  justifyContent: centerHorizontal ? 'center' : undefined,
-  alignItems: centerVertical ? 'center' : 'stretch',
+  justifyContent: centerVertical ? 'center' : undefined,
+  alignItems: centerHorizontal ? 'center' : 'stretch',
   flex: (grow ?? true) ? 1 : undefined,
 }));
