@@ -117,9 +117,6 @@ export const theme = createTheme({
       styleOverrides: {
         root: ({ theme }) => ({
           display: 'flex',
-          gap: theme.spacing(1),
-          margin: theme.spacing(1),
-          padding: theme.spacing(1),
           backgroundColor: theme.palette.background.paper,
           color: theme.palette.primary.contrastText,
         }),

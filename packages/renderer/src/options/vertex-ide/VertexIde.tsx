@@ -4,13 +4,13 @@ import { TypeScriptCompiler } from '@shared/compiler';
 import { AppSettings, GlobalModule, ScriptFile, UserScript } from '@shared/model';
 import { IDEStorageManager } from '@shared/storage';
 import { useEffect, useState } from 'react';
-import { FlexColumn } from '../../shared/components/flex-containers/flex-column';
-import TabView from '../../shared/components/tab-view/tab-view';
-import { TabViewContent } from '../../shared/components/tab-view/tab-view-content';
-import { uuid } from '../../shared/utils';
+import { FlexRow } from '../../shared/components/flex-containers/flex-row';
 import { CodeEditor } from './code-editor/CodeEditor';
+import { IdeTab, SideNavBar } from './navbar/SideNavBar';
+import { FlexColumn } from '../../shared/components/flex-containers/flex-column';
 
 export function VertexIde() {
+  const [activeTab, setActiveTab] = useState<IdeTab>(IdeTab.Scripts);
   const [scripts, setScripts] = useState<UserScript[]>([]);
   const [selectedScript, setSelectedScript] = useState<UserScript>(null);
   const [selectedFile, setSelectedFile] = useState<ScriptFile>(null);
@@ -440,26 +440,23 @@ export function VertexIde() {
     </div>
   );
 
-  const tabs = [
-    { label: 'Scripts', content: renderScriptsTab() },
-    { label: 'Modules', content: renderModulesTab() },
-    { label: 'Settings', content: renderSettingsTab() },
-  ];
-
   return (
-    <Box>
+    <FlexRow padding={0} margin={0} gap={0} wrap={false} width="100%">
+      <SideNavBar activeTab={activeTab} onTabChange={setActiveTab} />
       <FlexColumn>
-        <Typography variant="h1">⚡ Vertex IDE Userscripts</Typography>
-        <Typography variant="h2">Browser-based IDE for TypeScript userscripts</Typography>
+        <Box sx={{ p: 2, borderBottom: '1px solid rgba(0, 0, 0, 0.12)' }}>
+          <Typography variant="h5">⚡ Vertex IDE Userscripts</Typography>
+          <Typography variant="subtitle2" color="textSecondary">
+            Browser-based IDE for TypeScript userscripts
+          </Typography>
+        </Box>
+        <Box sx={{ flexGrow: 1, overflow: 'auto', p: 2 }}>
+          {activeTab === IdeTab.Scripts && renderScriptsTab()}
+          {activeTab === IdeTab.Modules && renderModulesTab()}
+          {activeTab === IdeTab.Settings && renderSettingsTab()}
+        </Box>
       </FlexColumn>
-      <TabView numTabs={tabs.length}>
-        {tabs.map((tab) => (
-          <TabViewContent key={uuid()} label={tab.label}>
-            {tab.content}
-          </TabViewContent>
-        ))}
-      </TabView>
-    </Box>
+    </FlexRow>
   );
 }
 

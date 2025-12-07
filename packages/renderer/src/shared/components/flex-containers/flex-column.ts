@@ -1,27 +1,23 @@
-import Container, { ContainerProps } from '@mui/material/Container';
+import Box from '@mui/material/Box';
 import { createStyled } from '../../theme';
 
 type FlexColumnProps = {
   centerVertical?: boolean;
   centerHorizontal?: boolean;
-  padding?: number;
-  margin?: number;
-} & ContainerProps;
+  grow?: boolean;
+} & React.CSSProperties;
 
-export const FlexColumn = createStyled(Container, {
+export const FlexColumn = createStyled(Box, {
   label: 'FlexColumn',
   name: 'FlexColumn',
   slot: 'Root',
+  target: 'FlexColumn',
   shouldForwardProp: (prop) =>
-    prop !== 'centerVertical' &&
-    prop !== 'centerHorizontal' &&
-    prop !== 'padding' &&
-    prop !== 'margin',
-})<FlexColumnProps>(({ centerVertical, centerHorizontal, padding, margin }) => ({
+    prop !== 'centerVertical' && prop !== 'centerHorizontal' && prop !== 'grow',
+})<FlexColumnProps>(({ centerVertical, centerHorizontal, grow }) => ({
   display: 'flex',
   flexDirection: 'column',
   justifyContent: centerHorizontal ? 'center' : undefined,
   alignItems: centerVertical ? 'center' : 'stretch',
-  padding: `${padding ?? 0}rem`,
-  margin: `${margin ?? 0}rem`,
+  flex: (grow ?? true) ? 1 : undefined,
 }));

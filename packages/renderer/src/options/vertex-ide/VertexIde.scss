@@ -2,10 +2,6 @@
   box-sizing: border-box;
 }
 
-.options-container {
-  min-height: 100vh;
-}
-
 .options-header {
   background: linear-gradient(135deg, #0e0e0e 0%, #3f3f3f 100%);
   color: white;
@@ -61,7 +57,6 @@
 .scripts-tab {
   display: flex;
   gap: 24px;
-  height: calc(100vh - 200px);
 }
 
 .scripts-sidebar {
@@ -102,7 +97,6 @@
 
   .scripts-list {
     overflow-y: auto;
-    max-height: calc(100vh - 280px);
   }
 
   .script-item {

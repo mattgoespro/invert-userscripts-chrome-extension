@@ -3,11 +3,14 @@ import webpack from 'webpack';
 import path from 'path';
 import fs from 'fs-extra';
 
+type LogLevel = 'INFO' | 'WARN' | 'ERROR' | 'VERBOSE';
+
 export const createLogger = (name: string, options: { prefix: string; verbose?: boolean }) => {
   const colors = webpack.cli.createColors();
+  const padLevel = (level: LogLevel) => level.padEnd(7, ' ');
 
-  const createPrefix = (level: string, color: (text: string) => string) =>
-    colors.bold(color(level));
+  const createPrefix = (level: LogLevel, color: (text: string) => string) =>
+    colors.bold(color(padLevel(level)));
 
   return {
     info: (message: string) => {
@@ -44,7 +47,7 @@ export const createLogger = (name: string, options: { prefix: string; verbose?: 
 
 export type Logger = ReturnType<typeof createLogger>;
 
-export function getChromePath(): string | undefined {
+export function resolveChromeExecutablePath(): string | undefined {
   const suffixes = [
     '\\Google\\Chrome\\Application\\chrome.exe',
     '\\Google\\Chrome SxS\\Application\\chrome.exe',
@@ -59,6 +62,7 @@ export function getChromePath(): string | undefined {
   for (const prefix of prefixes) {
     for (const suffix of suffixes) {
       const chromePath = path.join(prefix, suffix);
+
       if (fs.existsSync(chromePath)) {
         return chromePath;
       }

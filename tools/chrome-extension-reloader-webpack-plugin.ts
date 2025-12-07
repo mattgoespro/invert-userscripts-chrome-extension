@@ -5,7 +5,8 @@ import path from 'path';
 import webpack from 'webpack';
 import WebSocket from 'ws';
 import type { Logger } from './utils.ts';
-import { createLogger, getChromePath } from './utils.ts';
+import { createLogger, resolveChromeExecutablePath } from './utils.ts';
+import { error } from 'console';
 
 export interface DevToolsTarget {
   id: string;
@@ -29,26 +30,27 @@ export interface ChromeExtensionReloaderPluginOptions {
 
 export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPluginInstance {
   private readonly name = 'ChromeExtensionReloaderWebpackPlugin';
-  private readonly dataDir = path.join(process.cwd(), '.cache', 'chrome-extension-reloader');
+  private readonly cacheDir = path.join(
+    process.cwd(),
+    'node_modules',
+    '.cache',
+    'chrome-extension-reloader-webpack-plugin'
+  );
 
+  private _log: Logger;
   private _options: ChromeExtensionReloaderPluginOptions;
-
+  private _extensionPath: string;
   private _extensionId: string;
   private _manifestKey: string;
-
   private _extensionConnection: WebSocket = null;
   private _activeTabConnection: WebSocket = null;
-  private _log: Logger;
+  private _activeReload: NodeJS.Timeout = null;
 
   constructor(options: ChromeExtensionReloaderPluginOptions) {
     this._options = this.normalizeOptions(options);
     this._log = createLogger(this.name, { prefix: this.name, verbose: this._options.verbose });
 
     this.setExtensionId();
-  }
-
-  get manifestKey(): string {
-    return this._manifestKey;
   }
 
   private normalizeOptions(
@@ -68,15 +70,26 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
    * @param compiler The Webpack compiler instance.
    */
   async apply(compiler: webpack.Compiler) {
+    this._extensionPath = compiler.options.output.path;
+
+    compiler.hooks.emit.tap(this.name, (compilation) => {
+      const manifestName = 'manifest.json';
+      const asset = compilation.assets[manifestName];
+
+      if (asset) {
+        const source = asset.source().toString();
+        const manifest = JSON.parse(source);
+        manifest.key = this._manifestKey;
+        const newSource = JSON.stringify(manifest, null, 2);
+
+        compilation.updateAsset(manifestName, new webpack.sources.RawSource(newSource));
+      }
+    });
+
     compiler.hooks.done.tapAsync(this.name, async (stats, done) => {
       if (Object.keys(stats.compilation.assets).length > 0) {
-        try {
-          await this.reload();
-          this._log.info(`Reload finished.`);
-        } catch (error) {
-          console.error(error);
-          this._log.error(`Reload failed: ${error.message}`);
-        }
+        this._log.info(`Build completed. Scheduling extension reload...`);
+        this.scheduleReload();
       }
 
       done();
@@ -91,13 +104,30 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
     });
   }
 
+  private scheduleReload(): void {
+    if (this._activeReload != null) {
+      this._log.verbose(`Clearing pending reload...`);
+      clearTimeout(this._activeReload);
+    }
+
+    this._activeReload = setTimeout(async () => {
+      try {
+        await this.reload();
+        this._log.info(`Reload finished.`);
+      } catch (error) {
+        console.error(error);
+        this._log.warn(`Reload failed: ${error.message}`);
+      } finally {
+        this._activeReload = null;
+      }
+    }, 1000);
+  }
+
   /**
    * Main extension workflow.
    */
   private async reload(): Promise<void> {
-    const isBrowserOpen = await this.isBrowserOpen();
-
-    if (this._options.launchBrowser && !isBrowserOpen) {
+    if (this._options.launchBrowser && !(await this.isBrowserOpen())) {
       this._log.info('Launching Chrome with remote debugging enabled...');
       await this.launchChromeWithRemoteDebugging();
     }
@@ -105,17 +135,16 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
     const targets = await this.fetchBrowserDevToolsTargets();
 
     if (targets == null) {
-      this._log.warn(`Failed to fetch Chrome targets.`);
-      return;
+      throw new Error(`Failed to fetch Chrome targets.`);
     }
 
-    this._log.verbose(`Retrieved ${targets.length} devtools targets.`);
+    this._log.verbose(`Retrieved ${targets.length} devtools targets:`);
+    console.log(targets.map((t) => `- [${t.type}] ${t.title} (${t.url})`).join('\n'));
 
     const extensionTarget = this.resolveDevToolsExtensionTarget(targets);
 
     if (extensionTarget == null) {
-      this._log.warn(`The Chrome browser target for the extension runtime wasn't found.`);
-      return;
+      throw new Error(`The Chrome browser target for the extension runtime wasn't found.`);
     }
 
     this._log.verbose(`Resolved extension runtime target:`);
@@ -183,39 +212,38 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
   }
 
   private setExtensionId() {
-    fs.ensureDirSync(this.dataDir);
+    fs.ensureDirSync(this.cacheDir);
 
-    const keyPath = path.join(this.dataDir, 'key.pem');
+    const keyPath = path.join(this.cacheDir, 'key.pem');
 
     if (fs.existsSync(keyPath)) {
-      try {
-        const privateKeyPem = fs.readFileSync(keyPath, 'utf8');
-        const keyObject = crypto.createPrivateKey(privateKeyPem);
-        const publicKeyObject = crypto.createPublicKey(keyObject);
-        const publicKeyDer = publicKeyObject.export({ type: 'spki', format: 'der' });
+      const privateKeyPem = fs.readFileSync(keyPath, 'utf8');
+      const keyObject = crypto.createPrivateKey(privateKeyPem);
+      const publicKeyObject = crypto.createPublicKey(keyObject);
+      const publicKeyDer = publicKeyObject.export({ type: 'spki', format: 'der' });
 
-        this._manifestKey = publicKeyDer.toString('base64');
-        this._extensionId = this.calculateExtensionId(publicKeyDer);
+      this._manifestKey = publicKeyDer.toString('base64');
+      this._extensionId = this.calculateExtensionId(publicKeyDer);
 
-        this._log.verbose(`Extension ID: ${this._extensionId}`);
-        this._log.verbose(`Manifest key: ${this._manifestKey.slice(0, 16)}...`);
-      } catch (error) {
-        this._log.warn(
-          `Failed to load existing manifest key: ${error.message}. Generating a new one...`
-        );
-        const keyPair = crypto.generateKeyPairSync('rsa', {
-          modulusLength: 2048,
-          publicKeyEncoding: { type: 'spki', format: 'der' },
-          privateKeyEncoding: { type: 'pkcs8', format: 'pem' },
-        });
-        fs.writeFileSync(keyPath, keyPair.privateKey);
-
-        this._manifestKey = keyPair.publicKey.toString('base64');
-        this._extensionId = this.calculateExtensionId(keyPair.publicKey);
-
-        this._log.info(`Generated new manifest key.`);
-      }
+      this._log.verbose(`Extension ID: ${this._extensionId}`);
+      this._log.verbose(`Manifest key: ${this._manifestKey.slice(0, 24)}...`);
+      return;
     }
+
+    this._log.verbose(`Generating a new manifest key...`);
+
+    const keyPair = crypto.generateKeyPairSync('rsa', {
+      modulusLength: 2048,
+      publicKeyEncoding: { type: 'spki', format: 'der' },
+      privateKeyEncoding: { type: 'pkcs8', format: 'pem' },
+    });
+    fs.writeFileSync(keyPath, keyPair.privateKey);
+
+    this._manifestKey = keyPair.publicKey.toString('base64');
+    this._extensionId = this.calculateExtensionId(keyPair.publicKey);
+
+    this._log.verbose(`Extension ID: ${this._extensionId}`);
+    this._log.verbose(`Manifest key: ${this._manifestKey.slice(0, 24)}...`);
   }
 
   private calculateExtensionId(publicKey: Buffer): string {
@@ -258,29 +286,28 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
   }
 
   private async launchChromeWithRemoteDebugging() {
-    const userDataDir = path.resolve(path.join(process.cwd(), '.cache', 'chrome-user-data-v2'));
-    const extensionPath = path.resolve(path.join(process.cwd(), 'dist'));
-    const chromePath = getChromePath();
+    const userDataDir = path.join(this.cacheDir, 'remote-debugging-profile');
+    const chromePath = resolveChromeExecutablePath();
 
-    if (!chromePath) {
+    if (chromePath == null) {
       throw new Error('Could not find Chrome executable.');
     }
 
-    const args = [
-      `--remote-debugging-port=${this._options.remoteDebugPort}`,
-      `--user-data-dir=${userDataDir}`,
-      '--no-first-run',
-      '--no-default-browser-check',
-      `--load-extension=${extensionPath}`,
-      `chrome-extension://${this._extensionId}/`,
-    ];
-
-    const child = spawn(chromePath, args, {
-      detached: true,
-      stdio: 'ignore',
-    });
-
-    child.on('error', (err) => {
+    const child = spawn(
+      chromePath,
+      [
+        `--remote-debugging-port=${this._options.remoteDebugPort}`,
+        `--user-data-dir=${userDataDir}`,
+        '--no-first-run',
+        '--no-default-browser-check',
+        `--load-extension=${this._extensionPath}`,
+        `chrome-extension://${this._extensionId}/`,
+      ],
+      {
+        detached: true,
+        stdio: 'ignore',
+      }
+    ).on('error', (err) => {
       this._log.error(`Failed to start Chrome: ${err.message}`);
     });
 
@@ -288,10 +315,7 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
   }
 
   private resolveDevToolsExtensionTarget(targets: DevToolsTarget[]) {
-    return targets.find(
-      (t) =>
-        t.type === 'service_worker' && t.url.startsWith(`chrome-extension://${this._extensionId}`)
-    );
+    return targets.find((t) => t.url.startsWith(`chrome-extension://${this._extensionId}`));
   }
 
   private resolveDevToolsActiveTabTarget(targets: DevToolsTarget[]) {
@@ -323,7 +347,7 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
     return new Promise((resolve, reject) => {
       if (socket == null || this.getSocketConnectionStatus(socket) === 'unavailable') {
         this._log.warn(`WebSocket connection is unavailable.`);
-        return reject(new Error('Failed to execute command: socket is unavailable.'));
+        return reject(new Error('Unable to execute command: socket is unavailable.'));
       }
 
       socket
@@ -332,7 +356,7 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
           resolve();
         })
         .on('error', (err) => {
-          this._log.error(`Failed to execute command ${command.method}: ${err.message}`);
+          this._log.error(`Unable to execute command ${command.method}: ${err.message}`);
           reject(err);
         });
 
