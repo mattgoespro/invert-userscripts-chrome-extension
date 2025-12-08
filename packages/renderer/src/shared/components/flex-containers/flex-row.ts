@@ -11,6 +11,7 @@ type FlexRowProps = {
 export const FlexRow = createStyled(Box, {
   label: 'FlexRow',
   name: 'FlexRow',
+
   shouldForwardProp: (prop) => !['gap', 'wrap', 'grow'].includes(prop.toString()),
 })<FlexRowProps>(({ wrap = true, gap = 0, grow = true, theme }) => ({
   display: 'flex',

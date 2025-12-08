@@ -6,7 +6,6 @@ import webpack from 'webpack';
 import WebSocket from 'ws';
 import type { Logger } from './utils.ts';
 import { createLogger, resolveChromeExecutablePath } from './utils.ts';
-import { error } from 'console';
 
 export interface DevToolsTarget {
   id: string;
@@ -24,6 +23,7 @@ export interface DevToolsCommand {
 export interface ChromeExtensionReloaderPluginOptions {
   remoteDebugPort?: number;
   launchBrowser?: boolean;
+  openBrowserPage?: string;
   timeoutMs?: number;
   verbose?: boolean;
 }
@@ -59,6 +59,7 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
     return {
       remoteDebugPort: options.remoteDebugPort ?? 9222,
       launchBrowser: options.launchBrowser ?? false,
+      openBrowserPage: options.openBrowserPage ?? 'options.html',
       timeoutMs: options.timeoutMs ?? 30000,
       verbose: options.verbose ?? false,
     };
@@ -135,7 +136,10 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
     }
 
     this._log.verbose(`Retrieved ${targets.length} devtools targets:`);
-    console.log(targets.map((t) => `- [${t.type}] ${t.title} (${t.url})`).join('\n'));
+
+    for (const target of targets) {
+      this._log.verbose(`- ${target.type}: ${target.title} (${target.url})`);
+    }
 
     const extensionTarget = this.resolveDevToolsExtensionTarget(targets);
 
@@ -182,16 +186,7 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
         this.getSocketConnectionStatus(this._activeTabConnection) === 'unavailable'
       ) {
         this._activeTabConnection = new WebSocket(activeTabTarget.webSocketDebuggerUrl);
-        await new Promise<void>((resolve, reject) => {
-          this._activeTabConnection
-            .on('open', () => {
-              this._log.verbose(`Connected to active tab.`);
-              resolve();
-            })
-            .on('error', (err) => {
-              reject(err);
-            });
-        });
+        await this.connectWebSocket(this._activeTabConnection);
       }
 
       this._log.verbose(`Executing active tab reload...`);
@@ -200,11 +195,24 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
     }
   }
 
+  private async connectWebSocket(connection: WebSocket) {
+    await new Promise<void>((resolve, reject) => {
+      connection
+        .on('open', () => {
+          this._log.verbose(`Connected to active tab.`);
+          resolve();
+        })
+        .on('error', (err) => {
+          reject(err);
+        });
+    });
+  }
+
   private disconnect() {
     if (this._extensionConnection != null) {
       this._extensionConnection.close(0);
       this._extensionConnection = null;
-      this._log.verbose(`Extension websocket connection closed.`);
+      this._log.verbose(`Extension runtime websocket connection closed.`);
     }
 
     if (this._activeTabConnection != null) {
@@ -229,7 +237,7 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
       this._extensionId = this.calculateExtensionId(publicKeyDer);
 
       this._log.verbose(`Extension ID: ${this._extensionId}`);
-      this._log.verbose(`Manifest key: ${this._manifestKey.slice(0, 24)}...`);
+      this._log.verbose(`Manifest key: ${this._manifestKey.slice(0, 32)}...`);
       return;
     }
 
@@ -246,7 +254,7 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
     this._extensionId = this.calculateExtensionId(keyPair.publicKey);
 
     this._log.verbose(`Extension ID: ${this._extensionId}`);
-    this._log.verbose(`Manifest key: ${this._manifestKey.slice(0, 24)}...`);
+    this._log.verbose(`Manifest key: ${this._manifestKey.slice(0, 32)}...`);
   }
 
   private calculateExtensionId(publicKey: Buffer): string {
@@ -304,7 +312,7 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
         '--no-first-run',
         '--no-default-browser-check',
         `--load-extension=${this._extensionPath}`,
-        `chrome-extension://${this._extensionId}/`,
+        `chrome-extension://${this._extensionId}/${this._options.openBrowserPage}`,
       ],
       {
         detached: true,
