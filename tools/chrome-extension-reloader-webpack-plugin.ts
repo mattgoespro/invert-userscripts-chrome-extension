@@ -3,17 +3,9 @@ import crypto from 'crypto';
 import fs from 'fs-extra';
 import path from 'path';
 import webpack from 'webpack';
-import WebSocket from 'ws';
 import type { Logger } from './utils.ts';
 import { createLogger, resolveChromeExecutablePath } from './utils.ts';
-
-export interface DevToolsTarget {
-  id: string;
-  type: string;
-  title: string;
-  url: string;
-  webSocketDebuggerUrl?: string;
-}
+import CDP from 'chrome-remote-interface';
 
 export interface DevToolsCommand {
   method: string;
@@ -42,9 +34,9 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
   private _extensionPath: string;
   private _extensionId: string;
   private _manifestKey: string;
-  private _extensionConnection: WebSocket = null;
-  private _activeTabConnection: WebSocket = null;
-  private _activeReload: NodeJS.Timeout = null;
+  private _extensionClient: CDP.Client = null;
+  private _activeTabClient: CDP.Client = null;
+  private _reloader: NodeJS.Timeout = null;
 
   constructor(options: ChromeExtensionReloaderPluginOptions) {
     this._options = this.normalizeOptions(options);
@@ -102,20 +94,20 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
   }
 
   private scheduleReload(): void {
-    if (this._activeReload != null) {
+    if (this._reloader != null) {
       this._log.verbose(`Clearing pending reload...`);
-      clearTimeout(this._activeReload);
+      clearTimeout(this._reloader);
     }
 
-    this._activeReload = setTimeout(async () => {
+    this._reloader = setTimeout(async () => {
       try {
         await this.reload();
-        this._log.info(`Reload finished.`);
+        this._log.info(`Reload complete.`);
       } catch (error) {
         console.error(error);
         this._log.warn(`Reload failed: ${error.message}`);
       } finally {
-        this._activeReload = null;
+        this._reloader = null;
       }
     }, 1000);
   }
@@ -129,95 +121,58 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
       await this.launchChromeWithRemoteDebugging();
     }
 
-    const targets = await this.fetchBrowserDevToolsTargets();
-
-    if (targets == null) {
-      throw new Error(`Failed to fetch Chrome targets.`);
+    if (this._extensionClient == null) {
+      this._extensionClient = await this.createDebuggerProtocolClient((targets) =>
+        targets.find((target) => target.url.startsWith(`chrome-extension://${this._extensionId}`))
+      );
     }
 
-    this._log.verbose(`Retrieved ${targets.length} devtools targets:`);
-
-    for (const target of targets) {
-      this._log.verbose(`- ${target.type}: ${target.title} (${target.url})`);
-    }
-
-    const extensionTarget = this.resolveDevToolsExtensionTarget(targets);
-
-    if (extensionTarget == null) {
-      throw new Error(`The Chrome browser target for the extension runtime wasn't found.`);
-    }
-
-    this._log.verbose(`Resolved extension runtime target:`);
-    this._log.verbose(extensionTarget);
-
-    if (
-      this._extensionConnection == null ||
-      this.getSocketConnectionStatus(this._extensionConnection) === 'unavailable'
-    ) {
-      this._log.verbose(`Connecting to extension runtime...`);
-      this._extensionConnection = new WebSocket(extensionTarget.webSocketDebuggerUrl);
-
-      await new Promise<void>((resolve, reject) => {
-        this._extensionConnection
-          .on('open', () => {
-            this._log.verbose(`Connected to extension runtime.`);
-            resolve();
-          })
-          .on('error', (err) => {
-            reject(err);
-          });
-      });
+    if (this._extensionClient == null) {
+      this._log.warn(`Could not connect to extension runtime.`);
+      return;
     }
 
     this._log.verbose(`Executing extension runtime reload...`);
-
-    await this.executeExtensionReload();
-
+    await this._extensionClient.Runtime.evaluate({ expression: 'chrome.runtime.reload()' });
     this._log.verbose(`Extension runtime reloaded.`);
 
-    const activeTabTarget = this.resolveDevToolsActiveTabTarget(targets);
+    this._activeTabClient = await this.createDebuggerProtocolClient((targets) =>
+      targets.find(
+        (target) => target.type === 'page' && !target.url.startsWith('chrome-extension://')
+      )
+    );
 
-    if (activeTabTarget != null) {
-      this._log.verbose(`Resolved active tab target:`);
-      this._log.verbose(activeTabTarget);
-
-      if (
-        this._activeTabConnection == null ||
-        this.getSocketConnectionStatus(this._activeTabConnection) === 'unavailable'
-      ) {
-        this._activeTabConnection = new WebSocket(activeTabTarget.webSocketDebuggerUrl);
-        await this.connectWebSocket(this._activeTabConnection);
-      }
-
+    if (this._activeTabClient != null) {
       this._log.verbose(`Executing active tab reload...`);
-      await this.executeBrowserActiveTabReload();
+      await this._activeTabClient.Page.reload({
+        ignoreCache: true,
+      });
       this._log.verbose(`Active tab reloaded.`);
     }
   }
 
-  private async connectWebSocket(connection: WebSocket) {
-    await new Promise<void>((resolve, reject) => {
-      connection
-        .on('open', () => {
-          this._log.verbose(`Connected to active tab.`);
-          resolve();
-        })
-        .on('error', (err) => {
-          reject(err);
-        });
+  private createDebuggerProtocolClient(targetFilter: (targets: CDP.Target[]) => CDP.Target) {
+    return new Promise<CDP.Client>((resolve) => {
+      CDP({
+        host: 'localhost',
+        port: this._options.remoteDebugPort,
+        target: targetFilter,
+      })
+        .then((client) => resolve(client as CDP.Client))
+        .catch(() => resolve(null));
     });
   }
 
   private disconnect() {
-    if (this._extensionConnection != null) {
-      this._extensionConnection.close(0);
-      this._extensionConnection = null;
+    if (this._extensionClient != null) {
+      this._extensionClient.close();
+      this._extensionClient = null;
       this._log.verbose(`Extension runtime websocket connection closed.`);
     }
 
-    if (this._activeTabConnection != null) {
-      this._activeTabConnection.close(0);
-      this._activeTabConnection = null;
+    if (this._activeTabClient != null) {
+      this._activeTabClient.close();
+      this._activeTabClient = null;
       this._log.verbose(`Active tab websocket connection closed.`);
     }
   }
@@ -270,32 +225,6 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
       .join('');
   }
 
-  private async fetchBrowserDevToolsTargets(): Promise<DevToolsTarget[]> {
-    let attempts = 1;
-    const maxAttempts = 10;
-
-    while (attempts++ <= maxAttempts) {
-      try {
-        this._log.verbose(
-          `Fetching Chrome devtools targets (attempt ${attempts}/${maxAttempts})...`
-        );
-
-        const response = await fetch(this.getDevtoolsTargetsUrl('/json'), {
-          method: 'GET',
-          headers: { Accept: 'application/json' },
-        });
-
-        if (response.ok) {
-          return (await response.json()) as DevToolsTarget[];
-        }
-      } catch (error) {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-      }
-    }
-
-    return null;
-  }
-
   private async launchChromeWithRemoteDebugging() {
     const userDataDir = path.join(this.cacheDir, 'remote-debugging-profile');
     const chromePath = resolveChromeExecutablePath();
@@ -325,56 +254,6 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
     child.unref();
   }
 
-  private resolveDevToolsExtensionTarget(targets: DevToolsTarget[]) {
-    return targets.find((t) => t.url.startsWith(`chrome-extension://${this._extensionId}`));
-  }
-
-  private resolveDevToolsActiveTabTarget(targets: DevToolsTarget[]) {
-    return (
-      targets.find(
-        (target) => target.type === 'page' && !target.url.startsWith('chrome-extension://')
-      ) ?? null
-    );
-  }
-
-  private executeExtensionReload(): Promise<void> {
-    return this.executeBrowserDevToolsCommand(this._extensionConnection, {
-      method: 'Runtime.evaluate',
-      params: { expression: 'chrome.runtime.reload()' },
-    });
-  }
-
-  private executeBrowserActiveTabReload(): Promise<void> {
-    return this.executeBrowserDevToolsCommand(this._activeTabConnection, {
-      method: 'Page.reload',
-      params: { ignoreCache: true },
-    });
-  }
-
-  private executeBrowserDevToolsCommand(
-    socket: WebSocket,
-    command: DevToolsCommand
-  ): Promise<void> {
-    return new Promise((resolve, reject) => {
-      if (socket == null || this.getSocketConnectionStatus(socket) === 'unavailable') {
-        this._log.warn(`WebSocket connection is unavailable.`);
-        return reject(new Error('Unable to execute command: socket is unavailable.'));
-      }
-
-      socket
-        .once('message', () => {
-          this._log.verbose(`Command executed: ${command.method}`);
-          resolve();
-        })
-        .on('error', (err) => {
-          this._log.error(`Unable to execute command ${command.method}: ${err.message}`);
-          reject(err);
-        });
-
-      socket.send(JSON.stringify({ id: 1, ...command }));
-    });
-  }
-
   private async isBrowserOpen(): Promise<boolean> {
     return new Promise<boolean>((resolve) => {
       fetch(this.getDevtoolsTargetsUrl('/json'))
@@ -393,19 +272,5 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
 
   private getDevtoolsTargetsUrl(path: string): string {
     return `http://localhost:${this._options.remoteDebugPort}${path}`;
-  }
-
-  private getSocketConnectionStatus(socket: WebSocket): string {
-    switch (socket.readyState) {
-      case WebSocket.CONNECTING:
-        return 'connecting';
-      case WebSocket.OPEN:
-        return 'open';
-      case WebSocket.CLOSING:
-      case WebSocket.CLOSED:
-        return 'unavailable';
-      default:
-        throw new Error(`${socket.url} - Unknown WebSocket state: ${socket.readyState}`);
-    }
   }
 }
