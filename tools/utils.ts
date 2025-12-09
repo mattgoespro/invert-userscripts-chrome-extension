@@ -3,11 +3,11 @@ import webpack from 'webpack';
 import path from 'path';
 import fs from 'fs-extra';
 
-type LogLevel = 'INFO' | 'WARN' | 'ERROR' | 'VERBOSE';
+type LogLevel = 'INFO' | 'WARN' | 'ERROR' | 'VERB';
 
 export const createLogger = (name: string, options: { prefix: string; verbose?: boolean }) => {
   const colors = webpack.cli.createColors();
-  const padLevel = (level: LogLevel) => level.padEnd(7, ' ');
+  const padLevel = (level: LogLevel) => level.padEnd(5);
 
   const createPrefix = (level: LogLevel, color: (text: string) => string) =>
     colors.bold(color(padLevel(level)));
@@ -39,7 +39,7 @@ export const createLogger = (name: string, options: { prefix: string; verbose?: 
       }
 
       console.info(
-        `${colors.blue(name)} ${createPrefix('VERBOSE', colors.gray)} ${colors.gray(colors.italic(message))}`
+        `${colors.blue(name)} ${createPrefix('VERB', colors.gray)} ${colors.gray(colors.italic(message))}`
       );
     },
   };
