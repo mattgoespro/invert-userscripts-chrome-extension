@@ -1,4 +1,3 @@
-import Box from '@mui/material/Box';
 import 'monaco-editor/esm/vs/basic-languages/css/css.contribution';
 import 'monaco-editor/esm/vs/basic-languages/javascript/javascript.contribution';
 import 'monaco-editor/esm/vs/basic-languages/scss/scss.contribution';
@@ -69,5 +68,5 @@ export function CodeEditor({ value, onChange }: CodeEditorProps) {
     }
   }, [_editor, onChange]);
 
-  return <Box ref={editorRef} sx={{ height: '100%' }}></Box>;
+  return <div ref={editorRef} style={{ height: '100%' }}></div>;
 }

@@ -1,4 +1,3 @@
-import { Button } from '@mui/material';
 import { UserScript } from '@shared/model';
 import { IDEStorageManager } from '@shared/storage';
 import { useEffect, useState } from 'react';
@@ -48,9 +47,9 @@ export function VertexIdePopup() {
     <div className="popup-container">
       <div className="popup-header">
         <h1>Vertex IDE</h1>
-        <Button className="btn-options" onClick={openOptions}>
+        <button className="btn-options" onClick={openOptions}>
           ⚙️ Options
-        </Button>
+        </button>
       </div>
 
       <div className="scripts-list">

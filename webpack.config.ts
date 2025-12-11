@@ -1,7 +1,6 @@
 import CopyWebpackPlugin from 'copy-webpack-plugin';
 import FaviconsWebpackPlugin from 'favicons-webpack-plugin';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
-import MonacoEditorWebpackPlugin from 'monaco-editor-webpack-plugin';
 import path from 'path';
 import TerserPlugin from 'terser-webpack-plugin';
 import TsConfigPathsWebpackPlugin from 'tsconfig-paths-webpack-plugin';
@@ -113,11 +112,6 @@ export default (_args: Record<string, any>, { mode }: { mode: 'development' | 'p
         filename: 'options.html',
         chunks: ['options'],
       }),
-      // new MonacoEditorWebpackPlugin({
-      //   languages: ['typescript', 'scss', 'javascript', 'css'],
-      //   filename: `monaco/[name].worker.js`,
-      //   monacoEditorPath: path.join(__dirname, 'node_modules', 'monaco-editor'),
-      // }),
       new FaviconsWebpackPlugin({
         logo: path.resolve(__dirname, 'public', 'assets', 'icon.png'),
         mode: 'webapp',
@@ -135,9 +129,8 @@ export default (_args: Record<string, any>, { mode }: { mode: 'development' | 'p
       }),
       mode === 'development'
         ? new ChromeExtensionReloaderWebpackPlugin({
-            launchBrowser: true,
+            autoLaunchBrowser: true,
             verbose: true,
-            timeoutMs: 2000,
           })
         : false,
       new CopyWebpackPlugin({

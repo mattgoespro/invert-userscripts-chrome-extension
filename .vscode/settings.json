@@ -24,6 +24,7 @@
   "editor.fontFamily": "Fira Code, Ubuntu Mono, monospace",
   "editor.fontSize": 11,
   "editor.letterSpacing": -0.3,
+  "editor.tabSize": 2,
   "eslint.enable": true,
   "eslint.format.enable": false,
   "eslint.probe": ["typescript", "typescriptreact", "html"],

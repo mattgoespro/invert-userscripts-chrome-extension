@@ -1,0 +1,358 @@
+import { spawn } from 'child_process';
+import crypto from 'crypto';
+import fs from 'fs-extra';
+import path from 'path';
+import webpack from 'webpack';
+import type { Logger } from './utils.ts';
+import { createLogger, resolveChromeExecutablePath } from './utils.ts';
+import CDP from 'chrome-remote-interface';
+
+export interface DevToolsCommand {
+  method: string;
+  params?: Record<string, any>;
+}
+
+export interface ChromeExtensionReloaderPluginOptions {
+  remoteDebugPort?: number;
+  launchBrowser?: boolean;
+  openBrowserPage?: string;
+  timeoutMs?: number;
+  verbose?: boolean;
+}
+
+export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPluginInstance {
+  private readonly name = 'ChromeExtensionReloaderWebpackPlugin';
+  private readonly cacheDir = path.join(
+    process.cwd(),
+    'node_modules',
+    '.cache',
+    'chrome-extension-reloader-webpack-plugin'
+  );
+
+  private _log: Logger;
+  private _options: ChromeExtensionReloaderPluginOptions;
+  private _extensionPath: string;
+  private _extensionId: string;
+  private _manifestKey: string;
+  private _extensionClient: CDP.Client = null;
+  private _activeTabClient: CDP.Client = null;
+  private _reloader: NodeJS.Timeout = null;
+
+  constructor(options: ChromeExtensionReloaderPluginOptions) {
+    this._options = this.normalizeOptions(options);
+    this._log = createLogger(this.name, { prefix: this.name, verbose: this._options.verbose });
+
+    this.writePluginExtensionMetadata();
+  }
+
+  private normalizeOptions(
+    options: ChromeExtensionReloaderPluginOptions
+  ): ChromeExtensionReloaderPluginOptions {
+    return {
+      remoteDebugPort: options.remoteDebugPort ?? 9222,
+      launchBrowser: options.launchBrowser ?? false,
+      openBrowserPage: options.openBrowserPage ?? 'options.html',
+      timeoutMs: options.timeoutMs ?? 30000,
+      verbose: options.verbose ?? false,
+    };
+  }
+
+  /**
+   * Apply the extension reloader plugin to the Webpack compiler so that it integrates into the webpack build lifecycle.
+   *
+   * @param compiler The Webpack compiler instance.
+   */
+  async apply(compiler: webpack.Compiler) {
+    this._extensionPath = compiler.options.output.path;
+
+    compiler.hooks.thisCompilation.tap(this.name, (compilation) => {
+      compilation.hooks.processAssets.tap(
+        {
+          name: this.name,
+          stage: webpack.Compilation.PROCESS_ASSETS_STAGE_ADDITIONS,
+        },
+        () => {
+          const manifestName = 'manifest.json';
+          const asset = compilation.assets[manifestName];
+
+          if (asset != null) {
+            const source = asset.source().toString();
+            const manifest = JSON.parse(source);
+            manifest.key = this._manifestKey;
+            const newSource = JSON.stringify(manifest, null, 2);
+
+            compilation.updateAsset(manifestName, new webpack.sources.RawSource(newSource));
+          }
+
+          const backgroundName = 'background.js';
+          const backgroundAsset = compilation.assets[backgroundName];
+
+          if (backgroundAsset != null) {
+            const source = backgroundAsset.source().toString();
+            const keepAliveScript = `
+              // Keep-alive for devtools
+              setInterval(() => {
+                chrome.runtime.getPlatformInfo(() => {});
+              }, 20000);
+            `;
+            const newSource = source + keepAliveScript;
+
+            compilation.updateAsset(backgroundName, new webpack.sources.RawSource(newSource));
+          }
+        }
+      );
+    });
+
+    compiler.hooks.done.tapAsync(this.name, async (stats, done) => {
+      if (Object.keys(stats.compilation.assets).length > 0) {
+        this._log.verbose(`Build complete. Scheduling reload...`);
+        this.scheduleReload();
+      }
+
+      done();
+    });
+
+    compiler.hooks.shutdown.tap(this.name, async () => {
+      await this.disconnectRemoteClients();
+      this._log.verbose(`Remote clients disconnected.`);
+    });
+  }
+
+  private scheduleReload(): void {
+    if (this._reloader != null) {
+      this._log.verbose(`Clearing pending reload...`);
+      clearTimeout(this._reloader);
+    }
+
+    this._reloader = setTimeout(async () => {
+      try {
+        await this.reload();
+        this._log.info(`Reload complete.`);
+      } catch (error) {
+        console.error(error);
+        this._log.warn(`Reload failed: ${error.message}`);
+      } finally {
+        this._reloader = null;
+      }
+    }, 1000);
+  }
+
+  /**
+   * Main extension workflow.
+   */
+  private async reload(): Promise<void> {
+    await this.launchDebugSession();
+
+    const targets = await CDP.List({ port: this._options.remoteDebugPort });
+    const extensionPages = targets.filter(
+      (target) =>
+        target.type === 'page' && target.url.startsWith(`chrome-extension://${this._extensionId}`)
+    );
+
+    this._extensionClient = await this.createRemoteClient((targets) =>
+      targets.find(
+        (target) =>
+          target.type === 'service_worker' &&
+          target.url.startsWith(`chrome-extension://${this._extensionId}`)
+      )
+    );
+
+    if (this._extensionClient == null) {
+      this._log.warn(`Could not connect to extension runtime.`);
+      return;
+    }
+
+    this._log.verbose(`Executing extension runtime reload...`);
+    await this._extensionClient.Runtime.evaluate({ expression: 'chrome.runtime.reload()' });
+    this._log.verbose(`Extension runtime reloaded.`);
+
+    for (const page of extensionPages) {
+      this._log.verbose(`Reopening extension page: ${page.url}`);
+      await CDP.New({ port: this._options.remoteDebugPort, url: page.url });
+    }
+
+    this._activeTabClient = await this.createRemoteClient((targets) =>
+      targets.find(
+        (target) =>
+          target.type === 'page' &&
+          !target.url.startsWith(`chrome-extension://${this._extensionId}`)
+      )
+    );
+
+    if (this._activeTabClient != null) {
+      this._log.verbose(`Executing active tab reload...`);
+      await this._activeTabClient.Page.reload({
+        ignoreCache: true,
+      });
+      this._log.verbose(`Active tab reloaded.`);
+    }
+  }
+
+  private async launchDebugSession(): Promise<boolean> {
+    const browserOpen = await this.isBrowserOpen();
+
+    if (this._options.launchBrowser && !browserOpen) {
+      try {
+        this._log.info('Launching Chrome with remote debugging enabled...');
+        await this.launchChromeWithRemoteDebugging();
+
+        this._log.verbose('Waiting for Chrome to open...');
+        await this.waitForBrowser();
+        return true;
+      } catch (error) {
+        this._log.warn(error.message);
+        return false;
+      }
+    }
+    return false;
+  }
+
+  private createRemoteClient(targetFilter: (targets: CDP.Target[]) => CDP.Target) {
+    return new Promise<CDP.Client>((resolve) => {
+      CDP({
+        host: 'localhost',
+        port: this._options.remoteDebugPort,
+        target: targetFilter,
+      })
+        .then((client) => resolve(client as CDP.Client))
+        .catch(() => resolve(null));
+    });
+  }
+
+  private async disconnectRemoteClients() {
+    if (this._extensionClient != null) {
+      this._extensionClient.close();
+      this._extensionClient = null;
+      this._log.verbose(`Extension runtime websocket connection closed.`);
+    }
+
+    if (this._activeTabClient != null) {
+      this._activeTabClient.close();
+      this._activeTabClient = null;
+      this._log.verbose(`Active tab websocket connection closed.`);
+    }
+  }
+
+  private writePluginExtensionMetadata() {
+    fs.ensureDirSync(this.cacheDir);
+
+    const keyPath = path.join(this.cacheDir, 'key.pem');
+
+    if (fs.existsSync(keyPath)) {
+      const privateKeyPem = fs.readFileSync(keyPath, 'utf8');
+      const keyObject = crypto.createPrivateKey(privateKeyPem);
+      const publicKeyObject = crypto.createPublicKey(keyObject);
+      const publicKeyDer = publicKeyObject.export({ type: 'spki', format: 'der' });
+
+      this._manifestKey = publicKeyDer.toString('base64');
+      this._extensionId = this.calculateExtensionId(publicKeyDer);
+
+      this._log.verbose(`Extension ID: ${this._extensionId}`);
+      this._log.verbose(`Manifest key: ${this._manifestKey.slice(0, 32)}...`);
+      return;
+    }
+
+    this._log.verbose(`Generating a new manifest key...`);
+
+    const keyPair = crypto.generateKeyPairSync('rsa', {
+      modulusLength: 2048,
+      publicKeyEncoding: { type: 'spki', format: 'der' },
+      privateKeyEncoding: { type: 'pkcs8', format: 'pem' },
+    });
+    fs.writeFileSync(keyPath, keyPair.privateKey);
+
+    this._manifestKey = keyPair.publicKey.toString('base64');
+    this._extensionId = this.calculateExtensionId(keyPair.publicKey);
+
+    this._log.verbose(`Extension ID: ${this._extensionId}`);
+    this._log.verbose(`Manifest key: ${this._manifestKey.slice(0, 32)}...`);
+  }
+
+  private calculateExtensionId(publicKey: Buffer): string {
+    const hash = crypto.createHash('sha256').update(publicKey).digest('hex');
+    const first128Bits = hash.slice(0, 32);
+
+    return first128Bits
+      .split('')
+      .map((char) => {
+        const code = parseInt(char, 16);
+        return String.fromCharCode(97 + code);
+      })
+      .join('');
+  }
+
+  private async launchChromeWithRemoteDebugging() {
+    const chromePath = resolveChromeExecutablePath();
+
+    if (chromePath == null) {
+      throw new Error('Could not find Chrome executable.');
+    }
+
+    const child = spawn(
+      chromePath,
+      [
+        `--remote-debugging-port=${this._options.remoteDebugPort}`,
+        `--user-data-dir=${path.join(this.cacheDir, 'remote-debugging-profile')}`,
+        '--no-first-run',
+        '--no-default-browser-check',
+        `--load-extension=${this._extensionPath}`,
+      ],
+      {
+        detached: true,
+        stdio: 'ignore',
+      }
+    ).on('error', (err) => {
+      this._log.error(`Failed to start Chrome: ${err.message}`);
+    });
+
+    child.unref();
+  }
+
+  private async isBrowserOpen(): Promise<boolean> {
+    return new Promise<boolean>((resolve) => {
+      fetch(`http://localhost:${this._options.remoteDebugPort}/json/list`)
+        .then((response) => {
+          if (!response.ok) {
+            return resolve(false);
+          }
+
+          resolve(response.ok);
+        })
+        .catch(() => {
+          resolve(false);
+        });
+    });
+  }
+
+  private async waitForBrowser(): Promise<void> {
+    let timeoutId: NodeJS.Timeout;
+
+    const pollBrowser = async () => {
+      const start = Date.now();
+
+      while (Date.now() - start < this._options.timeoutMs) {
+        const isOpen = await this.isBrowserOpen();
+
+        if (isOpen) {
+          return;
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      }
+
+      throw new Error('Timed out waiting for browser to open.');
+    };
+
+    const timeoutPromise = new Promise<void>((_, reject) => {
+      timeoutId = setTimeout(() => {
+        reject(new Error('Timed out waiting for browser to open.'));
+      }, this._options.timeoutMs);
+    });
+
+    try {
+      await Promise.race([pollBrowser(), timeoutPromise]);
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  }
+}
