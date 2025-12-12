@@ -12,11 +12,15 @@
     transition: background-color 0.2s ease;
 
     &:hover {
-        background-color: rgba(219, 197, 123, 0.233);
+        background-color: rgba(255, 200, 20, 0.233);
     }
 
     &:disabled {
         cursor: not-allowed;
         opacity: 0.5;
+    }
+
+    &:focus {
+        background-color: rgba(219, 161, 123, 0.4);
     }
 }

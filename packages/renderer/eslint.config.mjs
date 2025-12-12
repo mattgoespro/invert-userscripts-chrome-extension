@@ -2,7 +2,7 @@ import html from '@html-eslint/eslint-plugin';
 import react from 'eslint-plugin-react';
 import { defineConfig } from 'eslint/config';
 import tseslint from 'typescript-eslint';
-import base from '../../eslint.config.mjs';
+import { base } from '../../eslint.config.mjs';
 
 export default defineConfig(
   base.config,

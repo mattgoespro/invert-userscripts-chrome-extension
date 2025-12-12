@@ -2,6 +2,10 @@ import { GlobalModule } from '@shared/model';
 import './Modules.scss';
 import { IDEStorageManager } from '@shared/storage';
 import { useState } from 'react';
+import { Button } from '@/shared/components/button/Button';
+import { Checkbox } from '@/shared/components/checkbox/Checkbox';
+import { IconButton } from '@/shared/components/icon-button/IconButton';
+import { DeleteIcon } from 'lucide-react';
 
 export function Modules() {
   const [modules, setModules] = useState<GlobalModule[]>([]);
@@ -43,12 +47,12 @@ export function Modules() {
   };
 
   return (
-    <div className="modules-tab">
-      <div className="tab-header">
+    <div className="modules-content">
+      <div className="modules-header">
         <h2>Global Modules</h2>
-        <button className="btn-primary" onClick={handleCreateModule}>
+        <Button className="btn-primary" onClick={handleCreateModule}>
           + Add Module
-        </button>
+        </Button>
       </div>
       <div className="modules-list">
         {modules.map((module) => (
@@ -59,17 +63,14 @@ export function Modules() {
               {module.version && <div className="module-version">v{module.version}</div>}
             </div>
             <div className="module-actions">
-              <label className="toggle-switch">
-                <input
-                  type="checkbox"
-                  checked={module.enabled}
-                  onChange={() => handleToggleModule(module)}
-                />
-                <span className="toggle-slider"></span>
-              </label>
-              <button className="btn-delete" onClick={() => handleDeleteModule(module.id)}>
-                🗑️
-              </button>
+              <Checkbox
+                label="Enabled"
+                checked={module.enabled}
+                onChange={() => handleToggleModule(module)}
+              />
+              <IconButton className="btn-delete" onClick={() => handleDeleteModule(module.id)}>
+                <DeleteIcon />
+              </IconButton>
             </div>
           </div>
         ))}

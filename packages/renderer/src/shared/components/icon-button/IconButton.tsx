@@ -5,12 +5,24 @@ type IconButtonProps = PropsWithChildren<
   {
     onClick?: () => void;
     disabled?: boolean;
+    active?: boolean;
   } & ButtonHTMLAttributes<HTMLButtonElement>
 >;
 
-export function IconButton({ children, onClick, disabled = false, ...rest }: IconButtonProps) {
+export function IconButton({
+  children,
+  onClick,
+  disabled = false,
+  active = false,
+  ...rest
+}: IconButtonProps) {
   return (
-    <button {...rest} className="icon-btn" onClick={onClick} disabled={disabled}>
+    <button
+      {...rest}
+      className={['icon-btn', active ? 'icon-btn--active' : ''].join(' ')}
+      onClick={onClick}
+      disabled={disabled}
+    >
       {children}
     </button>
   );

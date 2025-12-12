@@ -1,4 +1,4 @@
-import { ChildProcess, spawn } from 'child_process';
+import { spawn } from 'child_process';
 import crypto from 'crypto';
 import fs from 'fs-extra';
 import path from 'path';
@@ -30,14 +30,13 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
   private _manifestKey: string;
   private _wss: WebSocketServer = null;
   private _reloader: NodeJS.Timeout = null;
-  private _browser: ChildProcess = null;
 
   constructor(options: ChromeExtensionReloaderPluginOptions) {
     this._options = this.normalizeOptions(options);
     this._log = createLogger(this.name, { prefix: this.name, verbose: this._options.verbose });
 
     this.writePluginExtensionMetadata();
-    this.startServer();
+    this.startReloadServer();
   }
 
   private normalizeOptions(
@@ -51,24 +50,27 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
     };
   }
 
-  private startServer() {
-    if (this._wss) return;
-
-    this._wss = new WebSocketServer({ port: this._options.port });
-
-    this._wss.on('connection', (ws) => {
-      this._log.verbose('Client connected');
-      ws.on('close', () => this._log.verbose('Client disconnected'));
-      ws.on('error', (err) => this._log.error(`Client error: ${err.message}`));
+  private startReloadServer() {
+    this._wss = new WebSocketServer({
+      port: this._options.port,
     });
 
-    this._wss.on('listening', () => {
-      this._log.info(`Reload server listening on port ${this._options.port}`);
-    });
+    this._wss
+      .on('listening', () => {
+        this._log.info(`Extension reload server listening on port: ${this._options.port}`);
+      })
+      .on('connection', (ws) => {
+        this._log.info(`Connected.`);
 
-    this._wss.on('error', (err) => {
-      this._log.error(`WebSocket server error: ${err.message}`);
-    });
+        ws.on('close', () => this._log.verbose('Websocket to extension disconnected.')).on(
+          'error',
+          (err) => this._log.error(`Websocket to extension encountered an error: ${err.message}`)
+        );
+      })
+
+      .on('error', (err) => {
+        this._log.error(`Extension reload server encountered an error: ${err.message}`);
+      });
   }
 
   /**
@@ -88,25 +90,77 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
         () => {
           const manifestName = 'manifest.json';
           const asset = compilation.assets[manifestName];
+          let manifest: chrome.runtime.ManifestV3;
 
           if (asset != null) {
             const source = asset.source().toString();
-            const manifest = JSON.parse(source);
+            manifest = JSON.parse(source);
             manifest.key = this._manifestKey;
             const newSource = JSON.stringify(manifest, null, 2);
 
             compilation.updateAsset(manifestName, new webpack.sources.RawSource(newSource));
           }
 
-          const backgroundName = 'background.js';
-          const backgroundAsset = compilation.assets[backgroundName];
+          const clientReloaderScriptContent = fs
+            .readFileSync(path.join(import.meta.dirname, 'client-reloader.js'), 'utf8')
+            .replace('{{websocketPort}}', this._options.port.toString());
 
-          if (backgroundAsset != null) {
-            const source = backgroundAsset.source().toString();
-            const clientScript = this.getClientScript();
-            const newSource = source + '\n' + clientScript;
+          if (manifest?.background?.service_worker != null) {
+            const serviceWorkerName = manifest.background.service_worker;
+            const serviceWorkerAsset = compilation.assets[serviceWorkerName];
 
-            compilation.updateAsset(backgroundName, new webpack.sources.RawSource(newSource));
+            if (serviceWorkerAsset != null) {
+              const serviceWorkerContents = serviceWorkerAsset.source().toString();
+              const modifiedServiceWorkerContents =
+                serviceWorkerContents + '\n' + clientReloaderScriptContent;
+
+              compilation.updateAsset(
+                serviceWorkerName,
+                new webpack.sources.RawSource(modifiedServiceWorkerContents)
+              );
+            }
+
+            const defaultPopupHtmlName = manifest.action?.default_popup;
+            const defaultPopupHtmlAsset = compilation.assets[defaultPopupHtmlName];
+
+            if (defaultPopupHtmlAsset != null) {
+              if (defaultPopupHtmlAsset != null) {
+                const defaultPopupHtmlContents = defaultPopupHtmlAsset.source().toString();
+                const modifiedDefaultPopupHtmlContents = defaultPopupHtmlContents.replace(
+                  '</body>',
+                  `<script>
+                      ${clientReloaderScriptContent}
+                  </script>
+                  </body>`
+                );
+
+                compilation.updateAsset(
+                  defaultPopupHtmlName,
+                  new webpack.sources.RawSource(modifiedDefaultPopupHtmlContents)
+                );
+              }
+            }
+
+            const optionsHtmlName = manifest.options_page || manifest.options_ui?.page;
+            const optionsHtmlAsset = compilation.assets[optionsHtmlName];
+
+            if (optionsHtmlAsset != null) {
+              if (optionsHtmlAsset != null) {
+                const optionsHtmlContents = optionsHtmlAsset.source().toString();
+                const modifiedOptionsHtmlContents = optionsHtmlContents.replace(
+                  '</body>',
+                  `<script>
+                     ${clientReloaderScriptContent}
+                  </script>
+                  </body>`
+                );
+
+                compilation.updateAsset(
+                  optionsHtmlName,
+                  new webpack.sources.RawSource(modifiedOptionsHtmlContents)
+                );
+              }
+            }
           }
         }
       );
@@ -118,8 +172,8 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
         this.scheduleReload();
       }
 
-      // launch the browser only if configured to auto-launch and the browser is not already running
-      if (this._options.autoLaunchBrowser && this._browser == null) {
+      // launch the browser only if configured to auto-launch and the browser is not already running (i.e it has no active client connections)
+      if (this._options.autoLaunchBrowser && !this.isConnected()) {
         this.launchBrowser();
       }
 
@@ -127,10 +181,18 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
     });
 
     compiler.hooks.shutdown.tap(this.name, async () => {
-      if (this._wss) {
-        this._wss.close();
-        this._log.verbose('Server closed');
+      this._wss.close();
+      this._log.verbose('Server closed');
+    });
+  }
+
+  private isConnected(): boolean {
+    return Array.from(this._wss.clients).some((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        return true;
       }
+
+      return false;
     });
   }
 
@@ -147,10 +209,11 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
   }
 
   private broadcastReload() {
-    if (!this._wss) return;
-    this._log.info('Broadcasting reload signal...');
+    this._log.info('Reloading extension...');
+
     this._wss.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
+        this._log.verbose(`Reloading client: ${client.url}`);
         client.send('reload');
       }
     });
@@ -165,7 +228,7 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
         throw new Error('Chrome not found');
       }
 
-      this._browser = spawn(
+      const browser = spawn(
         chromePath,
         [
           `--load-extension=${this._extensionPath}`,
@@ -176,63 +239,12 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
             : null,
         ].filter(Boolean) as string[],
         { detached: true, stdio: 'ignore' }
-      ).on('close', (code) => {
-        this._log.verbose(`Chrome process exited with code ${code}`);
-        this._browser = null;
-      });
-      this._browser.unref();
+      );
+
+      browser.unref();
     } catch (e) {
       this._log.error(`Failed to launch browser: ${e.message}`);
     }
-  }
-
-  private getClientScript(): string {
-    return `
-      (function() {
-        let ws;
-        let retryInterval;
-
-        function connect() {
-            if (ws) return;
-            ws = new WebSocket('ws://localhost:${this._options.port}');
-
-            ws.onopen = () => {
-                console.log('[Vertex IDE Reloader] Connected to build server');
-                if (retryInterval) {
-                    clearInterval(retryInterval);
-                    retryInterval = null;
-                }
-            };
-
-            ws.onmessage = (event) => {
-                if (event.data === 'reload') {
-                    console.log('[Vertex IDE Reloader] Reloading extension...');
-                    chrome.runtime.reload();
-                }
-            };
-
-            ws.onclose = () => {
-                ws = null;
-                console.log('[Vertex IDE Reloader] Disconnected. Retrying in 1s...');
-                if (!retryInterval) {
-                    retryInterval = setInterval(connect, 1000);
-                }
-            };
-
-            ws.onerror = (err) => {
-                console.error('[Vertex IDE Reloader] WebSocket error:', err);
-                ws.close(); // Ensure close is called to trigger retry
-            };
-        }
-
-        connect();
-
-        // Keep-alive for service worker
-        setInterval(() => {
-            chrome.runtime.getPlatformInfo(() => {});
-        }, 20000);
-      })();
-      `;
   }
 
   private writePluginExtensionMetadata() {

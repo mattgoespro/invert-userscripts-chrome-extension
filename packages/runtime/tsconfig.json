@@ -6,7 +6,7 @@
     "outDir": "dist/packages/runtime",
     "paths": {
       "@/*": ["./src/*"],
-      "@shared/*": ["packages/shared/src/*"]
+      "@shared/*": ["../shared/src/*"]
     }
   },
   "references": [

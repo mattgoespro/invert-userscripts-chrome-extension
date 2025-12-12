@@ -1,0 +1,21 @@
+@use "~/theme" as theme;
+@use "sass:map";
+
+.input-wrapper {
+  .input-label {
+    color: map.get(theme.$theme, palette, input-label-color);
+    font-family: map.get(theme.$theme, palette, input-label-font-family);
+    font-size: map.get(theme.$theme, palette, input-label-font-size);
+    margin-bottom: 0.25rem;
+    text-transform: uppercase;
+  }
+
+  .input-field {
+    background-color: map.get(theme.$theme, palette, input-background);
+    color: map.get(theme.$theme, palette, input-foreground);
+    font-family: map.get(theme.$theme, palette, input-font-family);
+    font-size: map.get(theme.$theme, palette, input-font-size);
+    max-width: map.get(theme.$theme, palette, input-max-width);
+    border: none;
+  }
+}

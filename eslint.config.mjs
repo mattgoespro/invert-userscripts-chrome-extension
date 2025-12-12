@@ -24,21 +24,15 @@ function configureTsEslintConfig(rootDir, files) {
   };
 }
 
-export default {
+export const base = {
   config: defineConfig(
     {
       ignores: ['temp', 'node_modules', 'out', 'dist'],
     },
     tseslint.configs.recommended,
-    {
-      files: ['tools/**/*.ts'],
-      languageOptions: {
-        parserOptions: {
-          tsconfigRootDir: import.meta.dirname,
-        },
-      },
-      ...configureTsEslintConfig(import.meta.dirname, ['**/*.ts']),
-    }
+    configureTsEslintConfig(import.meta.dirname, ['**/*.ts'])
   ),
   configureTsEslintConfig,
 };
+
+export default base.config;

@@ -3,13 +3,12 @@ import FaviconsWebpackPlugin from 'favicons-webpack-plugin';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import path from 'path';
 import TerserPlugin from 'terser-webpack-plugin';
-import TsConfigPathsWebpackPlugin from 'tsconfig-paths-webpack-plugin';
-import type { Configuration } from 'webpack';
+import webpack from 'webpack';
 import { ChromeExtensionReloaderWebpackPlugin } from './tools/chrome-extension-reloader-webpack-plugin.ts';
 
 const __dirname = import.meta.dirname;
 
-export default (_args: Record<string, any>, { mode }: { mode: 'development' | 'production' }) =>
+export default (_args: unknown, { mode }: { mode: 'development' | 'production' }) =>
   ({
     mode,
     devtool: mode === 'production' ? false : 'inline-source-map',
@@ -93,13 +92,10 @@ export default (_args: Record<string, any>, { mode }: { mode: 'development' | 'p
     resolve: {
       extensions: ['.tsx', '.ts', '.js', '.scss'],
       alias: {
-        '~': path.resolve(__dirname, 'packages/renderer/src/assets/'),
+        '~/theme': path.resolve(__dirname, 'packages/renderer/src/assets/styles/theme.scss'),
+        '@': path.resolve(__dirname, 'packages/renderer/src/'),
+        '@shared': path.resolve(__dirname, 'packages/shared/src/'),
       },
-      plugins: [
-        new TsConfigPathsWebpackPlugin({
-          configFile: path.join(__dirname, 'tsconfig.base.json'),
-        }),
-      ],
     },
     plugins: [
       new HtmlWebpackPlugin({
@@ -111,6 +107,22 @@ export default (_args: Record<string, any>, { mode }: { mode: 'development' | 'p
         template: './packages/renderer/src/options/index.html',
         filename: 'options.html',
         chunks: ['options'],
+      }),
+      new webpack.ContextReplacementPlugin(/typescript\/lib\/typescript.js/),
+      new CopyWebpackPlugin({
+        patterns: [
+          {
+            from: path.join(__dirname, 'public', 'manifest.json'),
+            to: path.join(__dirname, 'dist'),
+            transform: (content) => {
+              const manifest: chrome.runtime.ManifestV3 = JSON.parse(content.toString());
+
+              delete manifest.$schema;
+
+              return JSON.stringify(manifest);
+            },
+          },
+        ],
       }),
       new FaviconsWebpackPlugin({
         logo: path.resolve(__dirname, 'public', 'assets', 'icon.png'),
@@ -133,21 +145,6 @@ export default (_args: Record<string, any>, { mode }: { mode: 'development' | 'p
             verbose: true,
           })
         : false,
-      new CopyWebpackPlugin({
-        patterns: [
-          {
-            from: path.join(__dirname, 'public', 'manifest.json'),
-            to: path.join(__dirname, 'dist'),
-            transform: (content) => {
-              const manifest: chrome.runtime.ManifestV3 = JSON.parse(content.toString());
-
-              delete manifest.$schema;
-
-              return JSON.stringify(manifest);
-            },
-          },
-        ],
-      }),
     ],
     optimization:
       mode === 'production'
@@ -180,4 +177,4 @@ export default (_args: Record<string, any>, { mode }: { mode: 'development' | 'p
           }
         : undefined,
     cache: true,
-  }) satisfies Configuration;
+  }) satisfies webpack.Configuration;

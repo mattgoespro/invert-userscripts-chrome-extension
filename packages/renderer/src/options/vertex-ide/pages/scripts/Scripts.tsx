@@ -1,9 +1,13 @@
+import { TypeScriptCompiler } from '@shared/compiler';
 import { AppSettings, ScriptFile, UserScript } from '@shared/model';
-import { CodeEditor } from '../../code-editor/CodeEditor';
-import './Scripts.scss';
 import { IDEStorageManager } from '@shared/storage';
 import { useState } from 'react';
-import { TypeScriptCompiler } from '@shared/compiler';
+import { CodeEditor } from '../../code-editor/CodeEditor';
+import './Scripts.scss';
+import { Input } from '@/shared/components/input/Input';
+import { Button } from '@/shared/components/button/Button';
+import { Checkbox } from '@/shared/components/checkbox/Checkbox';
+import { PlusIcon, XIcon } from 'lucide-react';
 
 type ScriptsProps = {
   settings: AppSettings;
@@ -161,7 +165,7 @@ export function Scripts({ settings }: ScriptsProps) {
   };
 
   return (
-    <div className="scripts-tab">
+    <div className="scripts-content">
       <div className="scripts-sidebar">
         <div className="sidebar-header">
           <h2>Scripts</h2>
@@ -199,35 +203,25 @@ export function Scripts({ settings }: ScriptsProps) {
           <>
             <div className="editor-header">
               <div className="script-meta">
-                <input
-                  type="text"
+                <Input
+                  label="Name"
                   value={selectedScript.name}
                   onChange={(e) => handleUpdateScriptMeta({ name: e.target.value })}
-                  className="input-script-name"
                 />
-                <input
-                  type="text"
+                <Input
+                  label="Description"
                   value={selectedScript.description}
                   onChange={(e) => handleUpdateScriptMeta({ description: e.target.value })}
-                  className="input-script-description"
-                  placeholder="Description"
                 />
-                <label className="checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={selectedScript.enabled}
-                    onChange={(e) => handleUpdateScriptMeta({ enabled: e.target.checked })}
-                  />
-                  Enabled
-                </label>
+                <Checkbox
+                  label="Enabled"
+                  checked={selectedScript.enabled}
+                  onChange={(value) => handleUpdateScriptMeta({ enabled: value })}
+                />
               </div>
               <div className="editor-actions">
-                <button className="btn-primary" onClick={handleSaveFile}>
-                  💾 Save
-                </button>
-                <button className="btn-primary" onClick={handleCompile}>
-                  🔧 Compile & Bundle
-                </button>
+                <Button onClick={handleSaveFile}>💾 Save</Button>
+                <Button onClick={handleCompile}>🔧 Compile & Bundle</Button>
               </div>
             </div>
             <div className="url-patterns">
@@ -236,14 +230,14 @@ export function Scripts({ settings }: ScriptsProps) {
                 {selectedScript.urlPatterns.map((pattern, index) => (
                   <div key={index} className="pattern-item">
                     <span>{pattern}</span>
-                    <button className="btn-remove" onClick={() => handleRemoveUrlPattern(index)}>
-                      ✖
-                    </button>
+                    <Button className="btn-remove" onClick={() => handleRemoveUrlPattern(index)}>
+                      <XIcon />
+                    </Button>
                   </div>
                 ))}
-                <button className="btn-add-pattern" onClick={handleAddUrlPattern}>
-                  + Add Pattern
-                </button>
+                <Button className="btn-add-pattern" onClick={handleAddUrlPattern}>
+                  <PlusIcon />
+                </Button>
               </div>
             </div>
             <div className="editor-container">

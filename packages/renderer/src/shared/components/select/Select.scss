@@ -1,0 +1,20 @@
+@use "~/assets/globals" as globals;
+
+.select-wrapper {
+  .select-label {
+    color: globals.$input-label-color;
+    font-family: globals.$input-label-font-family;
+    font-size: globals.$input-label-font-size;
+    margin-bottom: 0.25rem;
+    text-transform: uppercase;
+  }
+
+  .select-field {
+    background-color: globals.$input-background;
+    color: globals.$input-foreground;
+    font-family: globals.$input-font-family;
+    font-size: globals.$input-font-size;
+    max-width: globals.$input-max-width;
+    border: none;
+  }
+}

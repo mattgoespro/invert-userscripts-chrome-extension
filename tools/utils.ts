@@ -1,4 +1,3 @@
-import { apps, openApp } from 'open';
 import webpack from 'webpack';
 import path from 'path';
 import fs from 'fs-extra';
