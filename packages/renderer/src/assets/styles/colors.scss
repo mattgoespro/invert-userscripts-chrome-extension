@@ -5,18 +5,19 @@ $base: (
   primary: #1868c4,
   secondary: #a13b88,
   background: #1e1e1e,
-  foreground: #f0f0f0
+  foreground: #f0f0f0,
+  grey: color.scale(#808080, $lightness: 50%)
 );
 
 $palette: (
-  primary: #1868c4,
-  secondary: #a13b88,
-  background: #1e1e1e,
-  foreground: #f0f0f0,
+  base: $base,
   input: (
     background: #2d2d2d,
     foreground: map.get($base, foreground),
     border: color.scale(map.get($base, background), $lightness: -10%)
+  ),
+  label: (
+    foreground: map.get($base, grey)
   ),
   info: #3178c6,
   warning: #c5b415,

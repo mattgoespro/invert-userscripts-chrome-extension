@@ -13,7 +13,7 @@ export function Checkbox({ label, checked, onChange }: CheckboxProps) {
 
   return (
     <label className="checkbox-wrapper">
-      <input type="checkbox" checked={checked} onChange={handleChange} />
+      <input type="checkbox" className="checkbox" checked={checked} onChange={handleChange} />
       <span className="checkbox-label">{label}</span>
     </label>
   );

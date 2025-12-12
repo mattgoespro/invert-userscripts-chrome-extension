@@ -2,20 +2,21 @@
 @use "sass:map";
 
 .input-wrapper {
+  display: contents;
+
   .input-label {
-    color: map.get(theme.$theme, palette, input-label-color);
-    font-family: map.get(theme.$theme, palette, input-label-font-family);
-    font-size: map.get(theme.$theme, palette, input-label-font-size);
-    margin-bottom: 0.25rem;
+    color: map.get(theme.$theme, palette, label, foreground);
+    font-family: map.get(theme.$theme, typography, label, font-family);
+    font-size: map.get(theme.$theme, typography, label, font-size);
     text-transform: uppercase;
   }
 
   .input-field {
-    background-color: map.get(theme.$theme, palette, input-background);
-    color: map.get(theme.$theme, palette, input-foreground);
-    font-family: map.get(theme.$theme, palette, input-font-family);
-    font-size: map.get(theme.$theme, palette, input-font-size);
-    max-width: map.get(theme.$theme, palette, input-max-width);
+    background-color: map.get(theme.$theme, palette, input, background);
+    color: map.get(theme.$theme, palette, input, foreground);
+    font-family: map.get(theme.$theme, palette, input, font-family);
+    font-size: map.get(theme.$theme, palette, input, font-size);
+    max-width: map.get(theme.$theme, palette, input, max-width);
     border: none;
   }
 }

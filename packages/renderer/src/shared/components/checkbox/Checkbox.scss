@@ -9,10 +9,11 @@
     margin-left: 0.5rem;
   }
 
-  input {
-    width: map.get(theme.$theme, palette, input-size);
-    height: map.get(theme.$theme, palette, input-size);
-    accent-color: map.get(theme.$theme, palette, input-accent-color);
+  .checkbox {
+    // TODO: Fix checkbox styling to match theme
+    width: 24px;
+    height: 24px;
+    background-color: map.get(theme.$theme, palette, input, background);
     border: none;
   }
 }

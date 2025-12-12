@@ -30,6 +30,7 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
   private _manifestKey: string;
   private _wss: WebSocketServer = null;
   private _reloader: NodeJS.Timeout = null;
+  private _lastClientDisconnect: number = 0;
 
   constructor(options: ChromeExtensionReloaderPluginOptions) {
     this._options = this.normalizeOptions(options);
@@ -62,9 +63,11 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
       .on('connection', (ws) => {
         this._log.info(`Connected.`);
 
-        ws.on('close', () => this._log.verbose('Websocket to extension disconnected.')).on(
-          'error',
-          (err) => this._log.error(`Websocket to extension encountered an error: ${err.message}`)
+        ws.on('close', () => {
+          this._log.verbose('Websocket to extension disconnected.');
+          this._lastClientDisconnect = Date.now();
+        }).on('error', (err) =>
+          this._log.error(`Websocket to extension encountered an error: ${err.message}`)
         );
       })
 
@@ -187,13 +190,27 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
   }
 
   private isConnected(): boolean {
-    return Array.from(this._wss.clients).some((client) => {
+    const connected = Array.from(this._wss.clients).some((client) => {
       if (client.readyState === WebSocket.OPEN) {
         return true;
       }
 
       return false;
     });
+
+    if (connected) {
+      return true;
+    }
+
+    const RECONNECT_GRACE_PERIOD = 2000;
+    if (
+      this._lastClientDisconnect > 0 &&
+      Date.now() - this._lastClientDisconnect < RECONNECT_GRACE_PERIOD
+    ) {
+      return true;
+    }
+
+    return false;
   }
 
   private scheduleReload(): void {
@@ -217,6 +234,8 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
         client.send('reload');
       }
     });
+
+    this._log.info('Reloaded.');
   }
 
   private async launchBrowser() {

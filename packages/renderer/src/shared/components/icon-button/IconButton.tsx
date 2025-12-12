@@ -1,9 +1,9 @@
-import { ButtonHTMLAttributes, PropsWithChildren } from 'react';
+import { ButtonHTMLAttributes, MouseEventHandler, PropsWithChildren } from 'react';
 import './IconButton.scss';
 
 type IconButtonProps = PropsWithChildren<
   {
-    onClick?: () => void;
+    onClick?: MouseEventHandler<HTMLButtonElement>;
     disabled?: boolean;
     active?: boolean;
   } & ButtonHTMLAttributes<HTMLButtonElement>

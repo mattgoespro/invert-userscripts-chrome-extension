@@ -3,31 +3,38 @@
 
 $typography: (
   title: (
-    font-family: "Open Sans, Tahoma, Geneva, Verdana, sans-serif",
+    font-family: Open Sans,
     font-size: 1.5rem,
     line-height: 1.2,
     font-weight: bold,
     color: map.get(colors.$palette, heading-color)
   ),
   body: (
-    font-family: "Open Sans, Tahoma, Geneva, Verdana, sans-serif",
+    font-family: Open Sans,
     font-size: 0.5rem,
     line-height: 1.5,
     font-weight: normal,
-    color: map.get(colors.$palette, foreground)
+    color: map.get(colors.$palette, base, foreground)
   ),
   button: (
-    font-family: "Nunito Sans, Courier New, monospace",
+    font-family: Nunito Sans,
     font-size: 0.5rem,
-    line-height: 1.2,
+    line-height: 1.5,
     font-weight: normal,
-    color: map.get(colors.$palette, foreground)
+    color: map.get(colors.$palette, base, foreground)
   ),
   input: (
-    font-family: "Nunito Sans, Courier New, monospace",
+    font-family: Nunito Sans,
     font-size: 0.825em,
-    line-height: 1.2,
+    line-height: 1.5,
     font-weight: normal,
-    color: map.get(colors.$palette, input-foreground)
+    color: map.get(colors.$palette, input, foreground)
+  ),
+  label: (
+    font-family: Nunito Sans,
+    font-size: 0.875em,
+    line-height: 1.5,
+    font-weight: bold,
+    color: map.get(colors.$palette, label, foreground)
   )
 );

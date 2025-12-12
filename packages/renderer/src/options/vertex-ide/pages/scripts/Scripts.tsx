@@ -1,13 +1,15 @@
 import { TypeScriptCompiler } from '@shared/compiler';
 import { AppSettings, ScriptFile, UserScript } from '@shared/model';
 import { IDEStorageManager } from '@shared/storage';
-import { useState } from 'react';
-import { CodeEditor } from '../../code-editor/CodeEditor';
+import { useEffect, useState } from 'react';
+import { CodeEditor } from './code-editor/CodeEditor';
 import './Scripts.scss';
 import { Input } from '@/shared/components/input/Input';
 import { Button } from '@/shared/components/button/Button';
 import { Checkbox } from '@/shared/components/checkbox/Checkbox';
-import { PlusIcon, XIcon } from 'lucide-react';
+import { PlusIcon, TrashIcon, XIcon } from 'lucide-react';
+import { uuid } from '@/shared/utils';
+import { IconButton } from '@/shared/components/icon-button/IconButton';
 
 type ScriptsProps = {
   settings: AppSettings;
@@ -29,6 +31,10 @@ export function Scripts({ settings }: ScriptsProps) {
     setScripts(loadedScripts);
   };
 
+  useEffect(() => {
+    loadData();
+  }, [settings]);
+
   const loadScriptFiles = async (scriptId: string) => {
     const files = await IDEStorageManager.getScriptFiles(scriptId);
 
@@ -49,9 +55,9 @@ export function Scripts({ settings }: ScriptsProps) {
 
   const handleCreateScript = async () => {
     const newScript: UserScript = {
-      id: Date.now().toString(),
-      name: 'New Script',
-      description: 'Script description',
+      id: uuid(),
+      name: '',
+      description: '',
       enabled: false,
       code: '',
       urlPatterns: [],
@@ -182,16 +188,16 @@ export function Scripts({ settings }: ScriptsProps) {
             >
               <div className="script-item-header">
                 <span className="script-name">{script.name}</span>
-                <button
+                <IconButton
                   className="btn-delete"
-                  onClick={(e) => {
-                    e.stopPropagation();
+                  onClick={(event) => {
+                    event.stopPropagation();
                     handleDeleteScript(script.id);
                   }}
                   title="Delete script"
                 >
-                  🗑️
-                </button>
+                  <TrashIcon color="grey" size="1rem" />
+                </IconButton>
               </div>
               <div className="script-status">{script.enabled ? '✅ Enabled' : '⭕ Disabled'}</div>
             </div>

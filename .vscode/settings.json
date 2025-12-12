@@ -43,6 +43,16 @@
     "**/node_modules/**": true
   },
   "prettier.configPath": "prettier.config.mjs",
+  "scss.lint.duplicateProperties": "error",
+  "scss.lint.emptyRules": "warning",
+  "scss.lint.propertyIgnoredDueToDisplay": "warning",
+  "scss.lint.unknownAtRules": "warning",
+  "scss.lint.unknownProperties": "warning",
+  "scss.lint.zeroUnits": "warning",
+  "scss.showErrors": true,
+  "scss.validate": true,
+  "scssFormatter.printWidth": 100,
+  "scssFormatter.trailingComma": "all",
   "search.exclude": {
     "**/.vscode/**": true,
     "**/dist/**": true,
