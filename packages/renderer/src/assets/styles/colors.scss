@@ -1,25 +1,38 @@
 @use "sass:map";
 @use "sass:color";
 
-$base: (
-  primary: #1868c4,
-  secondary: #a13b88,
-  background: #1e1e1e,
-  foreground: #f0f0f0,
-  grey: color.scale(#808080, $lightness: 50%)
-);
+// color units
+$black: #1e1e1e;
+$white: #f0f0f0;
+$dark-grey: #2d2d2d;
+$grey: #808080;
+$blue: #1868c4;
+$purple: #a13b88;
+$orange: #ffba00fc;
+$red: #a02a2a;
 
 $palette: (
-  base: $base,
+  black: $black,
+  white: $white,
+  dark-grey: $dark-grey,
+  grey: $grey,
+  blue: $blue,
+  purple: $purple,
+  orange: $orange,
+  red: $red,
+  primary: $blue,
+  secondary: $purple,
+  background: $black,
+  foreground: $white,
   input: (
-    background: #2d2d2d,
-    foreground: map.get($base, foreground),
-    border: color.scale(map.get($base, background), $lightness: -10%)
+    background: $dark-grey,
+    foreground: $white,
+    border: $dark-grey
   ),
   label: (
-    foreground: map.get($base, grey)
+    foreground: $grey
   ),
-  info: #3178c6,
-  warning: #c5b415,
-  error: #a02a2a
+  info: $blue,
+  warning: $orange,
+  error: $red
 );

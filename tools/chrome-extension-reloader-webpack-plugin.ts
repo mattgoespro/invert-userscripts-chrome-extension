@@ -1,16 +1,18 @@
-import { spawn } from 'child_process';
 import crypto from 'crypto';
 import fs from 'fs-extra';
 import path from 'path';
 import webpack from 'webpack';
 import { WebSocket, WebSocketServer } from 'ws';
-import type { Logger } from './utils.ts';
-import { createLogger, resolveChromeExecutablePath } from './utils.ts';
+import type { Logger } from './chrome-extension-reloader-plugin-utils.ts';
+import {
+  createLogger,
+  launchChromeProcess,
+  loadReloaderClient,
+} from './chrome-extension-reloader-plugin-utils.ts';
 
 export interface ChromeExtensionReloaderPluginOptions {
   port?: number;
   autoLaunchBrowser?: boolean;
-  openBrowserPage?: string;
   verbose?: boolean;
 }
 
@@ -36,7 +38,7 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
     this._options = this.normalizeOptions(options);
     this._log = createLogger(this.name, { prefix: this.name, verbose: this._options.verbose });
 
-    this.writePluginExtensionMetadata();
+    this.setPluginExtensionMetadata();
     this.startReloadServer();
   }
 
@@ -46,7 +48,6 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
     return {
       port: options.port ?? 8081,
       autoLaunchBrowser: options.autoLaunchBrowser ?? false,
-      openBrowserPage: options.openBrowserPage ?? 'options.html',
       verbose: options.verbose ?? false,
     };
   }
@@ -64,13 +65,12 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
         this._log.info(`Connected.`);
 
         ws.on('close', () => {
-          this._log.verbose('Websocket to extension disconnected.');
+          this._log.verbose('Extension websocket disconnected.');
           this._lastClientDisconnect = Date.now();
         }).on('error', (err) =>
-          this._log.error(`Websocket to extension encountered an error: ${err.message}`)
+          this._log.error(`Extension websocket encountered an error: ${err.message}`)
         );
       })
-
       .on('error', (err) => {
         this._log.error(`Extension reload server encountered an error: ${err.message}`);
       });
@@ -88,90 +88,83 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
       compilation.hooks.processAssets.tap(
         {
           name: this.name,
-          stage: webpack.Compilation.PROCESS_ASSETS_STAGE_ADDITIONS,
+          stage: webpack.Compilation.PROCESS_ASSETS_STAGE_SUMMARIZE,
         },
-        () => {
+        (assets) => {
           const manifestName = 'manifest.json';
-          const asset = compilation.assets[manifestName];
-          let manifest: chrome.runtime.ManifestV3;
+          const manifestAsset = assets['manifest.json'];
+          let manifestContent: chrome.runtime.ManifestV3;
 
-          if (asset != null) {
-            const source = asset.source().toString();
-            manifest = JSON.parse(source);
-            manifest.key = this._manifestKey;
-            const newSource = JSON.stringify(manifest, null, 2);
+          if (manifestAsset != null) {
+            const source = manifestAsset.source().toString();
 
-            compilation.updateAsset(manifestName, new webpack.sources.RawSource(newSource));
+            manifestContent = JSON.parse(source);
+            manifestContent.key = this._manifestKey;
+
+            if (manifestContent.content_security_policy?.extension_pages) {
+              const csp = manifestContent.content_security_policy.extension_pages;
+              const wsUrl = `ws://localhost:${this._options.port}`;
+
+              if (csp.includes('connect-src')) {
+                manifestContent.content_security_policy.extension_pages = csp.replace(
+                  'connect-src',
+                  `connect-src ${wsUrl}`
+                );
+              } else {
+                manifestContent.content_security_policy.extension_pages =
+                  `${csp}; connect-src 'self' ${wsUrl}`.replace(/;;/g, ';');
+              }
+            }
+
+            compilation.updateAsset(
+              manifestName,
+              new webpack.sources.RawSource(JSON.stringify(manifestContent, null, 2))
+            );
           }
 
-          const clientReloaderScriptContent = fs
-            .readFileSync(path.join(import.meta.dirname, 'client-reloader.js'), 'utf8')
-            .replace('{{websocketPort}}', this._options.port.toString());
+          const clientReloaderScriptContent = loadReloaderClient([
+            ['websocketPort', this._options.port.toString()],
+          ]);
 
-          if (manifest?.background?.service_worker != null) {
-            const serviceWorkerName = manifest.background.service_worker;
-            const serviceWorkerAsset = compilation.assets[serviceWorkerName];
+          const reloaderScriptName = 'reloader-client.js';
+          compilation.emitAsset(
+            reloaderScriptName,
+            new webpack.sources.RawSource(clientReloaderScriptContent)
+          );
 
-            if (serviceWorkerAsset != null) {
-              const serviceWorkerContents = serviceWorkerAsset.source().toString();
-              const modifiedServiceWorkerContents =
-                serviceWorkerContents + '\n' + clientReloaderScriptContent;
+          if (manifestContent?.background?.service_worker != null) {
+            const manifestServiceWorkerName = manifestContent.background.service_worker;
+            const buildServiceWorkerAsset = compilation.assets[manifestServiceWorkerName];
 
+            if (buildServiceWorkerAsset != null) {
               compilation.updateAsset(
-                serviceWorkerName,
-                new webpack.sources.RawSource(modifiedServiceWorkerContents)
+                manifestServiceWorkerName,
+                new webpack.sources.RawSource(
+                  `${clientReloaderScriptContent}\n\n${buildServiceWorkerAsset.source().toString()}`
+                )
               );
             }
-
-            const defaultPopupHtmlName = manifest.action?.default_popup;
-            const defaultPopupHtmlAsset = compilation.assets[defaultPopupHtmlName];
-
-            if (defaultPopupHtmlAsset != null) {
-              if (defaultPopupHtmlAsset != null) {
-                const defaultPopupHtmlContents = defaultPopupHtmlAsset.source().toString();
-                const modifiedDefaultPopupHtmlContents = defaultPopupHtmlContents.replace(
-                  '</body>',
-                  `<script>
-                      ${clientReloaderScriptContent}
-                  </script>
-                  </body>`
-                );
-
-                compilation.updateAsset(
-                  defaultPopupHtmlName,
-                  new webpack.sources.RawSource(modifiedDefaultPopupHtmlContents)
-                );
-              }
-            }
-
-            const optionsHtmlName = manifest.options_page || manifest.options_ui?.page;
-            const optionsHtmlAsset = compilation.assets[optionsHtmlName];
-
-            if (optionsHtmlAsset != null) {
-              if (optionsHtmlAsset != null) {
-                const optionsHtmlContents = optionsHtmlAsset.source().toString();
-                const modifiedOptionsHtmlContents = optionsHtmlContents.replace(
-                  '</body>',
-                  `<script>
-                     ${clientReloaderScriptContent}
-                  </script>
-                  </body>`
-                );
-
-                compilation.updateAsset(
-                  optionsHtmlName,
-                  new webpack.sources.RawSource(modifiedOptionsHtmlContents)
-                );
-              }
-            }
           }
+
+          Object.keys(assets).forEach((assetName) => {
+            if (assetName.endsWith('.html')) {
+              const asset = assets[assetName];
+              const content = asset.source().toString();
+              const newContent = content.replace(
+                '</body>',
+                `<script src="${reloaderScriptName}"></script></body>`
+              );
+
+              compilation.updateAsset(assetName, new webpack.sources.RawSource(newContent));
+            }
+          });
         }
       );
     });
 
     compiler.hooks.done.tapAsync(this.name, async (stats, done) => {
       if (Object.keys(stats.compilation.assets).length > 0) {
-        this._log.verbose(`Build complete. Scheduling reload...`);
+        this._log.verbose(`Compilation complete. Scheduling reload...`);
         this.scheduleReload();
       }
 
@@ -190,13 +183,9 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
   }
 
   private isConnected(): boolean {
-    const connected = Array.from(this._wss.clients).some((client) => {
-      if (client.readyState === WebSocket.OPEN) {
-        return true;
-      }
-
-      return false;
-    });
+    const connected = Array.from(this._wss.clients).some(
+      (client) => client.readyState === WebSocket.OPEN
+    );
 
     if (connected) {
       return true;
@@ -226,47 +215,36 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
   }
 
   private broadcastReload() {
-    this._log.info('Reloading extension...');
+    this._log.verbose('Reloading extension...');
 
     this._wss.clients.forEach((client) => {
-      if (client.readyState === WebSocket.OPEN) {
-        this._log.verbose(`Reloading client: ${client.url}`);
-        client.send('reload');
+      if (client.readyState !== WebSocket.OPEN) {
+        this._log.warn('Skipped reloading disconnected client.');
+        return;
       }
+
+      client.send('reload');
     });
 
-    this._log.info('Reloaded.');
+    this._log.info('Reload complete.');
   }
 
   private async launchBrowser() {
     try {
       this._log.info('Launching Chrome...');
-      const chromePath = resolveChromeExecutablePath();
+      const browser = launchChromeProcess({
+        extensionPath: this._extensionPath,
+        page: `chrome-extension://${this._extensionId}/options.html`,
+      });
 
-      if (chromePath == null) {
-        throw new Error('Chrome not found');
-      }
-
-      const browser = spawn(
-        chromePath,
-        [
-          `--load-extension=${this._extensionPath}`,
-          '--no-first-run',
-          '--no-default-browser-check',
-          this._options.openBrowserPage
-            ? `chrome-extension://${this._extensionId}/${this._options.openBrowserPage}`
-            : null,
-        ].filter(Boolean) as string[],
-        { detached: true, stdio: 'ignore' }
-      );
-
+      // detach the browser process so that the plugin can continue without waiting for it to exit
       browser.unref();
     } catch (e) {
       this._log.error(`Failed to launch browser: ${e.message}`);
     }
   }
 
-  private writePluginExtensionMetadata() {
+  private setPluginExtensionMetadata() {
     fs.ensureDirSync(this.cacheDir);
 
     const keyPath = path.join(this.cacheDir, 'key.pem');

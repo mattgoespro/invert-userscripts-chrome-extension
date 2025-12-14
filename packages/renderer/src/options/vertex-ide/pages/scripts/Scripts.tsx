@@ -10,6 +10,7 @@ import { Checkbox } from '@/shared/components/checkbox/Checkbox';
 import { PlusIcon, TrashIcon, XIcon } from 'lucide-react';
 import { uuid } from '@/shared/utils';
 import { IconButton } from '@/shared/components/icon-button/IconButton';
+import { Typography } from '@/shared/components/typography/Typography';
 
 type ScriptsProps = {
   settings: AppSettings;
@@ -171,23 +172,23 @@ export function Scripts({ settings }: ScriptsProps) {
   };
 
   return (
-    <div className="scripts-content">
-      <div className="scripts-sidebar">
-        <div className="sidebar-header">
-          <h2>Scripts</h2>
-          <button className="btn-icon" onClick={handleCreateScript} title="Create new script">
-            &#x002b;
-          </button>
+    <div className="scripts--content">
+      <div className="scripts--sidebar">
+        <div className="scripts--sidebar-header">
+          <Typography variant="subtitle">Scripts</Typography>
+          <IconButton onClick={handleCreateScript} title="Create new script">
+            <PlusIcon color="grey" size="1rem" />
+          </IconButton>
         </div>
-        <div className="scripts-list">
+        <div className="scripts--list">
           {scripts.map((script) => (
             <div
               key={script.id}
-              className={`script-item ${selectedScript?.id === script.id ? 'active' : ''}`}
+              className={`scripts--list-item ${selectedScript?.id === script.id ? 'active' : ''}`}
               onClick={() => handleScriptSelect(script)}
             >
-              <div className="script-item-header">
-                <span className="script-name">{script.name}</span>
+              <div className="scripts--list-item-header">
+                <span className="scripts--list-item-name">{script.name}</span>
                 <IconButton
                   className="btn-delete"
                   onClick={(event) => {
@@ -199,16 +200,18 @@ export function Scripts({ settings }: ScriptsProps) {
                   <TrashIcon color="grey" size="1rem" />
                 </IconButton>
               </div>
-              <div className="script-status">{script.enabled ? '✅ Enabled' : '⭕ Disabled'}</div>
+              <div className="scripts--list-item-status">
+                {script.enabled ? '✅ Enabled' : '⭕ Disabled'}
+              </div>
             </div>
           ))}
         </div>
       </div>
-      <div className="editor-area">
+      <div className="scripts--editor-area">
         {selectedScript ? (
           <>
-            <div className="editor-header">
-              <div className="script-meta">
+            <div className="scripts--editor-header">
+              <div className="scripts--script-details">
                 <Input
                   label="Name"
                   value={selectedScript.name}
@@ -225,48 +228,52 @@ export function Scripts({ settings }: ScriptsProps) {
                   onChange={(value) => handleUpdateScriptMeta({ enabled: value })}
                 />
               </div>
-              <div className="editor-actions">
+              <div className="scripts--editor-actions">
                 <Button onClick={handleSaveFile}>💾 Save</Button>
                 <Button onClick={handleCompile}>🔧 Compile & Bundle</Button>
               </div>
             </div>
-            <div className="url-patterns">
-              <h3>URL Patterns</h3>
-              <div className="patterns-list">
+            <div className="scripts--url-patterns">
+              <Typography variant="body">URL Patterns</Typography>
+              <div className="scripts--patterns-list">
                 {selectedScript.urlPatterns.map((pattern, index) => (
-                  <div key={index} className="pattern-item">
+                  <div key={index} className="scripts--pattern-item">
                     <span>{pattern}</span>
-                    <Button className="btn-remove" onClick={() => handleRemoveUrlPattern(index)}>
+                    <Button onClick={() => handleRemoveUrlPattern(index)}>
                       <XIcon />
                     </Button>
                   </div>
                 ))}
-                <Button className="btn-add-pattern" onClick={handleAddUrlPattern}>
+                <Button onClick={handleAddUrlPattern}>
                   <PlusIcon />
                 </Button>
               </div>
             </div>
-            <div className="editor-container">
+            <div className="scripts--editor-container">
               {selectedFile && (
-                <CodeEditor value={selectedFile.content} onChange={handleEditorChange} />
+                <div className="scripts--editor">
+                  <CodeEditor value={selectedFile.content} onChange={handleEditorChange} />
+                </div>
               )}
-            </div>
-            {typeCheckErrors.length > 0 && (
-              <div className="type-check-errors">
-                <h4>Type Check Errors:</h4>
-                {typeCheckErrors.map((error, index) => (
-                  <div key={index} className="error-item">
-                    {error}
+              <div className="scripts--compilation">
+                {typeCheckErrors.length > 0 && (
+                  <div className="scripts--compilation-type-errors">
+                    <Typography variant="subtitle">Type Check Errors:</Typography>
+                    {typeCheckErrors.map((error, index) => (
+                      <div key={index} className="scripts--compilation-type-errors-error">
+                        {error}
+                      </div>
+                    ))}
                   </div>
-                ))}
+                )}
+                {compileOutput && (
+                  <div className="scripts--compilation-output">
+                    <Typography variant="subtitle">Compiled Output:</Typography>
+                    <pre>{compileOutput}</pre>
+                  </div>
+                )}
               </div>
-            )}
-            {compileOutput && (
-              <div className="compile-output">
-                <h4>Compiled Output:</h4>
-                <pre>{compileOutput}</pre>
-              </div>
-            )}
+            </div>
           </>
         ) : (
           <div className="empty-editor">

@@ -9,32 +9,39 @@ $typography: (
     font-weight: bold,
     color: map.get(colors.$palette, heading-color)
   ),
+  subtitle: (
+    font-family: Open Sans,
+    font-size: 1.25rem,
+    font-weight: normal,
+    line-height: 1.3,
+    color: map.get(colors.$palette, heading-color)
+  ),
   body: (
     font-family: Open Sans,
     font-size: 0.5rem,
-    line-height: 1.5,
     font-weight: normal,
+    line-height: 1.5,
     color: map.get(colors.$palette, base, foreground)
   ),
   button: (
     font-family: Nunito Sans,
     font-size: 0.5rem,
-    line-height: 1.5,
     font-weight: normal,
+    line-height: 1.5,
     color: map.get(colors.$palette, base, foreground)
   ),
   input: (
     font-family: Nunito Sans,
-    font-size: 0.825em,
+    font-size: 0.875rem,
+    font-weight: 300,
     line-height: 1.5,
-    font-weight: normal,
     color: map.get(colors.$palette, input, foreground)
   ),
   label: (
     font-family: Nunito Sans,
     font-size: 0.875em,
-    line-height: 1.5,
     font-weight: bold,
+    line-height: 1.5,
     color: map.get(colors.$palette, label, foreground)
   )
 );

@@ -1,5 +1,5 @@
 {
-  "include": ["tools", "*.ts"],
+  "include": ["tools/**/*.ts", "tools/**/*.js", "*.ts"],
   "compilerOptions": {
     "baseUrl": ".",
     "module": "esnext",

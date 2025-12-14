@@ -1,16 +1,22 @@
-@use "~/theme" as theme;
 @use "sass:map";
+@use "~/theme" as theme;
 
 .checkbox-wrapper {
   .checkbox-label {
-    color: map.get(theme.$theme, palette, input-foreground);
-    font-family: map.get(theme.$theme, palette, input-label-font-family);
-    font-size: map.get(theme.$theme, palette, input-label-font-size);
+    color: map.get(theme.$theme, palette, input, foreground);
+    font-family: map.get(theme.$theme, typography, label, font-family);
+    font-size: map.get(theme.$theme, typography, label, font-size);
     margin-left: 0.5rem;
   }
 
-  .checkbox {
-    // TODO: Fix checkbox styling to match theme
+  .checkbox:not(:checked) {
+    width: 24px;
+    height: 24px;
+    background-color: map.get(theme.$theme, palette, input, background);
+    border: none;
+  }
+
+  .checkbox:checked {
     width: 24px;
     height: 24px;
     background-color: map.get(theme.$theme, palette, input, background);

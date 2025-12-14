@@ -1,9 +1,11 @@
 import { defineConfig } from 'eslint/config';
 import tseslint from 'typescript-eslint';
 
+/** @type { (rootDir: string, files: string[]) => import("eslint").Linter.Config } */
 function configureTsEslintConfig(rootDir, files) {
   return {
     files,
+    ignores: ['**/node_modules/**', '**/dist/**'],
     languageOptions: {
       parserOptions: {
         tsconfigRootDir: rootDir,
@@ -27,7 +29,7 @@ function configureTsEslintConfig(rootDir, files) {
 export const base = {
   config: defineConfig(
     {
-      ignores: ['temp', 'node_modules', 'out', 'dist'],
+      ignores: ['**/node_modules/**', '**/dist/**'],
     },
     tseslint.configs.recommended,
     configureTsEslintConfig(import.meta.dirname, ['**/*.ts'])

@@ -20,6 +20,10 @@ export function VertexIde() {
     loadData();
   }, []);
 
+  const onNavigate = (tab: SidebarButton) => {
+    setActiveTab(tab);
+  };
+
   return (
     <div className="dashboard">
       <div className="dashboard-header">
@@ -28,7 +32,7 @@ export function VertexIde() {
       </div>
       <div className="dashboard-content">
         <div className="sidebar-wrapper">
-          <Sidebar active={activeTab} onNavigate={setActiveTab} />
+          <Sidebar active={activeTab} onNavigate={onNavigate} />
         </div>
         <div className="sidebar-content">
           {activeTab === 'scripts' && <Scripts settings={settings} />}

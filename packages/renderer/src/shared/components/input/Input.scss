@@ -5,18 +5,23 @@
   display: contents;
 
   .input-label {
-    color: map.get(theme.$theme, palette, label, foreground);
     font-family: map.get(theme.$theme, typography, label, font-family);
     font-size: map.get(theme.$theme, typography, label, font-size);
+    font-weight: map.get(theme.$theme, typography, label, font-weight);
+    line-height: map.get(theme.$theme, typography, label, line-height);
+    color: map.get(theme.$theme, palette, label, foreground);
     text-transform: uppercase;
   }
 
   .input-field {
-    background-color: map.get(theme.$theme, palette, input, background);
+    font-family: map.get(theme.$theme, typography, input, font-family);
+    font-size: map.get(theme.$theme, typography, input, font-size);
+    font-weight: map.get(theme.$theme, typography, input, font-weight);
+    line-height: map.get(theme.$theme, typography, input, line-height);
     color: map.get(theme.$theme, palette, input, foreground);
-    font-family: map.get(theme.$theme, palette, input, font-family);
-    font-size: map.get(theme.$theme, palette, input, font-size);
-    max-width: map.get(theme.$theme, palette, input, max-width);
+    height: 3rem;
+    padding: 0.5rem;
+    background-color: map.get(theme.$theme, palette, input, background);
     border: none;
   }
 }

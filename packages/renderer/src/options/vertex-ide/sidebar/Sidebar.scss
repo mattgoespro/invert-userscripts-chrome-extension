@@ -1,9 +1,13 @@
+@use "sass:map";
+@use "~/theme" as theme;
+
 .sidebar {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.5rem;
   width: 75px;
-  margin-right: 1rem;
-  border-right: 1px solid #23272a;
+  height: 100%;
+  padding: 1rem;
+  background: map.get(theme.$theme, palette, black);
 }
