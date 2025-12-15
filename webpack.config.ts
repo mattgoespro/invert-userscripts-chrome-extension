@@ -141,7 +141,6 @@ export default (_args: unknown, { mode }: { mode: 'development' | 'production' }
       }),
       mode === 'development'
         ? new ChromeExtensionReloaderWebpackPlugin({
-            autoLaunchBrowser: true,
             verbose: true,
           })
         : false,

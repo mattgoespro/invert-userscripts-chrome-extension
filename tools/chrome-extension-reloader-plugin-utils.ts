@@ -6,29 +6,29 @@ import console from 'console';
 
 type LogLevel = 'INFO' | 'WARN' | 'ERROR' | 'VERB';
 
-export const createLogger = (name: string, options: { prefix: string; verbose?: boolean }) => {
+export const createLogger = (name: string, options: { verbose?: boolean }) => {
   const Colors = webpack.cli.createColors();
   const loggerName = `${Colors.italic(Colors.cyan(name))} `;
 
   const padLevel = (level: LogLevel) => level.padEnd(5);
 
-  const createPrefix = (level: LogLevel, color: (text: string) => string) =>
+  const styleLevel = (level: LogLevel, color: (text: string) => string) =>
     Colors.bold(color(padLevel(level)));
 
   return {
     info: (message: string) => {
       console.info(
-        `${loggerName} ${createPrefix('INFO', Colors.green)} ${Colors.greenBright(message)}`
+        `${loggerName} ${styleLevel('INFO', Colors.green)} ${Colors.greenBright(message)}`
       );
     },
     warn: (message: string) => {
       console.warn(
-        `${loggerName} ${createPrefix('WARN', Colors.yellow)} ${Colors.yellowBright(message)}`
+        `${loggerName} ${styleLevel('WARN', Colors.yellow)} ${Colors.yellowBright(message)}`
       );
     },
     error: (message: string) => {
       console.error(
-        `${loggerName} ${createPrefix('ERROR', Colors.red)} ${Colors.redBright(message)}`
+        `${loggerName} ${styleLevel('ERROR', Colors.red)} ${Colors.redBright(message)}`
       );
     },
     verbose: (message: string | object) => {
@@ -42,7 +42,7 @@ export const createLogger = (name: string, options: { prefix: string; verbose?: 
       }
 
       console.info(
-        `${loggerName} ${createPrefix('VERB', Colors.gray)} ${Colors.gray(Colors.italic(message))}`
+        `${loggerName} ${styleLevel('VERB', Colors.gray)} ${Colors.gray(Colors.italic(message))}`
       );
     },
   };

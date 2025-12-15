@@ -94,12 +94,10 @@ export function Scripts({ settings }: ScriptsProps) {
   };
 
   const handleAddUrlPattern = () => {
-    if (selectedScript) {
-      const pattern = prompt('Enter URL pattern (e.g., https://example.com/*)');
-      if (pattern) {
-        const patterns = [...selectedScript.urlPatterns, pattern];
-        handleUpdateScriptMeta({ urlPatterns: patterns });
-      }
+    const pattern = prompt('Enter URL pattern (e.g., https://example.com/*)');
+    if (pattern) {
+      const patterns = [...selectedScript.urlPatterns, pattern];
+      handleUpdateScriptMeta({ urlPatterns: patterns });
     }
   };
 
@@ -111,33 +109,24 @@ export function Scripts({ settings }: ScriptsProps) {
   };
 
   const handleEditorChange = (value: string) => {
-    if (selectedFile && value !== undefined) {
-      const updated = { ...selectedFile, content: value };
-      setSelectedFile(updated);
+    const updated = { ...selectedFile, content: value };
+    setSelectedFile(updated);
 
-      // Auto-save if enabled
-      if (settings?.autoSave) {
-        IDEStorageManager.saveScriptFile(updated);
-      }
-
-      // Type check if enabled
-      if (settings?.enableTypeChecking && selectedFile.language === 'typescript') {
-        const errors = TypeScriptCompiler.typeCheck(value, selectedFile.name);
-        setTypeCheckErrors(errors);
-      }
+    // Auto-save if enabled
+    if (settings?.autoSave) {
+      IDEStorageManager.saveScriptFile(updated);
     }
+
+    const errors = TypeScriptCompiler.typeCheck(value, selectedFile.name);
+    setTypeCheckErrors(errors);
   };
 
   const handleSaveFile = async () => {
-    if (selectedFile) {
-      await IDEStorageManager.saveScriptFile(selectedFile);
-      alert('File saved successfully!');
-    }
+    await IDEStorageManager.saveScriptFile(selectedFile);
+    alert('File saved successfully!');
   };
 
   const handleCompile = async () => {
-    if (!selectedFile) return;
-
     setCompileOutput('Compiling...');
 
     const result = TypeScriptCompiler.compile(selectedFile.content, selectedFile.name);
@@ -163,12 +152,10 @@ export function Scripts({ settings }: ScriptsProps) {
   };
 
   const handleUpdateScriptMeta = async (updates: Partial<UserScript>) => {
-    if (selectedScript) {
-      const updated = { ...selectedScript, ...updates, updatedAt: Date.now() };
-      await IDEStorageManager.saveScript(updated);
-      setSelectedScript(updated);
-      await loadData();
-    }
+    const updated = { ...selectedScript, ...updates, updatedAt: Date.now() };
+    await IDEStorageManager.saveScript(updated);
+    setSelectedScript(updated);
+    await loadData();
   };
 
   return (

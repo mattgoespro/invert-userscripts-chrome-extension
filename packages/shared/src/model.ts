@@ -39,7 +39,6 @@ export interface AppSettings {
   tabSize: number;
   autoFormat: boolean;
   autoSave: boolean;
-  enableTypeChecking: boolean;
 }
 
 export interface CompileResult {
