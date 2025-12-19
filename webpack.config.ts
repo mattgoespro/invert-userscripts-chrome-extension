@@ -80,7 +80,7 @@ export default (_args: unknown, { mode }: { mode: 'development' | 'production' }
           use: ['style-loader', 'css-loader'],
         },
         {
-          // For monaco editor
+          // Fonts bundled with monaco-editor
           test: /\.ttf$/,
           type: 'asset/resource',
           generator: {
@@ -90,7 +90,7 @@ export default (_args: unknown, { mode }: { mode: 'development' | 'production' }
       ],
     },
     resolve: {
-      extensions: ['.tsx', '.ts', '.js', '.scss'],
+      extensions: ['.tsx', '.ts', '.js', '.scss', '.css'],
       alias: {
         '~/theme': path.resolve(__dirname, 'packages/renderer/src/assets/styles/theme.scss'),
         '@': path.resolve(__dirname, 'packages/renderer/src/'),
@@ -145,35 +145,33 @@ export default (_args: unknown, { mode }: { mode: 'development' | 'production' }
           })
         : false,
     ],
-    optimization:
-      mode === 'production'
-        ? {
-            minimize: true,
-            minimizer: [
-              new TerserPlugin({
-                extractComments: false,
-              }),
-            ],
-            splitChunks: {
-              cacheGroups: {
-                defaultVendors: false,
-                vendors: {
-                  test: /[\\/]node_modules[\\/]/,
-                  name: 'vendors',
-                  chunks: (chunk) => ['popup', 'options', 'background'].includes(chunk.name ?? ''),
-                  priority: -10,
-                  enforce: true,
-                },
-                monacoEditor: {
-                  test: /[\\/]node_modules[\\/]monaco-editor[\\/]/,
-                  name: 'monaco/editor.lib',
-                  chunks: (chunk) => ['popup', 'options'].includes(chunk.name ?? ''),
-                  priority: 20,
-                  enforce: true,
-                },
-              },
-            },
-          }
-        : undefined,
+    optimization: {
+      minimize: true,
+      minimizer: [
+        new TerserPlugin({
+          extractComments: false,
+        }),
+      ],
+      splitChunks: {
+        cacheGroups: {
+          default: false,
+          defaultVendors: false,
+          vendors: {
+            test: /[\\/]node_modules[\\/]/,
+            name: 'vendors',
+            chunks: (chunk) => ['popup', 'options', 'background'].includes(chunk.name ?? ''),
+            priority: -10,
+            enforce: true,
+          },
+          monacoEditor: {
+            test: /[\\/]node_modules[\\/]monaco-editor[\\/]/,
+            name: 'monaco/editor.lib',
+            chunks: (chunk) => ['popup', 'options'].includes(chunk.name ?? ''),
+            priority: 20,
+            enforce: true,
+          },
+        },
+      },
+    },
     cache: true,
   }) satisfies webpack.Configuration;

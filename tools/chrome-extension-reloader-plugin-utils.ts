@@ -15,6 +15,24 @@ export const createLogger = (name: string, options: { verbose?: boolean }) => {
   const styleLevel = (level: LogLevel, color: (text: string) => string) =>
     Colors.bold(color(padLevel(level)));
 
+  const createMessage = (level: LogLevel, message: string) =>
+    `${loggerName} ${styleLevel(level, getColorFunction(level))} ${message}`;
+
+  const getColorFunction = (level: LogLevel) => {
+    switch (level) {
+      case 'INFO':
+        return Colors.greenBright;
+      case 'WARN':
+        return Colors.yellowBright;
+      case 'ERROR':
+        return Colors.redBright;
+      case 'VERB':
+        return Colors.gray;
+      default:
+        return Colors.white;
+    }
+  };
+
   return {
     info: (message: string) => {
       console.info(
@@ -45,6 +63,7 @@ export const createLogger = (name: string, options: { verbose?: boolean }) => {
         `${loggerName} ${styleLevel('VERB', Colors.gray)} ${Colors.gray(Colors.italic(message))}`
       );
     },
+    createMessage,
   };
 };
 
@@ -77,7 +96,7 @@ export function resolveChromeExecutablePath(): string | undefined {
 
 const ServiceWorkerClientScriptPath = path.join(
   import.meta.dirname,
-  'chrome-extension-reloader-service-worker-client.js'
+  'chrome-extension-reloader-client.js'
 );
 
 export function loadReloaderClient(variables: string[][]): string {
@@ -90,10 +109,7 @@ export function loadReloaderClient(variables: string[][]): string {
   return script;
 }
 
-export function launchChromeProcess(options: {
-  extensionPath: string;
-  page?: string;
-}): ChildProcess {
+export function launchBrowser(options: { extensionPath: string; page?: string }): ChildProcess {
   const chromePath = resolveChromeExecutablePath();
 
   if (chromePath == null) {

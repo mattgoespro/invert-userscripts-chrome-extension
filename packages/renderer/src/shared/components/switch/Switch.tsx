@@ -14,7 +14,10 @@ export function Switch({ checked, onChange, disabled = false, label }: SwitchPro
         type="checkbox"
         checked={checked}
         disabled={disabled}
-        onChange={(e) => onChange(e.target.checked)}
+        onChange={(event) => {
+          event.preventDefault();
+          onChange(event.target.checked);
+        }}
       />
       <span className="switch-slider"></span>
       {label && <span className="switch-label">{label}</span>}

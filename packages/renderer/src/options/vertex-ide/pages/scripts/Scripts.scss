@@ -24,6 +24,9 @@
   }
 
   .scripts--list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     padding: 12px 16px;
     border-bottom: 1px solid map.get(theme.$theme, palette, dark-grey);
     cursor: pointer;
@@ -38,21 +41,16 @@
       border-left: 2px solid map.get(theme.$theme, palette, orange);
     }
 
-    .scripts--list-item-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 4px;
-
-      .scripts--list-item-name {
-        font-weight: 500;
-        font-size: 14px;
-      }
+    .scripts--list-item-name {
+      font-weight: 500;
+      font-size: 14px;
+      margin-left: 0.5rem;
     }
 
-    .scripts--list-item-status {
-      font-size: 12px;
-      color: map.get(theme.$theme, palette, grey);
+    .scripts--list-item-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
   }
 }

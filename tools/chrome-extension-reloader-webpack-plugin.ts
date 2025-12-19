@@ -1,30 +1,51 @@
-import fs from 'fs';
-import path from 'path';
 import webpack from 'webpack';
 import { WebSocket, WebSocketServer } from 'ws';
-import { createLogger } from './chrome-extension-reloader-plugin-utils.ts';
+import { createLogger, loadReloaderClient } from './chrome-extension-reloader-plugin-utils.ts';
 import type { Logger } from './chrome-extension-reloader-plugin-utils.ts';
 
 export interface ChromeExtensionReloaderPluginOptions {
   port?: number;
   verbose?: boolean;
+  autoLaunchBrowser?: boolean;
 }
+
+type BroadcastMessage = {
+  type: 'reload' | 'log';
+  data?: string;
+};
 
 export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPluginInstance {
   private readonly name = 'ChromeExtensionReloaderWebpackPlugin';
-  private log: Logger;
-  private port: number;
-  private wss: WebSocketServer;
+  private readonly ChromeExtensionReloaderClientScriptName = 'chrome-extension-reloader-client.js';
 
-  constructor({ port, verbose }: ChromeExtensionReloaderPluginOptions = {}) {
-    this.log = createLogger(this.name, {
-      verbose: verbose,
+  private _log: Logger;
+  private _wss: WebSocketServer;
+  private _clientReloaderScriptContent: string;
+
+  private _options: ChromeExtensionReloaderPluginOptions;
+
+  constructor(options: ChromeExtensionReloaderPluginOptions = {}) {
+    this._options = {
+      ...options,
+      port: options.port ?? 8081,
+      verbose: options.verbose ?? false,
+      autoLaunchBrowser: options.autoLaunchBrowser ?? false,
+    };
+
+    this._clientReloaderScriptContent = loadReloaderClient([
+      ['port', this._options.port.toString()],
+    ]);
+
+    this._log = createLogger(this.name, {
+      verbose: this._options.verbose,
     });
-    this.port = port ?? 8081;
 
-    this.startWebSocketServer();
+    this.startPluginWebsocketServer();
   }
 
+  /**
+   * Applies the plugin to the Webpack compiler.
+   */
   apply(compiler: webpack.Compiler) {
     compiler.hooks.thisCompilation.tap(this.name, (compilation) => {
       compilation.hooks.processAssets.tap(
@@ -32,65 +53,83 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
           name: this.name,
           stage: webpack.Compilation.PROCESS_ASSETS_STAGE_SUMMARIZE,
         },
-        (assets) => this.injectExtensionPageClient(compilation, assets)
+        (assets) => this.injectAssetClientReloader(compilation, assets)
       );
     });
 
     compiler.hooks.done.tap(this.name, () => {
-      this.broadcastExtensionMessage({ type: 'reload' });
+      this.broadcastExtClientMessage({ type: 'reload' });
     });
 
     compiler.hooks.shutdown.tap(this.name, () => {
-      this.wss.close();
+      this._wss.close();
     });
   }
 
-  // ------------------------------
-  // WebSocket
-  // ------------------------------
+  private startPluginWebsocketServer() {
+    this._wss = new WebSocketServer({ port: this._options.port });
 
-  private startWebSocketServer() {
-    this.wss = new WebSocketServer({ port: this.port });
+    this._wss.on('connection', () => {
+      this._log.verbose('Extension client connected from the browser.');
 
-    this.wss.on('connection', () => {
-      this.log.verbose('Extension client connected.');
+      this.broadcastExtClientMessage({
+        type: 'log',
+        data: this._log.createMessage('INFO', 'Extension client connected.'),
+      });
     });
 
-    this.log.verbose(`Websocket listening on port ${this.port}`);
+    this._log.verbose(`Listening on port: ${this._options.port}`);
   }
 
-  private broadcastExtensionMessage(payload: unknown) {
-    this.log.info('Reloading...');
+  private broadcastExtClientMessage(message: BroadcastMessage) {
+    const sendMessageToClients = (message: BroadcastMessage) => {
+      for (const client of this._wss.clients) {
+        if (client.readyState !== WebSocket.OPEN) {
+          this._log.verbose('An existing client is not ready.');
+          continue;
+        }
 
-    const msg = JSON.stringify(payload);
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(JSON.stringify(message));
+        }
+      }
+    };
 
-    for (const client of this.wss.clients) {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(msg);
+    switch (message.type) {
+      case 'reload': {
+        this._log.info('Reloading extension...');
+        sendMessageToClients(message);
+        this._log.info('Reload complete.');
+        break;
+      }
+      case 'log': {
+        sendMessageToClients(message);
       }
     }
   }
 
-  private injectExtensionPageClient(
+  private injectAssetClientReloader(
     compilation: webpack.Compilation,
     assets: Record<string, webpack.sources.Source>
   ) {
-    let clientCode = fs.readFileSync(
-      path.join(import.meta.dirname, 'chrome-extension-reloader-client.js'),
-      'utf-8'
-    );
-
-    clientCode = clientCode.replace(/{{port}}/g, this.port.toString());
-
     // Emit the inlined client as an asset
-    compilation.emitAsset('reloader-client.js', new webpack.sources.RawSource(clientCode));
+    compilation.emitAsset(
+      this.ChromeExtensionReloaderClientScriptName,
+      new webpack.sources.RawSource(this._clientReloaderScriptContent)
+    );
 
     // Inject the client script into HTML assets
     for (const name of Object.keys(assets)) {
-      if (!name.endsWith('.html')) continue;
+      if (!name.endsWith('.html')) {
+        continue;
+      }
 
       const src = assets[name].source().toString();
-      const out = src.replace('</body>', `<script src="reloader-client.js"></script></body>`);
+      const out = src.replace(
+        '</body>',
+        `\t<script src="${this.ChromeExtensionReloaderClientScriptName}"></script>
+        </body>`
+      );
 
       compilation.updateAsset(name, new webpack.sources.RawSource(out));
     }

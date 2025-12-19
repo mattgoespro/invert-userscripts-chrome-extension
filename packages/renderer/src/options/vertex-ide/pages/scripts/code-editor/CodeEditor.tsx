@@ -23,19 +23,24 @@ self.MonacoEnvironment = {
 };
 
 type CodeEditorProps = {
-  value: string;
+  contents: string;
   onChange: (value: string) => void;
 };
 
-export function CodeEditor({ value, onChange }: CodeEditorProps) {
+export function CodeEditor({ contents: value, onChange }: CodeEditorProps) {
   const [_editor, setEditor] = useState<monaco.editor.IStandaloneCodeEditor>(null);
   const editorRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (editorRef.current != null && _editor == null) {
+    if (editorRef.current == null) {
+      return;
+    }
+
+    if (_editor == null) {
       const editorInstance = monaco.editor.create(editorRef.current, {
         value: value,
         language: 'typescript',
+        model: monaco.editor.createModel(value, 'typescript'),
         automaticLayout: true,
         theme: 'vs-dark',
         minimap: { enabled: true },
@@ -50,22 +55,21 @@ export function CodeEditor({ value, onChange }: CodeEditorProps) {
     }
 
     return () => {
-      _editor?.dispose();
+      // _editor?.dispose();
     };
   }, [monaco, value]);
 
   useEffect(() => {
-    if (_editor) {
-      const model = _editor.getModel();
-      const subscription = model.onDidChangeContent(() => {
-        const newValue = model.getValue();
-        onChange(newValue);
-      });
-
-      return () => {
-        subscription.dispose();
-      };
-    }
+    // if (_editor) {
+    //   const model = _editor.getModel();
+    //   const subscription = model.onDidChangeContent(() => {
+    //     const newValue = model.getValue();
+    //     onChange(newValue);
+    //   });
+    //   return () => {
+    //     subscription.dispose();
+    //   };
+    // }
   }, [_editor, onChange]);
 
   return <div ref={editorRef} style={{ height: '100%' }}></div>;

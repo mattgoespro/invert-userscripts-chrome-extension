@@ -1,16 +1,16 @@
+import { Button } from '@/shared/components/button/Button';
+import { IconButton } from '@/shared/components/icon-button/IconButton';
+import { Input } from '@/shared/components/input/Input';
+import { Switch } from '@/shared/components/switch/Switch';
+import { Typography } from '@/shared/components/typography/Typography';
+import { uuid } from '@/shared/utils';
 import { TypeScriptCompiler } from '@shared/compiler';
 import { AppSettings, ScriptFile, UserScript } from '@shared/model';
 import { IDEStorageManager } from '@shared/storage';
+import { PlusIcon, TrashIcon, XIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { CodeEditor } from './code-editor/CodeEditor';
 import './Scripts.scss';
-import { Input } from '@/shared/components/input/Input';
-import { Button } from '@/shared/components/button/Button';
-import { Checkbox } from '@/shared/components/checkbox/Checkbox';
-import { PlusIcon, TrashIcon, XIcon } from 'lucide-react';
-import { uuid } from '@/shared/utils';
-import { IconButton } from '@/shared/components/icon-button/IconButton';
-import { Typography } from '@/shared/components/typography/Typography';
 
 type ScriptsProps = {
   settings: AppSettings;
@@ -158,6 +158,33 @@ export function Scripts({ settings }: ScriptsProps) {
     await loadData();
   };
 
+  const createScriptListItem = (script: UserScript) => {
+    return (
+      <div
+        key={script.id}
+        className={`scripts--list-item ${selectedScript?.id === script.id ? 'active' : ''}`}
+        onClick={() => handleScriptSelect(script)}
+      >
+        <span className="scripts--list-item-name">{script.name}</span>
+        <div className="scripts--list-item-actions">
+          <Switch
+            checked={script.enabled}
+            onChange={() => handleUpdateScriptMeta({ enabled: !script.enabled })}
+          />
+          <IconButton
+            onClick={(event) => {
+              event.stopPropagation();
+              handleDeleteScript(script.id);
+            }}
+            title="Delete script"
+          >
+            <TrashIcon color="grey" size="1rem" />
+          </IconButton>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="scripts--content">
       <div className="scripts--sidebar">
@@ -167,32 +194,7 @@ export function Scripts({ settings }: ScriptsProps) {
             <PlusIcon color="grey" size="1rem" />
           </IconButton>
         </div>
-        <div className="scripts--list">
-          {scripts.map((script) => (
-            <div
-              key={script.id}
-              className={`scripts--list-item ${selectedScript?.id === script.id ? 'active' : ''}`}
-              onClick={() => handleScriptSelect(script)}
-            >
-              <div className="scripts--list-item-header">
-                <span className="scripts--list-item-name">{script.name}</span>
-                <IconButton
-                  className="btn-delete"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    handleDeleteScript(script.id);
-                  }}
-                  title="Delete script"
-                >
-                  <TrashIcon color="grey" size="1rem" />
-                </IconButton>
-              </div>
-              <div className="scripts--list-item-status">
-                {script.enabled ? '✅ Enabled' : '⭕ Disabled'}
-              </div>
-            </div>
-          ))}
-        </div>
+        <div className="scripts--list">{scripts.map((script) => createScriptListItem(script))}</div>
       </div>
       <div className="scripts--editor-area">
         {selectedScript ? (
@@ -204,16 +206,6 @@ export function Scripts({ settings }: ScriptsProps) {
                   value={selectedScript.name}
                   onChange={(e) => handleUpdateScriptMeta({ name: e.target.value })}
                 />
-                <Input
-                  label="Description"
-                  value={selectedScript.description}
-                  onChange={(e) => handleUpdateScriptMeta({ description: e.target.value })}
-                />
-                <Checkbox
-                  label="Enabled"
-                  checked={selectedScript.enabled}
-                  onChange={(value) => handleUpdateScriptMeta({ enabled: value })}
-                />
               </div>
               <div className="scripts--editor-actions">
                 <Button onClick={handleSaveFile}>💾 Save</Button>
@@ -223,7 +215,7 @@ export function Scripts({ settings }: ScriptsProps) {
             <div className="scripts--url-patterns">
               <Typography variant="body">URL Patterns</Typography>
               <div className="scripts--patterns-list">
-                {selectedScript.urlPatterns.map((pattern, index) => (
+                {(selectedScript.urlPatterns ?? []).map((pattern, index) => (
                   <div key={index} className="scripts--pattern-item">
                     <span>{pattern}</span>
                     <Button onClick={() => handleRemoveUrlPattern(index)}>
@@ -239,7 +231,7 @@ export function Scripts({ settings }: ScriptsProps) {
             <div className="scripts--editor-container">
               {selectedFile && (
                 <div className="scripts--editor">
-                  <CodeEditor value={selectedFile.content} onChange={handleEditorChange} />
+                  <CodeEditor contents={selectedFile.content} onChange={handleEditorChange} />
                 </div>
               )}
               <div className="scripts--compilation">
