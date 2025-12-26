@@ -2,66 +2,53 @@
 
 ## Project Overview
 
-This is a Chrome Extension that provides an integrated browser and IDE for bundling and injecting TypeScript userscripts. It uses a monorepo-like structure managed via TypeScript project references and Webpack.
+This is a Chrome Extension that provides an integrated browser and IDE for bundling and injecting TypeScript userscripts. It features a monorepo-like structure managed via TypeScript project references and Webpack.
 
 ## Architecture & File Structure
 
 The codebase is organized into three main packages under `packages/`:
 
 - **`packages/renderer/`**: The UI layer (React 19).
-  - Contains the Options page (main IDE), Popup, and Sidebar.
-  - **Pattern:** Components are co-located with their SCSS files (e.g., `VertexIde.tsx` and `VertexIde.scss`).
+  - **Options Page:** The main IDE interface (`src/options/vertex-ide/`).
+  - **Popup:** Quick access menu (`src/popup/`).
+  - **Styling:** SCSS files co-located with components (e.g., `VertexIde.tsx` and `VertexIde.scss`).
+  - **Editor:** `monaco-editor` integration for code editing.
 - **`packages/runtime/`**: The extension's background and content logic.
-  - **`src/background.ts`**: Entry point for the service worker.
-  - **`src/handlers/`**: Logic is split into handlers (e.g., `runtime.handler.ts` for messages, `navigation.handler.ts` for navigation events).
-  - **`src/ide/`**: Core logic for script injection and management.
+  - **`src/background.ts`**: Service worker entry point.
+  - **`src/ide/scripts.ts`**: Core logic for script injection using `chrome.scripting.executeScript` with `world: 'MAIN'`.
+  - **`src/handlers/`**: Event handlers (e.g., `runtime.handler.ts` for messages).
 - **`packages/shared/`**: Common code shared between renderer and runtime.
-  - **`src/model.ts`**: TypeScript interfaces for data models (`UserScript`, `ScriptFile`, `AppSettings`).
-  - **`src/storage.ts`**: `IDEStorageManager` class wrapping `chrome.storage.sync`.
-  - **Import Alias:** Use `@shared/*` to import from this package (e.g., `import { UserScript } from '@shared/model'`).
+  - **`src/model.ts`**: Domain models (`UserScript`, `ScriptFile`, `GlobalModule`).
+  - **`src/storage.ts`**: `IDEStorageManager` wrapper for `chrome.storage.sync`.
+  - **`src/compiler.ts`**: In-browser `TypeScriptCompiler` using the `typescript` package.
 
 ## Key Conventions & Patterns
 
-### Data Persistence
-
-- **NEVER** use `chrome.storage` directly in components or business logic.
-- **ALWAYS** use `IDEStorageManager` from `@shared/storage` for all data operations.
-- Data is synced via `chrome.storage.sync`.
-
 ### Message Passing
 
-- Runtime message listeners are defined in `packages/runtime/src/handlers/extension-handlers/runtime.handler.ts`.
-- Use the `action` property in messages to dispatch tasks (e.g., `{ action: 'reloadScripts' }`).
+- **Pattern:** `{ action: 'actionName', payload?: any }`.
+- **Handler:** `packages/runtime/src/handlers/extension-handlers/runtime.handler.ts`.
+- **Reloading:** Sending `{ action: 'reloadScripts' }` triggers `injectMatchingScripts` on all tabs.
 
 ### UI Development
 
 - **Framework:** React 19 with Hooks.
-- **Styling:** SCSS. Create a `.scss` file next to the component and import it directly (`import './Component.scss'`).
-- **Editor:** Uses `monaco-editor` for code editing capabilities.
+- **Styling:** SCSS modules imported directly (`import './Component.scss'`).
+- **State:** Local state for UI, `IDEStorageManager` for persistent data.
+- **Monaco:** Workers are configured in `webpack.config.ts`.
 
-### Build & Development
+## Build & Development
 
 - **Build System:** Webpack with `ts-loader`.
-- **Config:** `webpack.config.ts` handles the build configuration for all entry points.
+- **Config:** `webpack.config.ts` handles entry points (`background`, `popup`, `options`, `monaco` workers).
+- **Aliases:**
+  - `@shared/*` -> `packages/shared/src/*`
+  - `@/*` -> `packages/renderer/src/*`
+  - `~/theme` -> `packages/renderer/src/assets/styles/theme.scss`
 - **Commands:**
-  - `npm run dev`: Runs Webpack in watch mode for development.
-  - `npm run build`: Builds the extension for production (output to `dist/`).
-  - `npm run lint`: Runs ESLint.
+  - `npm run dev`: Webpack watch mode.
+  - `npm run build`: Production build to `dist/`.
 
-## Critical Files
+## TypeScript Conventions
 
-- `packages/shared/src/model.ts`: Domain models.
-- `packages/shared/src/storage.ts`: Data access layer.
-- `packages/runtime/src/background.ts`: Service worker entry point.
-- `webpack.config.ts`: Build configuration.
-
-## Coding Conventions
-
-- Never use `any` type; prefer explicit types or generics when possible.
-- Always use loose, explicit `null` checks instead of truthy/falsy checks, unless checking for booleans or in cases where `null` and `undefined` represent different states.
-- Use descriptive variable and function names.
-- Write modular, reusable functions.
-- Add comments for complex logic or non-obvious decisions.
-- Use async/await for asynchronous operations.
-- Follow existing code patterns for consistency.
-- Follow TypeScript best practices for type safety.
+- Do not use or suggest using `any`; prefer strict types.

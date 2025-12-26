@@ -24,13 +24,30 @@ $palette: (
   secondary: $purple,
   background: $black,
   foreground: $white,
+  border: $dark-grey,
   input: (
-    background: $dark-grey,
     foreground: $white,
-    border: $dark-grey
+    background: $dark-grey,
+    border: $dark-grey,
+    placeholder: $grey
   ),
   label: (
     foreground: $grey
+  ),
+  icon-button: (
+    foreground: $white,
+    background: none,
+    border: $dark-grey,
+    hover-background: color.scale($dark-grey, $lightness: 10%),
+    focus-background: color.scale($dark-grey, $lightness: -10%)
+  ),
+  switch: (
+    foreground: $white,
+    background: $dark-grey,
+    border: $dark-grey,
+    checked-background: $orange,
+    focus-background: $blue,
+    disabled-background: color.scale($dark-grey, $lightness: 50%)
   ),
   info: $blue,
   warning: $orange,

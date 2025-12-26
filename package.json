@@ -9,6 +9,7 @@
   "scripts": {
     "build": "webpack --mode production",
     "dev": "webpack --mode development --watch",
+    "clean": "rm -rf dist",
     "icons": "tsx scripts/create-icons.ts",
     "lint": "eslint src --ext .ts,.tsx"
   },

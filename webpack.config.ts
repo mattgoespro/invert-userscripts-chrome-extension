@@ -5,13 +5,13 @@ import path from 'path';
 import TerserPlugin from 'terser-webpack-plugin';
 import webpack from 'webpack';
 import { ChromeExtensionReloaderWebpackPlugin } from './tools/chrome-extension-reloader-webpack-plugin.ts';
+import MonacoEditorWebpackPlugin from 'monaco-editor-webpack-plugin';
 
 const __dirname = import.meta.dirname;
-
 export default (_args: unknown, { mode }: { mode: 'development' | 'production' }) =>
   ({
     mode,
-    devtool: mode === 'production' ? false : 'inline-source-map',
+    devtool: mode === 'production' ? false : 'cheap-module-source-map',
     entry: {
       background: {
         import: './packages/runtime/src/background.ts',
@@ -19,17 +19,33 @@ export default (_args: unknown, { mode }: { mode: 'development' | 'production' }
       },
       popup: { import: './packages/renderer/src/popup/index.tsx', filename: 'popup.js' },
       options: { import: './packages/renderer/src/options/index.tsx', filename: 'options.js' },
-      'monaco/json.worker': 'monaco-editor/esm/vs/language/json/json.worker',
-      'monaco/css.worker': 'monaco-editor/esm/vs/language/css/css.worker',
-      'monaco/html.worker': 'monaco-editor/esm/vs/language/html/html.worker',
-      'monaco/ts.worker': 'monaco-editor/esm/vs/language/typescript/ts.worker',
-      'monaco/editor.worker': 'monaco-editor/esm/vs/editor/editor.worker',
     },
     stats: 'errors-warnings',
     output: {
       path: path.join(__dirname, 'dist'),
       filename: '[name].js',
-      chunkFilename: 'chunks/[name].js',
+      chunkFilename: (pathData) => {
+        const chunk = pathData.chunk;
+
+        // Check by name (development)
+        if (chunk?.name?.includes('monaco-editor')) {
+          return 'monaco-editor/[id].js';
+        }
+
+        // Check by module path (production)
+        if (chunk instanceof webpack.Chunk) {
+          for (const module of chunk.getModules()) {
+            if (
+              module instanceof webpack.NormalModule &&
+              module.resource.includes('monaco-editor')
+            ) {
+              return 'monaco-editor/[id].js';
+            }
+          }
+        }
+
+        return 'chunks/[name].js';
+      },
       publicPath: '/',
       clean: true,
     },
@@ -95,6 +111,7 @@ export default (_args: unknown, { mode }: { mode: 'development' | 'production' }
         '~/theme': path.resolve(__dirname, 'packages/renderer/src/assets/styles/theme.scss'),
         '@': path.resolve(__dirname, 'packages/renderer/src/'),
         '@shared': path.resolve(__dirname, 'packages/shared/src/'),
+        'monaco-editor': 'monaco-editor/esm/vs/editor/editor.api.js',
       },
     },
     plugins: [
@@ -108,7 +125,11 @@ export default (_args: unknown, { mode }: { mode: 'development' | 'production' }
         filename: 'options.html',
         chunks: ['options'],
       }),
-      new webpack.ContextReplacementPlugin(/typescript\/lib\/typescript.js/),
+      new MonacoEditorWebpackPlugin({
+        languages: ['typescript', 'scss', 'javascript', 'css'],
+        filename: 'monaco-editor/[name].worker.js',
+        monacoEditorPath: path.resolve(__dirname, 'node_modules/monaco-editor'),
+      }),
       new CopyWebpackPlugin({
         patterns: [
           {
@@ -152,26 +173,6 @@ export default (_args: unknown, { mode }: { mode: 'development' | 'production' }
           extractComments: false,
         }),
       ],
-      splitChunks: {
-        cacheGroups: {
-          default: false,
-          defaultVendors: false,
-          vendors: {
-            test: /[\\/]node_modules[\\/]/,
-            name: 'vendors',
-            chunks: (chunk) => ['popup', 'options', 'background'].includes(chunk.name ?? ''),
-            priority: -10,
-            enforce: true,
-          },
-          monacoEditor: {
-            test: /[\\/]node_modules[\\/]monaco-editor[\\/]/,
-            name: 'monaco/editor.lib',
-            chunks: (chunk) => ['popup', 'options'].includes(chunk.name ?? ''),
-            priority: 20,
-            enforce: true,
-          },
-        },
-      },
     },
     cache: true,
   }) satisfies webpack.Configuration;

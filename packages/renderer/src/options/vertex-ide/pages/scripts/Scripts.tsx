@@ -7,9 +7,9 @@ import { uuid } from '@/shared/utils';
 import { TypeScriptCompiler } from '@shared/compiler';
 import { AppSettings, ScriptFile, UserScript } from '@shared/model';
 import { IDEStorageManager } from '@shared/storage';
-import { PlusIcon, TrashIcon, XIcon } from 'lucide-react';
+import { EllipsisIcon, PlusIcon, XIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { CodeEditor } from './code-editor/CodeEditor';
+import { CodeEditor } from '../../code-editor/CodeEditor';
 import './Scripts.scss';
 
 type ScriptsProps = {
@@ -20,8 +20,8 @@ export function Scripts({ settings }: ScriptsProps) {
   const [scripts, setScripts] = useState<UserScript[]>([]);
   const [selectedScript, setSelectedScript] = useState<UserScript>(null);
   const [selectedFile, setSelectedFile] = useState<ScriptFile>(null);
-  const [compileOutput, setCompileOutput] = useState<string>('');
-  const [typeCheckErrors, setTypeCheckErrors] = useState<string[]>([]);
+  const [_compileOutput, setCompileOutput] = useState<string>('');
+  const [_typeCheckErrors, setTypeCheckErrors] = useState<string[]>([]);
 
   const loadData = async () => {
     const [loadedScripts] = await Promise.all([
@@ -172,14 +172,13 @@ export function Scripts({ settings }: ScriptsProps) {
             onChange={() => handleUpdateScriptMeta({ enabled: !script.enabled })}
           />
           <IconButton
+            icon={EllipsisIcon}
             onClick={(event) => {
               event.stopPropagation();
               handleDeleteScript(script.id);
             }}
-            title="Delete script"
-          >
-            <TrashIcon color="grey" size="1rem" />
-          </IconButton>
+            title="More"
+          ></IconButton>
         </div>
       </div>
     );
@@ -190,9 +189,11 @@ export function Scripts({ settings }: ScriptsProps) {
       <div className="scripts--sidebar">
         <div className="scripts--sidebar-header">
           <Typography variant="subtitle">Scripts</Typography>
-          <IconButton onClick={handleCreateScript} title="Create new script">
-            <PlusIcon color="grey" size="1rem" />
-          </IconButton>
+          <IconButton
+            icon={PlusIcon}
+            onClick={handleCreateScript}
+            title="Create new script"
+          ></IconButton>
         </div>
         <div className="scripts--list">{scripts.map((script) => createScriptListItem(script))}</div>
       </div>
@@ -217,46 +218,40 @@ export function Scripts({ settings }: ScriptsProps) {
               <div className="scripts--patterns-list">
                 {(selectedScript.urlPatterns ?? []).map((pattern, index) => (
                   <div key={index} className="scripts--pattern-item">
-                    <span>{pattern}</span>
-                    <Button onClick={() => handleRemoveUrlPattern(index)}>
-                      <XIcon />
-                    </Button>
+                    <Typography variant="caption">{pattern}</Typography>
+                    <IconButton
+                      icon={XIcon}
+                      onClick={() => handleRemoveUrlPattern(index)}
+                    ></IconButton>
                   </div>
                 ))}
-                <Button onClick={handleAddUrlPattern}>
-                  <PlusIcon />
-                </Button>
+                <IconButton
+                  icon={PlusIcon}
+                  variant="secondary"
+                  onClick={handleAddUrlPattern}
+                ></IconButton>
               </div>
             </div>
             <div className="scripts--editor-container">
               {selectedFile && (
-                <div className="scripts--editor">
-                  <CodeEditor contents={selectedFile.content} onChange={handleEditorChange} />
-                </div>
+                <>
+                  <div className="scripts--editor">
+                    <CodeEditor
+                      language="typescript"
+                      code={selectedFile.content}
+                      onChange={handleEditorChange}
+                    />
+                  </div>
+                  <div className="scripts--editor">
+                    <CodeEditor language="scss" code={''} onChange={handleEditorChange} />
+                  </div>
+                </>
               )}
-              <div className="scripts--compilation">
-                {typeCheckErrors.length > 0 && (
-                  <div className="scripts--compilation-type-errors">
-                    <Typography variant="subtitle">Type Check Errors:</Typography>
-                    {typeCheckErrors.map((error, index) => (
-                      <div key={index} className="scripts--compilation-type-errors-error">
-                        {error}
-                      </div>
-                    ))}
-                  </div>
-                )}
-                {compileOutput && (
-                  <div className="scripts--compilation-output">
-                    <Typography variant="subtitle">Compiled Output:</Typography>
-                    <pre>{compileOutput}</pre>
-                  </div>
-                )}
-              </div>
             </div>
           </>
         ) : (
-          <div className="empty-editor">
-            <p>Select a script or create a new one</p>
+          <div className="scripts--empty-editor">
+            <Typography variant="caption">Select a script or create a new one</Typography>
           </div>
         )}
       </div>

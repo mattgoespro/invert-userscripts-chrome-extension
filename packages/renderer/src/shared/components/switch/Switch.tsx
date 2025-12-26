@@ -15,7 +15,7 @@ export function Switch({ checked, onChange, disabled = false, label }: SwitchPro
         checked={checked}
         disabled={disabled}
         onChange={(event) => {
-          event.preventDefault();
+          console.log(`Checked: ${event.target.checked}`);
           onChange(event.target.checked);
         }}
       />

@@ -75,7 +75,7 @@
       margin-bottom: 1rem;
     }
 
-    .editor-actions {
+    .scripts--editor-actions {
       display: flex;
       gap: 12px;
     }
@@ -99,48 +99,16 @@
 
   .scripts--editor-container {
     display: flex;
-    flex-direction: column;
     flex: 1;
     gap: 1rem;
 
     .scripts--editor {
-      flex-basis: 80%;
+      flex: 1;
       overflow: hidden;
-    }
-
-    .scripts--compilation {
-      flex-basis: 20%;
-      overflow-y: auto;
-      background-color: map.get(theme.$theme, palette, dark-grey);
-      padding: 16px;
-      border-radius: 8px;
-
-      .scripts--compilation-type-errors,
-      .scripts--compilation-output {
-        margin-bottom: 16px;
-
-        h4 {
-          margin-bottom: 8px;
-          color: map.get(theme.$theme, palette, error);
-        }
-
-        .error-item {
-          margin-bottom: 6px;
-          color: map.get(theme.$theme, palette, error);
-        }
-
-        pre {
-          background-color: #1e1e1e;
-          padding: 12px;
-          border-radius: 4px;
-          overflow-x: auto;
-          color: map.get(theme.$theme, palette, foreground);
-        }
-      }
     }
   }
 
-  .empty-editor {
+  .scripts--empty-editor {
     display: flex;
     align-items: center;
     justify-content: center;

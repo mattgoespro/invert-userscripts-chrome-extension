@@ -74,7 +74,7 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
 
       this.broadcastExtClientMessage({
         type: 'log',
-        data: this._log.createMessage('INFO', 'Extension client connected.'),
+        data: this._log.createMessage('INFO', 'Connected to Chrome Extension Reloader.'),
       });
     });
 
@@ -112,13 +112,13 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
     compilation: webpack.Compilation,
     assets: Record<string, webpack.sources.Source>
   ) {
-    // Emit the inlined client as an asset
+    // Emit the extension reloader client as an asset so that it can be linked as a script in the HTML templates.
     compilation.emitAsset(
       this.ChromeExtensionReloaderClientScriptName,
       new webpack.sources.RawSource(this._clientReloaderScriptContent)
     );
 
-    // Inject the client script into HTML assets
+    // Insert the client script into all HTML assets.
     for (const name of Object.keys(assets)) {
       if (!name.endsWith('.html')) {
         continue;

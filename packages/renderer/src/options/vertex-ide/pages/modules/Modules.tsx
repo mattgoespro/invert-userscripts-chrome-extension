@@ -6,6 +6,7 @@ import { Button } from '@/shared/components/button/Button';
 import { Checkbox } from '@/shared/components/checkbox/Checkbox';
 import { IconButton } from '@/shared/components/icon-button/IconButton';
 import { DeleteIcon } from 'lucide-react';
+import { Typography } from '@/shared/components/typography/Typography';
 
 export function Modules() {
   const [modules, setModules] = useState<GlobalModule[]>([]);
@@ -49,7 +50,7 @@ export function Modules() {
   return (
     <div className="modules-content">
       <div className="modules-header">
-        <h2>Global Modules</h2>
+        <Typography variant="button">Global Modules</Typography>
         <Button className="btn-primary" onClick={handleCreateModule}>
           + Add Module
         </Button>

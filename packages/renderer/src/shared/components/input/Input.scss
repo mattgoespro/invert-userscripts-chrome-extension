@@ -23,5 +23,10 @@
     padding: 0.5rem;
     background-color: map.get(theme.$theme, palette, input, background);
     border: none;
+    border-radius: map.get(theme.$theme, geometry, border-radius);
+
+    &::placeholder {
+      color: map.get(theme.$theme, palette, input, placeholder);
+    }
   }
 }

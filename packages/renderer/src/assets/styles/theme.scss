@@ -4,5 +4,8 @@
 
 $theme: (
   palette: colors.$palette,
-  typography: typography.$typography
+  typography: typography.$typography,
+  geometry: (
+    border-radius: 6px
+  )
 );
