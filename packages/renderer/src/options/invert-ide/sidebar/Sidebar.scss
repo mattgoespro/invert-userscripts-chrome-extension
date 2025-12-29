@@ -8,6 +8,9 @@
   gap: 0.5rem;
   width: 75px;
   height: 100%;
-  padding: 1rem;
   background: map.get(theme.$theme, palette, black);
+
+  .sidebar--button {
+    width: 100%;
+  }
 }

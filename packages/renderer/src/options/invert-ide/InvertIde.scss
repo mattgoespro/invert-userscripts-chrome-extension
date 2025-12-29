@@ -1,0 +1,37 @@
+* {
+  box-sizing: border-box;
+}
+
+.invert-ide--dashboard {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+
+  .invert-ide--dashboard-header {
+    background: linear-gradient(135deg, #0e0e0e 0%, #3f3f3f 100%);
+    color: white;
+    padding: 24px 32px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+    h1 {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 600;
+    }
+
+    .header-subtitle {
+      margin-top: 8px;
+      font-size: 14px;
+      opacity: 0.9;
+    }
+  }
+
+  .invert-ide--dashboard-page {
+    display: flex;
+    flex: 1;
+  }
+
+  .invert-ide--dashboard-page-content {
+    flex: 1;
+  }
+}

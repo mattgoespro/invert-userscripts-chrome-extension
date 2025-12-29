@@ -1,13 +1,13 @@
 import { IconButton } from '@/shared/components/icon-button/IconButton';
 import { Typography } from '@/shared/components/typography/Typography';
 import { SettingsIcon } from 'lucide-react';
-import './VertexIdePopup.scss';
+import './InvertIdePopup.scss';
 
-export function VertexIdePopup() {
+export function InvertIdePopup() {
   return (
     <div className="popup--container">
       <div className="popup--header">
-        <Typography variant="title">Vertex IDE</Typography>
+        <Typography variant="title">Invert IDE</Typography>
         <IconButton
           icon={SettingsIcon}
           size="sm"

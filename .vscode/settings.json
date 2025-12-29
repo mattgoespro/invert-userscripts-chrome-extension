@@ -61,6 +61,7 @@
   },
   "terminal.integrated.automationProfile.windows": {
     "args": ["-l"],
+    "color": "terminal.ansiMagenta",
     "env": {
       "PATH": "${workspaceFolder}\\node_modules\\.bin;${env:PATH}"
     },
@@ -72,6 +73,7 @@
   "terminal.integrated.profiles.windows": {
     "bash-node": {
       "args": ["-l"],
+      "color": "terminal.ansiCyan",
       "env": {
         "PATH": "${workspaceFolder}\\node_modules\\.bin;${env:PATH}"
       },

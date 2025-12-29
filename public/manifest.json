@@ -1,8 +1,8 @@
 {
   "$schema": "https://json.schemastore.org/chrome-manifest.json",
   "manifest_version": 3,
-  "name": "Vertex IDE Userscripts",
-  "description": "A Chrome extension that provides an integrated browser IDE for bundling and injecting TypeScript userscripts",
+  "name": "Invert IDE Userscripts",
+  "description": "A Chrome extension that provides an integrated browser IDE for bundling and injecting TypeScript userscripts.",
   "version": "1.0.0",
   "icons": {
     "16": "assets/favicon-16x16.png",

@@ -11,13 +11,29 @@ type IconButtonProps = PropsWithChildren<
 >;
 
 export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
-  ({ children, variant = 'primary', icon, size = 'md', ...rest }, ref) => {
+  ({ children, variant = 'primary', icon, size = 'md', className, ...rest }, ref) => {
+    const getIconStyle = () => {
+      switch (size) {
+        case 'sm':
+          return { size: 16, padding: '6px' };
+        case 'md':
+          return { size: 24, padding: '8px' };
+        case 'lg':
+          return { size: 32, padding: '4px' };
+      }
+    };
+
     return (
-      <button ref={ref} {...rest} className={[`icon-btn`, `icon-btn--${variant}`].join(' ')}>
+      <button
+        style={getIconStyle()}
+        ref={ref}
+        {...rest}
+        className={[`icon-btn`, `icon-btn--${variant}`, className].filter(Boolean).join(' ')}
+      >
         {icon &&
           createElement(icon as React.ElementType, {
-            size: size === 'sm' ? 16 : size === 'lg' ? 24 : 20,
             color: '#a5a5a5ff',
+            size: getIconStyle().size,
           })}
         {children}
       </button>

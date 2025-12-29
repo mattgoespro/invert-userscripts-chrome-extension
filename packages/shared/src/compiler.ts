@@ -1,8 +1,8 @@
-import * as ts from 'typescript';
+import ts from 'typescript';
 import { CompileResult } from './model';
 
 export class TypeScriptCompiler {
-  static compile(code: string, fileName: string = 'script.ts'): CompileResult {
+  static compile(code: string): CompileResult {
     try {
       const compilerOptions: ts.CompilerOptions = {
         target: ts.ScriptTarget.ES2020,
@@ -17,7 +17,6 @@ export class TypeScriptCompiler {
 
       const result = ts.transpileModule(code, {
         compilerOptions,
-        fileName,
       });
 
       const warnings: string[] = [];

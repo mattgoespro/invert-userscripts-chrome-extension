@@ -1,7 +1,7 @@
 import { injectMatchingScripts } from '../../ide/scripts';
 
 export const onInstalled = (details: chrome.runtime.InstalledDetails) => {
-  console.log('Vertex IDE Userscripts extension installed.');
+  console.log('Invert IDE Userscripts extension installed.');
   console.log(`Extension ID: ${chrome.runtime.id}`);
 };
 

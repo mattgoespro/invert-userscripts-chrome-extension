@@ -1,24 +1,21 @@
-.modules-content {
-  .modules-header {
+.modules--content {
+  flex: 1;
+  padding: 2rem;
+
+  .modules--header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 24px;
-
-    h2 {
-      margin: 0;
-      font-size: 24px;
-      font-weight: 600;
-    }
   }
 
-  .modules-list {
+  .modules--list {
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     overflow: hidden;
   }
 
-  .module-item {
+  .modules--list-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -28,7 +25,7 @@
       border-bottom: none;
     }
 
-    .module-info {
+    .modules--list-item-info {
       flex: 1;
 
       strong {
@@ -37,27 +34,27 @@
         margin-bottom: 4px;
       }
 
-      .module-url {
+      .modules--list-item-url {
         font-size: 13px;
         color: #666;
         font-family: monospace;
         margin-bottom: 4px;
       }
 
-      .module-version {
+      .modules--list-item-version {
         font-size: 12px;
         color: #999;
       }
     }
 
-    .module-actions {
+    .modules--list-item-actions {
       display: flex;
       align-items: center;
       gap: 16px;
     }
   }
 
-  .empty-state {
+  .modules--empty-state {
     padding: 60px 20px;
     text-align: center;
     color: #999;

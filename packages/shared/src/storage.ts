@@ -1,18 +1,16 @@
 import { UserScript, ScriptFile, GlobalModule, AppSettings } from './model';
 
-const STORAGE_KEYS = {
-  SCRIPTS: 'userscripts',
-  SCRIPT_FILES: 'scriptFiles',
-  MODULES: 'globalModules',
-  SETTINGS: 'appSettings',
+const StorageKeys = {
+  scripts: 'userscripts',
+  scriptFiles: 'scriptFiles',
+  modules: 'globalModules',
+  settings: 'appSettings',
 };
 
 export class IDEStorageManager {
   static async getScripts(): Promise<UserScript[]> {
-    const result: Record<string, UserScript[]> = await chrome.storage.sync.get(
-      STORAGE_KEYS.SCRIPTS
-    );
-    return result[STORAGE_KEYS.SCRIPTS] || [];
+    const result: Record<string, UserScript[]> = await chrome.storage.sync.get(StorageKeys.scripts);
+    return result[StorageKeys.scripts] || [];
   }
 
   static async saveScript(script: UserScript): Promise<void> {
@@ -25,13 +23,13 @@ export class IDEStorageManager {
       scripts.push(script);
     }
 
-    await chrome.storage.sync.set({ [STORAGE_KEYS.SCRIPTS]: scripts });
+    await chrome.storage.sync.set({ [StorageKeys.scripts]: scripts });
   }
 
   static async deleteScript(scriptId: string): Promise<void> {
     const scripts = await this.getScripts();
     const filtered = scripts.filter((s) => s.id !== scriptId);
-    await chrome.storage.sync.set({ [STORAGE_KEYS.SCRIPTS]: filtered });
+    await chrome.storage.sync.set({ [StorageKeys.scripts]: filtered });
 
     // Also delete associated files
     const files = await this.getScriptFiles(scriptId);
@@ -43,17 +41,17 @@ export class IDEStorageManager {
   // Script Files
   static async getScriptFiles(scriptId: string): Promise<ScriptFile[]> {
     const result: Record<string, ScriptFile[]> = await chrome.storage.sync.get(
-      STORAGE_KEYS.SCRIPT_FILES
+      StorageKeys.scriptFiles
     );
-    const allFiles: ScriptFile[] = result[STORAGE_KEYS.SCRIPT_FILES] || [];
+    const allFiles: ScriptFile[] = result[StorageKeys.scriptFiles] || [];
     return allFiles.filter((f) => f.scriptId === scriptId);
   }
 
   static async saveScriptFile(file: ScriptFile): Promise<void> {
     const result: Record<string, ScriptFile[]> = await chrome.storage.sync.get(
-      STORAGE_KEYS.SCRIPT_FILES
+      StorageKeys.scriptFiles
     );
-    const files: ScriptFile[] = result[STORAGE_KEYS.SCRIPT_FILES] || [];
+    const files: ScriptFile[] = result[StorageKeys.scriptFiles] || [];
     const index = files.findIndex((f) => f.id === file.id);
 
     if (index >= 0) {
@@ -62,24 +60,24 @@ export class IDEStorageManager {
       files.push(file);
     }
 
-    await chrome.storage.sync.set({ [STORAGE_KEYS.SCRIPT_FILES]: files });
+    await chrome.storage.sync.set({ [StorageKeys.scriptFiles]: files });
   }
 
   static async deleteScriptFile(fileId: string): Promise<void> {
     const result: Record<string, ScriptFile[]> = await chrome.storage.sync.get(
-      STORAGE_KEYS.SCRIPT_FILES
+      StorageKeys.scriptFiles
     );
-    const files: ScriptFile[] = result[STORAGE_KEYS.SCRIPT_FILES] || [];
+    const files: ScriptFile[] = result[StorageKeys.scriptFiles] || [];
     const filtered = files.filter((f) => f.id !== fileId);
-    await chrome.storage.sync.set({ [STORAGE_KEYS.SCRIPT_FILES]: filtered });
+    await chrome.storage.sync.set({ [StorageKeys.scriptFiles]: filtered });
   }
 
   // Global Modules
   static async getModules(): Promise<GlobalModule[]> {
     const result: Record<string, GlobalModule[]> = await chrome.storage.sync.get(
-      STORAGE_KEYS.MODULES
+      StorageKeys.modules
     );
-    return result[STORAGE_KEYS.MODULES] || [];
+    return result[StorageKeys.modules] || [];
   }
 
   static async saveModule(module: GlobalModule): Promise<void> {
@@ -92,33 +90,30 @@ export class IDEStorageManager {
       modules.push(module);
     }
 
-    await chrome.storage.sync.set({ [STORAGE_KEYS.MODULES]: modules });
+    await chrome.storage.sync.set({ [StorageKeys.modules]: modules });
   }
 
   static async deleteModule(moduleId: string): Promise<void> {
     const modules = await this.getModules();
     const filtered = modules.filter((m) => m.id !== moduleId);
-    await chrome.storage.sync.set({ [STORAGE_KEYS.MODULES]: filtered });
+    await chrome.storage.sync.set({ [StorageKeys.modules]: filtered });
   }
+
+  private static readonly SettingsDefault = {
+    editorTheme: 'vs-dark',
+    fontSize: 14,
+    tabSize: 2,
+    autoFormat: true,
+    autoSave: true,
+  };
 
   // Settings
   static async getSettings(): Promise<AppSettings> {
-    const result: Record<string, AppSettings> = await chrome.storage.sync.get(
-      STORAGE_KEYS.SETTINGS
-    );
-    return (
-      result[STORAGE_KEYS.SETTINGS] || {
-        editorTheme: 'vs-dark',
-        fontSize: 14,
-        tabSize: 2,
-        autoFormat: true,
-        autoSave: true,
-        enableTypeChecking: true,
-      }
-    );
+    const result: Record<string, AppSettings> = await chrome.storage.sync.get(StorageKeys.settings);
+    return result[StorageKeys.settings] || IDEStorageManager.SettingsDefault;
   }
 
   static async saveSettings(settings: AppSettings): Promise<void> {
-    await chrome.storage.sync.set({ [STORAGE_KEYS.SETTINGS]: settings });
+    await chrome.storage.sync.set({ [StorageKeys.settings]: settings });
   }
 }

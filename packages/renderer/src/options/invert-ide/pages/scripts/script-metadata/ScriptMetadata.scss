@@ -1,0 +1,12 @@
+.script-metadata--wrapper {
+  display: flex;
+  gap: 0.5rem;
+
+  .script-metadata--name {
+    flex-basis: 25%;
+  }
+
+  .script-metadata--url-patterns {
+    flex-basis: 75%;
+  }
+}

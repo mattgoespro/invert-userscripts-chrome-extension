@@ -1,10 +1,10 @@
 @use "~/theme" as theme;
 @use "sass:map";
 
-.input-wrapper {
+.input--wrapper {
   display: contents;
 
-  .input-label {
+  .input--label {
     font-family: map.get(theme.$theme, typography, label, font-family);
     font-size: map.get(theme.$theme, typography, label, font-size);
     font-weight: map.get(theme.$theme, typography, label, font-weight);
@@ -13,7 +13,7 @@
     text-transform: uppercase;
   }
 
-  .input-field {
+  .input--field {
     font-family: map.get(theme.$theme, typography, input, font-family);
     font-size: map.get(theme.$theme, typography, input, font-size);
     font-weight: map.get(theme.$theme, typography, input, font-weight);
@@ -28,5 +28,9 @@
     &::placeholder {
       color: map.get(theme.$theme, palette, input, placeholder);
     }
+  }
+
+  &:focus-visible {
+    outline: none;
   }
 }

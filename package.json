@@ -1,11 +1,21 @@
 {
-  "name": "chrome-vertex-ide-userscripts-extension",
+  "name": "chrome-invert-ide-userscripts-extension",
+  "displayName": "Invert IDE Userscripts",
   "version": "1.0.0",
-  "description": "A Chrome extension that provides an integrated browser and IDE for bundling and injecting TypeScript userscripts.",
+  "description": "Flip the web upside down with Invert IDE, a Chrome extension that combines an integrated TypeScript/SCSS IDE and bundler for the browser, to manage, build, and inject JavaScript userscripts fast.",
   "author": "mattgoespro",
   "main": "index.js",
   "type": "module",
-  "keywords": [],
+  "keywords": [
+    "chrome",
+    "extension",
+    "userscripts",
+    "typescript",
+    "ide",
+    "scss",
+    "bundler",
+    "developer tools"
+  ],
   "scripts": {
     "build": "webpack --mode production",
     "dev": "webpack --mode development --watch",
@@ -18,6 +28,7 @@
     "monaco-editor": "^0.55.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "react-error-boundary": "^6.0.0",
     "uuid": "^13.0.0"
   },
   "devDependencies": {
@@ -31,6 +42,7 @@
     "chrome-remote-interface": "^0.33.3",
     "copy-webpack-plugin": "^13.0.1",
     "css-loader": "^7.1.2",
+    "esbuild-loader": "^4.4.2",
     "eslint": "^9.39.1",
     "eslint-plugin-react": "^7.37.5",
     "favicons": "^7.2.0",

@@ -7,9 +7,6 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 8px;
-    width: 40px;
-    height: 40px;
     background: none;
     cursor: pointer;
     border-radius: 4px;
@@ -20,6 +17,7 @@
         opacity: 0.5;
     }
 }
+
 .icon-btn--primary {
     border: none;
     border-radius: 6px;

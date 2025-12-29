@@ -1,16 +1,15 @@
-import { Button } from '@/shared/components/button/Button';
 import { IconButton } from '@/shared/components/icon-button/IconButton';
-import { Input } from '@/shared/components/input/Input';
 import { Switch } from '@/shared/components/switch/Switch';
 import { Typography } from '@/shared/components/typography/Typography';
 import { uuid } from '@/shared/utils';
 import { TypeScriptCompiler } from '@shared/compiler';
 import { AppSettings, ScriptFile, UserScript } from '@shared/model';
 import { IDEStorageManager } from '@shared/storage';
-import { EllipsisIcon, PlusIcon, XIcon } from 'lucide-react';
+import { EllipsisIcon, PlusIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { CodeEditor } from '../../code-editor/CodeEditor';
 import './Scripts.scss';
+import { ScriptMetadata } from './script-metadata/ScriptMetadata';
 
 type ScriptsProps = {
   settings: AppSettings;
@@ -20,8 +19,6 @@ export function Scripts({ settings }: ScriptsProps) {
   const [scripts, setScripts] = useState<UserScript[]>([]);
   const [selectedScript, setSelectedScript] = useState<UserScript>(null);
   const [selectedFile, setSelectedFile] = useState<ScriptFile>(null);
-  const [_compileOutput, setCompileOutput] = useState<string>('');
-  const [_typeCheckErrors, setTypeCheckErrors] = useState<string[]>([]);
 
   const loadData = async () => {
     const [loadedScripts] = await Promise.all([
@@ -50,15 +47,12 @@ export function Scripts({ settings }: ScriptsProps) {
   const handleScriptSelect = async (script: UserScript) => {
     setSelectedScript(script);
     await loadScriptFiles(script.id);
-    setCompileOutput('');
-    setTypeCheckErrors([]);
   };
 
   const handleCreateScript = async () => {
     const newScript: UserScript = {
       id: uuid(),
-      name: '',
-      description: '',
+      name: 'New Script',
       enabled: false,
       code: '',
       urlPatterns: [],
@@ -75,7 +69,7 @@ export function Scripts({ settings }: ScriptsProps) {
       scriptId: newScript.id,
       name: 'main.ts',
       language: 'typescript',
-      content: '// Start coding your userscript here\nconsole.log("Hello from Vertex IDE!");',
+      content: '// Start coding your userscript here\nconsole.log("Hello from Invert IDE!");',
       isMain: true,
     };
 
@@ -93,61 +87,19 @@ export function Scripts({ settings }: ScriptsProps) {
     }
   };
 
-  const handleAddUrlPattern = () => {
-    const pattern = prompt('Enter URL pattern (e.g., https://example.com/*)');
-    if (pattern) {
-      const patterns = [...selectedScript.urlPatterns, pattern];
-      handleUpdateScriptMeta({ urlPatterns: patterns });
-    }
-  };
+  const handleEditorChange = async (code: string) => {
+    const output = TypeScriptCompiler.compile(code);
 
-  const handleRemoveUrlPattern = (index: number) => {
-    if (selectedScript) {
-      const patterns = selectedScript.urlPatterns.filter((_, i) => i !== index);
-      handleUpdateScriptMeta({ urlPatterns: patterns });
-    }
-  };
-
-  const handleEditorChange = (value: string) => {
-    const updated = { ...selectedFile, content: value };
-    setSelectedFile(updated);
-
-    // Auto-save if enabled
-    if (settings?.autoSave) {
-      IDEStorageManager.saveScriptFile(updated);
-    }
-
-    const errors = TypeScriptCompiler.typeCheck(value, selectedFile.name);
-    setTypeCheckErrors(errors);
-  };
-
-  const handleSaveFile = async () => {
-    await IDEStorageManager.saveScriptFile(selectedFile);
-    alert('File saved successfully!');
-  };
-
-  const handleCompile = async () => {
-    setCompileOutput('Compiling...');
-
-    const result = TypeScriptCompiler.compile(selectedFile.content, selectedFile.name);
-
-    if (result.success && result.code) {
-      setCompileOutput(`// Compiled successfully\n${result.code}`);
-
-      if (result.warnings && result.warnings.length > 0) {
-        setCompileOutput(
-          `// Warnings:\n${result.warnings.map((w) => `// ${w}`).join('\n')}\n\n${result.code}`
-        );
-      }
-
-      // Update the script's compiled code
-      if (selectedScript) {
-        const updated = { ...selectedScript, code: result.code, updatedAt: Date.now() };
-        await IDEStorageManager.saveScript(updated);
-        setSelectedScript(updated);
-      }
+    if (output.success) {
+      const updatedFile: ScriptFile = {
+        ...selectedFile,
+        content: code,
+      };
+      await IDEStorageManager.saveScriptFile(updatedFile);
+      setSelectedFile(updatedFile);
     } else {
-      setCompileOutput(`// Compilation failed\n// Error: ${result.error}`);
+      // Handle compilation errors (could show in UI)
+      console.error('Compilation Error:', output.error);
     }
   };
 
@@ -173,6 +125,7 @@ export function Scripts({ settings }: ScriptsProps) {
           />
           <IconButton
             icon={EllipsisIcon}
+            size="sm"
             onClick={(event) => {
               event.stopPropagation();
               handleDeleteScript(script.id);
@@ -191,6 +144,7 @@ export function Scripts({ settings }: ScriptsProps) {
           <Typography variant="subtitle">Scripts</Typography>
           <IconButton
             icon={PlusIcon}
+            size="sm"
             onClick={handleCreateScript}
             title="Create new script"
           ></IconButton>
@@ -201,36 +155,7 @@ export function Scripts({ settings }: ScriptsProps) {
         {selectedScript ? (
           <>
             <div className="scripts--editor-header">
-              <div className="scripts--script-details">
-                <Input
-                  label="Name"
-                  value={selectedScript.name}
-                  onChange={(e) => handleUpdateScriptMeta({ name: e.target.value })}
-                />
-              </div>
-              <div className="scripts--editor-actions">
-                <Button onClick={handleSaveFile}>💾 Save</Button>
-                <Button onClick={handleCompile}>🔧 Compile & Bundle</Button>
-              </div>
-            </div>
-            <div className="scripts--url-patterns">
-              <Typography variant="body">URL Patterns</Typography>
-              <div className="scripts--patterns-list">
-                {(selectedScript.urlPatterns ?? []).map((pattern, index) => (
-                  <div key={index} className="scripts--pattern-item">
-                    <Typography variant="caption">{pattern}</Typography>
-                    <IconButton
-                      icon={XIcon}
-                      onClick={() => handleRemoveUrlPattern(index)}
-                    ></IconButton>
-                  </div>
-                ))}
-                <IconButton
-                  icon={PlusIcon}
-                  variant="secondary"
-                  onClick={handleAddUrlPattern}
-                ></IconButton>
-              </div>
+              <ScriptMetadata script={selectedScript} />
             </div>
             <div className="scripts--editor-container">
               {selectedFile && (

@@ -48,35 +48,39 @@ export function Modules() {
   };
 
   return (
-    <div className="modules-content">
-      <div className="modules-header">
-        <Typography variant="button">Global Modules</Typography>
-        <Button className="btn-primary" onClick={handleCreateModule}>
-          + Add Module
-        </Button>
+    <div className="modules--content">
+      <div className="modules--header">
+        <Typography variant="subtitle">Global Modules</Typography>
+        <Button onClick={handleCreateModule}>+ Add Module</Button>
       </div>
-      <div className="modules-list">
+      <div className="modules--list">
         {modules.map((module) => (
-          <div key={module.id} className="module-item">
-            <div className="module-info">
+          <div key={module.id} className="modules--list-item">
+            <div className="modules--list-item-info">
               <strong>{module.name}</strong>
-              <div className="module-url">{module.url}</div>
-              {module.version && <div className="module-version">v{module.version}</div>}
+              <div className="modules--list-item-url">{module.url}</div>
+              {module.version && (
+                <div className="modules--list-item-version">v{module.version}</div>
+              )}
             </div>
-            <div className="module-actions">
+            <div className="modules--list-item-actions">
               <Checkbox
                 label="Enabled"
                 checked={module.enabled}
                 onChange={() => handleToggleModule(module)}
               />
-              <IconButton className="btn-delete" onClick={() => handleDeleteModule(module.id)}>
+              <IconButton
+                icon={DeleteIcon}
+                className="btn-delete"
+                onClick={() => handleDeleteModule(module.id)}
+              >
                 <DeleteIcon />
               </IconButton>
             </div>
           </div>
         ))}
         {modules.length === 0 && (
-          <div className="empty-state">
+          <div className="modules--empty-state">
             <p>No global modules yet. Add CDN libraries that can be shared across all scripts.</p>
           </div>
         )}

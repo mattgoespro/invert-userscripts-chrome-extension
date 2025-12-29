@@ -1,7 +1,6 @@
 export interface UserScript {
   id: string;
   name: string;
-  description: string;
   enabled: boolean;
   code: string;
   urlPatterns: string[];

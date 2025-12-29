@@ -1,0 +1,11 @@
+.settings--content {
+  flex: 1;
+  padding: 2rem;
+
+  .settings--header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+  }
+}

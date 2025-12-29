@@ -6,6 +6,7 @@ import TerserPlugin from 'terser-webpack-plugin';
 import webpack from 'webpack';
 import { ChromeExtensionReloaderWebpackPlugin } from './tools/chrome-extension-reloader-webpack-plugin.ts';
 import MonacoEditorWebpackPlugin from 'monaco-editor-webpack-plugin';
+import packageJson from './package.json' with { type: 'json' };
 
 const __dirname = import.meta.dirname;
 export default (_args: unknown, { mode }: { mode: 'development' | 'production' }) =>
@@ -33,18 +34,16 @@ export default (_args: unknown, { mode }: { mode: 'development' | 'production' }
         }
 
         // Check by module path (production)
-        if (chunk instanceof webpack.Chunk) {
-          for (const module of chunk.getModules()) {
-            if (
-              module instanceof webpack.NormalModule &&
-              module.resource.includes('monaco-editor')
-            ) {
-              return 'monaco-editor/[id].js';
-            }
-          }
+        if (
+          chunk instanceof webpack.Chunk &&
+          chunk.hasModuleInGraph((module) => {
+            return module.id?.toString().includes('monaco-editor');
+          })
+        ) {
+          return 'monaco-editor/[chunkhash].js';
         }
 
-        return 'chunks/[name].js';
+        return 'chunks/[chunkhash].js';
       },
       publicPath: '/',
       clean: true,
@@ -54,10 +53,9 @@ export default (_args: unknown, { mode }: { mode: 'development' | 'production' }
         {
           test: /\.ts$/,
           use: {
-            loader: 'ts-loader',
+            loader: 'esbuild-loader',
             options: {
-              configFile: path.join(__dirname, 'packages', 'shared', 'tsconfig.json'),
-              transpileOnly: true,
+              tsconfig: path.join(__dirname, 'packages', 'shared', 'tsconfig.json'),
             },
           },
           include: /packages\/shared\/src/,
@@ -66,10 +64,9 @@ export default (_args: unknown, { mode }: { mode: 'development' | 'production' }
         {
           test: /\.ts$/,
           use: {
-            loader: 'ts-loader',
+            loader: 'esbuild-loader',
             options: {
-              configFile: path.join(__dirname, 'packages', 'runtime', 'tsconfig.json'),
-              transpileOnly: true,
+              tsconfig: path.join(__dirname, 'packages', 'runtime', 'tsconfig.json'),
             },
           },
           include: /packages/,
@@ -139,6 +136,7 @@ export default (_args: unknown, { mode }: { mode: 'development' | 'production' }
               const manifest: chrome.runtime.ManifestV3 = JSON.parse(content.toString());
 
               delete manifest.$schema;
+              manifest.description = packageJson.description;
 
               return JSON.stringify(manifest);
             },
@@ -166,13 +164,16 @@ export default (_args: unknown, { mode }: { mode: 'development' | 'production' }
           })
         : false,
     ],
-    optimization: {
-      minimize: true,
-      minimizer: [
-        new TerserPlugin({
-          extractComments: false,
-        }),
-      ],
-    },
+    optimization:
+      mode === 'production'
+        ? {
+            minimize: true,
+            minimizer: [
+              new TerserPlugin({
+                extractComments: false,
+              }),
+            ],
+          }
+        : undefined,
     cache: true,
   }) satisfies webpack.Configuration;

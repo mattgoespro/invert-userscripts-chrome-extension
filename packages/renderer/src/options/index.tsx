@@ -1,4 +1,4 @@
 import { createRoot } from 'react-dom/client';
-import { VertexIde } from './vertex-ide/VertexIde';
+import { InvertIde } from './invert-ide/InvertIde';
 
-createRoot(document.getElementById('root')).render(<VertexIde />);
+createRoot(document.getElementById('root')).render(<InvertIde />);

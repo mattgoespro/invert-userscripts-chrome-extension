@@ -1,4 +1,4 @@
 import { createRoot } from 'react-dom/client';
-import { VertexIdePopup } from './vertex-ide-popup/VertextIdePopup';
+import { InvertIdePopup } from './invert-ide-popup/InvertIdePopup';
 
-createRoot(document.getElementById('root')).render(<VertexIdePopup />);
+createRoot(document.getElementById('root')).render(<InvertIdePopup />);

@@ -1,5 +1,9 @@
 # Outstanding Tasks
 
+## Bundling
+
+- Look at creating a manifest generator webpack plugin to mitigate dealing with keeping the package.json, source manifest.json, and JavaScript output paths aligned
+
 ## Bundles
 
-- Investigate the bundle outputs, chunks, and their sizes, and further optimize bundle splitting.
+- Investigate output bundles and their file sizes for further chunk-splitting optimizations.
