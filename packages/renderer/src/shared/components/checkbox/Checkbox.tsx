@@ -1,4 +1,4 @@
-import './Checkbox.scss';
+import "./Checkbox.scss";
 
 type CheckboxProps = {
   label?: string;

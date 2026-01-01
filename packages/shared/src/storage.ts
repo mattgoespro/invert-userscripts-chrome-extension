@@ -1,8 +1,8 @@
-import { Userscript, GlobalModule, EditorSettings, GlobalModules, Userscripts } from './model';
+import { Userscript, GlobalModule, EditorSettings, GlobalModules, Userscripts } from "./model";
 
 export class StorageManager {
   private static readonly SettingsDefaults: EditorSettings = {
-    theme: 'vs-dark',
+    theme: "vs-dark",
     fontSize: 14,
     tabSize: 2,
     autoFormat: true,
@@ -10,7 +10,7 @@ export class StorageManager {
   };
 
   static async getScripts(): Promise<Userscripts> {
-    return chrome.storage.sync.get(['userscripts']) ?? {};
+    return chrome.storage.sync.get(["userscripts"]) ?? {};
   }
 
   static async saveScript(script: Userscript): Promise<void> {
@@ -27,15 +27,15 @@ export class StorageManager {
 
   static async deleteScript(scriptId: string): Promise<void> {
     const scripts = await this.getScripts();
-    console.log('Current scripts: ', scripts);
+    console.log("Current scripts: ", scripts);
     delete scripts[scriptId];
-    console.log('Updated scripts: ', scripts);
+    console.log("Updated scripts: ", scripts);
 
     await chrome.storage.sync.set({ userscripts: scripts });
   }
 
   static async getModules(): Promise<GlobalModules> {
-    return chrome.storage.sync.get(['globalModules']);
+    return chrome.storage.sync.get(["globalModules"]);
   }
 
   static async saveModule(module: GlobalModule): Promise<void> {
@@ -55,7 +55,7 @@ export class StorageManager {
   }
 
   static async getEditorSettings(): Promise<EditorSettings> {
-    const data = await chrome.storage.sync.get(['editorSettings']);
+    const data = await chrome.storage.sync.get(["editorSettings"]);
     return { ...this.SettingsDefaults, ...data };
   }
 

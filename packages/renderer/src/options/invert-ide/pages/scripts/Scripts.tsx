@@ -1,15 +1,15 @@
-import { IconButton } from '@/shared/components/icon-button/IconButton';
-import { Switch } from '@/shared/components/switch/Switch';
-import { Typography } from '@/shared/components/typography/Typography';
-import { uuid } from '@/shared/utils';
-import { TypeScriptCompiler } from '@shared/compiler';
-import { Userscript, Userscripts } from '@shared/model';
-import { StorageManager } from '@shared/storage';
-import { EllipsisIcon, PlusIcon } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { CodeEditor } from '../../code-editor/CodeEditor';
-import './Scripts.scss';
-import { ScriptMetadata } from './script-metadata/ScriptMetadata';
+import { IconButton } from "@/shared/components/icon-button/IconButton";
+import { Switch } from "@/shared/components/switch/Switch";
+import { Typography } from "@/shared/components/typography/Typography";
+import { uuid } from "@/shared/utils";
+import { TypeScriptCompiler } from "@shared/compiler";
+import { Userscript, Userscripts } from "@shared/model";
+import { StorageManager } from "@shared/storage";
+import { EllipsisIcon, PlusIcon } from "lucide-react";
+import { useEffect, useState } from "react";
+import { CodeEditor } from "../../code-editor/CodeEditor";
+import "./Scripts.scss";
+import { ScriptMetadata } from "./script-metadata/ScriptMetadata";
 
 export function Scripts() {
   const [scripts, setScripts] = useState<Userscripts>({});
@@ -31,11 +31,11 @@ export function Scripts() {
   const handleCreateScript = async () => {
     const newScript: Userscript = {
       id: uuid(),
-      name: 'New Script',
+      name: "New Script",
       enabled: false,
-      code: '',
+      code: "",
       urlPatterns: [],
-      runAt: 'document_idle',
+      runAt: "document_idle",
       createdAt: Date.now(),
       updatedAt: Date.now(),
     };
@@ -48,7 +48,7 @@ export function Scripts() {
   };
 
   const handleDeleteScript = async (scriptId: string) => {
-    if (confirm('Are you sure you want to delete this script?')) {
+    if (confirm("Are you sure you want to delete this script?")) {
       await StorageManager.deleteScript(scriptId);
       setSelectedScript(null);
       await loadData();
@@ -68,7 +68,7 @@ export function Scripts() {
       setSelectedScript(updatedFile);
     } else {
       // Handle compilation errors (could show in UI)
-      console.error('Compilation Error:', output.error);
+      console.error("Compilation Error:", output.error);
     }
   };
 
@@ -80,11 +80,11 @@ export function Scripts() {
   };
 
   const createScriptListItem = (script: Userscript) => {
-    console.log('Script item: ', script.id);
+    console.log("Script item: ", script.id);
     return (
       <div
         key={script.id}
-        className={`scripts--list-item ${selectedScript?.id === script.id ? 'scripts--list-item-active' : ''}`}
+        className={`scripts--list-item ${selectedScript?.id === script.id ? "scripts--list-item-active" : ""}`}
         onClick={() => handleScriptSelect(script)}
       >
         <span className="scripts--list-item-name">{script.name}</span>
@@ -140,7 +140,7 @@ export function Scripts() {
                     />
                   </div>
                   <div className="scripts--editor">
-                    <CodeEditor language="scss" code={''} onChange={handleEditorChange} />
+                    <CodeEditor language="scss" code={""} onChange={handleEditorChange} />
                   </div>
                 </>
               )}

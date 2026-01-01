@@ -1,12 +1,12 @@
-import { GlobalModule, GlobalModules } from '@shared/model';
-import './Modules.scss';
-import { StorageManager } from '@shared/storage';
-import { useState } from 'react';
-import { Button } from '@/shared/components/button/Button';
-import { Checkbox } from '@/shared/components/checkbox/Checkbox';
-import { IconButton } from '@/shared/components/icon-button/IconButton';
-import { DeleteIcon } from 'lucide-react';
-import { Typography } from '@/shared/components/typography/Typography';
+import { GlobalModule, GlobalModules } from "@shared/model";
+import "./Modules.scss";
+import { StorageManager } from "@shared/storage";
+import { useState } from "react";
+import { Button } from "@/shared/components/button/Button";
+import { Checkbox } from "@/shared/components/checkbox/Checkbox";
+import { IconButton } from "@/shared/components/icon-button/IconButton";
+import { DeleteIcon } from "lucide-react";
+import { Typography } from "@/shared/components/typography/Typography";
 
 export function Modules() {
   const [modules, setModules] = useState<GlobalModules>({});
@@ -17,10 +17,10 @@ export function Modules() {
   };
 
   const handleCreateModule = async () => {
-    const name = prompt('Module name:');
+    const name = prompt("Module name:");
     if (!name) return;
 
-    const url = prompt('CDN URL:');
+    const url = prompt("CDN URL:");
     if (!url) return;
 
     const newModule: GlobalModule = {
@@ -35,7 +35,7 @@ export function Modules() {
   };
 
   const handleDeleteModule = async (moduleId: string) => {
-    if (confirm('Delete this module?')) {
+    if (confirm("Delete this module?")) {
       await StorageManager.deleteModule(moduleId);
       await loadData();
     }

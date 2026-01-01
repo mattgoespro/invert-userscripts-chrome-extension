@@ -1,4 +1,4 @@
-import './Switch.scss';
+import "./Switch.scss";
 
 type SwitchProps = {
   checked: boolean;
@@ -9,7 +9,7 @@ type SwitchProps = {
 
 export function Switch({ checked, onChange, disabled = false, label }: SwitchProps) {
   return (
-    <label className={`switch ${disabled ? 'switch--disabled' : ''}`}>
+    <label className={`switch ${disabled ? "switch--disabled" : ""}`}>
       <input
         type="checkbox"
         checked={checked}

@@ -3,37 +3,37 @@
 @use "~/theme" as theme;
 
 .btn {
-    padding: 8px 16px;
-    border: none;
-    border-radius: 4px;
-    background-color: map.get(theme.$theme, palette, primary);
-    color: map.get(theme.$theme, palette, foreground);
-    font-size: 14px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  background-color: map.get(theme.$theme, palette, primary);
+  color: map.get(theme.$theme, palette, foreground);
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
 
-    &:hover {
-        background-color: #357ab8;
-    }
+  &:hover {
+    background-color: #357ab8;
+  }
 
-    &:disabled {
-        background-color: #a0a0a0;
-        cursor: not-allowed;
-    }
+  &:disabled {
+    background-color: #a0a0a0;
+    cursor: not-allowed;
+  }
 }
 
 .btn-primary {
-    background-color: #007bff;
+  background-color: #007bff;
 
-    &:hover {
-        background-color: #0056b3;
-    }
+  &:hover {
+    background-color: #0056b3;
+  }
 }
 
 .btn-secondary {
-    background-color: #b48135;
+  background-color: #b48135;
 
-    &:hover {
-        background-color: #8c5e27;
-    }
+  &:hover {
+    background-color: #8c5e27;
+  }
 }

@@ -1,5 +1,5 @@
-import { editor } from 'monaco-editor';
-import { useEffect, useRef, useState } from 'react';
+import { editor } from "monaco-editor";
+import { useEffect, useRef, useState } from "react";
 
 type CodeEditorProps = {
   language: string;
@@ -22,8 +22,8 @@ export function CodeEditor({ language, code, onChange }: CodeEditorProps) {
         language,
         model: editor.createModel(code, language),
         automaticLayout: true,
-        theme: 'vs-dark',
-        'semanticHighlighting.enabled': true,
+        theme: "vs-dark",
+        "semanticHighlighting.enabled": true,
         minimap: { enabled: true },
         allowOverflow: false,
       });
@@ -37,5 +37,5 @@ export function CodeEditor({ language, code, onChange }: CodeEditorProps) {
     }
   }, [code, language]);
 
-  return <div ref={editorRef} style={{ height: '100%' }}></div>;
+  return <div ref={editorRef} style={{ height: "100%" }}></div>;
 }

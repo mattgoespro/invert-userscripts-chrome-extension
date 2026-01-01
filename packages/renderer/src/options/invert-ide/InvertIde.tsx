@@ -1,13 +1,13 @@
-import { useState } from 'react';
-import { Sidebar, SidebarButton } from './sidebar/Sidebar';
-import './InvertIde.scss';
-import { Scripts } from './pages/scripts/Scripts';
-import { Modules } from './pages/modules/Modules';
-import { ErrorBoundary } from 'react-error-boundary';
-import { Settings } from './pages/settings/Settings';
+import { useState } from "react";
+import { Sidebar, SidebarButton } from "./sidebar/Sidebar";
+import "./InvertIde.scss";
+import { Scripts } from "./pages/scripts/Scripts";
+import { Modules } from "./pages/modules/Modules";
+import { ErrorBoundary } from "react-error-boundary";
+import { Settings } from "./pages/settings/Settings";
 
 export function InvertIde() {
-  const [activeTab, setActiveTab] = useState<SidebarButton>('scripts');
+  const [activeTab, setActiveTab] = useState<SidebarButton>("scripts");
 
   const onNavigate = (tab: SidebarButton) => {
     setActiveTab(tab);
@@ -27,9 +27,9 @@ export function InvertIde() {
             <Sidebar active={activeTab} onNavigate={onNavigate} />
           </div>
           <div className="invert-ide--dashboard-page-content">
-            {activeTab === 'scripts' && <Scripts />}
-            {activeTab === 'modules' && <Modules />}
-            {activeTab === 'settings' && <Settings />}
+            {activeTab === "scripts" && <Scripts />}
+            {activeTab === "modules" && <Modules />}
+            {activeTab === "settings" && <Settings />}
           </div>
         </div>
       </div>

@@ -3,12 +3,12 @@
  * This can be extended for additional features like communication with injected scripts
  */
 
-console.log('Invert IDE content script loaded');
+console.log("Invert IDE content script loaded");
 
 // Listen for messages from background or injected scripts
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.action === 'ping') {
-    sendResponse({ status: 'ready' });
+  if (request.action === "ping") {
+    sendResponse({ status: "ready" });
   }
   return true;
 });

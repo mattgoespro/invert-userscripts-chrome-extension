@@ -4,7 +4,7 @@ export interface Userscript {
   enabled: boolean;
   code: string;
   urlPatterns: string[];
-  runAt: 'document_start' | 'document_end' | 'document_idle';
+  runAt: "document_start" | "document_end" | "document_idle";
   createdAt: number;
   updatedAt: number;
 }
@@ -23,7 +23,7 @@ export interface GlobalModule {
 export interface EditorTheme {
   id: string;
   name: string;
-  theme: 'vs-dark' | 'vs-light' | 'hc-black';
+  theme: "vs-dark" | "vs-light" | "hc-black";
 }
 
 export interface EditorSettings {

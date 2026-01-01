@@ -1,14 +1,14 @@
-import './Button.scss';
+import "./Button.scss";
 
 type ButtonProps = {
-  variant?: 'primary' | 'secondary';
+  variant?: "primary" | "secondary";
   onClick?: () => void;
   disabled?: boolean;
   children: React.ReactNode;
 } & React.ButtonHTMLAttributes<HTMLButtonElement>;
 
 export function Button({
-  variant = 'primary',
+  variant = "primary",
   onClick,
   disabled = false,
   children,

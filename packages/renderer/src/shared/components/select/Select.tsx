@@ -1,4 +1,4 @@
-import './Select.scss';
+import "./Select.scss";
 
 type SelectProps = {
   label: string;

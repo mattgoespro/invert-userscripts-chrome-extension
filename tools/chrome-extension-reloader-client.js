@@ -1,17 +1,17 @@
 (() => {
   const serverWebsocketPort = `{{port}}`;
   const serverWebsocketUrl = `ws://localhost:${serverWebsocketPort}`;
-  const storageKey = '__chrome_ext_snapshot__';
+  const storageKey = "__chrome_ext_snapshot__";
 
   function getState() {
     return {
       url: location.href,
       scroll: { x: window.scrollX, y: window.scrollY },
-      inputs: Array.from(document.querySelectorAll('input, textarea, select')).map((el) => ({
+      inputs: Array.from(document.querySelectorAll("input, textarea, select")).map((el) => ({
         id: el.id ?? null,
         name: el.tagName ?? null,
-        value: 'value' in el ? el.value : null,
-        checked: 'checked' in el ? el.checked : null,
+        value: "value" in el ? el.value : null,
+        checked: "checked" in el ? el.checked : null,
       })),
     };
   }
@@ -39,11 +39,11 @@
           continue;
         }
 
-        if ('checked' in element && input.checked !== null) {
+        if ("checked" in element && input.checked !== null) {
           element.checked = input.checked;
         }
 
-        if ('value' in element && input.value !== null) {
+        if ("value" in element && input.value !== null) {
           element.value = input.value;
         }
       }
@@ -54,14 +54,14 @@
     const links = document.querySelectorAll('link[rel="stylesheet"]');
 
     for (const link of links) {
-      const href = link.getAttribute('href');
+      const href = link.getAttribute("href");
 
       if (href == null) {
         continue;
       }
 
-      const domain = href.split('?')[0];
-      link.setAttribute('href', `${domain}?t=${Date.now()}`);
+      const domain = href.split("?")[0];
+      link.setAttribute("href", `${domain}?t=${Date.now()}`);
     }
   }
 
@@ -76,7 +76,7 @@
     try {
       websocket = new WebSocket(serverWebsocketUrl);
     } catch {
-      console.warn('Unable to connect, retrying in 1s...');
+      console.warn("Unable to connect, retrying in 1s...");
       setTimeout(connect, 1000);
       return;
     }
@@ -85,12 +85,12 @@
       let msg = JSON.parse(message.data);
 
       switch (msg.type) {
-        case 'reload': {
+        case "reload": {
           reloadCSS();
           saveStateAndReload();
           break;
         }
-        case 'log': {
+        case "log": {
           console.log(msg.data);
           break;
         }
@@ -103,13 +103,13 @@
       try {
         websocket.close();
       } catch {
-        console.error('Error closing websocket.');
+        console.error("Error closing websocket.");
       }
     };
   }
 
-  if (document.readyState === 'complete') {
-    document.addEventListener('DOMContentLoaded', restoreState);
+  if (document.readyState === "complete") {
+    document.addEventListener("DOMContentLoaded", restoreState);
   } else {
     restoreState();
   }

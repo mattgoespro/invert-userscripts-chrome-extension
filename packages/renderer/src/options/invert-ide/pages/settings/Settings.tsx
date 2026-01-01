@@ -1,14 +1,14 @@
-import { EditorSettings } from '@shared/model';
-import './Settings.scss';
-import { StorageManager } from '@shared/storage';
-import { Checkbox } from '@/shared/components/checkbox/Checkbox';
-import { Typography } from '@/shared/components/typography/Typography';
-import { Input } from '@/shared/components/input/Input';
-import { useEffect, useState } from 'react';
+import { EditorSettings } from "@shared/model";
+import "./Settings.scss";
+import { StorageManager } from "@shared/storage";
+import { Checkbox } from "@/shared/components/checkbox/Checkbox";
+import { Typography } from "@/shared/components/typography/Typography";
+import { Input } from "@/shared/components/input/Input";
+import { useEffect, useState } from "react";
 
 export function Settings() {
   const [settings, setSettings] = useState<EditorSettings>({
-    theme: 'vs-dark',
+    theme: "vs-dark",
     fontSize: 14,
     tabSize: 2,
     autoFormat: true,

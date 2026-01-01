@@ -1,5 +1,5 @@
-import { StorageManager } from '@shared/storage';
-import { Userscript } from '../../../shared/src/model';
+import { StorageManager } from "@shared/storage";
+import { Userscript } from "../../../shared/src/model";
 
 export async function injectMatchingScripts(tabId: number, url: string): Promise<void> {
   try {
@@ -12,7 +12,7 @@ export async function injectMatchingScripts(tabId: number, url: string): Promise
       }
     }
   } catch (error) {
-    console.error('Error injecting scripts:', error);
+    console.error("Error injecting scripts:", error);
   }
 }
 
@@ -25,9 +25,9 @@ export function matchesUrlPattern(url: string, patterns: string[]): boolean {
     // Convert glob pattern to regex with proper escaping
     // First escape all regex special characters except * and ?
     const regexPattern = pattern
-      .replace(/[.+^${}()|[\]\\]/g, '\\$&') // Escape regex special chars including backslash
-      .replace(/\*/g, '.*') // Convert * to .*
-      .replace(/\?/g, '.'); // Convert ? to .
+      .replace(/[.+^${}()|[\]\\]/g, "\\$&") // Escape regex special chars including backslash
+      .replace(/\*/g, ".*") // Convert * to .*
+      .replace(/\?/g, "."); // Convert ? to .
 
     const regex = new RegExp(`^${regexPattern}$`);
     return regex.test(url);
@@ -41,16 +41,16 @@ export async function injectScript(tabId: number, script: Userscript): Promise<v
       func: (code: string) => {
         try {
           // Create a script element to execute the code
-          const scriptEl = document.createElement('script');
+          const scriptEl = document.createElement("script");
           scriptEl.textContent = code;
           (document.head || document.documentElement).appendChild(scriptEl);
           scriptEl.remove();
         } catch (error) {
-          console.error('Error executing userscript:', error);
+          console.error("Error executing userscript:", error);
         }
       },
       args: [script.code],
-      world: 'MAIN',
+      world: "MAIN",
     });
     console.log(`Injected script: ${script.name} into tab ${tabId}`);
   } catch (error) {

@@ -4,64 +4,64 @@
 @use "~/theme" as theme;
 
 .icon-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: none;
-    cursor: pointer;
-    border-radius: 4px;
-    transition: background-color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
 
-    &:disabled {
-        cursor: not-allowed;
-        opacity: 0.5;
-    }
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
 }
 
 .icon-btn--primary {
-    border: none;
-    border-radius: 6px;
-    transition: background-color 0.2s ease;
+  border: none;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
 
-    &:hover {
-        background-color: rgba(255, 200, 20, 0.233);
-    }
+  &:hover {
+    background-color: rgba(255, 200, 20, 0.233);
+  }
 
-    &:disabled {
-        cursor: not-allowed;
-        opacity: 0.5;
-    }
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
 
-    &:focus {
-        background-color: rgba(219, 161, 123, 0.4);
-    }
+  &:focus {
+    background-color: rgba(219, 161, 123, 0.4);
+  }
 }
 
 .icon-btn--secondary {
-    border: 1px solid map.get(theme.$theme, palette, icon-button, border);
-    color: map.get(theme.$theme, palette, icon-button, foreground);
+  border: 1px solid map.get(theme.$theme, palette, icon-button, border);
+  color: map.get(theme.$theme, palette, icon-button, foreground);
 
-    &:hover {
-        background: map.get(theme.$theme, palette, icon-button, hover-background);
-    }
+  &:hover {
+    background: map.get(theme.$theme, palette, icon-button, hover-background);
+  }
 
-    &:focus {
-        background-color: color.scale(
-            map.get(theme.$theme, palette, icon-button, focus-background),
-            $lightness: -10%
-        );
-    }
+  &:focus {
+    background-color: color.scale(
+      map.get(theme.$theme, palette, icon-button, focus-background),
+      $lightness: -10%
+    );
+  }
 }
 
 .icon-btn--outlined {
-    border: 2px solid map.get(theme.$theme, palette, primary);
-    color: map.get(theme.$theme, palette, primary);
+  border: 2px solid map.get(theme.$theme, palette, primary);
+  color: map.get(theme.$theme, palette, primary);
 
-    &:hover {
-        background-color: color.scale(map.get(theme.$theme, palette, primary), $lightness: 40%);
-    }
+  &:hover {
+    background-color: color.scale(map.get(theme.$theme, palette, primary), $lightness: 40%);
+  }
 
-    &:focus {
-        background-color: color.scale(map.get(theme.$theme, palette, primary), $lightness: 20%);
-    }
+  &:focus {
+    background-color: color.scale(map.get(theme.$theme, palette, primary), $lightness: 20%);
+  }
 }

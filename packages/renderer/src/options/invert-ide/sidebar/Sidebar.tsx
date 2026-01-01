@@ -1,8 +1,8 @@
-import { ClipboardPenIcon, PackageIcon, SettingsIcon } from 'lucide-react';
-import { IconButton } from '../../../shared/components/icon-button/IconButton';
-import './Sidebar.scss';
+import { ClipboardPenIcon, PackageIcon, SettingsIcon } from "lucide-react";
+import { IconButton } from "../../../shared/components/icon-button/IconButton";
+import "./Sidebar.scss";
 
-export type SidebarButton = 'scripts' | 'modules' | 'settings';
+export type SidebarButton = "scripts" | "modules" | "settings";
 
 interface SidebarProps {
   active: SidebarButton;
@@ -13,28 +13,28 @@ export function Sidebar({ active: active, onNavigate }: SidebarProps) {
   return (
     <div className="sidebar">
       <IconButton
-        className={[active === 'scripts' ? 'sidebar--button-active' : null, 'sidebar--button']
+        className={[active === "scripts" ? "sidebar--button-active" : null, "sidebar--button"]
           .filter(Boolean)
-          .join(' ')}
+          .join(" ")}
         icon={ClipboardPenIcon}
         size="md"
-        onClick={() => onNavigate('scripts')}
+        onClick={() => onNavigate("scripts")}
       ></IconButton>
       <IconButton
         icon={PackageIcon}
-        className={[active === 'modules' ? 'sidebar--button-active' : null, 'sidebar--button']
+        className={[active === "modules" ? "sidebar--button-active" : null, "sidebar--button"]
           .filter(Boolean)
-          .join(' ')}
+          .join(" ")}
         size="md"
-        onClick={() => onNavigate('modules')}
+        onClick={() => onNavigate("modules")}
       />
       <IconButton
         icon={SettingsIcon}
-        className={[active === 'settings' ? 'sidebar--button-active' : null, 'sidebar--button']
+        className={[active === "settings" ? "sidebar--button-active" : null, "sidebar--button"]
           .filter(Boolean)
-          .join(' ')}
+          .join(" ")}
         size="md"
-        onClick={() => onNavigate('settings')}
+        onClick={() => onNavigate("settings")}
       />
     </div>
   );

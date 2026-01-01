@@ -1,7 +1,7 @@
-import { Input } from '@/shared/components/input/Input';
-import { Userscript } from '@shared/model';
-import { StorageManager } from '@shared/storage';
-import './ScriptMetadata.scss';
+import { Input } from "@/shared/components/input/Input";
+import { Userscript } from "@shared/model";
+import { StorageManager } from "@shared/storage";
+import "./ScriptMetadata.scss";
 
 type ScriptMetadataProps = {
   script: Userscript;
@@ -23,10 +23,10 @@ export function ScriptMetadata({ script }: ScriptMetadataProps) {
       />
       <Input
         className="script-metadata--url-patterns"
-        value={script.urlPatterns?.join(', ')}
+        value={script.urlPatterns?.join(", ")}
         placeholder="URL Patterns (comma separated)..."
         onChange={(e) =>
-          handleUpdateScriptMeta({ urlPatterns: e.target.value.split(',').map((p) => p.trim()) })
+          handleUpdateScriptMeta({ urlPatterns: e.target.value.split(",").map((p) => p.trim()) })
         }
       />
     </div>

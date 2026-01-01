@@ -1,7 +1,7 @@
-import { IconButton } from '@/shared/components/icon-button/IconButton';
-import { Typography } from '@/shared/components/typography/Typography';
-import { SettingsIcon } from 'lucide-react';
-import './InvertIdePopup.scss';
+import { IconButton } from "@/shared/components/icon-button/IconButton";
+import { Typography } from "@/shared/components/typography/Typography";
+import { SettingsIcon } from "lucide-react";
+import "./InvertIdePopup.scss";
 
 export function InvertIdePopup() {
   return (

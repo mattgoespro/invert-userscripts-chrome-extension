@@ -17,6 +17,7 @@
   "chat.tools.terminal.autoApprove": {
     "/.*/": true
   },
+  "chat.tools.terminal.autoReplyToPrompts": true,
   "chat.tools.terminal.ignoreDefaultAutoApproveRules": true,
   "debug.toolBarLocation": "commandCenter",
   "editor.codeActionsOnSave": {
@@ -48,6 +49,7 @@
   },
   "prettier.configPath": "prettier.config.mjs",
   "prettier.requireConfig": true,
+  "scss.format.enable": false,
   "scss.lint.duplicateProperties": "error",
   "scss.lint.emptyRules": "warning",
   "scss.lint.propertyIgnoredDueToDisplay": "warning",
@@ -57,7 +59,7 @@
   "scss.showErrors": true,
   "scss.validate": true,
   "scssFormatter.printWidth": 100,
-  "scssFormatter.trailingComma": "all",
+  "scssFormatter.trailingComma": "es5",
   "search.exclude": {
     "**/.vscode/**": true,
     "**/dist/**": true,
