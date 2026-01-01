@@ -28,6 +28,10 @@
     &::placeholder {
       color: map.get(theme.$theme, palette, input, placeholder);
     }
+
+    *:focus-visible {
+      outline: none;
+    }
   }
 
   &:focus-visible {

@@ -1,25 +1,13 @@
-import { AppSettings } from '@shared/model';
-import { IDEStorageManager } from '@shared/storage';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Sidebar, SidebarButton } from './sidebar/Sidebar';
 import './InvertIde.scss';
 import { Scripts } from './pages/scripts/Scripts';
 import { Modules } from './pages/modules/Modules';
-import { Settings } from './pages/settings/Settings';
 import { ErrorBoundary } from 'react-error-boundary';
+import { Settings } from './pages/settings/Settings';
 
 export function InvertIde() {
   const [activeTab, setActiveTab] = useState<SidebarButton>('scripts');
-  const [settings, setSettings] = useState<AppSettings>(null);
-
-  const loadData = async () => {
-    const [loadedSettings] = await Promise.all([IDEStorageManager.getSettings()]);
-    setSettings(loadedSettings);
-  };
-
-  useEffect(() => {
-    loadData();
-  }, []);
 
   const onNavigate = (tab: SidebarButton) => {
     setActiveTab(tab);
@@ -39,9 +27,9 @@ export function InvertIde() {
             <Sidebar active={activeTab} onNavigate={onNavigate} />
           </div>
           <div className="invert-ide--dashboard-page-content">
-            {activeTab === 'scripts' && <Scripts settings={settings} />}
+            {activeTab === 'scripts' && <Scripts />}
             {activeTab === 'modules' && <Modules />}
-            {activeTab === 'settings' && <Settings settings={settings} />}
+            {activeTab === 'settings' && <Settings />}
           </div>
         </div>
       </div>

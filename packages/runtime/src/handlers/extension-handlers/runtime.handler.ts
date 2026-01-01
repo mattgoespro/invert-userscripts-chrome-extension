@@ -2,7 +2,7 @@ import { injectMatchingScripts } from '../../ide/scripts';
 
 export const onInstalled = (details: chrome.runtime.InstalledDetails) => {
   console.log('Invert IDE Userscripts extension installed.');
-  console.log(`Extension ID: ${chrome.runtime.id}`);
+  console.log('Details: ', details);
 };
 
 export const onMessage: (

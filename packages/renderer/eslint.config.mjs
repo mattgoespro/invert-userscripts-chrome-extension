@@ -1,17 +1,17 @@
-import html from '@html-eslint/eslint-plugin';
-import react from 'eslint-plugin-react';
-import { defineConfig } from 'eslint/config';
-import tseslint from 'typescript-eslint';
-import { base } from '../../eslint.config.mjs';
+import html from "@html-eslint/eslint-plugin";
+import react from "eslint-plugin-react";
+import { defineConfig } from "eslint/config";
+import tseslint from "typescript-eslint";
+import { base } from "../../eslint.config.mjs";
 
 export default defineConfig(
-  base.config,
+  ...base.common,
   {
     ...react.configs.flat.recommended,
-    files: ['src/renderer/**/*.ts', 'src/renderer/**/*.tsx'],
+    files: ["src/renderer/**/*.ts", "src/renderer/**/*.tsx"],
     settings: {
       react: {
-        version: 'detect',
+        version: "detect",
       },
       ecmaFeatures: {
         jsx: true,
@@ -19,11 +19,11 @@ export default defineConfig(
       },
     },
     rules: {
-      'react/react-in-jsx-scope': 'off',
-      'react/jsx-uses-react': 'off',
+      "react/react-in-jsx-scope": "off",
+      "react/jsx-uses-react": "off",
     },
   },
-  html.configs['flat/recommended'],
+  html.configs["flat/recommended"],
   tseslint.configs.recommended,
-  base.configureTsEslintConfig(import.meta.dirname, ['**/*.ts', '**/*.tsx'])
+  base.configureTsEslintConfig(import.meta.dirname, ["**/*.ts", "**/*.tsx"])
 );

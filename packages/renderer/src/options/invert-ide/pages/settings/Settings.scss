@@ -8,4 +8,10 @@
     align-items: center;
     margin-bottom: 24px;
   }
+
+  .settings--form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
 }

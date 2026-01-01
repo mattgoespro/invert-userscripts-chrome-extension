@@ -1,16 +1,16 @@
 import { Input } from '@/shared/components/input/Input';
-import { UserScript } from '@shared/model';
-import { IDEStorageManager } from '@shared/storage';
+import { Userscript } from '@shared/model';
+import { StorageManager } from '@shared/storage';
 import './ScriptMetadata.scss';
 
 type ScriptMetadataProps = {
-  script: UserScript;
+  script: Userscript;
 };
 
 export function ScriptMetadata({ script }: ScriptMetadataProps) {
-  const handleUpdateScriptMeta = async (updates: Partial<UserScript>) => {
+  const handleUpdateScriptMeta = async (updates: Partial<Userscript>) => {
     const updated = { ...script, ...updates, updatedAt: Date.now() };
-    await IDEStorageManager.saveScript(updated);
+    await StorageManager.saveScript(updated);
   };
 
   return (
@@ -23,7 +23,7 @@ export function ScriptMetadata({ script }: ScriptMetadataProps) {
       />
       <Input
         className="script-metadata--url-patterns"
-        value={script.urlPatterns.join(', ')}
+        value={script.urlPatterns?.join(', ')}
         placeholder="URL Patterns (comma separated)..."
         onChange={(e) =>
           handleUpdateScriptMeta({ urlPatterns: e.target.value.split(',').map((p) => p.trim()) })

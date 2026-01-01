@@ -9,10 +9,11 @@ import MonacoEditorWebpackPlugin from 'monaco-editor-webpack-plugin';
 import packageJson from './package.json' with { type: 'json' };
 
 const __dirname = import.meta.dirname;
+
 export default (_args: unknown, { mode }: { mode: 'development' | 'production' }) =>
   ({
     mode,
-    devtool: mode === 'production' ? false : 'cheap-module-source-map',
+    devtool: mode === 'production' ? false : 'inline-source-map',
     entry: {
       background: {
         import: './packages/runtime/src/background.ts',
@@ -28,17 +29,13 @@ export default (_args: unknown, { mode }: { mode: 'development' | 'production' }
       chunkFilename: (pathData) => {
         const chunk = pathData.chunk;
 
-        // Check by name (development)
-        if (chunk?.name?.includes('monaco-editor')) {
-          return 'monaco-editor/[id].js';
-        }
-
         // Check by module path (production)
         if (
           chunk instanceof webpack.Chunk &&
-          chunk.hasModuleInGraph((module) => {
-            return module.id?.toString().includes('monaco-editor');
-          })
+          chunk.modulesIterable &&
+          Array.from(chunk.modulesIterable).some((m) =>
+            m.identifier().includes(path.join('node_modules', 'monaco-editor'))
+          )
         ) {
           return 'monaco-editor/[chunkhash].js';
         }
@@ -97,7 +94,7 @@ export default (_args: unknown, { mode }: { mode: 'development' | 'production' }
           test: /\.ttf$/,
           type: 'asset/resource',
           generator: {
-            filename: 'assets/[name][ext]',
+            filename: 'assets/fonts/[name][ext]',
           },
         },
       ],
@@ -124,7 +121,7 @@ export default (_args: unknown, { mode }: { mode: 'development' | 'production' }
       }),
       new MonacoEditorWebpackPlugin({
         languages: ['typescript', 'scss', 'javascript', 'css'],
-        filename: 'monaco-editor/[name].worker.js',
+        filename: 'monaco-editor/workers/[name].worker.js',
         monacoEditorPath: path.resolve(__dirname, 'node_modules/monaco-editor'),
       }),
       new CopyWebpackPlugin({
@@ -147,6 +144,7 @@ export default (_args: unknown, { mode }: { mode: 'development' | 'production' }
         logo: path.resolve(__dirname, 'public', 'assets', 'icon.png'),
         mode: 'webapp',
         cache: false,
+        outputPath: 'assets/favicons',
         favicons: {
           icons: {
             android: false,
@@ -158,11 +156,7 @@ export default (_args: unknown, { mode }: { mode: 'development' | 'production' }
           },
         },
       }),
-      mode === 'development'
-        ? new ChromeExtensionReloaderWebpackPlugin({
-            verbose: true,
-          })
-        : false,
+      mode === 'development' ? new ChromeExtensionReloaderWebpackPlugin() : false,
     ],
     optimization:
       mode === 'production'

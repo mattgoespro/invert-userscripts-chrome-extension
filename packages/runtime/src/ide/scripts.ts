@@ -1,10 +1,10 @@
-import { IDEStorageManager } from '@shared/storage';
-import { UserScript } from '../../../shared/src/model';
+import { StorageManager } from '@shared/storage';
+import { Userscript } from '../../../shared/src/model';
 
 export async function injectMatchingScripts(tabId: number, url: string): Promise<void> {
   try {
-    const scripts = await IDEStorageManager.getScripts();
-    const enabledScripts = scripts.filter((script) => script.enabled);
+    const scripts = await StorageManager.getScripts();
+    const enabledScripts = Object.values(scripts).filter((script) => script.enabled);
 
     for (const script of enabledScripts) {
       if (matchesUrlPattern(url, script.urlPatterns)) {
@@ -34,7 +34,7 @@ export function matchesUrlPattern(url: string, patterns: string[]): boolean {
   });
 }
 
-export async function injectScript(tabId: number, script: UserScript): Promise<void> {
+export async function injectScript(tabId: number, script: Userscript): Promise<void> {
   try {
     await chrome.scripting.executeScript({
       target: { tabId },

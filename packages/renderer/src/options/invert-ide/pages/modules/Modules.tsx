@@ -1,6 +1,6 @@
-import { GlobalModule } from '@shared/model';
+import { GlobalModule, GlobalModules } from '@shared/model';
 import './Modules.scss';
-import { IDEStorageManager } from '@shared/storage';
+import { StorageManager } from '@shared/storage';
 import { useState } from 'react';
 import { Button } from '@/shared/components/button/Button';
 import { Checkbox } from '@/shared/components/checkbox/Checkbox';
@@ -9,10 +9,10 @@ import { DeleteIcon } from 'lucide-react';
 import { Typography } from '@/shared/components/typography/Typography';
 
 export function Modules() {
-  const [modules, setModules] = useState<GlobalModule[]>([]);
+  const [modules, setModules] = useState<GlobalModules>({});
 
   const loadData = async () => {
-    const loadedModules = await IDEStorageManager.getModules();
+    const loadedModules = await StorageManager.getModules();
     setModules(loadedModules);
   };
 
@@ -30,20 +30,20 @@ export function Modules() {
       enabled: true,
     };
 
-    await IDEStorageManager.saveModule(newModule);
+    await StorageManager.saveModule(newModule);
     await loadData();
   };
 
   const handleDeleteModule = async (moduleId: string) => {
     if (confirm('Delete this module?')) {
-      await IDEStorageManager.deleteModule(moduleId);
+      await StorageManager.deleteModule(moduleId);
       await loadData();
     }
   };
 
   const handleToggleModule = async (module: GlobalModule) => {
     const updated = { ...module, enabled: !module.enabled };
-    await IDEStorageManager.saveModule(updated);
+    await StorageManager.saveModule(updated);
     await loadData();
   };
 
@@ -54,14 +54,11 @@ export function Modules() {
         <Button onClick={handleCreateModule}>+ Add Module</Button>
       </div>
       <div className="modules--list">
-        {modules.map((module) => (
+        {Object.values(modules ?? {}).map((module) => (
           <div key={module.id} className="modules--list-item">
             <div className="modules--list-item-info">
               <strong>{module.name}</strong>
               <div className="modules--list-item-url">{module.url}</div>
-              {module.version && (
-                <div className="modules--list-item-version">v{module.version}</div>
-              )}
             </div>
             <div className="modules--list-item-actions">
               <Checkbox
@@ -79,7 +76,7 @@ export function Modules() {
             </div>
           </div>
         ))}
-        {modules.length === 0 && (
+        {Object.values(modules ?? {}).length === 0 && (
           <div className="modules--empty-state">
             <p>No global modules yet. Add CDN libraries that can be shared across all scripts.</p>
           </div>

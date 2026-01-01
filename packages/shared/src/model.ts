@@ -1,4 +1,4 @@
-export interface UserScript {
+export interface Userscript {
   id: string;
   name: string;
   enabled: boolean;
@@ -9,20 +9,14 @@ export interface UserScript {
   updatedAt: number;
 }
 
-export interface ScriptFile {
-  id: string;
-  scriptId: string;
-  name: string;
-  language: 'typescript' | 'javascript' | 'scss' | 'css';
-  content: string;
-  isMain: boolean;
-}
+export type Userscripts = Record<string, Userscript>;
+
+export type GlobalModules = Record<string, GlobalModule>;
 
 export interface GlobalModule {
   id: string;
   name: string;
   url: string;
-  version?: string;
   enabled: boolean;
 }
 
@@ -32,8 +26,8 @@ export interface EditorTheme {
   theme: 'vs-dark' | 'vs-light' | 'hc-black';
 }
 
-export interface AppSettings {
-  editorTheme: string;
+export interface EditorSettings {
+  theme: string;
   fontSize: number;
   tabSize: number;
   autoFormat: boolean;
@@ -43,6 +37,5 @@ export interface AppSettings {
 export interface CompileResult {
   success: boolean;
   code?: string;
-  error?: string;
-  warnings?: string[];
+  error?: Error;
 }

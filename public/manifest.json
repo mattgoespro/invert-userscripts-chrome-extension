@@ -5,15 +5,15 @@
   "description": "A Chrome extension that provides an integrated browser IDE for bundling and injecting TypeScript userscripts.",
   "version": "1.0.0",
   "icons": {
-    "16": "assets/favicon-16x16.png",
-    "32": "assets/favicon-32x32.png",
-    "48": "assets/favicon-48x48.png"
+    "16": "assets/favicons/favicon-16x16.png",
+    "32": "assets/favicons/favicon-32x32.png",
+    "48": "assets/favicons/favicon-48x48.png"
   },
   "action": {
     "default_icon": {
-      "16": "assets/favicon-16x16.png",
-      "32": "assets/favicon-32x32.png",
-      "48": "assets/favicon-48x48.png"
+      "16": "assets/favicons/favicon-16x16.png",
+      "32": "assets/favicons/favicon-32x32.png",
+      "48": "assets/favicons/favicon-48x48.png"
     },
     "default_popup": "popup.html"
   },

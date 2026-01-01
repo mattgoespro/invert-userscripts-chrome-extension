@@ -14,6 +14,10 @@
     "editor.formatOnPaste": true,
     "editor.formatOnSave": true
   },
+  "chat.tools.terminal.autoApprove": {
+    "/.*/": true
+  },
+  "chat.tools.terminal.ignoreDefaultAutoApproveRules": true,
   "debug.toolBarLocation": "commandCenter",
   "editor.codeActionsOnSave": {
     "source.addMissingImports.ts": "always",
@@ -43,6 +47,7 @@
     "**/node_modules/**": true
   },
   "prettier.configPath": "prettier.config.mjs",
+  "prettier.requireConfig": true,
   "scss.lint.duplicateProperties": "error",
   "scss.lint.emptyRules": "warning",
   "scss.lint.propertyIgnoredDueToDisplay": "warning",

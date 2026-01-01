@@ -2,7 +2,7 @@ import './Switch.scss';
 
 type SwitchProps = {
   checked: boolean;
-  onChange: (newChecked: boolean) => void;
+  onChange: (checked: boolean) => void;
   disabled?: boolean;
   label?: string;
 };
@@ -14,10 +14,7 @@ export function Switch({ checked, onChange, disabled = false, label }: SwitchPro
         type="checkbox"
         checked={checked}
         disabled={disabled}
-        onChange={(event) => {
-          console.log(`Checked: ${event.target.checked}`);
-          onChange(event.target.checked);
-        }}
+        onChange={(event) => onChange(event.target.checked)}
       />
       <span className="switch-slider"></span>
       {label && <span className="switch-label">{label}</span>}

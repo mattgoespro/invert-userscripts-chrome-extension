@@ -5,84 +5,84 @@
   display: flex;
   gap: 24px;
   height: calc(100vh - 200px);
-}
 
-.scripts--sidebar {
-  width: 280px;
-  overflow: hidden;
+  .scripts--sidebar {
+    width: 280px;
+    overflow: hidden;
 
-  .scripts--sidebar-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px;
+    .scripts--sidebar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px;
+    }
+
+    .scripts--list {
+      overflow-y: auto;
+      max-height: calc(100vh - 280px);
+    }
+
+    .scripts--list-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      border-bottom: 1px solid map.get(theme.$theme, palette, dark-grey);
+      cursor: pointer;
+      transition: background 50ms;
+
+      &:hover {
+        background: map.get(theme.$theme, palette, dark-grey);
+      }
+
+      &.active {
+        background: map.get(theme.$theme, palette, black);
+        border-left: 2px solid map.get(theme.$theme, palette, orange);
+      }
+
+      .scripts--list-item-name {
+        font-weight: 500;
+        font-size: 14px;
+        margin-left: 0.5rem;
+      }
+
+      .scripts--list-item-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+    }
   }
 
-  .scripts--list {
+  .scripts--editor-area {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    padding: 1rem;
     overflow-y: auto;
-    max-height: calc(100vh - 280px);
-  }
 
-  .scripts--list-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px 16px;
-    border-bottom: 1px solid map.get(theme.$theme, palette, dark-grey);
-    cursor: pointer;
-    transition: background 50ms;
-
-    &:hover {
-      background: map.get(theme.$theme, palette, dark-grey);
+    .scripts--editor-header {
+      margin: 1rem;
     }
 
-    &.active {
-      background: map.get(theme.$theme, palette, black);
-      border-left: 2px solid map.get(theme.$theme, palette, orange);
+    .scripts--editor-container {
+      display: flex;
+      flex: 1;
+      gap: 1rem;
+
+      .scripts--editor {
+        flex: 1;
+        overflow: hidden;
+      }
     }
 
-    .scripts--list-item-name {
-      font-weight: 500;
-      font-size: 14px;
-      margin-left: 0.5rem;
-    }
-
-    .scripts--list-item-actions {
+    .scripts--empty-editor {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      justify-content: center;
+      height: 400px;
+      font-size: 16px;
     }
-  }
-}
-
-.scripts--editor-area {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  padding: 1rem;
-  overflow-y: auto;
-
-  .scripts--editor-header {
-    margin: 1rem;
-  }
-
-  .scripts--editor-container {
-    display: flex;
-    flex: 1;
-    gap: 1rem;
-
-    .scripts--editor {
-      flex: 1;
-      overflow: hidden;
-    }
-  }
-
-  .scripts--empty-editor {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 400px;
-    font-size: 16px;
   }
 }

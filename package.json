@@ -21,7 +21,7 @@
     "dev": "webpack --mode development --watch",
     "clean": "rm -rf dist",
     "icons": "tsx scripts/create-icons.ts",
-    "lint": "eslint src --ext .ts,.tsx"
+    "lint": "eslint packages tools"
   },
   "dependencies": {
     "lucide-react": "^0.554.0",

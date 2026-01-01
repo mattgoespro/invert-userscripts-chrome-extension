@@ -3,54 +3,33 @@ import { Switch } from '@/shared/components/switch/Switch';
 import { Typography } from '@/shared/components/typography/Typography';
 import { uuid } from '@/shared/utils';
 import { TypeScriptCompiler } from '@shared/compiler';
-import { AppSettings, ScriptFile, UserScript } from '@shared/model';
-import { IDEStorageManager } from '@shared/storage';
+import { Userscript, Userscripts } from '@shared/model';
+import { StorageManager } from '@shared/storage';
 import { EllipsisIcon, PlusIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { CodeEditor } from '../../code-editor/CodeEditor';
 import './Scripts.scss';
 import { ScriptMetadata } from './script-metadata/ScriptMetadata';
 
-type ScriptsProps = {
-  settings: AppSettings;
-};
-
-export function Scripts({ settings }: ScriptsProps) {
-  const [scripts, setScripts] = useState<UserScript[]>([]);
-  const [selectedScript, setSelectedScript] = useState<UserScript>(null);
-  const [selectedFile, setSelectedFile] = useState<ScriptFile>(null);
+export function Scripts() {
+  const [scripts, setScripts] = useState<Userscripts>({});
+  const [selectedScript, setSelectedScript] = useState<Userscript>(null);
 
   const loadData = async () => {
-    const [loadedScripts] = await Promise.all([
-      IDEStorageManager.getScripts(),
-      IDEStorageManager.getModules(),
-      IDEStorageManager.getSettings(),
-    ]);
+    const loadedScripts = await StorageManager.getScripts();
     setScripts(loadedScripts);
   };
 
   useEffect(() => {
     loadData();
-  }, [settings]);
+  }, []);
 
-  const loadScriptFiles = async (scriptId: string) => {
-    const files = await IDEStorageManager.getScriptFiles(scriptId);
-
-    if (files.length > 0) {
-      const mainFile = files.find((f) => f.isMain) || files[0];
-      setSelectedFile(mainFile);
-    } else {
-      setSelectedFile(null);
-    }
-  };
-
-  const handleScriptSelect = async (script: UserScript) => {
+  const handleScriptSelect = async (script: Userscript) => {
     setSelectedScript(script);
-    await loadScriptFiles(script.id);
   };
 
   const handleCreateScript = async () => {
-    const newScript: UserScript = {
+    const newScript: Userscript = {
       id: uuid(),
       name: 'New Script',
       enabled: false,
@@ -61,28 +40,17 @@ export function Scripts({ settings }: ScriptsProps) {
       updatedAt: Date.now(),
     };
 
-    await IDEStorageManager.saveScript(newScript);
+    await StorageManager.saveScript(newScript);
 
-    // Create default main file
-    const mainFile: ScriptFile = {
-      id: `${newScript.id}-main`,
-      scriptId: newScript.id,
-      name: 'main.ts',
-      language: 'typescript',
-      content: '// Start coding your userscript here\nconsole.log("Hello from Invert IDE!");',
-      isMain: true,
-    };
-
-    await IDEStorageManager.saveScriptFile(mainFile);
     await loadData();
+
     handleScriptSelect(newScript);
   };
 
   const handleDeleteScript = async (scriptId: string) => {
     if (confirm('Are you sure you want to delete this script?')) {
-      await IDEStorageManager.deleteScript(scriptId);
+      await StorageManager.deleteScript(scriptId);
       setSelectedScript(null);
-      setSelectedFile(null);
       await loadData();
     }
   };
@@ -91,30 +59,32 @@ export function Scripts({ settings }: ScriptsProps) {
     const output = TypeScriptCompiler.compile(code);
 
     if (output.success) {
-      const updatedFile: ScriptFile = {
-        ...selectedFile,
-        content: code,
-      };
-      await IDEStorageManager.saveScriptFile(updatedFile);
-      setSelectedFile(updatedFile);
+      await StorageManager.saveScript({
+        ...selectedScript,
+        code,
+        updatedAt: Date.now(),
+      });
+      const updatedFile = { ...selectedScript, code };
+      setSelectedScript(updatedFile);
     } else {
       // Handle compilation errors (could show in UI)
       console.error('Compilation Error:', output.error);
     }
   };
 
-  const handleUpdateScriptMeta = async (updates: Partial<UserScript>) => {
+  const handleUpdateScriptMeta = async (updates: Partial<Userscript>) => {
     const updated = { ...selectedScript, ...updates, updatedAt: Date.now() };
-    await IDEStorageManager.saveScript(updated);
+    await StorageManager.saveScript(updated);
     setSelectedScript(updated);
     await loadData();
   };
 
-  const createScriptListItem = (script: UserScript) => {
+  const createScriptListItem = (script: Userscript) => {
+    console.log('Script item: ', script.id);
     return (
       <div
         key={script.id}
-        className={`scripts--list-item ${selectedScript?.id === script.id ? 'active' : ''}`}
+        className={`scripts--list-item ${selectedScript?.id === script.id ? 'scripts--list-item-active' : ''}`}
         onClick={() => handleScriptSelect(script)}
       >
         <span className="scripts--list-item-name">{script.name}</span>
@@ -149,7 +119,9 @@ export function Scripts({ settings }: ScriptsProps) {
             title="Create new script"
           ></IconButton>
         </div>
-        <div className="scripts--list">{scripts.map((script) => createScriptListItem(script))}</div>
+        <div className="scripts--list">
+          {Object.values(scripts ?? []).map((script) => createScriptListItem(script))}
+        </div>
       </div>
       <div className="scripts--editor-area">
         {selectedScript ? (
@@ -158,12 +130,12 @@ export function Scripts({ settings }: ScriptsProps) {
               <ScriptMetadata script={selectedScript} />
             </div>
             <div className="scripts--editor-container">
-              {selectedFile && (
+              {selectedScript && (
                 <>
                   <div className="scripts--editor">
                     <CodeEditor
                       language="typescript"
-                      code={selectedFile.content}
+                      code={selectedScript.code}
                       onChange={handleEditorChange}
                     />
                   </div>
