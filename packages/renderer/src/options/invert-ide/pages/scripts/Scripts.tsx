@@ -24,11 +24,7 @@ export function Scripts() {
     loadData();
   }, []);
 
-  const handleScriptSelect = async (script: Userscript) => {
-    setSelectedScript(script);
-  };
-
-  const handleCreateScript = async () => {
+  const onCreateScript = async () => {
     const newScript: Userscript = {
       id: uuid(),
       name: "New Script",
@@ -44,10 +40,10 @@ export function Scripts() {
 
     await loadData();
 
-    handleScriptSelect(newScript);
+    setSelectedScript(newScript);
   };
 
-  const handleDeleteScript = async (scriptId: string) => {
+  const onDeleteScript = async (scriptId: string) => {
     if (confirm("Are you sure you want to delete this script?")) {
       await StorageManager.deleteScript(scriptId);
       setSelectedScript(null);
@@ -55,7 +51,7 @@ export function Scripts() {
     }
   };
 
-  const handleEditorChange = async (code: string) => {
+  const onEditorChange = async (code: string) => {
     const output = TypeScriptCompiler.compile(code);
 
     if (output.success) {
@@ -72,7 +68,7 @@ export function Scripts() {
     }
   };
 
-  const handleUpdateScriptMeta = async (updates: Partial<Userscript>) => {
+  const onUpdateScriptMeta = async (updates: Partial<Userscript>) => {
     const updated = { ...selectedScript, ...updates, updatedAt: Date.now() };
     await StorageManager.saveScript(updated);
     setSelectedScript(updated);
@@ -80,25 +76,24 @@ export function Scripts() {
   };
 
   const createScriptListItem = (script: Userscript) => {
-    console.log("Script item: ", script.id);
     return (
       <div
         key={script.id}
         className={`scripts--list-item ${selectedScript?.id === script.id ? "scripts--list-item-active" : ""}`}
-        onClick={() => handleScriptSelect(script)}
+        onClick={() => setSelectedScript(script)}
       >
         <span className="scripts--list-item-name">{script.name}</span>
         <div className="scripts--list-item-actions">
           <Switch
             checked={script.enabled}
-            onChange={() => handleUpdateScriptMeta({ enabled: !script.enabled })}
+            onChange={() => onUpdateScriptMeta({ enabled: !script.enabled })}
           />
           <IconButton
             icon={EllipsisIcon}
             size="sm"
             onClick={(event) => {
               event.stopPropagation();
-              handleDeleteScript(script.id);
+              onDeleteScript(script.id);
             }}
             title="More"
           ></IconButton>
@@ -115,7 +110,7 @@ export function Scripts() {
           <IconButton
             icon={PlusIcon}
             size="sm"
-            onClick={handleCreateScript}
+            onClick={onCreateScript}
             title="Create new script"
           ></IconButton>
         </div>
@@ -136,11 +131,11 @@ export function Scripts() {
                     <CodeEditor
                       language="typescript"
                       code={selectedScript.code}
-                      onChange={handleEditorChange}
+                      onChange={onEditorChange}
                     />
                   </div>
                   <div className="scripts--editor">
-                    <CodeEditor language="scss" code={""} onChange={handleEditorChange} />
+                    <CodeEditor language="scss" code={""} onChange={onEditorChange} />
                   </div>
                 </>
               )}

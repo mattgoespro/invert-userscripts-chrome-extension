@@ -10,7 +10,8 @@ export class StorageManager {
   };
 
   static async getScripts(): Promise<Userscripts> {
-    return chrome.storage.sync.get(["userscripts"]) ?? {};
+    const result = await chrome.storage.sync.get<{ userscripts: Userscripts }>(["userscripts"]);
+    return result.userscripts ?? {};
   }
 
   static async saveScript(script: Userscript): Promise<void> {
@@ -27,15 +28,17 @@ export class StorageManager {
 
   static async deleteScript(scriptId: string): Promise<void> {
     const scripts = await this.getScripts();
-    console.log("Current scripts: ", scripts);
+
     delete scripts[scriptId];
-    console.log("Updated scripts: ", scripts);
 
     await chrome.storage.sync.set({ userscripts: scripts });
   }
 
   static async getModules(): Promise<GlobalModules> {
-    return chrome.storage.sync.get(["globalModules"]);
+    const result = await chrome.storage.sync.get<{ globalModules: GlobalModules }>([
+      "globalModules",
+    ]);
+    return result.globalModules ?? {};
   }
 
   static async saveModule(module: GlobalModule): Promise<void> {
@@ -55,11 +58,14 @@ export class StorageManager {
   }
 
   static async getEditorSettings(): Promise<EditorSettings> {
-    const data = await chrome.storage.sync.get(["editorSettings"]);
-    return { ...this.SettingsDefaults, ...data };
+    const result = await chrome.storage.sync.get<{ editorSettings: EditorSettings }>([
+      "editorSettings",
+    ]);
+    return { ...this.SettingsDefaults, ...result.editorSettings };
   }
 
   static async saveEditorSettings(editorSettings: Partial<EditorSettings>): Promise<void> {
-    await chrome.storage.sync.set({ editorSettings });
+    const current = await this.getEditorSettings();
+    await chrome.storage.sync.set({ editorSettings: { ...current, ...editorSettings } });
   }
 }

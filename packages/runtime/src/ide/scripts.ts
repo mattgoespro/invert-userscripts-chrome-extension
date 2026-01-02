@@ -12,7 +12,7 @@ export async function injectMatchingScripts(tabId: number, url: string): Promise
       }
     }
   } catch (error) {
-    console.error("Error injecting scripts:", error);
+    console.error("Error injecting scripts: ", error);
   }
 }
 
@@ -43,10 +43,10 @@ export async function injectScript(tabId: number, script: Userscript): Promise<v
           // Create a script element to execute the code
           const scriptEl = document.createElement("script");
           scriptEl.textContent = code;
-          (document.head || document.documentElement).appendChild(scriptEl);
+          document.head.appendChild(scriptEl);
           scriptEl.remove();
         } catch (error) {
-          console.error("Error executing userscript:", error);
+          console.error("Error executing userscript: ", error);
         }
       },
       args: [script.code],

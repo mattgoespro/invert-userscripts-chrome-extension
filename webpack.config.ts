@@ -26,22 +26,7 @@ export default (_args: unknown, { mode }: { mode: "development" | "production" }
     output: {
       path: path.join(__dirname, "dist"),
       filename: "[name].js",
-      chunkFilename: (pathData) => {
-        const chunk = pathData.chunk;
-
-        // Check by module path (production)
-        if (
-          chunk instanceof webpack.Chunk &&
-          chunk.modulesIterable &&
-          Array.from(chunk.modulesIterable).some((m) =>
-            m.identifier().includes(path.join("node_modules", "monaco-editor"))
-          )
-        ) {
-          return "monaco-editor/[chunkhash].js";
-        }
-
-        return "chunks/[chunkhash].js";
-      },
+      chunkFilename: "chunks/[chunkhash].js",
       publicPath: "/",
       clean: true,
     },
@@ -145,6 +130,7 @@ export default (_args: unknown, { mode }: { mode: "development" | "production" }
         mode: "webapp",
         cache: false,
         outputPath: "assets/favicons",
+        prefix: "assets/favicons/",
         favicons: {
           icons: {
             android: false,
@@ -158,16 +144,26 @@ export default (_args: unknown, { mode }: { mode: "development" | "production" }
       }),
       mode === "development" ? new ChromeExtensionReloaderWebpackPlugin() : false,
     ],
-    optimization:
-      mode === "production"
-        ? {
-            minimize: true,
-            minimizer: [
+    optimization: {
+      minimize: mode === "production",
+      minimizer:
+        mode === "production"
+          ? [
               new TerserPlugin({
                 extractComments: false,
               }),
-            ],
-          }
-        : undefined,
+            ]
+          : undefined,
+      splitChunks: {
+        cacheGroups: {
+          monaco: {
+            test: /[\\/]node_modules[\\/]monaco-editor[\\/]/,
+            name: "monaco-editor",
+            filename: "monaco-editor/[chunkhash].js",
+            chunks: "all",
+          },
+        },
+      },
+    },
     cache: true,
   }) satisfies webpack.Configuration;

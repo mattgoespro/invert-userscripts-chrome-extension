@@ -58,13 +58,10 @@
     display: flex;
     flex-direction: column;
     flex: 1;
+    gap: 1rem;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     padding: 1rem;
     overflow-y: auto;
-
-    .scripts--editor-header {
-      margin: 1rem;
-    }
 
     .scripts--editor-container {
       display: flex;

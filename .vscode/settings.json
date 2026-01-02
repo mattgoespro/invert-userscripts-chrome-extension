@@ -70,7 +70,8 @@
     "args": ["-l"],
     "color": "terminal.ansiMagenta",
     "env": {
-      "PATH": "${workspaceFolder}\\node_modules\\.bin;${env:PATH}"
+      "PATH": "${workspaceFolder}\\node_modules\\.bin;${env:PATH}",
+      "TIMING": "1"
     },
     "path": "C:\\Program Files\\Git\\bin\\bash.exe"
   },
@@ -82,7 +83,8 @@
       "args": ["-l"],
       "color": "terminal.ansiCyan",
       "env": {
-        "PATH": "${workspaceFolder}\\node_modules\\.bin;${env:PATH}"
+        "PATH": "${workspaceFolder}\\node_modules\\.bin;${env:PATH}",
+        "TIMING": "1"
       },
       "icon": "terminal-bash",
       "overrideName": true,

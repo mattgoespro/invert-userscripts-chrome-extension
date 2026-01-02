@@ -1,20 +1,19 @@
 import { injectMatchingScripts } from "../../ide/scripts";
 
-export const onInstalled = (details: chrome.runtime.InstalledDetails) => {
+export const onInstalled = (_details: chrome.runtime.InstalledDetails) => {
   console.log("Invert IDE Userscripts extension installed.");
-  console.log("Details: ", details);
 };
 
-export const onMessage: (
+export const onMessage = (
   message: unknown,
-  sender: chrome.runtime.MessageSender,
+  _sender: chrome.runtime.MessageSender,
   sendResponse: (response?: unknown) => void
-) => void = (request, _sender, sendResponse) => {
+) => {
   if (
-    typeof request === "object" &&
-    request !== null &&
-    "action" in request &&
-    request.action === "reloadScripts"
+    typeof message === "object" &&
+    message !== null &&
+    "action" in message &&
+    message.action === "reloadScripts"
   ) {
     chrome.tabs.query({}, async (tabs) => {
       for (const tab of tabs) {
