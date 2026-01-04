@@ -1,13 +1,9 @@
-@use "sass:map";
-
-@use "~/theme" as theme;
-
 .popup--container {
   display: flex;
   flex-direction: column;
   padding: 16px;
-  background: map.get(theme.$theme, palette, background);
-  color: map.get(theme.$theme, palette, foreground);
+  background: var(--background);
+  color: var(--foreground);
 }
 
 .popup--header {

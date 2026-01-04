@@ -1,6 +1,7 @@
 import { IconButton } from "@/shared/components/icon-button/IconButton";
 import { Typography } from "@/shared/components/typography/Typography";
 import { SettingsIcon } from "lucide-react";
+import "../../assets/styles/variables.scss";
 import "./InvertIdePopup.scss";
 
 export function InvertIdePopup() {

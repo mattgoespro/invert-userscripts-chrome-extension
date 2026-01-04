@@ -1,5 +1,5 @@
 import { GlobalModule, GlobalModules } from "@shared/model";
-import "./Modules.scss";
+import "./ModulesPage.scss";
 import { StorageManager } from "@shared/storage";
 import { useState } from "react";
 import { Button } from "@/shared/components/button/Button";
@@ -8,7 +8,7 @@ import { IconButton } from "@/shared/components/icon-button/IconButton";
 import { DeleteIcon } from "lucide-react";
 import { Typography } from "@/shared/components/typography/Typography";
 
-export function Modules() {
+export function ModulesPage() {
   const [modules, setModules] = useState<GlobalModules>({});
 
   const loadData = async () => {

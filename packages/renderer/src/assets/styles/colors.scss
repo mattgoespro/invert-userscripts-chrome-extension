@@ -21,6 +21,7 @@ $palette: (
   orange: $orange,
   red: $red,
   primary: $blue,
+  primary-hover: color.scale($blue, $lightness: 40%),
   secondary: $purple,
   background: $black,
   foreground: $white,
@@ -42,12 +43,11 @@ $palette: (
     focus-background: color.scale($dark-grey, $lightness: -10%)
   ),
   switch: (
-    foreground: $white,
+    foreground: $grey,
     background: $dark-grey,
-    border: $dark-grey,
+    checked-foreground: $dark-grey,
     checked-background: $orange,
-    focus-background: $blue,
-    disabled-background: color.scale($dark-grey, $lightness: 50%)
+    border: $dark-grey
   ),
   info: $blue,
   warning: $orange,

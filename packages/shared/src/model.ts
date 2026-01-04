@@ -2,9 +2,12 @@ export interface Userscript {
   id: string;
   name: string;
   enabled: boolean;
-  code: string;
+  code: {
+    script: string;
+    stylesheet: string;
+  };
   urlPatterns: string[];
-  runAt: "document_start" | "document_end" | "document_idle";
+  runAt: "beforePageLoad" | "afterPageLoad";
   createdAt: number;
   updatedAt: number;
 }

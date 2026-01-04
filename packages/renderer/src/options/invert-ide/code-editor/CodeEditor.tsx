@@ -1,13 +1,13 @@
-import { editor } from "monaco-editor";
+import { editor, KeyCode, KeyMod } from "monaco-editor";
 import { useEffect, useRef, useState } from "react";
 
 type CodeEditorProps = {
   language: string;
-  code: string;
-  onChange: (value: string) => void;
+  contents: string;
+  onSave: (value: string) => void;
 };
 
-export function CodeEditor({ language, code, onChange }: CodeEditorProps) {
+export function CodeEditor({ language, contents, onSave }: CodeEditorProps) {
   const [_editor, setEditor] = useState<editor.IStandaloneCodeEditor>(null);
   const editorRef = useRef<HTMLDivElement>(null);
 
@@ -18,24 +18,28 @@ export function CodeEditor({ language, code, onChange }: CodeEditorProps) {
 
     if (_editor == null) {
       const editorInstance = editor.create(editorRef.current, {
-        value: code,
+        // Language options
         language,
-        model: editor.createModel(code, language),
-        automaticLayout: true,
+        model: editor.createModel(contents, language),
+        value: contents,
+        // Interface options
         theme: "vs-dark",
-        "semanticHighlighting.enabled": true,
-        minimap: { enabled: true },
+        fontSize: 14,
+        automaticLayout: true,
         allowOverflow: false,
+        padding: { top: 10, bottom: 10 },
+        wordWrap: "on",
+        minimap: { enabled: true },
       });
 
-      editorInstance.getModel().onDidChangeContent(() => {
-        const newValue = editorInstance.getModel().getValue();
-        onChange(newValue);
+      editorInstance.addCommand(KeyMod.CtrlCmd | KeyCode.KeyS, () => {
+        const newValue = editorInstance.getValue();
+        onSave(newValue);
       });
 
       setEditor(editorInstance);
     }
-  }, [code, language]);
+  }, [contents, language]);
 
   return <div ref={editorRef} style={{ height: "100%" }}></div>;
 }

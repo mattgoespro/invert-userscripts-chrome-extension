@@ -1,16 +1,17 @@
+import "@/assets/styles/variables.scss";
 import { useState } from "react";
-import { Sidebar, SidebarButton } from "./sidebar/Sidebar";
-import "./InvertIde.scss";
-import { Scripts } from "./pages/scripts/Scripts";
-import { Modules } from "./pages/modules/Modules";
 import { ErrorBoundary } from "react-error-boundary";
-import { Settings } from "./pages/settings/Settings";
+import "./InvertIde.scss";
+import { ModulesPage } from "./pages/modules-page/ModulesPage";
+import { ScriptsPage } from "./pages/scripts-page/ScriptsPage";
+import { Settings } from "./pages/settings-page/SettingsPage";
+import { Sidebar, SidebarButton } from "./sidebar/Sidebar";
 
 export function InvertIde() {
-  const [activeTab, setActiveTab] = useState<SidebarButton>("scripts");
+  const [active, setActive] = useState<SidebarButton>("scripts");
 
-  const onNavigate = (tab: SidebarButton) => {
-    setActiveTab(tab);
+  const onNavigate = (button: SidebarButton) => {
+    setActive(button);
   };
 
   return (
@@ -24,12 +25,12 @@ export function InvertIde() {
         </div>
         <div className="invert-ide--dashboard-page">
           <div className="invert-ide--sidebar-wrapper">
-            <Sidebar active={activeTab} onNavigate={onNavigate} />
+            <Sidebar active={active} onNavigate={onNavigate} />
           </div>
           <div className="invert-ide--dashboard-page-content">
-            {activeTab === "scripts" && <Scripts />}
-            {activeTab === "modules" && <Modules />}
-            {activeTab === "settings" && <Settings />}
+            {active === "scripts" && <ScriptsPage />}
+            {active === "modules" && <ModulesPage />}
+            {active === "settings" && <Settings />}
           </div>
         </div>
       </div>

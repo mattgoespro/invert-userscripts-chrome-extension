@@ -28,7 +28,7 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
         style={getIconStyle()}
         ref={ref}
         {...rest}
-        className={[`icon-btn`, `icon-btn--${variant}`, className].filter(Boolean).join(" ")}
+        className={[`icon-btn--${variant}`, className].filter(Boolean).join(" ")}
       >
         {icon &&
           createElement(icon as React.ElementType, {

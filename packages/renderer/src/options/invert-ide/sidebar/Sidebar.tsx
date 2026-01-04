@@ -1,6 +1,6 @@
 import { ClipboardPenIcon, PackageIcon, SettingsIcon } from "lucide-react";
-import { IconButton } from "../../../shared/components/icon-button/IconButton";
 import "./Sidebar.scss";
+import { SidebarNavButton } from "./sidebar-nav-button/SidebarNavButton";
 
 export type SidebarButton = "scripts" | "modules" | "settings";
 
@@ -9,33 +9,24 @@ interface SidebarProps {
   onNavigate: (tab: SidebarButton) => void;
 }
 
-export function Sidebar({ active: active, onNavigate }: SidebarProps) {
+export function Sidebar({ active, onNavigate }: SidebarProps) {
   return (
     <div className="sidebar">
-      <IconButton
-        className={[active === "scripts" ? "sidebar--button-active" : null, "sidebar--button"]
-          .filter(Boolean)
-          .join(" ")}
+      <SidebarNavButton
         icon={ClipboardPenIcon}
-        size="md"
+        active={active === "scripts"}
         onClick={() => onNavigate("scripts")}
-      ></IconButton>
-      <IconButton
+      ></SidebarNavButton>
+      <SidebarNavButton
         icon={PackageIcon}
-        className={[active === "modules" ? "sidebar--button-active" : null, "sidebar--button"]
-          .filter(Boolean)
-          .join(" ")}
-        size="md"
+        active={active === "modules"}
         onClick={() => onNavigate("modules")}
-      />
-      <IconButton
+      ></SidebarNavButton>
+      <SidebarNavButton
         icon={SettingsIcon}
-        className={[active === "settings" ? "sidebar--button-active" : null, "sidebar--button"]
-          .filter(Boolean)
-          .join(" ")}
-        size="md"
+        active={active === "settings"}
         onClick={() => onNavigate("settings")}
-      />
+      ></SidebarNavButton>
     </div>
   );
 }

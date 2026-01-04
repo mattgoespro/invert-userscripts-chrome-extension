@@ -1,32 +1,29 @@
-@use "~/theme" as theme;
-@use "sass:map";
-
 .input--wrapper {
   display: contents;
 
   .input--label {
-    font-family: map.get(theme.$theme, typography, label, font-family);
-    font-size: map.get(theme.$theme, typography, label, font-size);
-    font-weight: map.get(theme.$theme, typography, label, font-weight);
-    line-height: map.get(theme.$theme, typography, label, line-height);
-    color: map.get(theme.$theme, palette, label, foreground);
+    font-family: var(--typography-label-font-family);
+    font-size: var(--typography-label-font-size);
+    font-weight: var(--typography-label-font-weight);
+    line-height: var(--typography-label-line-height);
+    color: var(--label-foreground);
     text-transform: uppercase;
   }
 
   .input--field {
-    font-family: map.get(theme.$theme, typography, input, font-family);
-    font-size: map.get(theme.$theme, typography, input, font-size);
-    font-weight: map.get(theme.$theme, typography, input, font-weight);
-    line-height: map.get(theme.$theme, typography, input, line-height);
-    color: map.get(theme.$theme, palette, input, foreground);
+    font-family: var(--typography-input-font-family);
+    font-size: var(--typography-input-font-size);
+    font-weight: var(--typography-input-font-weight);
+    line-height: var(--typography-input-line-height);
+    color: var(--input-foreground);
     height: 3rem;
-    padding: 0.5rem;
-    background-color: map.get(theme.$theme, palette, input, background);
+    padding: 0.5rem 1rem;
+    background-color: var(--input-background);
     border: none;
-    border-radius: map.get(theme.$theme, geometry, border-radius);
+    border-radius: var(--geometry-border-radius);
 
     &::placeholder {
-      color: map.get(theme.$theme, palette, input, placeholder);
+      color: var(--input-placeholder);
     }
 
     *:focus-visible {

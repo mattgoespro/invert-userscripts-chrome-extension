@@ -8,12 +8,13 @@ import { StorageManager } from "@shared/storage";
 import { EllipsisIcon, PlusIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { CodeEditor } from "../../code-editor/CodeEditor";
-import "./Scripts.scss";
+import "./ScriptsPage.scss";
 import { ScriptMetadata } from "./script-metadata/ScriptMetadata";
 
-export function Scripts() {
+export function ScriptsPage() {
   const [scripts, setScripts] = useState<Userscripts>({});
   const [selectedScript, setSelectedScript] = useState<Userscript>(null);
+  const [unsavedChanges, setUnsavedChanges] = useState<Set<string>>(new Set());
 
   const loadData = async () => {
     const loadedScripts = await StorageManager.getScripts();
@@ -29,9 +30,12 @@ export function Scripts() {
       id: uuid(),
       name: "New Script",
       enabled: false,
-      code: "",
+      code: {
+        script: "// Your code here",
+        stylesheet: "/* Your styles here */",
+      },
       urlPatterns: [],
-      runAt: "document_idle",
+      runAt: "beforePageLoad",
       createdAt: Date.now(),
       updatedAt: Date.now(),
     };
@@ -51,20 +55,35 @@ export function Scripts() {
     }
   };
 
-  const onEditorChange = async (code: string) => {
-    const output = TypeScriptCompiler.compile(code);
+  const onEditorSave = async (language: "typescript" | "scss", code: string) => {
+    if (language === "typescript") {
+      const output = TypeScriptCompiler.compile(code);
 
-    if (output.success) {
-      await StorageManager.saveScript({
-        ...selectedScript,
-        code,
-        updatedAt: Date.now(),
-      });
-      const updatedFile = { ...selectedScript, code };
-      setSelectedScript(updatedFile);
-    } else {
-      // Handle compilation errors (could show in UI)
-      console.error("Compilation Error:", output.error);
+      if (output.success) {
+        try {
+          await StorageManager.saveScript({
+            ...selectedScript,
+            code: {
+              ...selectedScript.code,
+              script: output.code,
+            },
+            updatedAt: Date.now(),
+          });
+        } catch (error) {
+          console.error("Failed to save script:", error);
+          // Revert unsaved changes indicator if save fails
+          setUnsavedChanges((prev) => {
+            const newSet = new Set(prev);
+            newSet.add(selectedScript.id);
+            return newSet;
+          });
+        }
+      } else {
+        // Handle compilation errors (could show in UI)
+        console.error("Compilation Error:", output.error);
+      }
+
+      return;
     }
   };
 
@@ -75,13 +94,14 @@ export function Scripts() {
     await loadData();
   };
 
-  const createScriptListItem = (script: Userscript) => {
+  const renderScriptListItem = (script: Userscript) => {
     return (
       <div
         key={script.id}
         className={`scripts--list-item ${selectedScript?.id === script.id ? "scripts--list-item-active" : ""}`}
         onClick={() => setSelectedScript(script)}
       >
+        {unsavedChanges.has(script.id) && <div className="scripts--list-item-unsaved" />}
         <span className="scripts--list-item-name">{script.name}</span>
         <div className="scripts--list-item-actions">
           <Switch
@@ -115,7 +135,7 @@ export function Scripts() {
           ></IconButton>
         </div>
         <div className="scripts--list">
-          {Object.values(scripts ?? []).map((script) => createScriptListItem(script))}
+          {Object.values(scripts ?? []).map((script) => renderScriptListItem(script))}
         </div>
       </div>
       <div className="scripts--editor-area">
@@ -129,13 +149,18 @@ export function Scripts() {
                 <>
                   <div className="scripts--editor">
                     <CodeEditor
+                      key={selectedScript.id}
                       language="typescript"
-                      code={selectedScript.code}
-                      onChange={onEditorChange}
+                      contents={selectedScript.code.script}
+                      onSave={(code) => onEditorSave("typescript", code)}
                     />
                   </div>
                   <div className="scripts--editor">
-                    <CodeEditor language="scss" code={""} onChange={onEditorChange} />
+                    <CodeEditor
+                      language="scss"
+                      contents={selectedScript.code.stylesheet}
+                      onSave={(code) => onEditorSave("scss", code)}
+                    />
                   </div>
                 </>
               )}

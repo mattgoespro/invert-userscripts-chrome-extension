@@ -1,25 +1,17 @@
-@use "sass:map";
-
-@use "~/theme" as theme;
-
-.switch {
+.switch--wrapper {
   position: relative;
   display: inline-block;
   width: 40px;
   height: 20px;
 
-  input {
+  .switch--input {
     opacity: 0;
     width: 0;
     height: 0;
   }
 }
 
-.switch--disabled {
-  opacity: 0.6;
-  pointer-events: none;
-}
-
+// unchecked state
 .switch-slider {
   position: absolute;
   cursor: pointer;
@@ -27,10 +19,11 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: map.get(theme.$theme, palette, switch, background);
+  background-color: var(--switch-background);
   transition: 0.3s;
   border-radius: 20px;
 
+  // toggle indicator
   &:before {
     position: absolute;
     content: "";
@@ -38,18 +31,25 @@
     width: 16px;
     left: 2px;
     bottom: 2px;
-    background-color: map.get(theme.$theme, palette, switch, background);
+    background-color: var(--switch-foreground);
     transition: 0.3s;
     border-radius: 50%;
   }
 }
 
+// checked state
 input:checked + .switch-slider {
-  background-color: map.get(theme.$theme, palette, switch, checked-background);
+  background-color: var(--switch-checked-background);
+
+  // toggle indicator
+  &:before {
+    background-color: var(--switch-checked-foreground);
+    transition: 0.3s;
+  }
 }
 
 input:focus + .switch-slider {
-  box-shadow: 0 0 1px map.get(theme.$theme, palette, blue);
+  box-shadow: 0 0 1px var(--blue);
 }
 
 input:checked + .switch-slider:before {

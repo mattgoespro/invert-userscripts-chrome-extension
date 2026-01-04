@@ -1,10 +1,7 @@
-@use "sass:map";
-@use "~/theme" as theme;
-
 .typography--title {
-  font-family: map.get(theme.$theme, typography, heading-1, font-family);
-  font-size: map.get(theme.$theme, typography, heading-1, font-size);
-  font-weight: map.get(theme.$theme, typography, heading-1, font-weight);
-  color: map.get(theme.$theme, palette, heading-color);
+  font-family: var(--typography-title-font-family);
+  font-size: var(--typography-title-font-size);
+  font-weight: var(--typography-title-font-weight);
+  color: var(--typography-title-color);
   margin-bottom: 16px;
 }
