@@ -1,14 +1,21 @@
 import "@/assets/styles/variables.scss";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import "./InvertIde.scss";
 import { ModulesPage } from "./pages/modules-page/ModulesPage";
 import { ScriptsPage } from "./pages/scripts-page/ScriptsPage";
 import { Settings } from "./pages/settings-page/SettingsPage";
 import { Sidebar, SidebarButton } from "./sidebar/Sidebar";
+import { loadUserscripts } from "@/shared/store/slices/userscripts.slice";
+import { useAppDispatch } from "@/shared/store/hooks";
 
 export function InvertIde() {
   const [active, setActive] = useState<SidebarButton>("scripts");
+  const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    dispatch(loadUserscripts());
+  });
 
   const onNavigate = (button: SidebarButton) => {
     setActive(button);

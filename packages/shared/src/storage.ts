@@ -9,6 +9,14 @@ export class StorageManager {
     autoSave: true,
   };
 
+  static async getData(): Promise<{
+    userscripts: Userscripts;
+    globalModules: GlobalModules;
+    editorSettings: EditorSettings;
+  }> {
+    return chrome.storage.sync.get();
+  }
+
   static async getScripts(): Promise<Userscripts> {
     const result = await chrome.storage.sync.get<{ userscripts: Userscripts }>(["userscripts"]);
     return result.userscripts ?? {};
@@ -24,7 +32,6 @@ export class StorageManager {
     }
 
     await chrome.storage.sync.set({ userscripts: scripts });
-    console.log("Saved script.");
   }
 
   static async deleteScript(scriptId: string): Promise<void> {

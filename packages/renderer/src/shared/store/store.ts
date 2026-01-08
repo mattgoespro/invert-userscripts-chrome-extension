@@ -10,7 +10,6 @@ export const store = configureStore({
     userscripts: userscriptsReducer,
   },
   middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(epicMiddleware),
-  preloadedState: {},
 });
 
 epicMiddleware.run(rootEpic);

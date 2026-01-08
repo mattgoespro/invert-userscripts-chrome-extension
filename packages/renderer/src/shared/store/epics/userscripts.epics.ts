@@ -1,5 +1,5 @@
 import { combineEpics, Epic } from "redux-observable";
-import { filter, mergeMap, catchError, ignoreElements } from "rxjs/operators";
+import { filter, mergeMap, catchError, ignoreElements, tap } from "rxjs/operators";
 import { from, EMPTY } from "rxjs";
 import { StorageManager } from "@shared/storage";
 import { Action } from "@reduxjs/toolkit";
@@ -10,11 +10,12 @@ const addUserscriptEpic: Epic<Action> = (action$) =>
     filter(addUserscript.match),
     mergeMap((action) =>
       from(StorageManager.saveScript(action.payload)).pipe(
-        // Side effect done.
-        // In a real app, you might dispatch a notification or 'saveSuccess' action here.
+        tap(() => {
+          console.log("Saved userscript.");
+        }),
         ignoreElements(),
         catchError((error) => {
-          console.error("Failed to save script:", error);
+          console.error("Failed to save userscript:", error);
           return EMPTY;
         })
       )
@@ -26,9 +27,12 @@ const updateUserscriptEpic: Epic<Action> = (action$) =>
     filter(updateUserscript.match),
     mergeMap((action) =>
       from(StorageManager.saveScript(action.payload)).pipe(
+        tap(() => {
+          console.log("Updated userscript.");
+        }),
         ignoreElements(),
         catchError((error) => {
-          console.error("Failed to update script:", error);
+          console.error("Failed to update userscript:", error);
           return EMPTY;
         })
       )
@@ -40,9 +44,12 @@ const deleteUserscriptEpic: Epic<Action> = (action$) =>
     filter(deleteUserscript.match),
     mergeMap((action) =>
       from(StorageManager.deleteScript(action.payload)).pipe(
+        tap(() => {
+          console.log("Deleted userscript.");
+        }),
         ignoreElements(),
         catchError((error) => {
-          console.error("Failed to delete script:", error);
+          console.error("Failed to delete userscript:", error);
           return EMPTY;
         })
       )
