@@ -27,7 +27,8 @@ export function CodeEditor({ language, contents, onSave }: CodeEditorProps) {
         fontSize: 14,
         automaticLayout: true,
         allowOverflow: false,
-        padding: { top: 10, bottom: 10 },
+        fixedOverflowWidgets: true, // keep widgets (such as the hover quick-fix widget) inside editor bounds
+        padding: { top: 25, bottom: 10 },
         wordWrap: "on",
         minimap: { enabled: true },
       });
