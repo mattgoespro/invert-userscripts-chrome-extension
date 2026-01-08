@@ -1,8 +1,10 @@
+$transition-duration: 0.2s;
+
 .switch--wrapper {
   position: relative;
   display: inline-block;
-  width: 40px;
-  height: 20px;
+  width: 2rem;
+  height: 1rem;
 
   .switch--input {
     opacity: 0;
@@ -12,7 +14,7 @@
 }
 
 // unchecked state
-.switch-slider {
+.switch--slider {
   position: absolute;
   cursor: pointer;
   top: 0;
@@ -20,43 +22,43 @@
   right: 0;
   bottom: 0;
   background-color: var(--switch-background);
-  transition: 0.3s;
+  transition: $transition-duration;
   border-radius: 20px;
 
   // toggle indicator
   &:before {
     position: absolute;
     content: "";
-    height: 16px;
-    width: 16px;
-    left: 2px;
+    height: 0.75rem;
+    width: 0.75rem;
+    left: 3px;
     bottom: 2px;
     background-color: var(--switch-foreground);
-    transition: 0.3s;
+    transition: $transition-duration;
     border-radius: 50%;
   }
 }
 
 // checked state
-input:checked + .switch-slider {
+input:checked + .switch--slider {
   background-color: var(--switch-checked-background);
 
   // toggle indicator
   &:before {
     background-color: var(--switch-checked-foreground);
-    transition: 0.3s;
+    transition: $transition-duration;
   }
 }
 
-input:focus + .switch-slider {
+input:focus + .switch--slider {
   box-shadow: 0 0 1px var(--blue);
 }
 
-input:checked + .switch-slider:before {
-  transform: translateX(20px);
+input:checked + .switch--slider:before {
+  transform: translateX(14px);
 }
 
-.switch-label {
+.switch--label {
   display: flex;
   align-items: center;
   gap: 8px;

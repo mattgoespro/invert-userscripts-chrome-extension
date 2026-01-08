@@ -24,6 +24,7 @@ export class StorageManager {
     }
 
     await chrome.storage.sync.set({ userscripts: scripts });
+    console.log("Saved script.");
   }
 
   static async deleteScript(scriptId: string): Promise<void> {

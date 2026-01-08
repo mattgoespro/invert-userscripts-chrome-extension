@@ -5,24 +5,22 @@ export const onInstalled = (_details: chrome.runtime.InstalledDetails) => {
 };
 
 export const onMessage = (
-  message: unknown,
+  message: Record<string, unknown>,
   _sender: chrome.runtime.MessageSender,
   sendResponse: (response?: unknown) => void
 ) => {
-  if (
-    typeof message === "object" &&
-    message !== null &&
-    "action" in message &&
-    message.action === "reloadScripts"
-  ) {
-    chrome.tabs.query({}, async (tabs) => {
-      for (const tab of tabs) {
-        if (tab.id && tab.url) {
-          await injectMatchingScripts(tab.id, tab.url);
+  switch (message.action) {
+    case "reloadScripts":
+      chrome.tabs.query({}, async (tabs) => {
+        for (const tab of tabs) {
+          if (tab.id != null && tab.url != null) {
+            await injectMatchingScripts(tab.id, tab.url);
+          }
         }
-      }
-    });
-    sendResponse({ success: true });
+      });
+      sendResponse({ success: true });
+      break;
   }
+
   return true;
 };

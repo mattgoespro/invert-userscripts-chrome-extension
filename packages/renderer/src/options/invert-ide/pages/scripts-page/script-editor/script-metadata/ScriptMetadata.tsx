@@ -1,16 +1,19 @@
 import { Input } from "@/shared/components/input/Input";
 import { Userscript } from "@shared/model";
-import { StorageManager } from "@shared/storage";
 import "./ScriptMetadata.scss";
+import { useAppDispatch } from "@/shared/store/hooks";
+import { AppDispatch } from "@/shared/store/store";
+import { updateUserscript } from "@/shared/store/slices/userscripts.slice";
 
 type ScriptMetadataProps = {
   script: Userscript;
 };
 
 export function ScriptMetadata({ script }: ScriptMetadataProps) {
-  const handleUpdateScriptMeta = async (updates: Partial<Userscript>) => {
-    const updated = { ...script, ...updates, updatedAt: Date.now() };
-    await StorageManager.saveScript(updated);
+  const dispatch: AppDispatch = useAppDispatch();
+
+  const onUpdateScriptMeta = async (updates: Partial<Userscript>) => {
+    dispatch(updateUserscript({ ...script, ...updates }));
   };
 
   return (
@@ -19,14 +22,14 @@ export function ScriptMetadata({ script }: ScriptMetadataProps) {
         className="script-metadata--name"
         value={script.name}
         placeholder="Script name..."
-        onChange={(e) => handleUpdateScriptMeta({ name: e.target.value })}
+        onChange={(e) => onUpdateScriptMeta({ name: e.target.value })}
       />
       <Input
         className="script-metadata--url-patterns"
         value={script.urlPatterns?.join(", ")}
         placeholder="URL Patterns (comma separated)..."
         onChange={(e) =>
-          handleUpdateScriptMeta({ urlPatterns: e.target.value.split(",").map((p) => p.trim()) })
+          onUpdateScriptMeta({ urlPatterns: e.target.value.split(",").map((p) => p.trim()) })
         }
       />
     </div>

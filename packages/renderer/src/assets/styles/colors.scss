@@ -44,7 +44,7 @@ $palette: (
   ),
   switch: (
     foreground: $grey,
-    background: $dark-grey,
+    background: color.scale($dark-grey, $lightness: 10%),
     checked-foreground: $dark-grey,
     checked-background: $orange,
     border: $dark-grey
