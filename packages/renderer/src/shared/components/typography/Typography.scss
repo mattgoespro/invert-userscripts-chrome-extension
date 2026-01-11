@@ -1,7 +1,11 @@
+.typography {
+  outline: none;
+  margin: 0;
+}
+
 .typography--title {
   font-family: var(--typography-title-font-family);
   font-size: var(--typography-title-font-size);
   font-weight: var(--typography-title-font-weight);
   color: var(--typography-title-color);
-  margin-bottom: 16px;
 }

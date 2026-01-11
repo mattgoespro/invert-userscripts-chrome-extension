@@ -1,78 +1,131 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-import { Userscript } from "@shared/model";
+import { Userscript, UserscriptCode, Userscripts, UserscriptStatus } from "@shared/model";
 import { StorageManager } from "@shared/storage";
 
-export type UserscriptsState = {
-  scripts?: Userscript[];
-  selectedScript?: Userscript;
+export type UserscriptsSliceState = {
+  scripts?: Userscripts;
+  currentScript?: Userscript;
 };
 
-// Load persisted state
-const initialState: UserscriptsState = {
-  scripts: undefined,
+const initialState: UserscriptsSliceState = {
+  scripts: {},
+  currentScript: undefined,
 };
 
-// --- Async Thunks ---
+export const loadUserscripts = createAsyncThunk(
+  "userscripts/loadUserscripts",
+  StorageManager.getScripts
+);
 
-export const loadUserscripts = createAsyncThunk("userscripts/loadUserscripts", async () => {
-  const scriptsMap = await StorageManager.getScripts();
-  // Convert Record<string, Userscript> to Userscript[]
-  return Object.values(scriptsMap);
-});
+const toScriptList = (scriptsRecord: Userscripts): Userscript[] => {
+  return Object.values(scriptsRecord);
+};
 
 const userscriptsSlice = createSlice({
   name: "userscripts",
   initialState,
-  reducers: {
-    selectUserscript(state, action: PayloadAction<Userscript>) {
-      state.selectedScript = state.scripts?.find((script) => script.id === action.payload.id);
+  selectors: {
+    selectAllUserscripts: (state: UserscriptsSliceState) => toScriptList(state.scripts),
+    selectCurrentUserscript: (state: UserscriptsSliceState) => state.currentScript,
+    selectUnsavedUserscripts: (state: UserscriptsSliceState) => {
+      return new Set(
+        toScriptList(state.scripts)
+          .filter((script) => script.status === "modified")
+          .map((script) => script.id) || []
+      );
     },
-    addUserscript(state, action: PayloadAction<Userscript>) {
-      if (state.scripts == null) {
-        state.scripts = [];
-      }
-      state.scripts.push(action.payload);
+  },
+  reducers: {
+    selectUserscript: (state, action: PayloadAction<Userscript>) => {
+      state.currentScript = toScriptList(state.scripts).find(
+        (script) => script.id === action.payload.id
+      );
+    },
+    addUserscript: (state, action: PayloadAction<Userscript>) => {
+      state.scripts[action.payload.id] = action.payload;
       console.log("Added userscript: ", action.payload);
     },
-    updateUserscript(state, action: PayloadAction<Userscript>) {
-      if (state.scripts == null) {
-        return;
-      }
+    updateUserscript: (state, action: PayloadAction<Userscript>) => {
+      state.scripts[action.payload.id] = action.payload;
+    },
+    updateUserscriptCode: {
+      prepare: (id: string, language: UserscriptCode, code: string) => {
+        return {
+          payload: {
+            id,
+            language,
+            code,
+          },
+        };
+      },
+      reducer: (
+        state,
+        action: PayloadAction<{ id: string; language: UserscriptCode; code: string }>
+      ) => {
+        const { id, language, code } = action.payload;
 
-      const index = state.scripts.findIndex((script) => script.id === action.payload.id);
+        const script = state.scripts[id];
+        script.code[language] = code;
+        script.status = "modified";
+      },
+    },
+    deleteUserscript: (
+      state,
+      action: PayloadAction<{
+        id: string;
+      }>
+    ) => {
+      const { id } = action.payload;
 
-      if (index !== -1) {
-        state.scripts[index] = action.payload;
-      }
-      // Also update selectedScript if it matches
-      if (state.selectedScript?.id === action.payload.id) {
-        state.selectedScript = action.payload;
+      state.scripts = Object.fromEntries(
+        Object.entries(state.scripts).filter(([scriptId]) => scriptId !== id)
+      );
+
+      if (state.currentScript?.id === id) {
+        state.currentScript = undefined;
       }
     },
-    deleteUserscript(state, action: PayloadAction<string>) {
-      if (state.scripts == null) {
-        return;
-      }
+    setUserscriptStatus: (
+      state,
+      action: PayloadAction<{ id: string; status: UserscriptStatus }>
+    ) => {
+      const { id, status } = action.payload;
+      const script = state.scripts[id];
 
-      state.scripts = state.scripts.filter((script) => script.id !== action.payload);
-      if (state.selectedScript?.id === action.payload) {
-        state.selectedScript = undefined;
+      if (script != null) {
+        script.status = status;
       }
     },
   },
+  // Reducers not tied to specific actions
   extraReducers: (builder) => {
-    builder
-      // Load
-      .addCase(loadUserscripts.fulfilled, (state, action) => {
-        state.scripts = action.payload;
-      });
+    builder.addAsyncThunk(
+      createAsyncThunk("userscripts/loadUserscripts", StorageManager.getScripts),
+      {
+        fulfilled: (state, action) => {
+          state.scripts = action.payload;
+        },
+        rejected: (_state, action) => {
+          console.error("Failed to load userscripts: ", action.error);
+        },
+      }
+    );
   },
 });
 
-// `createSlice` automatically generated action creators with these names.
-// export them as named exports from this "slice" file
-export const { selectUserscript, addUserscript, updateUserscript, deleteUserscript } =
-  userscriptsSlice.actions;
+// Automatically generated action creators for the slice
+export const {
+  selectUserscript,
+  addUserscript,
+  updateUserscript,
+  updateUserscriptCode,
+  deleteUserscript,
+  setUserscriptStatus,
+} = userscriptsSlice.actions;
+
+// Automatically generated selectors for the slice
+export const { selectAllUserscripts, selectCurrentUserscript, selectUnsavedUserscripts } =
+  userscriptsSlice.selectors;
 
 // Export the slice reducer as the default export
 export default userscriptsSlice.reducer;

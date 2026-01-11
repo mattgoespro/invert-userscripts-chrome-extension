@@ -4,10 +4,11 @@ import { useEffect, useRef, useState } from "react";
 type CodeEditorProps = {
   language: string;
   contents: string;
+  onModify: () => void;
   onSave: (value: string) => void;
 };
 
-export function CodeEditor({ language, contents, onSave }: CodeEditorProps) {
+export function CodeEditor({ language, contents, onModify, onSave }: CodeEditorProps) {
   const [_editor, setEditor] = useState<editor.IStandaloneCodeEditor>(null);
   const editorRef = useRef<HTMLDivElement>(null);
 
@@ -33,9 +34,12 @@ export function CodeEditor({ language, contents, onSave }: CodeEditorProps) {
         minimap: { enabled: true },
       });
 
+      editorInstance.onDidChangeModelContent(() => {
+        onModify();
+      });
+
       editorInstance.addCommand(KeyMod.CtrlCmd | KeyCode.KeyS, () => {
-        const newValue = editorInstance.getValue();
-        onSave(newValue);
+        onSave(editorInstance.getValue());
       });
 
       setEditor(editorInstance);

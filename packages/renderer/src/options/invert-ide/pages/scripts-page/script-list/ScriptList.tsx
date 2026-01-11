@@ -1,19 +1,21 @@
-import { useAppDispatch, useAppSelector } from "@/shared/store/hooks";
-import "./ScriptList.scss";
 import { IconButton } from "@/shared/components/icon-button/IconButton";
-import { Userscript } from "@shared/model";
+import { Switch } from "@/shared/components/switch/Switch";
+import { useAppDispatch, useAppSelector } from "@/shared/store/hooks";
 import {
   deleteUserscript,
+  selectUnsavedUserscripts,
   selectUserscript,
   updateUserscript,
 } from "@/shared/store/slices/userscripts.slice";
-import { Switch } from "@/shared/components/switch/Switch";
+import { Userscript } from "@shared/model";
 import { EllipsisIcon } from "lucide-react";
+import "./ScriptList.scss";
 
 export function ScriptList() {
   const dispatch = useAppDispatch();
-  const selectedScript = useAppSelector((state) => state.userscripts.selectedScript);
+  const selectedScript = useAppSelector((state) => state.userscripts.currentScript);
   const scripts = useAppSelector((state) => state.userscripts.scripts);
+  const unsavedChanges = useAppSelector(selectUnsavedUserscripts);
 
   const onSelectScript = (script: Userscript) => {
     dispatch(selectUserscript(script));
@@ -41,7 +43,7 @@ export function ScriptList() {
         className={`script-list--list-item ${selectedScript?.id === script.id ? "script-list--list-item-active" : ""}`}
         onClick={() => onSelectScript(script)}
       >
-        {/* {unsavedChanges.has(script.id) && <div className="script-list--list-item-unsaved" />} */}
+        {unsavedChanges.has(script.id) && <div className="script-list--list-item-unsaved" />}
         <span className="script-list--list-item-name">{script.name}</span>
         <div className="script-list--list-item-actions">
           <Switch checked={script.enabled} onChange={() => onToggleScript(script)} />

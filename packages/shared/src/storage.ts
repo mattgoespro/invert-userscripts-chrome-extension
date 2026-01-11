@@ -22,15 +22,15 @@ export class StorageManager {
     return result.userscripts ?? {};
   }
 
+  static async createScript(script: Userscript): Promise<void> {
+    const scripts = await this.getScripts();
+    scripts[script.id] = script;
+    await chrome.storage.sync.set({ userscripts: scripts });
+  }
+
   static async saveScript(script: Userscript): Promise<void> {
     const scripts = await this.getScripts();
-
-    if (scripts[script.id] == null) {
-      scripts[script.id] = script;
-    } else {
-      scripts[script.id] = script;
-    }
-
+    scripts[script.id] = script;
     await chrome.storage.sync.set({ userscripts: scripts });
   }
 

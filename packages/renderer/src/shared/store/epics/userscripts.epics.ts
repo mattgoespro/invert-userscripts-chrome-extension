@@ -9,13 +9,13 @@ const addUserscriptEpic: Epic<Action> = (action$) =>
   action$.pipe(
     filter(addUserscript.match),
     mergeMap((action) =>
-      from(StorageManager.saveScript(action.payload)).pipe(
+      from(StorageManager.createScript(action.payload)).pipe(
         tap(() => {
-          console.log("Saved userscript.");
+          console.log("Created new userscript.");
         }),
         ignoreElements(),
         catchError((error) => {
-          console.error("Failed to save userscript:", error);
+          console.error("Failed to create userscript:", error);
           return EMPTY;
         })
       )
