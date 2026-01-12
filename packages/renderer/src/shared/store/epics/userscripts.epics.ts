@@ -1,11 +1,16 @@
 import { combineEpics, Epic } from "redux-observable";
-import { filter, mergeMap, catchError, ignoreElements, tap } from "rxjs/operators";
+import { filter, mergeMap, catchError, ignoreElements, tap, map } from "rxjs/operators";
 import { from, EMPTY } from "rxjs";
 import { StorageManager } from "@shared/storage";
 import { Action } from "@reduxjs/toolkit";
-import { addUserscript, updateUserscript, deleteUserscript } from "../slices/userscripts.slice";
+import {
+  addUserscript,
+  updateUserscript,
+  deleteUserscript,
+  updateUserscriptCode,
+} from "../slices/userscripts.slice";
 
-const addUserscriptEpic: Epic<Action> = (action$) =>
+const addUserscriptEffect: Epic<Action> = (action$) =>
   action$.pipe(
     filter(addUserscript.match),
     mergeMap((action) =>
@@ -22,24 +27,7 @@ const addUserscriptEpic: Epic<Action> = (action$) =>
     )
   );
 
-const updateUserscriptEpic: Epic<Action> = (action$) =>
-  action$.pipe(
-    filter(updateUserscript.match),
-    mergeMap((action) =>
-      from(StorageManager.saveScript(action.payload)).pipe(
-        tap(() => {
-          console.log("Updated userscript.");
-        }),
-        ignoreElements(),
-        catchError((error) => {
-          console.error("Failed to update userscript:", error);
-          return EMPTY;
-        })
-      )
-    )
-  );
-
-const deleteUserscriptEpic: Epic<Action> = (action$) =>
+const deleteUserscriptEffect: Epic<Action> = (action$) =>
   action$.pipe(
     filter(deleteUserscript.match),
     mergeMap((action) =>
@@ -56,8 +44,17 @@ const deleteUserscriptEpic: Epic<Action> = (action$) =>
     )
   );
 
+const saveUserscriptEffect: Epic<Action> = (action$) =>
+  action$.pipe(
+    filter(updateUserscriptCode.fulfilled.match),
+    tap(() => {
+      console.log("Saved userscript after code update. Dispatching updateUserscript.");
+    }),
+    map((action) => updateUserscript(action.payload))
+  );
+
 export const userscriptsEpics = combineEpics(
-  addUserscriptEpic,
-  updateUserscriptEpic,
-  deleteUserscriptEpic
+  addUserscriptEffect,
+  deleteUserscriptEffect,
+  saveUserscriptEffect
 );

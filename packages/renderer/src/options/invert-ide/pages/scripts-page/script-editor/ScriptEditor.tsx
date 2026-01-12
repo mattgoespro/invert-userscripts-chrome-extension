@@ -1,14 +1,21 @@
 import { CodeEditor } from "@/options/invert-ide/code-editor/CodeEditor";
-import { Userscript } from "@shared/model";
+import { Userscript, UserscriptCode } from "@shared/model";
 import { ScriptMetadata } from "./script-metadata/ScriptMetadata";
 import "./ScriptEditor.scss";
+import { useAppDispatch } from "@/shared/store/hooks";
+import { updateUserscriptCode } from "@/shared/store/slices/userscripts.slice";
 
 type ScriptEditorProps = {
   script: Userscript;
-  onSave: (language: "typescript" | "scss", code: string) => Promise<void>;
 };
 
-export function ScriptEditor({ script, onSave }: ScriptEditorProps) {
+export function ScriptEditor({ script }: ScriptEditorProps) {
+  const dispatch = useAppDispatch();
+
+  const onSave = async (language: UserscriptCode, code: string) => {
+    dispatch(updateUserscriptCode({ id: script.id, language, code }));
+  };
+
   return (
     <div className="script-editor--editor-area">
       <div className="script-editor--editor-header">
@@ -19,14 +26,14 @@ export function ScriptEditor({ script, onSave }: ScriptEditorProps) {
           <CodeEditor
             key={script.id}
             language="typescript"
-            contents={script.code.script}
+            contents={script.code.typescript}
             onSave={(code) => onSave("typescript", code)}
           />
         </div>
         <div className="script-editor--code-editor">
           <CodeEditor
             language="scss"
-            contents={script.code.stylesheet}
+            contents={script.code.scss}
             onSave={(code) => onSave("scss", code)}
           />
         </div>

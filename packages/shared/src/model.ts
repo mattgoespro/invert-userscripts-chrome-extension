@@ -1,10 +1,14 @@
+export type UserscriptStatus = "modified" | "saved";
+
+export type UserscriptCode = "typescript" | "scss";
+
 export interface Userscript {
   id: string;
   name: string;
   enabled: boolean;
+  status: UserscriptStatus;
   code: {
-    script: string;
-    stylesheet: string;
+    [key in UserscriptCode]: string;
   };
   urlPatterns: string[];
   runAt: "beforePageLoad" | "afterPageLoad";

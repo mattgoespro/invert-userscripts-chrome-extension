@@ -1,78 +1,108 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-import { Userscript } from "@shared/model";
+import { Userscript, UserscriptCode, Userscripts } from "@shared/model";
 import { StorageManager } from "@shared/storage";
+import { TypeScriptCompiler } from "@shared/compiler";
 
 export type UserscriptsState = {
-  scripts?: Userscript[];
-  selectedScript?: Userscript;
+  scripts?: Userscripts;
+  currentUserscript?: Userscript;
 };
 
-// Load persisted state
 const initialState: UserscriptsState = {
-  scripts: undefined,
+  scripts: {},
 };
-
-// --- Async Thunks ---
 
 export const loadUserscripts = createAsyncThunk("userscripts/loadUserscripts", async () => {
   const scriptsMap = await StorageManager.getScripts();
-  // Convert Record<string, Userscript> to Userscript[]
   return Object.values(scriptsMap);
 });
+
+export const updateUserscriptCode = createAsyncThunk(
+  "userscripts/updateUserscriptCode",
+  async ({ id, language, code }: { id: string; language: UserscriptCode; code: string }) => {
+    const scriptsMap = await StorageManager.getScripts();
+    const script = scriptsMap[id];
+
+    if (language === "typescript") {
+      const compiled = TypeScriptCompiler.compile(code);
+
+      if (!compiled.success) {
+        throw new Error(`TypeScript compilation error: ${compiled.error?.message}`);
+      }
+
+      console.log("Compiled userscript to JavaScript: ", compiled);
+
+      script.code.typescript = code;
+      script.status = "modified";
+      script.updatedAt = Date.now();
+    } else if (language === "scss") {
+      script.code.scss = code;
+      script.status = "modified";
+      script.updatedAt = Date.now();
+    }
+
+    await StorageManager.saveScript(script);
+    return script;
+  }
+);
 
 const userscriptsSlice = createSlice({
   name: "userscripts",
   initialState,
+  selectors: {
+    selectAllUserscripts(state: UserscriptsState) {
+      return state.scripts;
+    },
+    selectCurrentUserscript(state: UserscriptsState) {
+      return state.currentUserscript;
+    },
+    selectUnsavedUserscripts(state: UserscriptsState) {
+      return Object.values(state.scripts ?? {}).filter((script) => script.status === "modified");
+    },
+  },
   reducers: {
     selectUserscript(state, action: PayloadAction<Userscript>) {
-      state.selectedScript = state.scripts?.find((script) => script.id === action.payload.id);
+      state.currentUserscript = state.scripts?.[action.payload.id];
     },
     addUserscript(state, action: PayloadAction<Userscript>) {
       if (state.scripts == null) {
-        state.scripts = [];
+        state.scripts = {};
       }
-      state.scripts.push(action.payload);
+      state.scripts[action.payload.id] = action.payload;
       console.log("Added userscript: ", action.payload);
     },
     updateUserscript(state, action: PayloadAction<Userscript>) {
-      if (state.scripts == null) {
-        return;
-      }
-
-      const index = state.scripts.findIndex((script) => script.id === action.payload.id);
-
-      if (index !== -1) {
-        state.scripts[index] = action.payload;
-      }
-      // Also update selectedScript if it matches
-      if (state.selectedScript?.id === action.payload.id) {
-        state.selectedScript = action.payload;
-      }
+      state.scripts[action.payload.id] = {
+        ...state.scripts[action.payload.id],
+        ...action.payload,
+      };
+      console.log("Userscript updated.");
     },
     deleteUserscript(state, action: PayloadAction<string>) {
-      if (state.scripts == null) {
-        return;
-      }
+      state.scripts = Object.fromEntries(
+        Object.entries(state.scripts).filter(([id]) => id !== action.payload)
+      );
 
-      state.scripts = state.scripts.filter((script) => script.id !== action.payload);
-      if (state.selectedScript?.id === action.payload) {
-        state.selectedScript = undefined;
+      if (state.currentUserscript?.id === action.payload) {
+        state.currentUserscript = undefined;
       }
     },
   },
   extraReducers: (builder) => {
     builder
-      // Load
+      // Additional reducers for async thunks
       .addCase(loadUserscripts.fulfilled, (state, action) => {
-        state.scripts = action.payload;
+        state.scripts = {
+          ...Object.fromEntries(action.payload.map((script) => [script.id, script])),
+        };
       });
   },
 });
 
-// `createSlice` automatically generated action creators with these names.
-// export them as named exports from this "slice" file
 export const { selectUserscript, addUserscript, updateUserscript, deleteUserscript } =
   userscriptsSlice.actions;
 
-// Export the slice reducer as the default export
+export const { selectAllUserscripts, selectCurrentUserscript, selectUnsavedUserscripts } =
+  userscriptsSlice.selectors;
+
 export default userscriptsSlice.reducer;

@@ -4,6 +4,7 @@ import { IconButton } from "@/shared/components/icon-button/IconButton";
 import { Userscript } from "@shared/model";
 import {
   deleteUserscript,
+  selectCurrentUserscript,
   selectUserscript,
   updateUserscript,
 } from "@/shared/store/slices/userscripts.slice";
@@ -12,7 +13,7 @@ import { EllipsisIcon } from "lucide-react";
 
 export function ScriptList() {
   const dispatch = useAppDispatch();
-  const selectedScript = useAppSelector((state) => state.userscripts.selectedScript);
+  const currentScript = useAppSelector(selectCurrentUserscript);
   const scripts = useAppSelector((state) => state.userscripts.scripts);
 
   const onSelectScript = (script: Userscript) => {
@@ -38,7 +39,7 @@ export function ScriptList() {
     return (
       <div
         key={script.id}
-        className={`script-list--list-item ${selectedScript?.id === script.id ? "script-list--list-item-active" : ""}`}
+        className={`script-list--list-item ${currentScript?.id === script.id ? "script-list--list-item-active" : ""}`}
         onClick={() => onSelectScript(script)}
       >
         {/* {unsavedChanges.has(script.id) && <div className="script-list--list-item-unsaved" />} */}
