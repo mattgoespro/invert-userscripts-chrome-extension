@@ -50,7 +50,7 @@ const saveUserscriptEffect: Epic<Action> = (action$) =>
     tap(() => {
       console.log("Saved userscript after code update. Dispatching updateUserscript.");
     }),
-    map((action) => updateUserscript(action.payload))
+    map((action) => updateUserscript({ ...action.payload, status: "saved" }))
   );
 
 export const userscriptsEpics = combineEpics(

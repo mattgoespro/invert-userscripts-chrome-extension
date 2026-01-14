@@ -12,7 +12,11 @@ type ScriptEditorProps = {
 export function ScriptEditor({ script }: ScriptEditorProps) {
   const dispatch = useAppDispatch();
 
-  const onSave = async (language: UserscriptCode, code: string) => {
+  const onCodeModified = (_language: UserscriptCode, _code: string) => {
+    // TODO: If needed, we could handle live code modifications here
+  };
+
+  const onCodeSaved = async (language: UserscriptCode, code: string) => {
     dispatch(updateUserscriptCode({ id: script.id, language, code }));
   };
 
@@ -27,14 +31,16 @@ export function ScriptEditor({ script }: ScriptEditorProps) {
             key={script.id}
             language="typescript"
             contents={script.code.typescript}
-            onSave={(code) => onSave("typescript", code)}
+            onCodeModified={(code) => onCodeModified("typescript", code)}
+            onCodeSaved={(code) => onCodeSaved("typescript", code)}
           />
         </div>
         <div className="script-editor--code-editor">
           <CodeEditor
             language="scss"
             contents={script.code.scss}
-            onSave={(code) => onSave("scss", code)}
+            onCodeModified={(code) => onCodeModified("scss", code)}
+            onCodeSaved={(code) => onCodeSaved("scss", code)}
           />
         </div>
       </div>

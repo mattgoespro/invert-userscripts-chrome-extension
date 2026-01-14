@@ -1,0 +1,39 @@
+.script-list-item--wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--dark-grey);
+  cursor: pointer;
+  transition: background 50ms;
+
+  &:hover {
+    background: var(--dark-grey);
+  }
+
+  &.active {
+    background: var(--black);
+    border-left: 2px solid var(--orange);
+  }
+
+  .script-list-item--unsaved-indicator {
+    width: 8px;
+    height: 8px;
+    background-color: var(--orange);
+    border-radius: 50%;
+    margin-right: 8px;
+    flex-shrink: 0;
+  }
+
+  .script-list-item--name {
+    font-weight: 500;
+    font-size: 14px;
+    margin-left: 0.5rem;
+  }
+
+  .script-list-item--actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+}

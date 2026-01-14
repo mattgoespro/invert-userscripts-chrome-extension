@@ -62,12 +62,9 @@ const userscriptsSlice = createSlice({
   },
   reducers: {
     selectUserscript(state, action: PayloadAction<Userscript>) {
-      state.currentUserscript = state.scripts?.[action.payload.id];
+      state.currentUserscript = state.scripts[action.payload.id];
     },
     addUserscript(state, action: PayloadAction<Userscript>) {
-      if (state.scripts == null) {
-        state.scripts = {};
-      }
       state.scripts[action.payload.id] = action.payload;
       console.log("Added userscript: ", action.payload);
     },
@@ -87,6 +84,11 @@ const userscriptsSlice = createSlice({
         state.currentUserscript = undefined;
       }
     },
+    toggleUserscript(state, action: PayloadAction<string>) {
+      const script = state.scripts[action.payload];
+      script.enabled = !script.enabled;
+      state.scripts[action.payload] = script;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -99,8 +101,13 @@ const userscriptsSlice = createSlice({
   },
 });
 
-export const { selectUserscript, addUserscript, updateUserscript, deleteUserscript } =
-  userscriptsSlice.actions;
+export const {
+  selectUserscript,
+  addUserscript,
+  updateUserscript,
+  deleteUserscript,
+  toggleUserscript,
+} = userscriptsSlice.actions;
 
 export const { selectAllUserscripts, selectCurrentUserscript, selectUnsavedUserscripts } =
   userscriptsSlice.selectors;

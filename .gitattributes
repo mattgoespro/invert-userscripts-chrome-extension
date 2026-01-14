@@ -1,0 +1,11 @@
+*.ts text crlf=lf
+*.js text crlf=lf
+*.html text crlf=lf
+*.css text crlf=lf
+*.scss text crlf=lf
+*.json text crlf=lf
+*.md text crlf=lf
+
+*.psd binary
+*.jpg binary
+*.png binary

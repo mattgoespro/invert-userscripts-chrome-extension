@@ -5,10 +5,11 @@ import { registerCodeEditorThemes } from "./themes/CodeEditorThemes";
 type CodeEditorProps = {
   language: string;
   contents: string;
-  onSave: (value: string) => void;
+  onCodeModified: (value: string) => void;
+  onCodeSaved: (value: string) => void;
 };
 
-export function CodeEditor({ language, contents, onSave }: CodeEditorProps) {
+export function CodeEditor({ language, contents, onCodeModified, onCodeSaved }: CodeEditorProps) {
   const editorOptions: editor.IStandaloneEditorConstructionOptions = {
     language,
     model: editor.createModel(contents, language),
@@ -46,8 +47,11 @@ export function CodeEditor({ language, contents, onSave }: CodeEditorProps) {
       const editorInstance = editor.create(editorRef.current, editorOptions);
 
       editorInstance.addCommand(KeyMod.CtrlCmd | KeyCode.KeyS, () => {
-        const newValue = editorInstance.getValue();
-        onSave(newValue);
+        onCodeSaved(editorInstance.getValue());
+      });
+
+      editorInstance.onDidChangeModelContent(() => {
+        onCodeModified(editorInstance.getValue());
       });
 
       setEditor(editorInstance);
