@@ -5,10 +5,11 @@ import { EditorSettings } from "@shared/model";
 import { StorageManager } from "@shared/storage";
 import { useEffect, useState } from "react";
 import "./SettingsPage.scss";
+import { CodeEditorThemeNames } from "@/shared/components/CodeEditorThemes";
 
 export function Settings() {
   const [settings, setSettings] = useState<EditorSettings>({
-    theme: "vs-dark",
+    theme: "Dark",
     fontSize: 14,
     tabSize: 2,
     autoFormat: true,
@@ -38,9 +39,11 @@ export function Settings() {
           value={settings.theme}
           onChange={(e) => handleUpdateSettings({ theme: e.target.value })}
         >
-          <option value="vs-dark">Dark</option>
-          <option value="vs-light">Light</option>
-          <option value="hc-black">High Contrast</option>
+          {CodeEditorThemeNames.map((themeName) => (
+            <option key={themeName} value={themeName}>
+              {themeName}
+            </option>
+          ))}
         </select>
         <Input
           type="number"

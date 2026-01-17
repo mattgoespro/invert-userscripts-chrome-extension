@@ -1,7 +1,7 @@
 import monaco from "monaco-editor";
 
 export const EditorThemes: Record<string, monaco.editor.IStandaloneThemeData> = {
-  "invert-ide-light": {
+  Light: {
     base: "vs",
     inherit: true,
     rules: [
@@ -18,7 +18,7 @@ export const EditorThemes: Record<string, monaco.editor.IStandaloneThemeData> = 
       "editor.selectionBackground": "#ADD6FF",
     },
   },
-  "invert-ide-dark": {
+  Dark: {
     base: "vs-dark",
     inherit: true,
     rules: [
@@ -35,7 +35,7 @@ export const EditorThemes: Record<string, monaco.editor.IStandaloneThemeData> = 
       "editor.selectionBackground": "#264F78",
     },
   },
-  "material-theme-dark": {
+  "Material Dark": {
     base: "vs-dark",
     inherit: true,
     rules: [
@@ -53,6 +53,10 @@ export const EditorThemes: Record<string, monaco.editor.IStandaloneThemeData> = 
     },
   },
 };
+
+export type CodeEditorThemeName = keyof typeof EditorThemes;
+
+export const CodeEditorThemeNames: CodeEditorThemeName[] = Object.keys(EditorThemes);
 
 export function registerCodeEditorThemes() {
   for (const [themeName, themeData] of Object.entries(EditorThemes)) {

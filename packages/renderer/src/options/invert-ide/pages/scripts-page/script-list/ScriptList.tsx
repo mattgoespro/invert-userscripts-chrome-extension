@@ -1,12 +1,14 @@
 import { useAppSelector } from "@/shared/store/hooks";
-import "./ScriptList.scss";
-import { selectCurrentUserscript } from "@/shared/store/slices/userscripts.slice";
-
+import {
+  selectAllUserscripts,
+  selectCurrentUserscript,
+} from "@/shared/store/slices/userscripts.slice";
 import { ScriptListItem } from "./script-list-item/ScriptListItem";
+import "./ScriptList.scss";
 
 export function ScriptList() {
   const currentScript = useAppSelector(selectCurrentUserscript);
-  const scripts = useAppSelector((state) => state.userscripts.scripts);
+  const scripts = useAppSelector(selectAllUserscripts);
 
   return (
     <div className="script-list--list">

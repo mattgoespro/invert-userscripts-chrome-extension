@@ -20,13 +20,13 @@ export function ScriptMetadata({ script }: ScriptMetadataProps) {
     <div className="script-metadata--wrapper">
       <Input
         className="script-metadata--name"
-        value={script.name}
+        defaultValue={script.name}
         placeholder="Script name..."
         onChange={(e) => onUpdateScriptMeta({ name: e.target.value })}
       />
       <Input
         className="script-metadata--url-patterns"
-        value={script.urlPatterns?.join(", ")}
+        defaultValue={script.urlPatterns?.join(", ")}
         placeholder="URL Patterns (comma separated)..."
         onChange={(e) =>
           onUpdateScriptMeta({ urlPatterns: e.target.value.split(",").map((p) => p.trim()) })

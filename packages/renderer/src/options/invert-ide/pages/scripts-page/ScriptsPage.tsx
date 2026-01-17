@@ -47,7 +47,7 @@ export function ScriptsPage() {
         <ScriptList></ScriptList>
       </div>
       {selectedScript ? (
-        <ScriptEditor script={selectedScript} />
+        <ScriptEditor />
       ) : (
         <div className="scripts--empty-editor">
           <Typography variant="caption">Select a script or create a new one</Typography>

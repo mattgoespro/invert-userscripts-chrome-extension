@@ -1,6 +1,6 @@
 import { editor, KeyCode, KeyMod } from "monaco-editor";
 import { useEffect, useRef, useState } from "react";
-import { registerCodeEditorThemes } from "./themes/CodeEditorThemes";
+import { registerCodeEditorThemes } from "../../../shared/components/CodeEditorThemes";
 
 type CodeEditorProps = {
   language: string;
@@ -10,6 +10,8 @@ type CodeEditorProps = {
 };
 
 export function CodeEditor({ language, contents, onCodeModified, onCodeSaved }: CodeEditorProps) {
+  registerCodeEditorThemes();
+
   const editorOptions: editor.IStandaloneEditorConstructionOptions = {
     language,
     model: editor.createModel(contents, language),
@@ -18,11 +20,11 @@ export function CodeEditor({ language, contents, onCodeModified, onCodeSaved }: 
     // Layout options
     automaticLayout: true,
     padding: { top: 25, bottom: 10 },
-    fixedOverflowWidgets: true, // keep widgets (such as the hover quick-fix widget) inside editor bounds
+    fixedOverflowWidgets: true, // prevent widgets (such as the hover quick-fix widget) from being cut off when near the editor edge
     allowOverflow: false,
 
     // Interface options
-    theme: "invert-ide-dark",
+    theme: "Dark",
     fontSize: 14,
     scrollbar: {
       verticalSliderSize: 6,
@@ -42,8 +44,6 @@ export function CodeEditor({ language, contents, onCodeModified, onCodeSaved }: 
     }
 
     if (_editor == null) {
-      registerCodeEditorThemes();
-
       const editorInstance = editor.create(editorRef.current, editorOptions);
 
       editorInstance.addCommand(KeyMod.CtrlCmd | KeyCode.KeyS, () => {
@@ -60,9 +60,9 @@ export function CodeEditor({ language, contents, onCodeModified, onCodeSaved }: 
 
   return (
     <div
-      className="editor-container-ref"
       ref={editorRef}
       style={{
+        width: "100%",
         height: "100%",
       }}
     ></div>

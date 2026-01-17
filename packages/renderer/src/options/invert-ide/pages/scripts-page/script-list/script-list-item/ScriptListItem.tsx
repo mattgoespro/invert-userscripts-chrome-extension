@@ -19,6 +19,10 @@ export function ScriptListItem({ script, active }: ScriptListItemProps) {
   const dispatch = useAppDispatch();
 
   const onSelectScript = () => {
+    if (active) {
+      return;
+    }
+
     dispatch(selectUserscript(script));
   };
 

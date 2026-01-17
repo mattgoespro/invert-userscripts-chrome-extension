@@ -1,16 +1,16 @@
 import { CodeEditor } from "@/options/invert-ide/code-editor/CodeEditor";
-import { Userscript, UserscriptCode } from "@shared/model";
+import { UserscriptCode } from "@shared/model";
 import { ScriptMetadata } from "./script-metadata/ScriptMetadata";
 import "./ScriptEditor.scss";
-import { useAppDispatch } from "@/shared/store/hooks";
-import { updateUserscriptCode } from "@/shared/store/slices/userscripts.slice";
+import { useAppDispatch, useAppSelector } from "@/shared/store/hooks";
+import {
+  selectCurrentUserscript,
+  updateUserscriptCode,
+} from "@/shared/store/slices/userscripts.slice";
 
-type ScriptEditorProps = {
-  script: Userscript;
-};
-
-export function ScriptEditor({ script }: ScriptEditorProps) {
+export function ScriptEditor() {
   const dispatch = useAppDispatch();
+  const script = useAppSelector(selectCurrentUserscript);
 
   const onCodeModified = (_language: UserscriptCode, _code: string) => {
     // TODO: If needed, we could handle live code modifications here
