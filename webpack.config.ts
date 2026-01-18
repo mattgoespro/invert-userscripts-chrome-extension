@@ -82,6 +82,14 @@ export default (_args: unknown, { mode }: { mode: "development" | "production" }
             filename: "assets/fonts/[name][ext]",
           },
         },
+        {
+          test: /\.(png|jpg|gif)$/i,
+          type: "asset/resource",
+          include: path.resolve(__dirname, "packages/renderer/src/assets/images"),
+          generator: {
+            filename: "assets/images/[name][ext]",
+          },
+        },
       ],
     },
     resolve: {

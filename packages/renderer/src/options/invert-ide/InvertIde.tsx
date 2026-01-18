@@ -8,12 +8,15 @@ import { Settings } from "./pages/settings-page/SettingsPage";
 import { Sidebar, SidebarButton } from "./sidebar/Sidebar";
 import { loadUserscripts } from "@/shared/store/slices/userscripts.slice";
 import { useAppDispatch } from "@/shared/store/hooks";
+import { registerCodeEditorThemes } from "@/shared/components/CodeEditorThemes";
 
 export function InvertIde() {
   const [active, setActive] = useState<SidebarButton>("scripts");
   const dispatch = useAppDispatch();
 
   useEffect(() => {
+    registerCodeEditorThemes();
+
     dispatch(loadUserscripts());
   });
 
@@ -25,6 +28,7 @@ export function InvertIde() {
     <ErrorBoundary fallback={<span>Something went wrong.</span>}>
       <div className="invert-ide--dashboard">
         <div className="invert-ide--dashboard-header">
+          <img src="assets/images/logo.png" alt="Invert IDE Logo" />
           <h1>⚡ Invert IDE Userscripts</h1>
           <div className="invert-ide--header-subtitle">
             Browser-based IDE for TypeScript userscripts

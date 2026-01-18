@@ -17,6 +17,46 @@ export const loadUserscripts = createAsyncThunk("userscripts/loadUserscripts", a
   return Object.values(scriptsMap);
 });
 
+export const addUserscript = createAsyncThunk(
+  "userscripts/addUserscript",
+  async (script: Userscript) => {
+    await StorageManager.saveScript(script);
+    console.log("Saved new userscript to storage:", script.id);
+    return script;
+  }
+);
+
+export const deleteUserscript = createAsyncThunk(
+  "userscripts/deleteUserscript",
+  async (scriptId: string) => {
+    await StorageManager.deleteScript(scriptId);
+    console.log("Deleted userscript from storage:", scriptId);
+    return scriptId;
+  }
+);
+
+export const toggleUserscript = createAsyncThunk(
+  "userscripts/toggleUserscript",
+  async (scriptId: string) => {
+    const scriptsMap = await StorageManager.getScripts();
+    const script = scriptsMap[scriptId];
+
+    if (!script) {
+      throw new Error(`Userscript not found: ${scriptId}`);
+    }
+
+    const updatedScript: Userscript = {
+      ...script,
+      enabled: !script.enabled,
+      updatedAt: Date.now(),
+    };
+
+    await StorageManager.saveScript(updatedScript);
+    console.log("Toggled userscript in storage:", scriptId, "enabled:", updatedScript.enabled);
+    return updatedScript;
+  }
+);
+
 export const updateUserscriptCode = createAsyncThunk(
   "userscripts/updateUserscriptCode",
   async ({ id, language, code }: { id: string; language: UserscriptCode; code: string }) => {
@@ -56,60 +96,72 @@ const userscriptsSlice = createSlice({
     selectCurrentUserscript(state: UserscriptsState) {
       return state.currentUserscript;
     },
+    selectUserscriptById(state: UserscriptsState, scriptId: string) {
+      return state.scripts[scriptId];
+    },
     selectUnsavedUserscripts(state: UserscriptsState) {
       return Object.values(state.scripts ?? {}).filter((script) => script.status === "modified");
     },
   },
   reducers: {
-    selectUserscript(state, action: PayloadAction<Userscript>) {
-      state.currentUserscript = state.scripts[action.payload.id];
+    setCurrentUserscript: {
+      prepare: (id: string) => {
+        return {
+          payload: { id },
+        };
+      },
+      reducer: (state, action: PayloadAction<{ id: string }>) => {
+        state.currentUserscript = state.scripts[action.payload.id];
+      },
     },
-    addUserscript(state, action: PayloadAction<Userscript>) {
-      state.scripts[action.payload.id] = action.payload;
-      console.log("Added userscript: ", action.payload);
-    },
-    updateUserscript(state, action: PayloadAction<Userscript>) {
-      state.scripts[action.payload.id] = {
-        ...state.scripts[action.payload.id],
-        ...action.payload,
-      };
-      console.log("Userscript updated.");
-    },
-    deleteUserscript(state, action: PayloadAction<string>) {
-      state.scripts = Object.fromEntries(
-        Object.entries(state.scripts).filter(([id]) => id !== action.payload)
-      );
-
-      if (state.currentUserscript?.id === action.payload) {
-        state.currentUserscript = undefined;
-      }
-    },
-    toggleUserscript(state, action: PayloadAction<string>) {
-      const script = state.scripts[action.payload];
-      script.enabled = !script.enabled;
-      state.scripts[action.payload] = script;
+    updateUserscript: {
+      prepare(id: string, updates: Partial<Omit<Userscript, "id">>) {
+        return { payload: { id, ...updates } };
+      },
+      reducer(state, action: PayloadAction<{ id: string } & Partial<Omit<Userscript, "id">>>) {
+        state.scripts[action.payload.id] = {
+          ...state.scripts[action.payload.id],
+          ...action.payload,
+        };
+        console.log("Userscript updated.");
+      },
     },
   },
   extraReducers: (builder) => {
     builder
-      // Additional reducers for async thunks
       .addCase(loadUserscripts.fulfilled, (state, action) => {
-        state.scripts = {
-          ...Object.fromEntries(action.payload.map((script) => [script.id, script])),
-        };
+        state.scripts = Object.fromEntries(action.payload.map((script) => [script.id, script]));
+      })
+      .addCase(addUserscript.fulfilled, (state, action) => {
+        state.scripts[action.payload.id] = action.payload;
+        console.log("Added userscript to Redux state:", action.payload.id);
+      })
+      .addCase(deleteUserscript.fulfilled, (state, action) => {
+        const scriptId = action.payload;
+        state.scripts = Object.fromEntries(
+          Object.entries(state.scripts).filter(([id]) => id !== scriptId)
+        );
+
+        if (state.currentUserscript?.id === scriptId) {
+          state.currentUserscript = undefined;
+        }
+        console.log("Deleted userscript from Redux state:", scriptId);
+      })
+      .addCase(toggleUserscript.fulfilled, (state, action) => {
+        const updatedScript = action.payload;
+        state.scripts[updatedScript.id] = updatedScript;
+        console.log("Toggled userscript in Redux state:", updatedScript.id);
       });
   },
 });
 
-export const {
-  selectUserscript,
-  addUserscript,
-  updateUserscript,
-  deleteUserscript,
-  toggleUserscript,
-} = userscriptsSlice.actions;
+export const { setCurrentUserscript, updateUserscript } = userscriptsSlice.actions;
 
-export const { selectAllUserscripts, selectCurrentUserscript, selectUnsavedUserscripts } =
-  userscriptsSlice.selectors;
+export const {
+  selectAllUserscripts,
+  selectUserscriptById,
+  selectCurrentUserscript,
+  selectUnsavedUserscripts,
+} = userscriptsSlice.selectors;
 
 export default userscriptsSlice.reducer;

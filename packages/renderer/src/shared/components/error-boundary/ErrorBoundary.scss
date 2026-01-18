@@ -1,0 +1,170 @@
+@use "@/assets/styles/colors" as *;
+@use "sass:map";
+@use "sass:color";
+
+$error-accent: #f87171;
+$error-glow: #dc2626;
+$surface-card: #18181b;
+$surface-code: #0c0c0e;
+$text-primary: #fafafa;
+$text-muted: #71717a;
+$text-secondary: #a1a1aa;
+$border-card: #27272a;
+
+.error-boundary {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(180deg, #09090b 0%, #18181b 50%, #09090b 100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 32px;
+  box-sizing: border-box;
+  overflow: auto;
+
+  &__content {
+    max-width: 600px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    background: $surface-card;
+    border: 1px solid $border-card;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow:
+      0 0 0 1px rgba(0, 0, 0, 0.5),
+      0 25px 50px -12px rgba(0, 0, 0, 0.6);
+  }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 24px 28px;
+    background: linear-gradient(135deg, rgba($error-glow, 0.1) 0%, transparent 60%);
+    border-bottom: 1px solid $border-card;
+
+    .typography--title {
+      font-weight: 600;
+      font-size: 18px;
+      letter-spacing: -0.02em;
+      color: $text-primary;
+    }
+  }
+
+  &__icon {
+    width: 40px;
+    height: 40px;
+    background: rgba($error-glow, 0.15);
+    border: 1px solid rgba($error-accent, 0.3);
+    border-radius: 10px;
+    text-align: center;
+    line-height: 1.6;
+    font-size: 18px;
+    box-shadow: 0 0 20px rgba($error-glow, 0.2);
+  }
+
+  &__details {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: 24px 28px;
+  }
+
+  &__section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 16px 0;
+    border-bottom: 1px solid $border-card;
+
+    &:first-child {
+      padding-top: 0;
+    }
+
+    &:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .typography--caption {
+      color: $text-muted;
+      text-transform: uppercase;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+    }
+  }
+
+  &__name {
+    display: inline-flex;
+    align-self: flex-start;
+    font-family: "JetBrains Mono", "SF Mono", "Fira Code", monospace;
+    font-size: 13px;
+    font-weight: 600;
+    color: $error-accent;
+    background: rgba($error-glow, 0.1);
+    padding: 8px;
+    margin-right: 8px;
+    border-radius: 8px;
+    border: 1px solid rgba($error-accent, 0.2);
+  }
+
+  &__message {
+    font-family: "JetBrains Mono", "SF Mono", "Fira Code", monospace;
+    font-size: 13px;
+    color: $text-secondary;
+    background: $surface-code;
+    padding: 16px;
+    border-radius: 10px;
+    border: 1px solid $border-card;
+    line-height: 1.7;
+    word-break: break-word;
+  }
+
+  &__stack {
+    font-family: "JetBrains Mono", "SF Mono", "Fira Code", monospace;
+    font-size: 11px;
+    color: $text-muted;
+    background: $surface-code;
+    padding: 16px;
+    border-radius: 10px;
+    border: 1px solid $border-card;
+    overflow-x: auto;
+    line-height: 2;
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+    max-height: 200px;
+    overflow-y: auto;
+
+    &::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background-color: $border-card;
+      border-radius: 3px;
+
+      &:hover {
+        background-color: $text-muted;
+      }
+    }
+  }
+
+  &__actions {
+    display: flex;
+    justify-content: flex-end;
+    padding: 20px 28px;
+    background: rgba(0, 0, 0, 0.2);
+    border-top: 1px solid $border-card;
+  }
+}

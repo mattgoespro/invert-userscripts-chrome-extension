@@ -3,7 +3,7 @@ import { Switch } from "@/shared/components/switch/Switch";
 import { useAppDispatch } from "@/shared/store/hooks";
 import {
   deleteUserscript,
-  selectUserscript,
+  setCurrentUserscript,
   toggleUserscript,
 } from "@/shared/store/slices/userscripts.slice";
 import { Userscript } from "@shared/model";
@@ -23,7 +23,7 @@ export function ScriptListItem({ script, active }: ScriptListItemProps) {
       return;
     }
 
-    dispatch(selectUserscript(script));
+    dispatch(setCurrentUserscript(script.id));
   };
 
   const onToggleScript = () => {

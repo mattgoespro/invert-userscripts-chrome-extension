@@ -1,17 +1,21 @@
 import { editor, KeyCode, KeyMod } from "monaco-editor";
 import { useEffect, useRef, useState } from "react";
-import { registerCodeEditorThemes } from "../../../shared/components/CodeEditorThemes";
 
 type CodeEditorProps = {
+  theme: string;
   language: string;
   contents: string;
   onCodeModified: (value: string) => void;
   onCodeSaved: (value: string) => void;
 };
 
-export function CodeEditor({ language, contents, onCodeModified, onCodeSaved }: CodeEditorProps) {
-  registerCodeEditorThemes();
-
+export function CodeEditor({
+  theme,
+  language,
+  contents,
+  onCodeModified,
+  onCodeSaved,
+}: CodeEditorProps) {
   const editorOptions: editor.IStandaloneEditorConstructionOptions = {
     language,
     model: editor.createModel(contents, language),
@@ -24,7 +28,7 @@ export function CodeEditor({ language, contents, onCodeModified, onCodeSaved }: 
     allowOverflow: false,
 
     // Interface options
-    theme: "Dark",
+    theme,
     fontSize: 14,
     scrollbar: {
       verticalSliderSize: 6,

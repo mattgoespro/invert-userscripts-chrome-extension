@@ -1,20 +1,24 @@
 import "./Select.scss";
 
-type SelectProps = {
-  label: string;
-  options: Array<{ value: string; label: string }>;
-  value: string;
-  onChange: (newValue: string) => void;
+type SelectProps<T> = {
+  options: Array<{ value: string; label?: string }>;
+  label?: string;
+  value: T;
+  onChange: (newValue: T) => void;
 };
 
-export function Select({ label, options, value, onChange }: SelectProps) {
+export function Select<T>({ label, options, value, onChange }: SelectProps<T>) {
   return (
-    <div className="select-wrapper">
-      <label className="select-label">{label}</label>
-      <select className="select-field" value={value} onChange={(e) => onChange(e.target.value)}>
+    <div className="select--wrapper">
+      {label && <label className="select--label">{label}</label>}
+      <select
+        className="select--field"
+        value={JSON.stringify(value)}
+        onChange={(e) => onChange(JSON.parse(e.target.value))}
+      >
         {options.map((option) => (
           <option key={option.value} value={option.value}>
-            {option.label}
+            {option.label ?? option.value}
           </option>
         ))}
       </select>

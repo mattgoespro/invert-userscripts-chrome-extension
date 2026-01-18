@@ -49,6 +49,12 @@ $palette: (
     checked-background: $orange,
     border: $dark-grey
   ),
+  select: (
+    foreground: $white,
+    background: $dark-grey,
+    border: $dark-grey,
+    placeholder: $grey
+  ),
   info: $blue,
   warning: $orange,
   error: $red

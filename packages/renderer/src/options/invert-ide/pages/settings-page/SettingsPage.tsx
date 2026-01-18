@@ -1,11 +1,12 @@
 import { Checkbox } from "@/shared/components/checkbox/Checkbox";
+import { CodeEditorThemeNames } from "@/shared/components/CodeEditorThemes";
 import { Input } from "@/shared/components/input/Input";
+import { Select } from "@/shared/components/select/Select";
 import { Typography } from "@/shared/components/typography/Typography";
 import { EditorSettings } from "@shared/model";
 import { StorageManager } from "@shared/storage";
 import { useEffect, useState } from "react";
 import "./SettingsPage.scss";
-import { CodeEditorThemeNames } from "@/shared/components/CodeEditorThemes";
 
 export function Settings() {
   const [settings, setSettings] = useState<EditorSettings>({
@@ -35,16 +36,11 @@ export function Settings() {
       </div>
       <div className="settings--form">
         <label>Editor Theme</label>
-        <select
+        <Select
           value={settings.theme}
-          onChange={(e) => handleUpdateSettings({ theme: e.target.value })}
-        >
-          {CodeEditorThemeNames.map((themeName) => (
-            <option key={themeName} value={themeName}>
-              {themeName}
-            </option>
-          ))}
-        </select>
+          onChange={(themeName) => handleUpdateSettings({ theme: themeName })}
+          options={CodeEditorThemeNames.map((themeName) => ({ value: themeName }))}
+        ></Select>
         <Input
           type="number"
           label="Font size"

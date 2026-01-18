@@ -13,6 +13,7 @@ export function ScriptEditor() {
   const script = useAppSelector(selectCurrentUserscript);
 
   const onCodeModified = (_language: UserscriptCode, _code: string) => {
+    console.log("Code modified...");
     // TODO: If needed, we could handle live code modifications here
   };
 
@@ -28,7 +29,7 @@ export function ScriptEditor() {
       <div className="script-editor--editor-container">
         <div className="script-editor--code-editor">
           <CodeEditor
-            key={script.id}
+            theme="vs-dark"
             language="typescript"
             contents={script.code.typescript}
             onCodeModified={(code) => onCodeModified("typescript", code)}
@@ -37,6 +38,7 @@ export function ScriptEditor() {
         </div>
         <div className="script-editor--code-editor">
           <CodeEditor
+            theme="vs-dark"
             language="scss"
             contents={script.code.scss}
             onCodeModified={(code) => onCodeModified("scss", code)}

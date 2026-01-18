@@ -1,20 +1,18 @@
-@use "~/assets/globals" as globals;
-
-.select-wrapper {
-  .select-label {
-    color: globals.$input-label-color;
-    font-family: globals.$input-label-font-family;
-    font-size: globals.$input-label-font-size;
+.select--wrapper {
+  .select--label {
+    color: var(--label-foreground);
+    font-family: var(--typography-label-font-family);
+    font-size: var(--typography-label-font-size);
     margin-bottom: 0.25rem;
     text-transform: uppercase;
   }
 
-  .select-field {
-    background-color: globals.$input-background;
-    color: globals.$input-foreground;
-    font-family: globals.$input-font-family;
-    font-size: globals.$input-font-size;
-    max-width: globals.$input-max-width;
+  .select--field {
+    background-color: var(--input-background);
+    color: var(--input-foreground);
+    font-family: var(--typography-input-font-family);
+    font-size: var(--typography-input-font-size);
+    max-width: var(--input-max-width);
     border: none;
   }
 }
