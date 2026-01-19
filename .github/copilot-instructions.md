@@ -98,9 +98,73 @@ Use the custom component library in `packages/renderer/src/shared/components`:
 - Follow BEM-like naming or block-element nesting for class names
 - Global variables available in `packages/renderer/src/assets/styles/`:
   - `colors.scss` - Color palette
-  - `variables.scss` - Spacing, sizing, etc.
   - `typography.scss` - Font definitions
   - `theme.scss` - Theme-specific styles
+  - `variables.scss` - CSS custom property generation
+
+### CSS Variable Generation
+
+The `generate-variables` mixin in `variables.scss` recursively converts nested SCSS maps into CSS custom properties on `:root`. The naming convention uses hyphen-delimited paths:
+
+> **Important**: `variables.scss` is imported once at the app root level. **Do NOT import it directly into React components** - the CSS variables are globally available via `var()` syntax.
+
+**How it works:**
+
+1. Takes a SCSS map and optional prefix
+2. For each key-value pair:
+   - If value is a nested map → recurses with `prefix-key` as new prefix
+   - If value is a primitive → outputs `--prefix-key: value`
+
+**Example transformation:**
+
+```scss
+// Input: colors.$palette (nested map)
+$palette: (
+  primary: #1868c4,
+  input: (
+    foreground: #f0f0f0,
+    background: #2d2d2d,
+  ),
+);
+
+// Output CSS (no prefix for palette)
+:root {
+  --primary: #1868c4;
+  --input-foreground: #f0f0f0;
+  --input-background: #2d2d2d;
+}
+```
+
+```scss
+// Input: typography.$typography with "typography" prefix
+$typography: (
+  title: (
+    font-size: 1.5rem,
+    font-weight: bold,
+  ),
+  body: (
+    font-size: 0.5rem,
+  ),
+);
+
+// Output CSS
+:root {
+  --typography-title-font-size: 1.5rem;
+  --typography-title-font-weight: bold;
+  --typography-body-font-size: 0.5rem;
+}
+```
+
+**Usage in components:**
+
+```scss
+.my-component {
+  color: var(--primary);
+  background: var(--input-background);
+  font-size: var(--typography-body-font-size);
+  border-radius: var(--geometry-border-radius);
+}
+```
 
 ---
 
@@ -189,12 +253,19 @@ tsconfig.json (root)
 └── packages/renderer/tsconfig.json
 ```
 
-### Key Compiler Options
+### Key TypeScript Compiler Options
 
 - **Target**: ES2020
 - **Module**: ESNext with Node module resolution
 - **JSX**: `react-jsx` (in renderer package)
 - **Strict Mode**: Disabled at base level (consider enabling for new code)
+- **Path Aliases**:
+  - `@shared/*` → `packages/shared/src/*`
+  - `@/*` → `./src/*` within each package
+- **Source Maps**: Enabled for easier debugging in development
+- **noImplicitAny**: true
+- **forceConsistentCasingInFileNames**: true
+- **noImplicitThis**: true
 
 ---
 
