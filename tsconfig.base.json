@@ -11,6 +11,9 @@
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "strict": false,
+    "noImplicitAny": true,
+    "forceConsistentCasingInFileNames": true,
+    "noImplicitThis": true,
     "paths": {
       "@shared/*": ["packages/shared/src/*"]
     }
