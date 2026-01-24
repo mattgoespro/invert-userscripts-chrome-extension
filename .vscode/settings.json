@@ -47,6 +47,7 @@
     "**/dist/**": true,
     "**/node_modules/**": true
   },
+  "npm-outdated.majorUpdateProtection": false,
   "prettier.configPath": "prettier.config.mjs",
   "prettier.requireConfig": true,
   "scss.format.enable": false,
