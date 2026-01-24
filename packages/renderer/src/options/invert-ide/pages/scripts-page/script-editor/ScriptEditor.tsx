@@ -1,5 +1,5 @@
 import { CodeEditor } from "@/options/invert-ide/code-editor/CodeEditor";
-import { UserscriptCode } from "@shared/model";
+import { UserscriptSourceCode } from "@shared/model";
 import { ScriptMetadata } from "./script-metadata/ScriptMetadata";
 import "./ScriptEditor.scss";
 import { useAppDispatch, useAppSelector } from "@/shared/store/hooks";
@@ -12,12 +12,12 @@ export function ScriptEditor() {
   const dispatch = useAppDispatch();
   const script = useAppSelector(selectCurrentUserscript);
 
-  const onCodeModified = (_language: UserscriptCode, _code: string) => {
+  const onCodeModified = (_language: UserscriptSourceCode, _code: string) => {
     console.log("Code modified...");
     // TODO: If needed, we could handle live code modifications here
   };
 
-  const onCodeSaved = async (language: UserscriptCode, code: string) => {
+  const onCodeSaved = async (language: UserscriptSourceCode, code: string) => {
     dispatch(updateUserscriptCode({ id: script.id, language, code }));
   };
 
@@ -31,7 +31,7 @@ export function ScriptEditor() {
           <CodeEditor
             theme="vs-dark"
             language="typescript"
-            contents={script.code.typescript}
+            contents={script.code.source.typescript}
             onCodeModified={(code) => onCodeModified("typescript", code)}
             onCodeSaved={(code) => onCodeSaved("typescript", code)}
           />
@@ -40,7 +40,7 @@ export function ScriptEditor() {
           <CodeEditor
             theme="vs-dark"
             language="scss"
-            contents={script.code.scss}
+            contents={script.code.source.scss}
             onCodeModified={(code) => onCodeModified("scss", code)}
             onCodeSaved={(code) => onCodeSaved("scss", code)}
           />

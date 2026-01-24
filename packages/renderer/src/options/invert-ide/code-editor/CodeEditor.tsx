@@ -43,11 +43,11 @@ export function CodeEditor({
   const editorRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (editorRef.current == null) {
+    if (!editorRef) {
       return;
     }
 
-    if (_editor == null) {
+    if (!_editor) {
       const editorInstance = editor.create(editorRef.current, editorOptions);
 
       editorInstance.addCommand(KeyMod.CtrlCmd | KeyCode.KeyS, () => {

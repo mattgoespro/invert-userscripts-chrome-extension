@@ -33,7 +33,11 @@
       "resources": ["*.js.map"]
     }
   ],
+  "sandbox": {
+    "pages": ["sass-sandbox.html"]
+  },
   "content_security_policy": {
-    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'; style-src 'self' 'unsafe-inline' https:; font-src 'self' data: https:;"
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'; style-src 'self' 'unsafe-inline' https:; font-src 'self' data: https:;",
+    "sandbox": "sandbox allow-scripts; script-src 'self' 'unsafe-eval'; object-src 'self';"
   }
 }

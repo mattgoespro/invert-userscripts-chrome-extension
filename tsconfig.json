@@ -3,8 +3,6 @@
   "include": ["tools", "*.ts"],
   "compilerOptions": {
     "noEmit": true,
-    "allowImportingTsExtensions": true,
-    "lib": ["dom", "dom.iterable"],
-    "checkJs": true
+    "allowImportingTsExtensions": true
   }
 }

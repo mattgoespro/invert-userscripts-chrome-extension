@@ -21,6 +21,10 @@ export default (_args: unknown, { mode }: { mode: "development" | "production" }
       },
       popup: { import: "./packages/renderer/src/popup/index.tsx", filename: "popup.js" },
       options: { import: "./packages/renderer/src/options/index.tsx", filename: "options.js" },
+      "sass-sandbox": {
+        import: "./packages/renderer/src/sandbox/sass-sandbox.ts",
+        filename: "sass-sandbox.js",
+      },
     },
     stats: "errors-warnings",
     output: {
@@ -112,10 +116,15 @@ export default (_args: unknown, { mode }: { mode: "development" | "production" }
         filename: "options.html",
         chunks: ["options"],
       }),
+      new HtmlWebpackPlugin({
+        template: "./packages/renderer/src/sandbox/sass-sandbox.html",
+        filename: "sass-sandbox.html",
+        chunks: ["sass-sandbox"],
+      }),
       new MonacoEditorWebpackPlugin({
         languages: ["typescript", "scss", "javascript", "css"],
         filename: "monaco-editor/workers/[name].worker.js",
-        monacoEditorPath: path.resolve(__dirname, "node_modules/monaco-editor"),
+        monacoEditorPath: path.resolve(__dirname, "node_modules", "monaco-editor"),
       }),
       new CopyWebpackPlugin({
         patterns: [
@@ -164,11 +173,17 @@ export default (_args: unknown, { mode }: { mode: "development" | "production" }
           : undefined,
       splitChunks: {
         cacheGroups: {
-          monaco: {
+          monacoEditor: {
             test: /[\\/]node_modules[\\/]monaco-editor[\\/]/,
             name: "monaco-editor",
             filename: "monaco-editor/[chunkhash].js",
             chunks: "all",
+          },
+          sass: {
+            test: /[\\/]node_modules[\\/]sass[\\/]/,
+            name: "sass",
+            filename: "sass/[chunkhash].js",
+            chunks: (chunk) => chunk.name === "sass-sandbox",
           },
         },
       },

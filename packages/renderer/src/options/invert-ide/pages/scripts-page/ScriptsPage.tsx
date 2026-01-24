@@ -1,7 +1,7 @@
 import { IconButton } from "@/shared/components/icon-button/IconButton";
 import { Typography } from "@/shared/components/typography/Typography";
 import { useAppDispatch, useAppSelector } from "@/shared/store/hooks";
-import { addUserscript } from "@/shared/store/slices/userscripts.slice";
+import { createUserscript } from "@/shared/store/slices/userscripts.slice";
 import { uuid } from "@/shared/utils";
 import { Userscript } from "@shared/model";
 import { PlusIcon } from "lucide-react";
@@ -20,8 +20,14 @@ export function ScriptsPage() {
       enabled: false,
       status: "modified",
       code: {
-        typescript: "// Your code here",
-        scss: "/* Your styles here */",
+        source: {
+          typescript: "// Your code here",
+          scss: "/* Your styles here */",
+        },
+        compiled: {
+          javascript: "",
+          css: "",
+        },
       },
       urlPatterns: [],
       runAt: "beforePageLoad",
@@ -29,7 +35,7 @@ export function ScriptsPage() {
       updatedAt: Date.now(),
     };
 
-    dispatch(addUserscript(newScript));
+    dispatch(createUserscript(newScript));
   };
 
   return (

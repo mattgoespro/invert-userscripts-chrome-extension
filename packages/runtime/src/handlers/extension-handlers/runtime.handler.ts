@@ -14,11 +14,12 @@ export const onMessage = async (
     case "refreshTabs": {
       chrome.tabs.query({}, async (tabs) => {
         for (const tab of tabs) {
-          if (tab.id != null && tab.url != null) {
+          if (tab.id && tab.url) {
             await injectMatchingScripts(tab.id, tab.url);
           }
         }
       });
+
       sendResponse({ success: true });
       break;
     }

@@ -26,6 +26,12 @@ $palette: (
   background: $black,
   foreground: $white,
   border: $dark-grey,
+  title: (
+    foreground: $white
+  ),
+  subtitle: (
+    foreground: $grey
+  ),
   input: (
     foreground: $white,
     background: $dark-grey,
@@ -34,6 +40,14 @@ $palette: (
   ),
   label: (
     foreground: $grey
+  ),
+  button: (
+    foreground: $white,
+    background: $blue,
+    hover-background: color.scale($blue, $lightness: 10%),
+    active-background: color.scale($blue, $lightness: -10%),
+    disabled-foreground: color.scale($grey, $lightness: -20%),
+    disabled-background: color.scale($dark-grey, $lightness: -10%)
   ),
   icon-button: (
     foreground: $white,

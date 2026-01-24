@@ -12,7 +12,7 @@ export function ModulesPage() {
   const [modules, setModules] = useState<GlobalModules>({});
 
   const loadData = async () => {
-    const loadedModules = await StorageManager.getModules();
+    const loadedModules = await StorageManager.getAllModules();
     setModules(loadedModules);
   };
 

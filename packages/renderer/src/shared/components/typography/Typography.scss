@@ -1,7 +1,17 @@
-.typography--title {
-  font-family: var(--typography-title-font-family);
-  font-size: var(--typography-title-font-size);
-  font-weight: var(--typography-title-font-weight);
-  color: var(--typography-title-color);
-  margin-bottom: 16px;
+.typography {
+  &--title {
+    font-family: var(--typography-title-font-family);
+    font-size: var(--typography-title-font-size);
+    font-weight: var(--typography-title-font-weight);
+    color: var(--typography-title-color);
+    margin-bottom: 16px;
+  }
+
+  &--subtitle {
+    font-family: var(--typography-subtitle-font-family);
+    font-size: var(--typography-subtitle-font-size);
+    font-weight: var(--typography-subtitle-font-weight);
+    color: var(--typography-subtitle-color);
+    margin-bottom: 12px;
+  }
 }

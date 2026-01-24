@@ -1,11 +1,12 @@
-import { PropsWithChildren } from "react";
+import { JSX, PropsWithChildren } from "react";
+import "./Typography.scss";
 
 type TypographyProps = PropsWithChildren<{
   variant?: "title" | "subtitle" | "body" | "button" | "caption";
 }>;
 
 export function Typography({ variant = "body", children }: TypographyProps) {
-  let Tag = null;
+  let Tag: keyof JSX.IntrinsicElements = "p";
 
   switch (variant) {
     case "title":

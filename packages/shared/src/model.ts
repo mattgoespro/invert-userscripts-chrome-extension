@@ -1,6 +1,8 @@
 export type UserscriptStatus = "modified" | "saved";
 
-export type UserscriptCode = "typescript" | "scss";
+export type UserscriptSourceCode = "typescript" | "scss";
+
+export type UserscriptCompiledCode = "javascript" | "css";
 
 export interface Userscript {
   id: string;
@@ -8,7 +10,12 @@ export interface Userscript {
   enabled: boolean;
   status: UserscriptStatus;
   code: {
-    [key in UserscriptCode]: string;
+    source: {
+      [key in UserscriptSourceCode]: string;
+    };
+    compiled: {
+      [key in UserscriptCompiledCode]: string;
+    };
   };
   urlPatterns: string[];
   runAt: "beforePageLoad" | "afterPageLoad";

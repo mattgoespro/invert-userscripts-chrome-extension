@@ -54,7 +54,7 @@ export const createLogger = (name: string, options: { verbose?: boolean }) => {
         return;
       }
 
-      if (message != null && Object.getPrototypeOf(message) === Object.prototype) {
+      if (message && Object.getPrototypeOf(message) === Object.prototype) {
         console.info(Colors.gray(Colors.italic(JSON.stringify(message, null, 2))));
         return;
       }
@@ -112,7 +112,7 @@ export function loadReloaderClient(variables: string[][]): string {
 export function launchBrowser(options: { extensionPath: string; page?: string }): ChildProcess {
   const chromePath = resolveChromeExecutablePath();
 
-  if (chromePath == null) {
+  if (!chromePath) {
     throw new Error("Chrome not found");
   }
 

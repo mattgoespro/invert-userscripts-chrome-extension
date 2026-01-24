@@ -11,7 +11,7 @@ interface SidebarProps {
 
 export function Sidebar({ active, onNavigate }: SidebarProps) {
   return (
-    <div className="sidebar">
+    <div className="sidebar--wrapper">
       <SidebarNavButton
         icon={ClipboardPenIcon}
         active={active === "scripts"}

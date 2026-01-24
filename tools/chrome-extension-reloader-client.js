@@ -19,7 +19,7 @@
   function restoreState() {
     const snapshotData = sessionStorage.getItem(storageKey);
 
-    if (snapshotData == null) {
+    if (!snapshotData) {
       return;
     }
 
@@ -35,7 +35,7 @@
           (input.id && document.getElementById(input.id)) ||
           (input.name && document.querySelector('[name="' + input.name + '"]'));
 
-        if (element == null) {
+        if (!element) {
           continue;
         }
 
@@ -56,7 +56,7 @@
     for (const link of links) {
       const href = link.getAttribute("href");
 
-      if (href == null) {
+      if (!href) {
         continue;
       }
 
