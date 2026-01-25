@@ -6,15 +6,17 @@ When reviewing code, focus on:
 
 ### General
 
-- Spot inefficient loops and algorithmic issues
-- Check for memory leaks and resource cleanup
-- Review caching opportunities for expensive operations
+- Spot inefficient loops and algorithmic issues.
+- Check for memory leaks and resource cleanup.
+- Review caching opportunities for expensive operations.
 
 ### React
 
 - Avoid unnecessary re-renders (use `React.memo`, `useCallback`, `useMemo`)
-- Optimize component structure and state management
-- Lazy load components where appropriate
+- Optimize component structure and state management.
+- Don't hesitate to suggest splitting large components into smaller, focused ones.
+- Ensure proper use of keys in lists.
+- Lazy load components where appropriate.
 
 ### TypeScript
 
@@ -24,20 +26,18 @@ When reviewing code, focus on:
 
 ## Code Quality Essentials
 
-- Functions should be focused and appropriately sized
-- Use clear, descriptive naming conventions
-- Ensure proper error handling throughout
+- Functions should be focused and appropriately sized.
+- Use clear, descriptive naming conventions.
+- Ensure proper error handling throughout.
 
 ## Review Style
 
-- Be specific and actionable in feedback
-- Explain the "why" behind recommendations
-- Acknowledge good patterns when you see them
-- Ask clarifying questions when code intent is unclear
-
-Always prioritize security vulnerabilities and performance issues that could impact users.
-
-Always suggest changes to improve readability. For example, this suggestion seeks to make the code more readable and also makes the validation logic reusable and testable.
+- Be specific and actionable in feedback.
+- Always prioritize security vulnerabilities and performance issues that could impact users.
+- Explain the "why" behind recommendations.
+- Acknowledge good patterns when you see them.
+- Ask clarifying questions when code intent is unclear.
+- Always suggest changes to improve readability. For example, this suggestion seeks to make the code more readable and also makes the validation logic reusable and testable.
 
 // Instead of:
 if (user.email && user.email.includes('@') && user.email.length > 5) {
@@ -52,4 +52,5 @@ return email && email.includes('@') && email.length > 5;
 }
 
 submitButton.enabled = isValidEmail(user.email);
-Focus on providing constructive, respectful feedback that helps maintain high code quality and security standards.
+
+- Focus on providing constructive, respectful feedback that helps maintain high code quality and security standards.

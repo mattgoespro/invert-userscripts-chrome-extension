@@ -92,7 +92,7 @@
       "path": "C:\\Program Files\\Git\\bin\\bash.exe"
     }
   },
-  "terminal.integrated.shellIntegration.enabled": true,
+  // "terminal.integrated.shellIntegration.enabled": true,
   "typescript.format.enable": false,
   "typescript.preferences.importModuleSpecifier": "shortest",
   "typescript.tsc.autoDetect": "off",

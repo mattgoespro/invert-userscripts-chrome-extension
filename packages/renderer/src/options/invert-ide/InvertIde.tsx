@@ -1,6 +1,7 @@
 import "@/assets/styles/variables.scss";
 import { useEffect, useState } from "react";
 import "./InvertIde.scss";
+import { DashboardHeader } from "./dashboard-header/DashboardHeader";
 import { ModulesPage } from "./pages/modules-page/ModulesPage";
 import { ScriptsPage } from "./pages/scripts-page/ScriptsPage";
 import { Settings } from "./pages/settings-page/SettingsPage";
@@ -29,13 +30,7 @@ export function InvertIde() {
 
   return (
     <div className="invert-ide--dashboard">
-      <div className="invert-ide--dashboard-header">
-        <img src="assets/images/logo.png" alt="Invert IDE Logo" />
-        <h1>⚡ Invert IDE Userscripts</h1>
-        <div className="invert-ide--header-subtitle">
-          Browser-based IDE for TypeScript userscripts
-        </div>
-      </div>
+      <DashboardHeader />
       <div className="invert-ide--dashboard-page">
         <Sidebar active={active} onNavigate={onNavigate} />
         <div className="invert-ide--dashboard-page-content">
