@@ -30,39 +30,49 @@ export function Settings() {
   };
 
   return (
-    <div className="settings---content">
-      <div className="settings---header">
+    <div className="settings--content">
+      <div className="settings--header">
+        <span className="settings--header-prefix">config.</span>
         <Typography variant="subtitle">Settings</Typography>
       </div>
-      <div className="settings--form">
-        <label>Editor Theme</label>
-        <Select
-          value={settings.theme}
-          onChange={(themeName) => handleUpdateSettings({ theme: themeName })}
-          options={CodeEditorThemeNames.map((themeName) => ({ value: themeName }))}
-        ></Select>
-        <Input
-          type="number"
-          label="Font size"
-          value={settings.fontSize}
-          onChange={(e) => handleUpdateSettings({ fontSize: parseInt(e.target.value) })}
-          min="8"
-          max="32"
-        />
-        <Input
-          type="number"
-          label="Tab size"
-          value={settings.tabSize}
-          onChange={(e) => handleUpdateSettings({ tabSize: parseInt(e.target.value) })}
-          min="2"
-          max="8"
-        />
 
-        <Checkbox
-          label="Format on save"
-          checked={settings.autoFormat}
-          onChange={(checked) => handleUpdateSettings({ autoFormat: checked })}
-        />
+      <div className="settings--section">
+        <h3 className="settings--section-title">Editor Appearance</h3>
+        <div className="settings--section-fields">
+          <Select
+            label="Theme"
+            value={settings.theme}
+            onChange={(themeName) => handleUpdateSettings({ theme: themeName })}
+            options={CodeEditorThemeNames.map((themeName) => ({ value: themeName }))}
+          />
+          <Input
+            type="number"
+            label="Font Size"
+            value={settings.fontSize}
+            onChange={(e) => handleUpdateSettings({ fontSize: parseInt(e.target.value) })}
+            min="8"
+            max="32"
+          />
+        </div>
+      </div>
+
+      <div className="settings--section">
+        <h3 className="settings--section-title">Formatting</h3>
+        <div className="settings--section-fields">
+          <Input
+            type="number"
+            label="Tab Size"
+            value={settings.tabSize}
+            onChange={(e) => handleUpdateSettings({ tabSize: parseInt(e.target.value) })}
+            min="2"
+            max="8"
+          />
+          <Checkbox
+            label="Format on save"
+            checked={settings.autoFormat}
+            onChange={(checked) => handleUpdateSettings({ autoFormat: checked })}
+          />
+        </div>
       </div>
     </div>
   );

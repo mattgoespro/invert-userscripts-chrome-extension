@@ -1,17 +1,117 @@
 @use "sass:map";
 @use "sass:color";
 
-// color units
+// =============================================================================
+// Core Color Units
+// =============================================================================
 $black: #1e1e1e;
 $white: #f0f0f0;
 $dark-grey: #2d2d2d;
 $grey: #808080;
 $blue: #1868c4;
 $purple: #a13b88;
-$orange: #ffba00fc;
+$orange: #ffba00;
 $red: #a02a2a;
+$google-blue: #4285f4;
+
+// =============================================================================
+// Atmospheric Colors (Dashboard Header Design Language)
+// =============================================================================
+$void-black: #0a0a0c;
+$carbon: #141418;
+$obsidian: #1a1a22;
+
+// Glass/transparency backgrounds
+$glass-bg: rgba(30, 30, 30, 0.6);
+$glass-bg-light: rgba(30, 30, 30, 0.4);
+$glass-bg-heavy: rgba(30, 30, 30, 0.7);
+$glass-white: rgba(255, 255, 255, 0.08);
+$glass-white-light: rgba(255, 255, 255, 0.06);
+
+// Glass/transparency borders
+$glass-border: rgba(255, 255, 255, 0.1);
+$glass-border-subtle: rgba(255, 255, 255, 0.06);
+$glass-border-light: rgba(255, 255, 255, 0.12);
+$glass-border-medium: rgba(255, 255, 255, 0.15);
+$glass-border-strong: rgba(255, 255, 255, 0.25);
+
+// Text colors with opacity
+$text-muted-30: rgba(255, 255, 255, 0.3);
+$text-muted-50: rgba(255, 255, 255, 0.5);
+$text-muted-70: rgba(255, 255, 255, 0.7);
+$text-muted-80: rgba(255, 255, 255, 0.8);
+$text-muted-90: rgba(255, 255, 255, 0.9);
+
+// Accent glow colors (orange-based)
+$accent-glow-10: rgba(255, 186, 0, 0.1);
+$accent-glow-15: rgba(255, 186, 0, 0.15);
+$accent-glow-20: rgba(255, 186, 0, 0.2);
+$accent-glow-30: rgba(255, 186, 0, 0.3);
+$accent-glow-40: rgba(255, 186, 0, 0.4);
+$accent-glow-50: rgba(255, 186, 0, 0.5);
+$accent-glow-60: rgba(255, 186, 0, 0.6);
+
+// Red/danger colors with opacity
+$red-30: rgba(160, 42, 42, 0.3);
+$red-40: rgba(160, 42, 42, 0.4);
+$red-50: rgba(160, 42, 42, 0.5);
+$red-80: rgba(160, 42, 42, 0.8);
+$red-solid: rgba(160, 42, 42, 1);
+
+// Shadow colors
+$shadow-light: rgba(0, 0, 0, 0.2);
+$shadow-medium: rgba(0, 0, 0, 0.3);
+$shadow-heavy: rgba(0, 0, 0, 0.5);
+$shadow-ultra: rgba(0, 0, 0, 0.6);
+
+// Grid/pattern colors
+$grid-line: rgba(255, 255, 255, 0.02);
+$grid-highlight: rgba(255, 255, 255, 0.05);
+$glow-diffuse: rgba(180, 180, 180, 0.05);
+
+// Additional atmospheric effects
+$void-black-80: rgba(10, 10, 12, 0.8);
+$accent-glow-03: rgba(255, 186, 0, 0.03);
+$glow-subtle: rgba(255, 255, 255, 0.02);
+
+// Additional glass variations
+$carbon-60: rgba(20, 20, 24, 0.6);
+$glass-bg-50: rgba(30, 30, 30, 0.5);
+$glass-bg-80: rgba(30, 30, 30, 0.8);
+$glass-border-08: rgba(255, 255, 255, 0.08);
+$text-muted-20: rgba(255, 255, 255, 0.2);
+$text-muted-25: rgba(255, 255, 255, 0.25);
+$text-muted-40: rgba(255, 255, 255, 0.4);
+$accent-glow-80: rgba(255, 186, 0, 0.8);
+$shadow-02: rgba(0, 0, 0, 0.2);
+$shadow-04: rgba(0, 0, 0, 0.4);
+$black-30: rgba(0, 0, 0, 0.3);
+
+// =============================================================================
+// Error Boundary Colors
+// =============================================================================
+$error-accent: #f87171;
+$error-glow: #dc2626;
+$error-surface-dark: #09090b;
+$error-surface-card: #18181b;
+$error-surface-code: #0c0c0e;
+$error-text-primary: #fafafa;
+$error-text-muted: #71717a;
+$error-text-secondary: #a1a1aa;
+$error-border: #27272a;
+
+// =============================================================================
+// Syntax Highlighting Colors (Decorative code elements)
+// =============================================================================
+$syntax-keyword: #c586c0;
+$syntax-function: #dcdcaa;
+$syntax-param: #9cdcfe;
+$syntax-type: #4ec9b0;
+$syntax-punctuation: rgba(255, 255, 255, 0.6);
+$syntax-bracket: rgba(255, 255, 255, 0.5);
 
 $palette: (
+  // Core colors
   black: $black,
   white: $white,
   dark-grey: $dark-grey,
@@ -20,15 +120,108 @@ $palette: (
   purple: $purple,
   orange: $orange,
   red: $red,
+  google-blue: $google-blue,
   primary: $blue,
   primary-hover: color.scale($blue, $lightness: 40%),
   secondary: $purple,
   background: $black,
   foreground: $white,
   border: $dark-grey,
+
+  // Atmospheric colors
+  void-black: $void-black,
+  carbon: $carbon,
+  obsidian: $obsidian,
+
+  // Glass backgrounds
+  glass-bg: $glass-bg,
+  glass-bg-light: $glass-bg-light,
+  glass-bg-heavy: $glass-bg-heavy,
+  glass-white: $glass-white,
+  glass-white-light: $glass-white-light,
+
+  // Glass borders
+  glass-border: $glass-border,
+  glass-border-subtle: $glass-border-subtle,
+  glass-border-light: $glass-border-light,
+  glass-border-medium: $glass-border-medium,
+  glass-border-strong: $glass-border-strong,
+
+  // Text muted colors
+  text-muted-30: $text-muted-30,
+  text-muted-50: $text-muted-50,
+  text-muted-70: $text-muted-70,
+  text-muted-80: $text-muted-80,
+  text-muted-90: $text-muted-90,
+
+  // Accent glow colors
+  accent-glow-10: $accent-glow-10,
+  accent-glow-15: $accent-glow-15,
+  accent-glow-20: $accent-glow-20,
+  accent-glow-30: $accent-glow-30,
+  accent-glow-40: $accent-glow-40,
+  accent-glow-50: $accent-glow-50,
+  accent-glow-60: $accent-glow-60,
+
+  // Red/danger colors
+  red-30: $red-30,
+  red-40: $red-40,
+  red-50: $red-50,
+  red-80: $red-80,
+  red-solid: $red-solid,
+
+  // Shadow colors
+  shadow-light: $shadow-light,
+  shadow-medium: $shadow-medium,
+  shadow-heavy: $shadow-heavy,
+  shadow-ultra: $shadow-ultra,
+
+  // Grid/pattern colors
+  grid-line: $grid-line,
+  grid-highlight: $grid-highlight,
+  glow-diffuse: $glow-diffuse,
+
+  // Additional atmospheric effects
+  void-black-80: $void-black-80,
+  accent-glow-03: $accent-glow-03,
+  glow-subtle: $glow-subtle,
+
+  // Additional glass variations
+  carbon-60: $carbon-60,
+  glass-bg-50: $glass-bg-50,
+  glass-bg-80: $glass-bg-80,
+  glass-border-08: $glass-border-08,
+  text-muted-20: $text-muted-20,
+  text-muted-25: $text-muted-25,
+  text-muted-40: $text-muted-40,
+  accent-glow-80: $accent-glow-80,
+  shadow-02: $shadow-02,
+  shadow-04: $shadow-04,
+  black-30: $black-30,
+
+  // Error boundary colors
+  error-accent: $error-accent,
+  error-glow: $error-glow,
+  error-surface-dark: $error-surface-dark,
+  error-surface-card: $error-surface-card,
+  error-surface-code: $error-surface-code,
+  error-text-primary: $error-text-primary,
+  error-text-muted: $error-text-muted,
+  error-text-secondary: $error-text-secondary,
+  error-border: $error-border,
+
+  // Syntax highlighting colors
+  syntax-keyword: $syntax-keyword,
+  syntax-function: $syntax-function,
+  syntax-param: $syntax-param,
+  syntax-type: $syntax-type,
+  syntax-punctuation: $syntax-punctuation,
+  syntax-bracket: $syntax-bracket,
+
+  // Component-specific nested colors
   title: (
-    foreground: $white
-  ),
+      foreground: $white
+    ),
   subtitle: (
     foreground: $grey
   ),

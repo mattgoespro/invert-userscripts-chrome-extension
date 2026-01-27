@@ -1,4 +1,23 @@
 .script-list--list {
-  max-height: calc(100vh - 280px);
+  flex: 1;
   overflow-y: auto;
+  padding: 8px;
+
+  // Custom scrollbar styling
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--glass-border);
+    border-radius: 3px;
+
+    &:hover {
+      background: var(--glass-border-medium);
+    }
+  }
 }

@@ -50,7 +50,9 @@ export function ModulesPage() {
   return (
     <div className="modules--content">
       <div className="modules--header">
-        <Typography variant="subtitle">Global Modules</Typography>
+        <div className="modules--header-title">
+          <Typography variant="subtitle">Modules</Typography>
+        </div>
         <Button onClick={handleCreateModule}>+ Add Module</Button>
       </div>
       <div className="modules--list">

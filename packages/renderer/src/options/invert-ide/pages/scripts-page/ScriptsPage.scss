@@ -1,24 +1,53 @@
 .scripts--content {
   display: flex;
-  gap: 0.5rem;
+  flex: 1;
   height: 100%;
 
   .scripts--sidebar {
-    width: 280px;
+    width: 300px;
+    background: var(--carbon-60);
+    border-right: 1px solid var(--glass-border-subtle);
+    backdrop-filter: blur(8px);
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
 
     .scripts--sidebar-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 16px;
+      padding: 20px 16px;
+      border-bottom: 1px solid var(--glass-border-subtle);
+
+      // Code-style decoration
+      &::before {
+        content: "//";
+        font-family: "JetBrains Mono", monospace;
+        color: var(--text-muted-20);
+        margin-right: 8px;
+        font-size: 14px;
+      }
     }
   }
 
   .scripts--empty-editor {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    margin: auto;
+    flex: 1;
+    gap: 1.5rem;
+
+    // Decorative code comment
+    &::before {
+      content: "// Select a script to begin editing";
+      font-family: "JetBrains Mono", monospace;
+      font-size: 15px;
+      color: var(--text-muted-25);
+      padding: 16px 24px;
+      background: var(--glass-bg-50);
+      border-radius: 8px;
+      border-left: 3px solid var(--accent-glow-30);
+    }
   }
 }

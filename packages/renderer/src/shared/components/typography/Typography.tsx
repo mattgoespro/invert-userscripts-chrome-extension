@@ -2,7 +2,7 @@ import { JSX, PropsWithChildren } from "react";
 import "./Typography.scss";
 
 type TypographyProps = PropsWithChildren<{
-  variant?: "title" | "subtitle" | "body" | "button" | "caption";
+  variant?: "title" | "subtitle" | "body" | "button" | "caption" | "code";
 }>;
 
 export function Typography({ variant = "body", children }: TypographyProps) {
@@ -20,6 +20,9 @@ export function Typography({ variant = "body", children }: TypographyProps) {
       break;
     case "caption":
       Tag = "span";
+      break;
+    case "code":
+      Tag = "code";
       break;
     case "body":
     default:
