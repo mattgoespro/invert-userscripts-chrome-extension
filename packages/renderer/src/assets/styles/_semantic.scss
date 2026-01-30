@@ -1,0 +1,108 @@
+// =============================================================================
+// Semantic Tokens
+// =============================================================================
+// Purpose-driven tokens that reference primitives. These are the tokens
+// components should use — they describe intent, not raw values.
+// =============================================================================
+
+:root {
+  // ===========================================================================
+  // Core Semantic Colors
+  // ===========================================================================
+  --primary: var(--base-blue);
+  --primary-hover: var(--base-blue-light);
+  --secondary: var(--base-purple);
+  --accent: var(--base-orange);
+  --danger: var(--base-red);
+
+  --background: var(--base-black);
+  --foreground: var(--base-white);
+  --border: var(--base-dark-grey);
+
+  // ===========================================================================
+  // Surfaces
+  // ===========================================================================
+  --surface-base: var(--base-surface-base);
+  --surface-raised: var(--base-surface-raised);
+  --surface-overlay: var(--base-surface-overlay);
+
+  // ===========================================================================
+  // Glass Effects
+  // ===========================================================================
+  --glass-bg-soft: var(--base-glass-bg-soft);
+  --glass-bg: var(--base-glass-bg);
+  --glass-bg-heavy: var(--base-glass-bg-heavy);
+  --glass-white: var(--base-glass-white);
+
+  --glass-border-soft: var(--base-glass-border-soft);
+  --glass-border: var(--base-glass-border);
+  --glass-border-strong: var(--base-glass-border-strong);
+
+  // ===========================================================================
+  // Text
+  // ===========================================================================
+  --text-muted-faint: var(--base-text-faint);
+  --text-muted: var(--base-text-muted);
+  --text-muted-strong: var(--base-text-muted-strong);
+
+  // ===========================================================================
+  // Accent Glow
+  // ===========================================================================
+  --accent-glow-faint: var(--base-accent-glow-faint);
+  --accent-glow-soft: var(--base-accent-glow-soft);
+  --accent-glow: var(--base-accent-glow);
+  --accent-glow-strong: var(--base-accent-glow-strong);
+
+  // ===========================================================================
+  // Danger States
+  // ===========================================================================
+  --danger-soft: var(--base-danger-soft);
+  --danger-strong: var(--base-danger-strong);
+
+  // ===========================================================================
+  // Shadows
+  // ===========================================================================
+  --shadow-soft: var(--base-shadow-soft);
+  --shadow: var(--base-shadow);
+  --shadow-heavy: var(--base-shadow-heavy);
+
+  // ===========================================================================
+  // Decorative
+  // ===========================================================================
+  --grid-line: var(--base-grid-line);
+  --grid-highlight: var(--base-grid-highlight);
+  --glow-ambient: var(--base-glow-ambient);
+
+  // ===========================================================================
+  // Error Boundary
+  // ===========================================================================
+  --error-accent: var(--base-error-accent);
+  --error-accent-soft: var(--base-error-accent-soft);
+  --error-glow: var(--base-error-glow);
+  --error-surface: var(--base-error-surface);
+  --error-surface-dark: var(--base-error-surface-dark);
+  --error-text: var(--base-error-text);
+  --error-text-muted: var(--base-error-text-muted);
+  --error-border: var(--base-error-border);
+
+  // ===========================================================================
+  // Syntax Highlighting
+  // ===========================================================================
+  --syntax-keyword: var(--base-syntax-keyword);
+  --syntax-function: var(--base-syntax-function);
+  --syntax-param: var(--base-syntax-param);
+  --syntax-type: var(--base-syntax-type);
+  --syntax-punctuation: var(--base-syntax-punctuation);
+
+  // ===========================================================================
+  // Status Colors
+  // ===========================================================================
+  --info: var(--base-blue);
+  --warning: var(--base-orange);
+  --error: var(--base-red);
+
+  // ===========================================================================
+  // Geometry
+  // ===========================================================================
+  --geometry-border-radius: 6px;
+}

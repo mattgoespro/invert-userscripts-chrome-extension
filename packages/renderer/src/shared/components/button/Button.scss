@@ -24,11 +24,11 @@
 }
 
 .btn-primary {
-  background: var(--orange);
-  color: var(--void-black);
+  background: var(--accent);
+  color: var(--surface-base);
 
   &:hover:not(:disabled) {
-    box-shadow: 0 0 20px var(--accent-glow-40);
+    box-shadow: 0 0 20px var(--accent-glow);
     transform: translateY(-1px);
   }
 
@@ -38,34 +38,34 @@
 }
 
 .btn-secondary {
-  background: var(--glass-white-light);
-  color: var(--text-muted-80);
+  background: var(--glass-white);
+  color: var(--text-muted-strong);
   border: 1px solid var(--glass-border);
 
   &:hover:not(:disabled) {
     background: var(--glass-border);
-    border-color: var(--accent-glow-30);
+    border-color: var(--accent-glow-soft);
   }
 }
 
 .btn-ghost {
   background: transparent;
-  color: var(--text-muted-70);
+  color: var(--text-muted-strong);
   border: none;
 
   &:hover:not(:disabled) {
-    background: var(--glass-white-light);
-    color: var(--text-muted-90);
+    background: var(--glass-white);
+    color: var(--text-muted-strong);
   }
 }
 
 .btn-danger {
-  background: var(--red-80);
+  background: var(--danger-strong);
   color: var(--foreground);
-  border: 1px solid var(--red-40);
+  border: 1px solid var(--danger);
 
   &:hover:not(:disabled) {
-    background: var(--red-solid);
-    box-shadow: 0 0 16px var(--red-40);
+    background: var(--error-accent);
+    box-shadow: 0 0 16px var(--danger);
   }
 }

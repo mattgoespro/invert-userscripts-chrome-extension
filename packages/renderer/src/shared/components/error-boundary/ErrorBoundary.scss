@@ -1,7 +1,3 @@
-@use "@/assets/styles/colors" as *;
-@use "sass:map";
-@use "sass:color";
-
 .error-boundary {
   position: absolute;
   width: 100%;
@@ -9,7 +5,7 @@
   background: linear-gradient(
     180deg,
     var(--error-surface-dark) 0%,
-    var(--error-surface-card) 50%,
+    var(--error-surface) 50%,
     var(--error-surface-dark) 100%
   );
   display: flex;
@@ -26,13 +22,13 @@
     display: flex;
     flex-direction: column;
     gap: 0;
-    background: var(--error-surface-card);
+    background: var(--error-surface);
     border: 1px solid var(--error-border);
     border-radius: 16px;
     overflow: hidden;
     box-shadow:
       0 0 0 1px var(--shadow-heavy),
-      0 25px 50px -12px var(--shadow-ultra);
+      0 25px 50px -12px var(--shadow-heavy);
   }
 
   &__header {
@@ -40,27 +36,27 @@
     align-items: center;
     gap: 14px;
     padding: 24px 28px;
-    background: linear-gradient(135deg, rgba($error-glow, 0.1) 0%, transparent 60%);
+    background: linear-gradient(135deg, var(--error-glow) 0%, transparent 60%);
     border-bottom: 1px solid var(--error-border);
 
     .typography--title {
       font-weight: 600;
       font-size: 18px;
       letter-spacing: -0.02em;
-      color: var(--error-text-primary);
+      color: var(--error-text);
     }
   }
 
   &__icon {
     width: 40px;
     height: 40px;
-    background: rgba($error-glow, 0.15);
-    border: 1px solid rgba($error-accent, 0.3);
+    background: var(--error-glow);
+    border: 1px solid var(--error-accent-soft);
     border-radius: 10px;
     text-align: center;
     line-height: 1.6;
     font-size: 18px;
-    box-shadow: 0 0 20px rgba($error-glow, 0.2);
+    box-shadow: 0 0 20px var(--error-glow);
   }
 
   &__details {
@@ -102,18 +98,18 @@
     font-size: 13px;
     font-weight: 600;
     color: var(--error-accent);
-    background: rgba($error-glow, 0.1);
+    background: var(--error-glow);
     padding: 8px;
     margin-right: 8px;
     border-radius: 8px;
-    border: 1px solid rgba($error-accent, 0.2);
+    border: 1px solid var(--error-accent-soft);
   }
 
   &__message {
     font-family: "JetBrains Mono", "SF Mono", "Fira Code", monospace;
     font-size: 13px;
-    color: var(--error-text-secondary);
-    background: var(--error-surface-code);
+    color: var(--error-text-muted);
+    background: var(--error-surface-dark);
     padding: 16px;
     border-radius: 10px;
     border: 1px solid var(--error-border);
@@ -125,7 +121,7 @@
     font-family: "JetBrains Mono", "SF Mono", "Fira Code", monospace;
     font-size: 11px;
     color: var(--error-text-muted);
-    background: var(--error-surface-code);
+    background: var(--error-surface-dark);
     padding: 16px;
     border-radius: 10px;
     border: 1px solid var(--error-border);
@@ -160,7 +156,7 @@
     display: flex;
     justify-content: flex-end;
     padding: 20px 28px;
-    background: var(--shadow-light);
+    background: var(--shadow-soft);
     border-top: 1px solid var(--error-border);
   }
 }

@@ -29,7 +29,7 @@
 // Accent Borders
 // -----------------------------------------------------------------------------
 @mixin accent-left-border($width: 3px) {
-  border-left: $width solid var(--orange);
+  border-left: $width solid var(--accent);
 }
 
 @mixin accent-glow-border {

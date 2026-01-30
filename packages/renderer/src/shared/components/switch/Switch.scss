@@ -22,7 +22,7 @@ $transition-duration: 0.2s;
   right: 0;
   bottom: 0;
   background: var(--glass-bg);
-  border: 1px solid var(--glass-border-medium);
+  border: 1px solid var(--glass-border-strong);
   transition: all $transition-duration ease;
   border-radius: 20px;
 
@@ -34,7 +34,7 @@ $transition-duration: 0.2s;
     width: 0.875rem;
     left: 3px;
     bottom: 2px;
-    background: var(--text-muted-50);
+    background: var(--text-muted);
     transition: all $transition-duration ease;
     border-radius: 50%;
   }
@@ -47,19 +47,19 @@ $transition-duration: 0.2s;
 
 // checked state
 input:checked + .switch--slider {
-  background: var(--accent-glow-20);
-  border-color: var(--accent-glow-40);
+  background: var(--accent-glow-soft);
+  border-color: var(--accent-glow);
 
   // toggle indicator
   &:before {
-    background: var(--orange);
-    box-shadow: 0 0 12px var(--accent-glow-60);
+    background: var(--accent);
+    box-shadow: 0 0 12px var(--accent-glow-strong);
     transform: translateX(14px);
   }
 }
 
 input:focus-visible + .switch--slider {
-  box-shadow: 0 0 0 3px var(--accent-glow-10);
+  box-shadow: 0 0 0 3px var(--accent-glow-faint);
 }
 
 .switch--label {
@@ -69,5 +69,5 @@ input:focus-visible + .switch--slider {
   cursor: pointer;
   font-family: "JetBrains Mono", monospace;
   font-size: 13px;
-  color: var(--text-muted-70);
+  color: var(--text-muted-strong);
 }

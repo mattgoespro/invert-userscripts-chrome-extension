@@ -5,37 +5,37 @@
   height: 44px;
   border-radius: 12px;
   transition: all 0.2s ease;
-  color: var(--text-muted-50);
+  color: var(--text-muted);
   background: transparent;
   position: relative;
 
   &:hover {
-    background: var(--glass-white-light);
-    color: var(--text-muted-80);
+    background: var(--glass-white);
+    color: var(--text-muted-strong);
   }
 }
 
 .sidebar-nav-button--button-active {
-  background: var(--accent-glow-15);
-  color: var(--orange);
-  box-shadow: 0 0 20px var(--accent-glow-15);
+  background: var(--accent-glow-faint);
+  color: var(--accent);
+  box-shadow: 0 0 20px var(--accent-glow-faint);
 
-  // Glow bar indicator on right edge
-  &::after {
+  // Glow bar indicator on left edge
+  &::before {
     content: "";
     position: absolute;
-    right: -10px;
+    left: -0.5px;
     top: 50%;
     transform: translateY(-50%);
     width: 3px;
-    height: 20px;
-    background: var(--orange);
+    height: 30px;
+    background: var(--accent);
     border-radius: 2px;
-    box-shadow: 0 0 8px var(--accent-glow-60);
+    box-shadow: 0 0 8px var(--accent-glow-strong);
   }
 
   &:hover {
-    background: var(--accent-glow-20);
-    color: var(--orange);
+    background: var(--accent-glow-soft);
+    color: var(--accent);
   }
 }

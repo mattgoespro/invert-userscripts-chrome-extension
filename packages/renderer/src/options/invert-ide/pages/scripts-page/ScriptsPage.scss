@@ -5,8 +5,8 @@
 
   .scripts--sidebar {
     width: 300px;
-    background: var(--carbon-60);
-    border-right: 1px solid var(--glass-border-subtle);
+    background: var(--glass-bg-soft);
+    border-right: 1px solid var(--glass-border-soft);
     backdrop-filter: blur(8px);
     overflow: hidden;
     display: flex;
@@ -17,13 +17,13 @@
       justify-content: space-between;
       align-items: center;
       padding: 20px 16px;
-      border-bottom: 1px solid var(--glass-border-subtle);
+      border-bottom: 1px solid var(--glass-border-soft);
 
       // Code-style decoration
       &::before {
         content: "//";
         font-family: "JetBrains Mono", monospace;
-        color: var(--text-muted-20);
+        color: var(--text-muted-faint);
         margin-right: 8px;
         font-size: 14px;
       }
@@ -43,11 +43,11 @@
       content: "// Select a script to begin editing";
       font-family: "JetBrains Mono", monospace;
       font-size: 15px;
-      color: var(--text-muted-25);
+      color: var(--text-muted-faint);
       padding: 16px 24px;
-      background: var(--glass-bg-50);
+      background: var(--glass-bg-soft);
       border-radius: 8px;
-      border-left: 3px solid var(--accent-glow-30);
+      border-left: 3px solid var(--accent-glow-soft);
     }
   }
 }

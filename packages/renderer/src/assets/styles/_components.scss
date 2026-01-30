@@ -1,0 +1,72 @@
+// =============================================================================
+// Component Tokens
+// =============================================================================
+// Themeable tokens for UI components. These define the styling contract
+// that themes can override. Components consume these via var(--token-name).
+// =============================================================================
+
+:root {
+  // ===========================================================================
+  // Input
+  // ===========================================================================
+  --input-foreground: var(--base-white);
+  --input-background: var(--base-input-bg);
+  --input-border: var(--base-input-border);
+  --input-placeholder: var(--base-input-placeholder);
+
+  // ===========================================================================
+  // Label
+  // ===========================================================================
+  --label-foreground: var(--base-grey);
+
+  // ===========================================================================
+  // Button
+  // ===========================================================================
+  --button-foreground: var(--base-white);
+  --button-background: var(--base-button-bg);
+  --button-hover-background: var(--base-button-hover-bg);
+  --button-active-background: var(--base-button-active-bg);
+  --button-disabled-foreground: var(--base-button-disabled-fg);
+  --button-disabled-background: var(--base-button-disabled-bg);
+
+  // ===========================================================================
+  // Icon Button
+  // ===========================================================================
+  --icon-button-foreground: var(--base-white);
+  --icon-button-background: none;
+  --icon-button-border: var(--base-icon-button-border);
+  --icon-button-hover-background: var(--base-icon-button-hover-bg);
+  --icon-button-focus-background: var(--base-icon-button-focus-bg);
+
+  // ===========================================================================
+  // Switch
+  // ===========================================================================
+  --switch-foreground: var(--base-grey);
+  --switch-background: var(--base-switch-bg);
+  --switch-checked-foreground: var(--base-switch-checked-fg);
+  --switch-checked-background: var(--base-switch-checked-bg);
+  --switch-border: var(--base-switch-border);
+
+  // ===========================================================================
+  // Select
+  // ===========================================================================
+  --select-foreground: var(--base-white);
+  --select-background: var(--base-select-bg);
+  --select-border: var(--base-select-border);
+  --select-placeholder: var(--base-select-placeholder);
+
+  // ===========================================================================
+  // Checkbox
+  // ===========================================================================
+  --checkbox-foreground: var(--base-white);
+  --checkbox-background: var(--base-input-bg);
+  --checkbox-border: var(--base-input-border);
+  --checkbox-checked-background: var(--accent);
+  --checkbox-checked-foreground: var(--base-white);
+
+  // ===========================================================================
+  // Typography
+  // ===========================================================================
+  --title-foreground: var(--base-white);
+  --subtitle-foreground: var(--base-grey);
+}

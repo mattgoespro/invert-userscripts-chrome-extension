@@ -7,7 +7,7 @@
     font-family: "JetBrains Mono", monospace;
     font-size: 12px;
     font-weight: 500;
-    color: var(--text-muted-50);
+    color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.05em;
   }
@@ -30,17 +30,17 @@
     padding-right: 36px;
 
     &:hover {
-      border-color: var(--glass-border-medium);
+      border-color: var(--glass-border-strong);
     }
 
     &:focus {
       outline: none;
-      border-color: var(--accent-glow-40);
-      box-shadow: 0 0 0 3px var(--accent-glow-10);
+      border-color: var(--accent-glow);
+      box-shadow: 0 0 0 3px var(--accent-glow-faint);
     }
 
     option {
-      background: var(--obsidian);
+      background: var(--surface-overlay);
       color: var(--foreground);
       padding: 8px;
     }

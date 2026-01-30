@@ -1,22 +1,15 @@
-@use "sass:map";
-@use "sass:meta";
-@use "./theme" as theme;
+// =============================================================================
+// Design Tokens Index
+// =============================================================================
+// This file imports all token layers in the correct order and makes them
+// available globally via :root. Import order matters:
+//   1. Primitives (base values, no dependencies)
+//   2. Semantic (app-level tokens, references primitives)
+//   3. Components (component tokens, references primitives + semantic)
+//   4. Typography (references semantic)
+// =============================================================================
 
-@mixin generate-variables($map, $prefix: "") {
-  @each $key, $value in $map {
-    $key-str: $key + "";
-    $name: if($prefix == "", $key-str, "#{$prefix}-#{$key-str}");
-
-    @if meta.type-of($value) == "map" {
-      @include generate-variables($value, $name);
-    } @else {
-      --#{$name}: #{$value};
-    }
-  }
-}
-
-:root {
-  @include generate-variables(map.get(theme.$theme, palette));
-  @include generate-variables(map.get(theme.$theme, typography), "typography");
-  @include generate-variables(map.get(theme.$theme, geometry), "geometry");
-}
+@use "./primitives";
+@use "./semantic";
+@use "./components";
+@use "./typography";
