@@ -1,7 +1,6 @@
 .modules--content {
   flex: 1;
   padding: 2rem;
-  animation: page-reveal 0.3s ease-out;
 
   .modules--header {
     display: flex;
@@ -122,17 +121,6 @@
       max-width: 400px;
       line-height: 1.6;
     }
-  }
-}
-
-@keyframes page-reveal {
-  0% {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
   }
 }
 

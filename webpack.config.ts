@@ -94,6 +94,10 @@ export default (_args: unknown, { mode }: { mode: "development" | "production" }
         "~/theme": path.resolve(__dirname, "packages/renderer/src/assets/styles/theme.scss"),
         "@": path.resolve(__dirname, "packages/renderer/src/"),
         "@shared": path.resolve(__dirname, "packages/shared/src/"),
+        "@assets/styles/invert-ide": path.resolve(
+          __dirname,
+          "packages/renderer/src/assets/styles/_index.scss"
+        ),
         "monaco-editor": "monaco-editor/esm/vs/editor/editor.api.js",
       },
     },

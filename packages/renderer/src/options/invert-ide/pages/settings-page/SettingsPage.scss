@@ -2,7 +2,7 @@
   flex: 1;
   padding: 2rem;
   max-width: 800px;
-  animation: page-reveal 0.3s ease-out;
+  // animation: page-reveal 0.3s ease-out;
 
   .settings--header {
     display: flex;
@@ -52,16 +52,5 @@
       flex-direction: column;
       gap: 1.25rem;
     }
-  }
-}
-
-@keyframes page-reveal {
-  0% {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
   }
 }

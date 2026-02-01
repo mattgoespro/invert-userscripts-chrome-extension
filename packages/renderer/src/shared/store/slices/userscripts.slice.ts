@@ -160,11 +160,6 @@ const userscriptsSlice = createSlice({
         const updatedScript = action.payload;
 
         state.scripts[updatedScript.id] = updatedScript;
-
-        // Also update currentUserscript if it's the one being edited
-        if (state.currentUserscript?.id === updatedScript.id) {
-          state.currentUserscript = updatedScript;
-        }
       });
   },
 });

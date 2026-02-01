@@ -1,4 +1,8 @@
-import "@/assets/styles/variables.scss";
+import { SassCompiler } from "@/sandbox/compiler";
+import { registerCodeEditorThemes } from "@/shared/components/CodeEditorThemes";
+import { useAppDispatch } from "@/shared/store/hooks";
+import { loadUserscripts } from "@/shared/store/slices/userscripts.slice";
+import "@assets/styles/invert-ide";
 import { useEffect, useState } from "react";
 import "./InvertIde.scss";
 import { DashboardHeader } from "./dashboard-header/DashboardHeader";
@@ -6,10 +10,6 @@ import { ModulesPage } from "./pages/modules-page/ModulesPage";
 import { ScriptsPage } from "./pages/scripts-page/ScriptsPage";
 import { Settings } from "./pages/settings-page/SettingsPage";
 import { Sidebar, SidebarButton } from "./sidebar/Sidebar";
-import { loadUserscripts } from "@/shared/store/slices/userscripts.slice";
-import { useAppDispatch } from "@/shared/store/hooks";
-import { registerCodeEditorThemes } from "@/shared/components/CodeEditorThemes";
-import { SassCompiler } from "@/sandbox/compiler";
 
 export function InvertIde() {
   const [active, setActive] = useState<SidebarButton>("scripts");

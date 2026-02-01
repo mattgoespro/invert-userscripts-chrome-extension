@@ -36,7 +36,7 @@
   // Staggered animation delay for list items
   @for $i from 1 through 15 {
     &:nth-child(#{$i}) {
-      animation-delay: #{$i * 0.04}s;
+      animation-delay: #{$i * 0.1}s;
     }
   }
 

@@ -27,18 +27,17 @@ $red: #a02a2a;
   // ===========================================================================
   // Core Palette
   // ===========================================================================
-  --base-black: #{$black};
-  --base-white: #{$white};
-  --base-dark-grey: #{$dark-grey};
-  --base-grey: #{$grey};
-  --base-blue: #{$blue};
-  --base-blue-light: #{color.scale($blue, $lightness: 40%)};
-  --base-blue-hover: #{color.scale($blue, $lightness: 10%)};
-  --base-blue-active: #{color.scale($blue, $lightness: -10%)};
-  --base-purple: #{$purple};
-  --base-orange: #{$orange};
-  --base-red: #{$red};
-  --base-google-blue: #4285f4;
+  --base-black: #1e1e1e;
+  --base-white: #f0f0f0;
+  --base-dark-grey: #2d2d2d;
+  --base-grey: #808080;
+  --base-blue: #1868c4;
+  --base-blue-light: #{color.scale(#1868c4, $lightness: 40%)};
+  --base-blue-hover: #{color.scale(#1868c4, $lightness: 10%)};
+  --base-blue-active: #{color.scale(#1868c4, $lightness: -10%)};
+  --base-purple: #a13b88;
+  --base-orange: #ffba00;
+  --base-red: #a02a2a;
 
   // ===========================================================================
   // Surfaces (dark backgrounds for layering)
