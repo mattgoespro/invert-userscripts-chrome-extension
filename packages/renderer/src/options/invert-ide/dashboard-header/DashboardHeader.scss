@@ -103,6 +103,10 @@
     color: var(--syntax-keyword);
   }
 
+  .dashboard-header--member {
+    color: var(--syntax-member);
+  }
+
   .dashboard-header--function {
     color: var(--syntax-function);
     font-weight: 600;

@@ -91,7 +91,6 @@ export default (_args: unknown, { mode }: { mode: "development" | "production" }
     resolve: {
       extensions: [".tsx", ".ts", ".js", ".scss", ".css"],
       alias: {
-        "~/theme": path.resolve(__dirname, "packages/renderer/src/assets/styles/theme.scss"),
         "@": path.resolve(__dirname, "packages/renderer/src/"),
         "@shared": path.resolve(__dirname, "packages/shared/src/"),
         "@assets/styles/invert-ide": path.resolve(

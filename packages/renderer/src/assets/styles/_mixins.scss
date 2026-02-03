@@ -6,24 +6,6 @@
 // -----------------------------------------------------------------------------
 // Glass Panel Effect
 // -----------------------------------------------------------------------------
-// Creates a frosted glass panel with subtle depth and border
-@mixin glass-panel($blur: 12px) {
-  background: var(--glass-bg-heavy);
-  border: 1px solid var(--glass-border);
-  border-radius: 6px;
-  backdrop-filter: blur($blur);
-  box-shadow:
-    0 4px 24px var(--shadow),
-    inset 0 1px 0 var(--grid-highlight);
-}
-
-// Lighter glass variant for nested elements
-@mixin glass-panel-light($blur: 8px) {
-  background: var(--glass-bg-soft);
-  border: 1px solid var(--glass-border-soft);
-  border-radius: 6px;
-  backdrop-filter: blur($blur);
-}
 
 // -----------------------------------------------------------------------------
 // Accent Borders
@@ -40,15 +22,6 @@
 // -----------------------------------------------------------------------------
 // Backgrounds
 // -----------------------------------------------------------------------------
-@mixin atmospheric-background {
-  background: linear-gradient(
-    165deg,
-    var(--background) 0%,
-    var(--surface-base) 40%,
-    var(--surface-overlay) 100%
-  );
-}
-
 @mixin grid-pattern {
   background-image:
     linear-gradient(90deg, var(--grid-line) 1px, transparent 1px),

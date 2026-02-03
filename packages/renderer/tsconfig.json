@@ -10,8 +10,7 @@
     "outDir": "dist/packages/renderer",
     "paths": {
       "@/*": ["./src/*"],
-      "@shared/*": ["../shared/src/*"],
-      "@assets/styles/invert-ide": ["./src/assets/styles/_index.scss"]
+      "@shared/*": ["../shared/src/*"]
     }
   },
   "references": [

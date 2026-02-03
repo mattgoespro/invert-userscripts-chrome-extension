@@ -8,7 +8,7 @@ export function DashboardHeader() {
       <div className="dashboard-header--content">
         <div className="dashboard-header--code-snippet">
           <span className="dashboard-header--keyword">export</span>&nbsp;
-          <span className="dashboard-header--keyword">function</span>&nbsp;
+          <span className="dashboard-header--member">function</span>&nbsp;
           <span className="dashboard-header--function">InvertUserscripts</span>
           <span className="dashboard-header--bracket">(</span>
           <span className="dashboard-header--param">doc</span>

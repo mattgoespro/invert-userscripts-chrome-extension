@@ -4,6 +4,7 @@ import { StorageManager } from "@shared/storage";
 import { useState } from "react";
 import { Button } from "@/shared/components/button/Button";
 import { Checkbox } from "@/shared/components/checkbox/Checkbox";
+import { CodeComment } from "@/shared/components/code-comment/CodeComment";
 import { IconButton } from "@/shared/components/icon-button/IconButton";
 import { DeleteIcon } from "lucide-react";
 import { Typography } from "@/shared/components/typography/Typography";
@@ -79,8 +80,8 @@ export function ModulesPage() {
           </div>
         ))}
         {Object.values(modules ?? {}).length === 0 && (
-          <div className="modules--empty-state">
-            <p>No global modules yet. Add CDN libraries that can be shared across all scripts.</p>
+          <div className="modules--list-items-empty">
+            <CodeComment>No modules imported yet.</CodeComment>
           </div>
         )}
       </div>

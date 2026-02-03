@@ -36,6 +36,7 @@
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
     gap: 1rem;
+    height: calc(100% - 4rem);
   }
 
   .modules--list-item {
@@ -98,29 +99,13 @@
     }
   }
 
-  .modules--empty-state {
+  .modules--list-items-empty {
     grid-column: 1 / -1;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 80px 20px;
     text-align: center;
-
-    // Decorative code comment
-    &::before {
-      content: "// No modules imported yet";
-      font-family: "JetBrains Mono", monospace;
-      font-size: 16px;
-      color: var(--text-muted-faint);
-      margin-bottom: 1rem;
-    }
-
-    p {
-      color: var(--text-muted);
-      max-width: 400px;
-      line-height: 1.6;
-    }
   }
 }
 

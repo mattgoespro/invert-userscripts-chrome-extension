@@ -31,10 +31,10 @@ $red: #a02a2a;
   --base-white: #f0f0f0;
   --base-dark-grey: #2d2d2d;
   --base-grey: #808080;
-  --base-blue: #1868c4;
-  --base-blue-light: #{color.scale(#1868c4, $lightness: 40%)};
-  --base-blue-hover: #{color.scale(#1868c4, $lightness: 10%)};
-  --base-blue-active: #{color.scale(#1868c4, $lightness: -10%)};
+  --base-blue: #{$blue};
+  --base-blue-light: #{color.scale($blue, $lightness: 40%)};
+  --base-blue-hover: #{color.scale($blue, $lightness: 10%)};
+  --base-blue-active: #{color.scale($blue, $lightness: -10%)};
   --base-purple: #a13b88;
   --base-orange: #ffba00;
   --base-red: #a02a2a;
@@ -112,7 +112,9 @@ $red: #a02a2a;
   // ===========================================================================
   // Syntax Highlighting
   // ===========================================================================
-  --base-syntax-keyword: #c586c0;
+  // --base-syntax-keyword: #da70d6;
+  --base-syntax-keyword: #b575a6;
+  --base-syntax-member: #569cd6;
   --base-syntax-function: #dcdcaa;
   --base-syntax-param: #9cdcfe;
   --base-syntax-type: #4ec9b0;

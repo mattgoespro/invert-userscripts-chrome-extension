@@ -8,6 +8,7 @@ import { PlusIcon } from "lucide-react";
 import { ScriptEditor } from "./script-editor/ScriptEditor";
 import { ScriptList } from "./script-list/ScriptList";
 import "./ScriptsPage.scss";
+import { CodeComment } from "@/shared/components/code-comment/CodeComment";
 
 export function ScriptsPage() {
   const dispatch = useAppDispatch();
@@ -52,7 +53,13 @@ export function ScriptsPage() {
         </div>
         <ScriptList></ScriptList>
       </div>
-      {selectedScript ? <ScriptEditor /> : <div className="scripts--empty-editor"></div>}
+      {selectedScript ? (
+        <ScriptEditor />
+      ) : (
+        <CodeComment className="scripts--empty-editor">
+          Select a script to start editing.
+        </CodeComment>
+      )}
     </div>
   );
 }

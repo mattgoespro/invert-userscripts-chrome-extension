@@ -4,6 +4,7 @@ import { ScriptMetadata } from "./script-metadata/ScriptMetadata";
 import "./ScriptEditor.scss";
 import { useAppDispatch, useAppSelector } from "@/shared/store/hooks";
 import {
+  markUserscriptModified,
   selectCurrentUserscript,
   updateUserscriptCode,
 } from "@/shared/store/slices/userscripts.slice";
@@ -12,9 +13,10 @@ export function ScriptEditor() {
   const dispatch = useAppDispatch();
   const script = useAppSelector(selectCurrentUserscript);
 
-  const onCodeModified = (_language: UserscriptSourceCode, _code: string) => {
-    console.log("Code modified...");
-    // TODO: If needed, we could handle live code modifications here
+  const onCodeModified = () => {
+    if (script.status !== "modified") {
+      dispatch(markUserscriptModified(script.id));
+    }
   };
 
   const onCodeSaved = async (language: UserscriptSourceCode, code: string) => {
@@ -32,7 +34,7 @@ export function ScriptEditor() {
             theme="vs-dark"
             language="typescript"
             contents={script.code.source.typescript}
-            onCodeModified={(code) => onCodeModified("typescript", code)}
+            onCodeModified={() => onCodeModified()}
             onCodeSaved={(code) => onCodeSaved("typescript", code)}
           />
         </div>
@@ -41,7 +43,7 @@ export function ScriptEditor() {
             theme="vs-dark"
             language="scss"
             contents={script.code.source.scss}
-            onCodeModified={(code) => onCodeModified("scss", code)}
+            onCodeModified={() => onCodeModified()}
             onCodeSaved={(code) => onCodeSaved("scss", code)}
           />
         </div>

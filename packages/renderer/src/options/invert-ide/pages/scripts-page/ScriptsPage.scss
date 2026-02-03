@@ -31,23 +31,6 @@
   }
 
   .scripts--empty-editor {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    flex: 1;
-    gap: 1.5rem;
-
-    // Decorative code comment
-    &::before {
-      content: "// Select a script to begin editing";
-      font-family: "JetBrains Mono", monospace;
-      font-size: 15px;
-      color: var(--text-muted-faint);
-      padding: 16px 24px;
-      background: var(--glass-bg-soft);
-      border-radius: 8px;
-      border-left: 3px solid var(--accent-glow-soft);
-    }
+    margin: auto;
   }
 }

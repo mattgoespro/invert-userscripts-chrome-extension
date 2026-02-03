@@ -2,7 +2,6 @@ import { SassCompiler } from "@/sandbox/compiler";
 import { registerCodeEditorThemes } from "@/shared/components/CodeEditorThemes";
 import { useAppDispatch } from "@/shared/store/hooks";
 import { loadUserscripts } from "@/shared/store/slices/userscripts.slice";
-import "@assets/styles/invert-ide";
 import { useEffect, useState } from "react";
 import "./InvertIde.scss";
 import { DashboardHeader } from "./dashboard-header/DashboardHeader";
