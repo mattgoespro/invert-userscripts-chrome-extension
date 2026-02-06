@@ -64,9 +64,10 @@ $red: #a02a2a;
   // ===========================================================================
   // Text Opacity Variants
   // ===========================================================================
-  --base-text-faint: rgba(255, 255, 255, 0.25);
-  --base-text-muted: rgba(255, 255, 255, 0.5);
-  --base-text-muted-strong: rgba(255, 255, 255, 0.8);
+  --base-text: var(--base-white);
+  --base-text-faint: color.scale(var(--base-white), $alpha: -50%);
+  --base-text-muted: color.scale(var(--base-white), $alpha: -30%);
+  --base-text-muted-strong: color.scale(var(--base-white), $alpha: -50%);
 
   // ===========================================================================
   // Accent Glow (orange-based)
@@ -112,8 +113,7 @@ $red: #a02a2a;
   // ===========================================================================
   // Syntax Highlighting
   // ===========================================================================
-  // --base-syntax-keyword: #da70d6;
-  --base-syntax-keyword: #b575a6;
+  --base-syntax-keyword: #da70d6;
   --base-syntax-member: #569cd6;
   --base-syntax-function: #dcdcaa;
   --base-syntax-param: #9cdcfe;
@@ -141,6 +141,7 @@ $red: #a02a2a;
   --base-icon-button-focus-bg: #{color.scale($dark-grey, $lightness: -10%)};
 
   // Switch
+  --base-switch-fg: #{$grey};
   --base-switch-bg: #{color.scale($dark-grey, $lightness: 10%)};
   --base-switch-checked-fg: #{$dark-grey};
   --base-switch-checked-bg: #{$orange};

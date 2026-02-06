@@ -1,5 +1,6 @@
 import { configureStore } from "@reduxjs/toolkit";
 import { createLogger } from "redux-logger";
+import settingsReducer from "./slices/settings.slice";
 import userscriptsReducer from "./slices/userscripts.slice";
 
 const logger = createLogger({
@@ -10,6 +11,7 @@ const logger = createLogger({
 export const store = configureStore({
   reducer: {
     userscripts: userscriptsReducer,
+    settings: settingsReducer,
   },
   devTools: {
     name: "Invert IDE Userscripts",

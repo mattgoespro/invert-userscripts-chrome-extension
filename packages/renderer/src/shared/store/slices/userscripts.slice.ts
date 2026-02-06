@@ -67,6 +67,8 @@ export const updateUserscript = createAsyncThunk<Userscript, Userscript, { state
 export const updateUserscriptCode = createAsyncThunk(
   "userscripts/updateUserscriptCode",
   async ({ id, language, code }: { id: string; language: UserscriptSourceCode; code: string }) => {
+    console.log("updateUserscriptCode received:", { id, language, code: code.substring(0, 100) });
+
     const scriptsMap = await StorageManager.getAllScripts();
     const script = scriptsMap[id];
 

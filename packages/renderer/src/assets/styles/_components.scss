@@ -41,11 +41,12 @@
   // ===========================================================================
   // Switch
   // ===========================================================================
-  --switch-foreground: var(--base-grey);
+  --switch-foreground: var(--base-switch-fg);
   --switch-background: var(--base-switch-bg);
   --switch-checked-foreground: var(--base-switch-checked-fg);
   --switch-checked-background: var(--base-switch-checked-bg);
   --switch-border: var(--base-switch-border);
+  --switch-border-strong: var(--base-switch-border-strong);
 
   // ===========================================================================
   // Select

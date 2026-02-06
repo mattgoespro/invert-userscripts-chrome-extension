@@ -1,6 +1,6 @@
 .input--label {
-  font-family: "JetBrains Mono", monospace;
-  font-size: 12px;
+  font-family: var(--font-mono);
+  font-size: 0.875em;
   font-weight: 500;
   color: var(--text-muted);
   text-transform: uppercase;
@@ -8,8 +8,8 @@
 }
 
 .input--field {
-  font-family: "JetBrains Mono", monospace;
-  font-size: 14px;
+  font-family: var(--font-mono);
+  font-size: 1em;
   font-weight: 400;
   line-height: 1.5;
   color: var(--foreground);
@@ -21,7 +21,7 @@
   transition: all 0.2s ease;
 
   &::placeholder {
-    font-size: 12px;
+    font-size: 1em;
     color: var(--text-muted-faint);
   }
 
@@ -32,7 +32,7 @@
   &:focus {
     outline: none;
     border-color: var(--accent-glow);
-    box-shadow: 0 0 0 3px var(--accent-glow-faint);
+    box-shadow: 0 0 0 2px var(--accent-glow-faint);
   }
 
   &:focus-visible {

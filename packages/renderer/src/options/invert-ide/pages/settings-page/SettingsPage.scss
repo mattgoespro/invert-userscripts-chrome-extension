@@ -2,7 +2,6 @@
   flex: 1;
   padding: 2rem;
   max-width: 800px;
-  // animation: page-reveal 0.3s ease-out;
 
   .settings--header {
     display: flex;
@@ -17,6 +16,16 @@
       font-size: 1.25rem;
       color: var(--syntax-param);
     }
+  }
+
+  .settings--loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+    color: var(--text-muted);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.875rem;
   }
 
   .settings--section {

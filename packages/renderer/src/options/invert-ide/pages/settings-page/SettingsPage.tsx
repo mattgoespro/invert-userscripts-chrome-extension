@@ -3,31 +3,59 @@ import { CodeEditorThemeNames } from "@/shared/components/CodeEditorThemes";
 import { Input } from "@/shared/components/input/Input";
 import { Select } from "@/shared/components/select/Select";
 import { Typography } from "@/shared/components/typography/Typography";
-import { EditorSettings } from "@shared/model";
-import { StorageManager } from "@shared/storage";
-import { useEffect, useState } from "react";
+import { useAppDispatch, useAppSelector } from "@/shared/store/hooks";
+import {
+  loadSettings,
+  selectEditorSettings,
+  selectIsLoading,
+  updateAutoFormat,
+  updateFontSize,
+  updateTabSize,
+  updateTheme,
+} from "@/shared/store/slices/settings.slice";
+import { useEffect } from "react";
 import "./SettingsPage.scss";
 
 export function Settings() {
-  const [settings, setSettings] = useState<EditorSettings>({
-    theme: "Dark",
-    fontSize: 14,
-    tabSize: 2,
-    autoFormat: true,
-    autoSave: true,
-  });
+  const dispatch = useAppDispatch();
+  const settings = useAppSelector(selectEditorSettings);
+  const isLoading = useAppSelector(selectIsLoading);
 
   useEffect(() => {
-    const loadSettings = async () => {
-      const storedSettings = await StorageManager.getEditorSettings();
-      setSettings(storedSettings);
-    };
-    loadSettings();
-  }, []);
+    dispatch(loadSettings());
+  }, [dispatch]);
 
-  const handleUpdateSettings = async (updates: Partial<EditorSettings>) => {
-    await StorageManager.saveEditorSettings(updates);
+  const handleThemeChange = (theme: string) => {
+    dispatch(updateTheme(theme));
   };
+
+  const handleFontSizeChange = (fontSize: number) => {
+    if (!isNaN(fontSize) && fontSize >= 8 && fontSize <= 32) {
+      dispatch(updateFontSize(fontSize));
+    }
+  };
+
+  const handleTabSizeChange = (tabSize: number) => {
+    if (!isNaN(tabSize) && tabSize >= 2 && tabSize <= 8) {
+      dispatch(updateTabSize(tabSize));
+    }
+  };
+
+  const handleAutoFormatChange = (autoFormat: boolean) => {
+    dispatch(updateAutoFormat(autoFormat));
+  };
+
+  if (isLoading) {
+    return (
+      <div className="settings--content">
+        <div className="settings--header">
+          <span className="settings--header-prefix">config.</span>
+          <Typography variant="subtitle">Settings</Typography>
+        </div>
+        <div className="settings--loading">Loading settings...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="settings--content">
@@ -42,14 +70,14 @@ export function Settings() {
           <Select
             label="Theme"
             value={settings.theme}
-            onChange={(themeName) => handleUpdateSettings({ theme: themeName })}
+            onChange={handleThemeChange}
             options={CodeEditorThemeNames.map((themeName) => ({ value: themeName }))}
           />
           <Input
             type="number"
             label="Font Size"
             value={settings.fontSize}
-            onChange={(e) => handleUpdateSettings({ fontSize: parseInt(e.target.value) })}
+            onChange={(e) => handleFontSizeChange(parseInt(e.target.value))}
             min="8"
             max="32"
           />
@@ -63,14 +91,14 @@ export function Settings() {
             type="number"
             label="Tab Size"
             value={settings.tabSize}
-            onChange={(e) => handleUpdateSettings({ tabSize: parseInt(e.target.value) })}
+            onChange={(e) => handleTabSizeChange(parseInt(e.target.value))}
             min="2"
             max="8"
           />
           <Checkbox
             label="Format on save"
             checked={settings.autoFormat}
-            onChange={(checked) => handleUpdateSettings({ autoFormat: checked })}
+            onChange={handleAutoFormatChange}
           />
         </div>
       </div>

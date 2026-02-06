@@ -2,7 +2,7 @@ import { Userscript, GlobalModule, EditorSettings, GlobalModules, Userscripts } 
 
 export class StorageManager {
   private static readonly SettingsDefaults: EditorSettings = {
-    theme: "vs-dark",
+    theme: "Invert Dark",
     fontSize: 14,
     tabSize: 2,
     autoFormat: true,
@@ -23,8 +23,10 @@ export class StorageManager {
   }
 
   static async saveScript(script: Userscript): Promise<void> {
-    const allScripts = await this.getAllScripts();
-    await chrome.storage.sync.set({ userscripts: { ...allScripts, [script.id]: script } });
+    await this.withLogging(`Save script ${script.id}`, async () => {
+      const allScripts = await this.getAllScripts();
+      await chrome.storage.sync.set({ userscripts: { ...allScripts, [script.id]: script } });
+    });
   }
 
   static async updateScript(id: string, updates: Partial<Omit<Userscript, "id">>): Promise<void> {
@@ -34,10 +36,17 @@ export class StorageManager {
       const script = allScripts[id];
 
       if (!script) {
-        throw new Error(`Userscript not found: ${script.name} (${id})`);
+        throw new Error(`Userscript not found: ${id}`);
       }
 
-      allScripts[id] = { ...script, ...updates };
+      const updatedScript = { ...script, ...updates };
+      allScripts[id] = updatedScript;
+
+      console.log("StorageManager: Saving updated script:", {
+        id,
+        typescript: updatedScript.code?.source?.typescript?.substring(0, 100),
+        scss: updatedScript.code?.source?.scss?.substring(0, 100),
+      });
 
       await chrome.storage.sync.set({ userscripts: allScripts });
     });

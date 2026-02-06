@@ -1,17 +1,20 @@
-import { CodeEditor } from "@/options/invert-ide/code-editor/CodeEditor";
-import { UserscriptSourceCode } from "@shared/model";
-import { ScriptMetadata } from "./script-metadata/ScriptMetadata";
-import "./ScriptEditor.scss";
+import { CodeEditor } from "@/options/invert-ide/components/code-editor/CodeEditor";
 import { useAppDispatch, useAppSelector } from "@/shared/store/hooks";
 import {
   markUserscriptModified,
   selectCurrentUserscript,
   updateUserscriptCode,
 } from "@/shared/store/slices/userscripts.slice";
+import { selectAutoFormat, selectTheme } from "@/shared/store/slices/settings.slice";
+import { UserscriptSourceCode } from "@shared/model";
+import { ScriptMetadata } from "./script-metadata/ScriptMetadata";
+import "./ScriptEditor.scss";
 
 export function ScriptEditor() {
   const dispatch = useAppDispatch();
   const script = useAppSelector(selectCurrentUserscript);
+  const autoFormat = useAppSelector(selectAutoFormat);
+  const theme = useAppSelector(selectTheme);
 
   const onCodeModified = () => {
     if (script.status !== "modified") {
@@ -31,18 +34,22 @@ export function ScriptEditor() {
       <div className="script-editor--editor-container">
         <div className="script-editor--code-editor">
           <CodeEditor
-            theme="vs-dark"
+            modelId={script.id}
+            theme={theme}
             language="typescript"
             contents={script.code.source.typescript}
+            autoFormat={autoFormat}
             onCodeModified={() => onCodeModified()}
             onCodeSaved={(code) => onCodeSaved("typescript", code)}
           />
         </div>
         <div className="script-editor--code-editor">
           <CodeEditor
-            theme="vs-dark"
+            modelId={script.id}
+            theme={theme}
             language="scss"
             contents={script.code.source.scss}
+            autoFormat={autoFormat}
             onCodeModified={() => onCodeModified()}
             onCodeSaved={(code) => onCodeSaved("scss", code)}
           />

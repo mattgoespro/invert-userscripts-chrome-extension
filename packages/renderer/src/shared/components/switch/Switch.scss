@@ -21,8 +21,8 @@ $transition-duration: 0.2s;
   left: 0;
   right: 0;
   bottom: 0;
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border-strong);
+  background: var(--switch-background);
+  border: 1px solid var(--switch-border);
   transition: all $transition-duration ease;
   border-radius: 20px;
 
@@ -34,7 +34,7 @@ $transition-duration: 0.2s;
     width: 0.875rem;
     left: 3px;
     bottom: 2px;
-    background: var(--text-muted);
+    background: var(--switch-foreground);
     transition: all $transition-duration ease;
     border-radius: 50%;
   }
@@ -42,7 +42,7 @@ $transition-duration: 0.2s;
 
 // hover state
 .switch--wrapper:hover .switch--slider {
-  border-color: var(--glass-border-strong);
+  border-color: var(--switch-border-strong);
 }
 
 // checked state
