@@ -23,11 +23,9 @@
   .script-editor--editor-container {
     display: flex;
     flex: 1;
-    gap: 1rem;
     min-height: 0;
 
     .script-editor--code-editor {
-      flex: 1;
       border-radius: 8px;
       overflow: hidden;
       border: 1px solid var(--glass-border-soft);

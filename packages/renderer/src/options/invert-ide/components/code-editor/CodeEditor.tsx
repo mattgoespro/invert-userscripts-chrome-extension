@@ -2,6 +2,8 @@ import { editor, Uri } from "monaco-editor";
 import { useEffect, useRef } from "react";
 import { FormatterLanguage, PrettierFormatter } from "@/sandbox/formatter";
 import { getMonacoThemeName } from "@/shared/components/CodeEditorThemes";
+import { useAppSelector } from "@/shared/store/hooks";
+import { selectEditorSettings } from "@/shared/store/slices/settings.slice";
 
 // Cache models by URI to preserve undo history and cursor position
 const modelCache = new Map<string, editor.ITextModel>();
@@ -37,6 +39,7 @@ export function CodeEditor({
   onCodeModified,
   onCodeSaved,
 }: CodeEditorProps) {
+  const settings = useAppSelector(selectEditorSettings);
   const editorRef = useRef<HTMLDivElement>(null);
   const editorInstanceRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const onCodeModifiedRef = useRef(onCodeModified);
@@ -52,16 +55,21 @@ export function CodeEditor({
 
     const editorInstance = editor.create(editorRef.current, {
       theme: getMonacoThemeName(theme),
-      fontSize: 14,
+      fontSize: settings.fontSize,
       automaticLayout: true,
       padding: { top: 25, bottom: 10 },
       fixedOverflowWidgets: true,
       wordWrap: "on",
       minimap: { enabled: false },
+      overviewRulerLanes: 0,
+      hideCursorInOverviewRuler: true,
+      overviewRulerBorder: false,
       scrollbar: {
-        verticalSliderSize: 6,
-        verticalScrollbarSize: 6,
-        verticalHasArrows: true,
+        vertical: "hidden",
+        horizontal: "hidden",
+        useShadows: false,
+        verticalScrollbarSize: 0,
+        horizontalScrollbarSize: 0,
       },
     });
 
@@ -71,7 +79,7 @@ export function CodeEditor({
       editorInstance.dispose();
       editorInstanceRef.current = null;
     };
-  }, []);
+  }, [settings.fontSize]);
 
   // Update theme dynamically without recreating the editor
   useEffect(() => {
