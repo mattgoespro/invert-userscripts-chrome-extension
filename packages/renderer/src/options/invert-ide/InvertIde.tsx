@@ -5,10 +5,10 @@ import { loadUserscripts } from "@/shared/store/slices/userscripts.slice";
 import { useEffect, useState } from "react";
 import "./InvertIde.scss";
 import { DashboardHeader } from "./components/dashboard-header/DashboardHeader";
+import { Sidebar, SidebarButton } from "./components/sidebar/Sidebar";
 import { ModulesPage } from "./pages/modules-page/ModulesPage";
 import { ScriptsPage } from "./pages/scripts-page/ScriptsPage";
 import { Settings } from "./pages/settings-page/SettingsPage";
-import { Sidebar, SidebarButton } from "./components/sidebar/Sidebar";
 
 export function InvertIde() {
   const [active, setActive] = useState<SidebarButton>("scripts");

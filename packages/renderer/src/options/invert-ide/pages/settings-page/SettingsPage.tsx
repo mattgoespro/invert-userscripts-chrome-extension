@@ -15,6 +15,7 @@ import {
 } from "@/shared/store/slices/settings.slice";
 import { useEffect } from "react";
 import "./SettingsPage.scss";
+import { ThemePreview } from "./theme-preview/ThemePreview";
 
 export function Settings() {
   const dispatch = useAppDispatch();
@@ -73,6 +74,9 @@ export function Settings() {
             onChange={handleThemeChange}
             options={CodeEditorThemeNames.map((themeName) => ({ value: themeName }))}
           />
+          <div className="settings--theme-preview-wrapper">
+            <ThemePreview theme={settings.theme} />
+          </div>
           <Input
             type="number"
             label="Font Size"

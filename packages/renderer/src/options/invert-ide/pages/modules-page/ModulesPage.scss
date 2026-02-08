@@ -15,19 +15,28 @@
       align-items: center;
       gap: 0.5rem;
 
-      // Code-style decoration
-      &::before {
-        content: "import {";
+      .modules--header-title-keyword {
         font-family: "JetBrains Mono", monospace;
-        color: var(--syntax-keyword);
         font-size: 14px;
+        color: var(--syntax-keyword);
       }
 
-      &::after {
-        content: "} from 'cdn'";
+      .modules--header-title-punctuation {
         font-family: "JetBrains Mono", monospace;
-        color: var(--text-muted);
         font-size: 14px;
+        color: var(--syntax-punctuation);
+      }
+
+      .modules--header-title-string {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 14px;
+        color: var(--text-muted);
+      }
+
+      .modules--header-title-path {
+        display: flex;
+        align-items: center;
+        gap: 0;
       }
     }
   }

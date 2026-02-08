@@ -23,7 +23,7 @@
   }
 }
 
-.script-list-item--wrapper {
+.script-list-item--item {
   display: flex;
   align-items: center;
   padding: 14px 16px;
@@ -50,11 +50,15 @@
     @include mixins.focus-ring;
   }
 
-  &.active {
+  &.script-list-item--item-active {
     background: var(--glass-bg-heavy);
     border-color: var(--accent-glow-soft);
     border-left: 3px solid var(--accent);
     box-shadow: 0 4px 16px var(--shadow-soft);
+  }
+
+  &.script-list-item--item-error {
+    border-color: var(--error);
   }
 
   .script-list-item--unsaved-indicator {
@@ -69,7 +73,7 @@
 
   .script-list-item--name {
     font-family: "JetBrains Mono", monospace;
-    font-size: 13px;
+    font-size: 11px;
     font-weight: 500;
     color: var(--syntax-function);
     flex: 1;

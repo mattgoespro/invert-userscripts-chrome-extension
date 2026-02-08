@@ -1,0 +1,122 @@
+.theme-preview {
+  border-radius: var(--geometry-border-radius);
+  overflow: hidden;
+  border: 1px solid var(--glass-border);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.04);
+
+  // -------------------------------------------------------------------------
+  // Title bar — minimal macOS-style window chrome
+  // -------------------------------------------------------------------------
+  .theme-preview--titlebar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: rgba(30, 30, 30, 0.9);
+    border-bottom: 1px solid var(--glass-border-soft);
+    user-select: none;
+  }
+
+  .theme-preview--dots {
+    display: flex;
+    gap: 6px;
+  }
+
+  .theme-preview--dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    opacity: 0.85;
+  }
+
+  .theme-preview--dot-close {
+    background: #ff5f57;
+  }
+
+  .theme-preview--dot-minimize {
+    background: #febc2e;
+  }
+
+  .theme-preview--dot-maximize {
+    background: #28c840;
+  }
+
+  .theme-preview--filename {
+    flex: 1;
+    text-align: center;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.6875rem;
+    color: var(--text-muted);
+    letter-spacing: 0.02em;
+  }
+
+  .theme-preview--spacer {
+    // Balances the dots so filename centers correctly
+    width: 44px;
+  }
+
+  // -------------------------------------------------------------------------
+  // Editor body — syntax-highlighted code lines
+  // -------------------------------------------------------------------------
+  .theme-preview--editor {
+    padding: 0.75rem 0;
+    transition: background-color 0.35s ease;
+    min-height: 0;
+  }
+
+  .theme-preview--line {
+    display: flex;
+    align-items: center;
+    padding: 0 0.75rem;
+    height: 1.5rem;
+    transition: background-color 0.35s ease;
+  }
+
+  .theme-preview--gutter {
+    width: 2rem;
+    flex-shrink: 0;
+    text-align: right;
+    padding-right: 1rem;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.6875rem;
+    line-height: 1.5rem;
+    transition: color 0.35s ease;
+    user-select: none;
+  }
+
+  .theme-preview--code {
+    position: relative;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.75rem;
+    line-height: 1.5rem;
+    white-space: pre;
+
+    span {
+      transition: color 0.35s ease;
+    }
+  }
+
+  // Blinking cursor caret
+  .theme-preview--cursor {
+    position: absolute;
+    left: 0;
+    top: 3px;
+    width: 1.5px;
+    height: calc(1.5rem - 6px);
+    border-left: 1.5px solid currentColor;
+    animation: theme-preview-blink 1s step-end infinite;
+    pointer-events: none;
+  }
+}
+
+@keyframes theme-preview-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}

@@ -52,7 +52,16 @@ export function ModulesPage() {
     <div className="modules--content">
       <div className="modules--header">
         <div className="modules--header-title">
+          <span className="modules--header-title-keyword">import</span>
+          <span className="modules--header-title-punctuation">{"{"}</span>
           <Typography variant="subtitle">Modules</Typography>
+          <span className="modules--header-title-punctuation">{"}"}</span>
+          <span className="modules--header-title-keyword">from</span>
+          <span className="modules--header-title-path">
+            <span className="modules--header-title-punctuation">'</span>
+            <span className="modules--header-title-string">cdn</span>
+            <span className="modules--header-title-punctuation">'</span>
+          </span>
         </div>
         <Button onClick={handleCreateModule}>+ Add Module</Button>
       </div>

@@ -40,7 +40,13 @@ export function ScriptListItem({ script, active }: ScriptListItemProps) {
 
   return (
     <div
-      className={`script-list-item--wrapper ${active ? "active" : ""}`}
+      className={[
+        "script-list-item--item",
+        active ? "script-list-item--item-active" : null,
+        script.error ? "script-list-item--item-error" : null,
+      ]
+        .filter(Boolean)
+        .join(" ")}
       onClick={() => onSelectScript()}
     >
       {script.status === "modified" && <div className="script-list-item--unsaved-indicator" />}

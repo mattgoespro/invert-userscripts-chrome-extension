@@ -1,19 +1,17 @@
+@use "../../../assets/styles/mixins" as mixins;
+
 .select--wrapper {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 
   .select--label {
-    font-family: "JetBrains Mono", monospace;
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--text-muted);
+    @include mixins.label-style;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
   }
 
   .select--field {
-    font-family: "JetBrains Mono", monospace;
+    font-family: var(--font-mono);
     font-size: 14px;
     color: var(--foreground);
     background: var(--glass-bg);

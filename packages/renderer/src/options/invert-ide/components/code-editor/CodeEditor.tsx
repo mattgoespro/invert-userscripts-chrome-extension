@@ -1,7 +1,7 @@
 import { editor, Uri } from "monaco-editor";
 import { useEffect, useRef } from "react";
 import { FormatterLanguage, PrettierFormatter } from "@/sandbox/formatter";
-import { getMonacoThemeName } from "@/shared/components/CodeEditorThemes";
+import { getCodeEditorThemeName } from "@/shared/components/CodeEditorThemes";
 import { useAppSelector } from "@/shared/store/hooks";
 import { selectEditorSettings } from "@/shared/store/slices/settings.slice";
 
@@ -54,7 +54,7 @@ export function CodeEditor({
     if (!editorRef.current) return;
 
     const editorInstance = editor.create(editorRef.current, {
-      theme: getMonacoThemeName(theme),
+      theme: getCodeEditorThemeName(theme),
       fontSize: settings.fontSize,
       automaticLayout: true,
       padding: { top: 25, bottom: 10 },
@@ -83,7 +83,7 @@ export function CodeEditor({
 
   // Update theme dynamically without recreating the editor
   useEffect(() => {
-    editor.setTheme(getMonacoThemeName(theme));
+    editor.setTheme(getCodeEditorThemeName(theme));
   }, [theme]);
 
   // Swap model when modelId changes (switching scripts)

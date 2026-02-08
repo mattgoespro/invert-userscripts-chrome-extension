@@ -724,17 +724,15 @@ export const EditorThemes: Record<
   },
 };
 
-export type CodeEditorThemeName = keyof typeof EditorThemes;
-
-export const CodeEditorThemeNames: CodeEditorThemeName[] = Object.keys(EditorThemes);
+export const CodeEditorThemeNames: string[] = Object.keys(EditorThemes);
 
 export function getCodeEditorThemeDefinition(
-  themeName: CodeEditorThemeName
+  themeName: string
 ): monaco.editor.IStandaloneThemeData {
   return EditorThemes[themeName].definition;
 }
 
-export function getMonacoThemeName(displayName: CodeEditorThemeName): string {
+export function getCodeEditorThemeName(displayName: string): string {
   return EditorThemes[displayName]?.name ?? "vs-dark";
 }
 
