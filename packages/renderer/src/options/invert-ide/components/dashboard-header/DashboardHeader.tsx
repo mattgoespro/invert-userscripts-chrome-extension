@@ -1,3 +1,4 @@
+import { CodeLine } from "@/shared/components/code-line/CodeLine";
 import "./DashboardHeader.scss";
 
 export function DashboardHeader() {
@@ -6,20 +7,7 @@ export function DashboardHeader() {
       <div className="dashboard-header--glow" aria-hidden="true" />
       <div className="dashboard-header--grid-pattern" aria-hidden="true" />
       <div className="dashboard-header--content">
-        <div className="dashboard-header--code-snippet">
-          <span className="dashboard-header--keyword">export</span>&nbsp;
-          <span className="dashboard-header--member">function</span>&nbsp;
-          <span className="dashboard-header--function">InvertUserscripts</span>
-          <span className="dashboard-header--bracket">(</span>
-          <span className="dashboard-header--param">doc</span>
-          <span className="dashboard-header--punctuation">:</span>&nbsp;
-          <span className="dashboard-header--type">Document</span>
-          <span className="dashboard-header--bracket">)</span>
-          <span className="dashboard-header--punctuation">:</span>&nbsp;
-          <span className="dashboard-header--type">void</span>&nbsp;
-          <span className="dashboard-header--bracket">{" {"}</span>
-          <span className="dashboard-header--cursor" />
-        </div>
+        <CodeLine code="export function InvertUserscripts (doc: Document): void {" />
       </div>
     </header>
   );

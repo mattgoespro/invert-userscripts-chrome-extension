@@ -20,23 +20,9 @@
   color: var(--accent);
   box-shadow: 0 0 20px var(--accent-glow-faint);
   border-left: 3px solid var(--accent);
-  // border-radius: 4px;
-
-  // Glow bar indicator on left edge
-  // &::before {
-  //   content: "";
-  //   position: absolute;
-  //   left: -0.5px;
-  //   top: 50%;
-  //   transform: translateY(-50%);
-  //   width: 3px;
-  //   height: 30px;
-  //   background: var(--accent);
-  //   border-radius: 2px;
-  //   box-shadow: 0 0 8px var(--accent-glow-strong);
-  // }
 
   &:hover {
+    border-left: 3px solid var(--accent);
     background: var(--accent-glow-soft);
     color: var(--accent);
   }

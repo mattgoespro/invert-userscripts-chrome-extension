@@ -6,8 +6,8 @@ import { Button } from "@/shared/components/button/Button";
 import { Checkbox } from "@/shared/components/checkbox/Checkbox";
 import { CodeComment } from "@/shared/components/code-comment/CodeComment";
 import { IconButton } from "@/shared/components/icon-button/IconButton";
+import { CodeLine } from "@/shared/components/code-line/CodeLine";
 import { DeleteIcon } from "lucide-react";
-import { Typography } from "@/shared/components/typography/Typography";
 
 export function ModulesPage() {
   const [modules, setModules] = useState<GlobalModules>({});
@@ -51,18 +51,7 @@ export function ModulesPage() {
   return (
     <div className="modules--content">
       <div className="modules--header">
-        <div className="modules--header-title">
-          <span className="modules--header-title-keyword">import</span>
-          <span className="modules--header-title-punctuation">{"{"}</span>
-          <Typography variant="subtitle">Modules</Typography>
-          <span className="modules--header-title-punctuation">{"}"}</span>
-          <span className="modules--header-title-keyword">from</span>
-          <span className="modules--header-title-path">
-            <span className="modules--header-title-punctuation">'</span>
-            <span className="modules--header-title-string">cdn</span>
-            <span className="modules--header-title-punctuation">'</span>
-          </span>
-        </div>
+        <CodeLine code="import { Modules } from 'cdn'" />
         <Button onClick={handleCreateModule}>+ Add Module</Button>
       </div>
       <div className="modules--list">

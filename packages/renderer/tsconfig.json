@@ -4,7 +4,7 @@
   "compilerOptions": {
     "composite": true,
     "baseUrl": ".",
-    "lib": ["es2020", "dom", "dom.iterable"],
+    "lib": ["es2020", "dom", "dom.iterable", "es2023.array"],
     "jsx": "react-jsx",
     "types": ["chrome", "react", "react-dom"],
     "outDir": "dist/packages/renderer",

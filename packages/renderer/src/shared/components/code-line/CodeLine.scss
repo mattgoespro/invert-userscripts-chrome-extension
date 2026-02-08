@@ -1,0 +1,39 @@
+.code-line {
+  font-family: var(--typography-code-font-family);
+  font-size: var(--typography-code-font-size);
+  line-height: var(--typography-code-line-height);
+  white-space: pre;
+
+  .code-line--keyword {
+    color: var(--syntax-keyword);
+  }
+
+  .code-line--type {
+    color: var(--syntax-type);
+  }
+
+  .code-line--function-name {
+    color: var(--syntax-function);
+  }
+
+  .code-line--string {
+    color: var(--text-muted);
+  }
+
+  .code-line--punctuation {
+    color: var(--syntax-punctuation);
+  }
+
+  .code-line--identifier {
+    color: var(--syntax-param);
+  }
+
+  .code-line--comment {
+    color: var(--text-muted-faint);
+    font-style: italic;
+  }
+
+  .code-line--whitespace {
+    white-space: pre;
+  }
+}

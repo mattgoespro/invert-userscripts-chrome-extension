@@ -10,34 +10,8 @@
     padding-bottom: 1rem;
     border-bottom: 1px solid var(--glass-border-soft);
 
-    .modules--header-title {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-
-      .modules--header-title-keyword {
-        font-family: "JetBrains Mono", monospace;
-        font-size: 14px;
-        color: var(--syntax-keyword);
-      }
-
-      .modules--header-title-punctuation {
-        font-family: "JetBrains Mono", monospace;
-        font-size: 14px;
-        color: var(--syntax-punctuation);
-      }
-
-      .modules--header-title-string {
-        font-family: "JetBrains Mono", monospace;
-        font-size: 14px;
-        color: var(--text-muted);
-      }
-
-      .modules--header-title-path {
-        display: flex;
-        align-items: center;
-        gap: 0;
-      }
+    .code-line {
+      font-size: 1.25rem;
     }
   }
 
