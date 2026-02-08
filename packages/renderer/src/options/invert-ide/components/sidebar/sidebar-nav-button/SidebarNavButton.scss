@@ -1,0 +1,29 @@
+@use "sass:color";
+
+.sidebar-nav-button--button {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+  color: var(--text-muted);
+  background: transparent;
+  position: relative;
+
+  &:hover {
+    background: var(--glass-white);
+    color: var(--text-muted-strong);
+  }
+}
+
+.sidebar-nav-button--button-active {
+  background: var(--accent-glow-faint);
+  color: var(--accent);
+  box-shadow: 0 0 20px var(--accent-glow-faint);
+  border-left: 3px solid var(--accent);
+
+  &:hover {
+    border-left: 3px solid var(--accent);
+    background: var(--accent-glow-soft);
+    color: var(--accent);
+  }
+}

@@ -1,0 +1,16 @@
+// =============================================================================
+// Design Tokens Index
+// =============================================================================
+// This file imports all token layers in the correct order and makes them
+// available globally via :root. Import order matters:
+//   1. Primitives (base values, no dependencies)
+//   2. Semantic (app-level tokens, references primitives)
+//   3. Components (component tokens, references primitives + semantic)
+//   4. Typography (references semantic)
+// =============================================================================
+
+@use "./primitives";
+@use "./semantic";
+@use "./components";
+@use "./typography";
+@use "./mixins";

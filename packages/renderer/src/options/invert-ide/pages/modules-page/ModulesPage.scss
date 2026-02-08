@@ -6,23 +6,48 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 24px;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--glass-border-soft);
+
+    .code-line {
+      font-size: 1.25rem;
+    }
   }
 
   .modules--list {
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    overflow: hidden;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1rem;
+    height: calc(100% - 4rem);
   }
 
   .modules--list-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    background: var(--glass-bg-heavy);
+    border: 1px solid var(--glass-border);
+    border-radius: 6px;
+    backdrop-filter: blur(12px);
+    box-shadow:
+      0 4px 24px var(--shadow),
+      inset 0 1px 0 var(--grid-highlight);
     padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    transition: all 0.2s ease;
+    animation: card-reveal 0.3s ease-out backwards;
 
-    &:last-child {
-      border-bottom: none;
+    // Staggered animation for cards
+    @for $i from 1 through 12 {
+      &:nth-child(#{$i}) {
+        animation-delay: #{$i * 0.05}s;
+      }
+    }
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px var(--shadow);
+      border-color: var(--accent-glow-soft);
     }
 
     .modules--list-item-info {
@@ -30,28 +55,50 @@
 
       strong {
         display: block;
-        font-size: 16px;
-        margin-bottom: 4px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 15px;
+        color: var(--syntax-type);
+        margin-bottom: 12px;
       }
 
       .modules--list-item-url {
-        font-size: 13px;
-        color: #666;
-        font-family: monospace;
-        margin-bottom: 4px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 12px;
+        color: var(--text-muted);
+        word-break: break-all;
+        padding: 10px 12px;
+        background: var(--shadow);
+        border-radius: 4px;
+        border: 1px solid var(--grid-highlight);
       }
     }
 
     .modules--list-item-actions {
       display: flex;
+      justify-content: space-between;
       align-items: center;
-      gap: 16px;
+      padding-top: 12px;
+      border-top: 1px solid var(--glass-border-soft);
     }
   }
 
-  .modules--empty-state {
-    padding: 60px 20px;
+  .modules--list-items-empty {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     text-align: center;
-    color: #999;
+  }
+}
+
+@keyframes card-reveal {
+  0% {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }

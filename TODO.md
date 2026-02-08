@@ -6,7 +6,7 @@
 
 ## Bugs
 
-- Toggling scripts causes a crash.
+- Clicking on a sidebar nav button makes the button icon wiggle
 
 ## Bundling
 

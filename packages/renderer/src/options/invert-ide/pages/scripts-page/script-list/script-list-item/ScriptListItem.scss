@@ -1,39 +1,96 @@
-.script-list-item--wrapper {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--dark-grey);
-  cursor: pointer;
-  transition: background 50ms;
+@use "../../../../../../assets/styles/mixins" as mixins;
 
-  &:hover {
-    background: var(--dark-grey);
+@keyframes pulse-indicator {
+  0%,
+  100% {
+    opacity: 0.6;
+    box-shadow: 0 0 4px var(--accent-glow);
+  }
+  50% {
+    opacity: 1;
+    box-shadow: 0 0 8px var(--accent-glow-strong);
+  }
+}
+
+@keyframes item-reveal {
+  0% {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.script-list-item--item {
+  display: flex;
+  align-items: center;
+  padding: 14px 16px;
+  margin-bottom: 6px;
+  border-radius: 8px;
+  background: var(--glass-bg-heavy);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  animation: item-reveal 0.25s ease-out backwards;
+
+  // Staggered animation delay for list items
+  @for $i from 1 through 15 {
+    &:nth-child(#{$i}) {
+      animation-delay: #{$i * 0.1}s;
+    }
   }
 
-  &.active {
-    background: var(--black);
-    border-left: 2px solid var(--orange);
+  &:hover {
+    border-color: var(--glass-border-soft);
+  }
+
+  &:focus {
+    @include mixins.focus-ring;
+  }
+
+  &.script-list-item--item-active {
+    background: var(--glass-bg-heavy);
+    border-color: var(--accent-glow-soft);
+    border-left: 3px solid var(--accent);
+    box-shadow: 0 4px 16px var(--shadow-soft);
+  }
+
+  &.script-list-item--item-error {
+    border-color: var(--error);
   }
 
   .script-list-item--unsaved-indicator {
     width: 8px;
     height: 8px;
-    background-color: var(--orange);
+    background: var(--accent);
     border-radius: 50%;
-    margin-right: 8px;
+    margin-right: 12px;
     flex-shrink: 0;
+    animation: pulse-indicator 2s ease-in-out infinite;
   }
 
   .script-list-item--name {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
     font-weight: 500;
-    font-size: 14px;
-    margin-left: 0.5rem;
+    color: var(--syntax-function);
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .script-list-item--actions {
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+  }
+
+  &:hover .script-list-item--actions {
+    opacity: 1;
   }
 }

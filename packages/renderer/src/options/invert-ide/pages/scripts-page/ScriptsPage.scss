@@ -1,24 +1,36 @@
 .scripts--content {
   display: flex;
-  gap: 0.5rem;
+  flex: 1;
   height: 100%;
 
   .scripts--sidebar {
-    width: 280px;
+    width: 300px;
+    background: var(--glass-bg-soft);
+    border-right: 1px solid var(--glass-border-soft);
+    backdrop-filter: blur(8px);
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
 
     .scripts--sidebar-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 16px;
+      padding: 20px 16px;
+      border-bottom: 1px solid var(--glass-border-soft);
+
+      // Code-style decoration
+      &::before {
+        content: "//";
+        font-family: "JetBrains Mono", monospace;
+        color: var(--text-muted-faint);
+        margin-right: 8px;
+        font-size: 14px;
+      }
     }
   }
 
   .scripts--empty-editor {
-    display: flex;
-    align-items: center;
-    justify-content: center;
     margin: auto;
   }
 }

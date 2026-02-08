@@ -1,0 +1,98 @@
+// =============================================================================
+// Typography Tokens
+// =============================================================================
+// Font stacks and typography CSS custom properties. Flat structure for
+// simplicity and easy consumption.
+// =============================================================================
+
+// -----------------------------------------------------------------------------
+// Font Stack Variables (SCSS for reuse in this file)
+// -----------------------------------------------------------------------------
+$font-heading: "Outfit", "Open Sans", sans-serif;
+$font-body: "Open Sans", sans-serif;
+$font-mono: "JetBrains Mono", monospace;
+
+// -----------------------------------------------------------------------------
+// CSS Custom Properties — Typography
+// -----------------------------------------------------------------------------
+:root {
+  // ===========================================================================
+  // Font Families
+  // ===========================================================================
+  --font-heading: #{$font-heading};
+  --font-body: #{$font-body};
+  --font-mono: #{$font-mono};
+
+  // ===========================================================================
+  // Title
+  // ===========================================================================
+  --typography-title-font-family: var(--font-heading);
+  --typography-title-font-size: 1.5rem;
+  --typography-title-font-weight: 600;
+  --typography-title-line-height: 1.2;
+  --typography-title-color: var(--title-foreground);
+
+  // ===========================================================================
+  // Subtitle
+  // ===========================================================================
+  --typography-subtitle-font-family: var(--font-heading);
+  --typography-subtitle-font-size: 1.25rem;
+  --typography-subtitle-font-weight: 500;
+  --typography-subtitle-line-height: 1.3;
+  --typography-subtitle-color: var(--subtitle-foreground);
+
+  // ===========================================================================
+  // Body
+  // ===========================================================================
+  --typography-body-font-family: var(--font-body);
+  --typography-body-font-size: 0.875rem;
+  --typography-body-font-weight: 400;
+  --typography-body-line-height: 1.5;
+  --typography-body-color: var(--foreground);
+
+  // ===========================================================================
+  // Caption
+  // ===========================================================================
+  --typography-caption-font-family: var(--font-body);
+  --typography-caption-font-size: 0.75rem;
+  --typography-caption-font-weight: 400;
+  --typography-caption-line-height: 1.4;
+  --typography-caption-color: var(--text-muted);
+
+  // ===========================================================================
+  // Button
+  // ===========================================================================
+  --typography-button-font-family: var(--font-mono);
+  --typography-button-font-size: 0.875rem;
+  --typography-button-font-weight: 500;
+  --typography-button-line-height: 1.5;
+  --typography-button-color: var(--button-foreground);
+
+  // ===========================================================================
+  // Input
+  // ===========================================================================
+  --typography-input-font-family: var(--font-mono);
+  --typography-input-font-size: 0.875rem;
+  --typography-input-font-weight: 400;
+  --typography-input-line-height: 1.5;
+  --typography-input-color: var(--input-foreground);
+
+  // ===========================================================================
+  // Label
+  // ===========================================================================
+  --typography-label-font-family: var(--font-mono);
+  --typography-label-font-size: 12px;
+  --typography-label-font-weight: 400;
+  --typography-label-line-height: 1;
+  --typography-label-color: var(--label-foreground);
+
+  // ===========================================================================
+  // Code
+  // ===========================================================================
+  --typography-code-font-family: var(--font-mono);
+  --typography-code-font-size: 0.875rem;
+  --typography-code-font-weight: 400;
+  --typography-code-line-height: 1.6;
+  --typography-code-letter-spacing: -0.01em;
+  --typography-code-color: var(--foreground);
+}

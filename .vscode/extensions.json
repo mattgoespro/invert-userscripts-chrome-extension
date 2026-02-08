@@ -21,6 +21,7 @@
     "aaron-bond.better-comments",
     "vscode-icons-team.vscode-icons",
     "mrmlnc.vscode-scss",
-    "sibiraj-s.vscode-scss-formatter"
+    "sibiraj-s.vscode-scss-formatter",
+    "yzhang.markdown-all-in-one"
   ]
 }

@@ -1,0 +1,57 @@
+.resize-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background-color 0.15s ease;
+
+  &--horizontal {
+    width: 12px;
+    cursor: col-resize;
+    flex-direction: column;
+
+    .resize-handle--bar {
+      width: 4px;
+      height: 48px;
+      border-radius: 2px;
+      background-color: var(--glass-border);
+      transition:
+        background-color 0.15s ease,
+        height 0.15s ease;
+    }
+
+    &:hover .resize-handle--bar,
+    &.resize-handle--dragging .resize-handle--bar {
+      background-color: var(--accent);
+      height: 64px;
+    }
+  }
+
+  &--vertical {
+    height: 12px;
+    cursor: row-resize;
+    flex-direction: row;
+
+    .resize-handle--bar {
+      height: 4px;
+      width: 48px;
+      border-radius: 2px;
+      background-color: var(--glass-border);
+      transition:
+        background-color 0.15s ease,
+        width 0.15s ease;
+    }
+
+    &:hover .resize-handle--bar,
+    &.resize-handle--dragging .resize-handle--bar {
+      background-color: var(--accent);
+      width: 64px;
+    }
+  }
+
+  &--dragging {
+    .resize-handle--bar {
+      background-color: var(--accent);
+    }
+  }
+}

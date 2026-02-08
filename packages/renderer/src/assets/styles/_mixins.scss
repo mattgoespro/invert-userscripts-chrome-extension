@@ -1,0 +1,35 @@
+// =============================================================================
+// Invert IDE - Design System Mixins
+// =============================================================================
+
+// -----------------------------------------------------------------------------
+// Backgrounds
+// -----------------------------------------------------------------------------
+@mixin grid-pattern {
+  background-image:
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px),
+    linear-gradient(var(--grid-line) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+// -----------------------------------------------------------------------------
+// Interactive States
+// -----------------------------------------------------------------------------
+@mixin focus-ring {
+  &:focus-visible {
+    outline: none;
+    border-color: var(--accent-glow);
+    box-shadow: 0 0 0 2px var(--accent-glow-faint);
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Labels
+// -----------------------------------------------------------------------------
+@mixin label-style {
+  font-family: var(--typography-label-font-family);
+  font-size: var(--typography-label-font-size);
+  font-weight: var(--typography-label-font-weight);
+  color: var(--typography-label-color);
+  text-transform: uppercase;
+}

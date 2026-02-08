@@ -1,12 +1,50 @@
 .script-metadata--wrapper {
   display: flex;
-  gap: 0.5rem;
+  gap: 1rem;
+  align-items: center;
+  width: 100%;
+
+  // Code decoration before name field
+  &::before {
+    content: "const";
+    font-family: "JetBrains Mono", monospace;
+    color: var(--syntax-keyword);
+    font-size: 14px;
+    flex-shrink: 0;
+  }
 
   .script-metadata--name {
     flex-basis: 25%;
   }
 
+  // Arrow separator
+  .script-metadata--separator {
+    color: var(--text-muted);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
   .script-metadata--url-patterns {
-    flex-basis: 75%;
+    flex: 1;
+    position: relative;
+
+    // URL label decoration
+    &::before {
+      content: "urls:";
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+      color: var(--syntax-param);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    input {
+      padding-left: 52px;
+    }
   }
 }

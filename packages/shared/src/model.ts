@@ -9,6 +9,7 @@ export interface Userscript {
   name: string;
   enabled: boolean;
   status: UserscriptStatus;
+  error?: boolean;
   code: {
     source: {
       [key in UserscriptSourceCode]: string;
@@ -32,12 +33,6 @@ export interface GlobalModule {
   name: string;
   url: string;
   enabled: boolean;
-}
-
-export interface EditorTheme {
-  id: string;
-  name: string;
-  theme: "vs-dark" | "vs-light" | "hc-black";
 }
 
 export interface EditorSettings {

@@ -13,8 +13,8 @@ export function Select<T>({ label, options, value, onChange }: SelectProps<T>) {
       {label && <label className="select--label">{label}</label>}
       <select
         className="select--field"
-        value={JSON.stringify(value)}
-        onChange={(e) => onChange(JSON.parse(e.target.value))}
+        value={typeof value === "string" ? value : JSON.stringify(value)}
+        onChange={(e) => onChange(e.target.value as T)}
       >
         {options.map((option) => (
           <option key={option.value} value={option.value}>

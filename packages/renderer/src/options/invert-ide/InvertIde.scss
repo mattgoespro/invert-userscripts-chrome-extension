@@ -6,13 +6,68 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+  background: linear-gradient(
+    165deg,
+    var(--surface-base) 0%,
+    var(--surface-raised) 40%,
+    var(--surface-overlay) 100%
+  );
+  position: relative;
+  overflow: hidden;
+
+  // Subtle ambient glow in bottom-right corner
+  &::before {
+    content: "";
+    position: absolute;
+    bottom: -200px;
+    right: -100px;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, var(--accent-glow-faint) 0%, transparent 60%);
+    filter: blur(80px);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  // Secondary glow top-left
+  &::after {
+    content: "";
+    position: absolute;
+    top: -150px;
+    left: -150px;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, var(--grid-line) 0%, transparent 60%);
+    filter: blur(60px);
+    pointer-events: none;
+    z-index: 0;
+  }
 
   .invert-ide--dashboard-page {
     display: flex;
     flex: 1;
+    position: relative;
+    z-index: 1;
   }
 
   .invert-ide--dashboard-page-content {
     flex: 1;
+    display: flex;
+    position: relative;
+
+    > * {
+      animation: page-reveal 0.3s ease-out;
+    }
+  }
+}
+
+@keyframes page-reveal {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

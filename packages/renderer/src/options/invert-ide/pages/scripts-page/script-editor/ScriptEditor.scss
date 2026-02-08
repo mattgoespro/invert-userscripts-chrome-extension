@@ -2,19 +2,35 @@
   display: flex;
   flex-direction: column;
   flex: 1;
+  padding: 1rem;
   gap: 1rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  margin: 1rem;
-  overflow-y: auto;
+  overflow: hidden;
+
+  .script-editor--editor-header {
+    background: var(--glass-bg-heavy);
+    border: 1px solid var(--glass-border);
+    border-radius: 6px;
+    backdrop-filter: blur(12px);
+    box-shadow:
+      0 4px 24px var(--shadow),
+      inset 0 1px 0 var(--grid-highlight);
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
 
   .script-editor--editor-container {
     display: flex;
     flex: 1;
-    gap: 1rem;
+    min-height: 0;
 
     .script-editor--code-editor {
-      flex: 1;
+      border-radius: 8px;
       overflow: hidden;
+      border: 1px solid var(--glass-border-soft);
+      box-shadow: 0 4px 20px var(--shadow);
+      background: var(--glass-bg-soft);
     }
   }
 }

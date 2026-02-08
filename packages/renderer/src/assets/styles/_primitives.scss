@@ -1,0 +1,154 @@
+@use "sass:color";
+
+// =============================================================================
+// Primitive Tokens
+// =============================================================================
+// Raw color values as SCSS variables (for transformations) and CSS custom
+// properties. These are the foundational building blocks — never use these
+// directly in components. Use semantic tokens instead.
+// =============================================================================
+
+// -----------------------------------------------------------------------------
+// Base Colors (SCSS variables for color.scale() transformations)
+// -----------------------------------------------------------------------------
+$black: #1e1e1e;
+$white: #f0f0f0;
+$dark-grey: #2d2d2d;
+$grey: #808080;
+$blue: #1868c4;
+$purple: #a13b88;
+$orange: #ffba00;
+$red: #a02a2a;
+
+// -----------------------------------------------------------------------------
+// CSS Custom Properties — Primitives
+// -----------------------------------------------------------------------------
+:root {
+  // ===========================================================================
+  // Core Palette
+  // ===========================================================================
+  --base-black: #1e1e1e;
+  --base-white: #f0f0f0;
+  --base-dark-grey: #2d2d2d;
+  --base-grey: #808080;
+  --base-blue: #{$blue};
+  --base-blue-light: #{color.scale($blue, $lightness: 40%)};
+  --base-blue-hover: #{color.scale($blue, $lightness: 10%)};
+  --base-blue-active: #{color.scale($blue, $lightness: -10%)};
+  --base-purple: #a13b88;
+  --base-orange: #ffba00;
+  --base-red: #a02a2a;
+
+  // ===========================================================================
+  // Surfaces (dark backgrounds for layering)
+  // ===========================================================================
+  --base-surface-base: #0a0a0c;
+  --base-surface-raised: #141418;
+  --base-surface-overlay: #1a1a22;
+
+  // ===========================================================================
+  // Glass (semi-transparent backgrounds)
+  // ===========================================================================
+  --base-glass-bg-soft: rgba(30, 30, 30, 0.4);
+  --base-glass-bg: rgba(30, 30, 30, 0.6);
+  --base-glass-bg-heavy: rgba(30, 30, 30, 0.8);
+  --base-glass-white: rgba(255, 255, 255, 0.08);
+
+  // ===========================================================================
+  // Glass Borders
+  // ===========================================================================
+  --base-glass-border-soft: rgba(255, 255, 255, 0.08);
+  --base-glass-border: rgba(255, 255, 255, 0.1);
+  --base-glass-border-strong: rgba(255, 255, 255, 0.2);
+
+  // ===========================================================================
+  // Text Opacity Variants
+  // ===========================================================================
+  --base-text: var(--base-white);
+  --base-text-faint: color.scale(var(--base-white), $alpha: -50%);
+  --base-text-muted: color.scale(var(--base-white), $alpha: -30%);
+  --base-text-muted-strong: color.scale(var(--base-white), $alpha: -50%);
+
+  // ===========================================================================
+  // Accent Glow (orange-based)
+  // ===========================================================================
+  --base-accent-glow-faint: rgba(255, 186, 0, 0.1);
+  --base-accent-glow-soft: rgba(255, 186, 0, 0.25);
+  --base-accent-glow: rgba(255, 186, 0, 0.4);
+  --base-accent-glow-strong: rgba(255, 186, 0, 0.7);
+
+  // ===========================================================================
+  // Danger/Red Variants
+  // ===========================================================================
+  --base-danger-soft: rgba(160, 42, 42, 0.3);
+  --base-danger: rgba(160, 42, 42, 0.5);
+  --base-danger-strong: rgba(160, 42, 42, 0.8);
+
+  // ===========================================================================
+  // Shadows
+  // ===========================================================================
+  --base-shadow-soft: rgba(0, 0, 0, 0.2);
+  --base-shadow: rgba(0, 0, 0, 0.35);
+  --base-shadow-heavy: rgba(0, 0, 0, 0.55);
+
+  // ===========================================================================
+  // Decorative (grid patterns, subtle glows)
+  // ===========================================================================
+  --base-grid-line: rgba(255, 255, 255, 0.02);
+  --base-grid-highlight: rgba(255, 255, 255, 0.05);
+  --base-glow-ambient: rgba(180, 180, 180, 0.05);
+
+  // ===========================================================================
+  // Error States
+  // ===========================================================================
+  --base-error-accent: #f87171;
+  --base-error-accent-soft: rgba(248, 113, 113, 0.25);
+  --base-error-glow: rgba(220, 38, 38, 0.15);
+  --base-error-surface: #18181b;
+  --base-error-surface-dark: #09090b;
+  --base-error-text: #fafafa;
+  --base-error-text-muted: #71717a;
+  --base-error-border: #27272a;
+
+  // ===========================================================================
+  // Syntax Highlighting
+  // ===========================================================================
+  --base-syntax-keyword: #da70d6;
+  --base-syntax-member: #569cd6;
+  --base-syntax-function: #dcdcaa;
+  --base-syntax-param: #9cdcfe;
+  --base-syntax-type: #4ec9b0;
+  --base-syntax-punctuation: rgba(255, 255, 255, 0.6);
+
+  // ===========================================================================
+  // Component-Specific Primitives
+  // ===========================================================================
+  // Input
+  --base-input-bg: #{$dark-grey};
+  --base-input-border: #{$dark-grey};
+  --base-input-placeholder: #{$grey};
+
+  // Button
+  --base-button-bg: #{$blue};
+  --base-button-hover-bg: #{color.scale($blue, $lightness: 10%)};
+  --base-button-active-bg: #{color.scale($blue, $lightness: -10%)};
+  --base-button-disabled-fg: #{color.scale($grey, $lightness: -20%)};
+  --base-button-disabled-bg: #{color.scale($dark-grey, $lightness: -10%)};
+
+  // Icon Button
+  --base-icon-button-border: #{$dark-grey};
+  --base-icon-button-hover-bg: #{color.scale($dark-grey, $lightness: 10%)};
+  --base-icon-button-focus-bg: #{color.scale($dark-grey, $lightness: -10%)};
+
+  // Switch
+  --base-switch-fg: #{$grey};
+  --base-switch-bg: #{color.scale($dark-grey, $lightness: 10%)};
+  --base-switch-checked-fg: #{$dark-grey};
+  --base-switch-checked-bg: #{$orange};
+  --base-switch-border: #{$dark-grey};
+
+  // Select
+  --base-select-bg: #{$dark-grey};
+  --base-select-border: #{$dark-grey};
+  --base-select-placeholder: #{$grey};
+}

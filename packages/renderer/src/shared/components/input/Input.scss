@@ -1,37 +1,49 @@
+@use "../../../assets/styles/mixins" as mixins;
+
 .input--wrapper {
-  display: contents;
+  position: relative;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 
   .input--label {
-    font-family: var(--typography-label-font-family);
-    font-size: var(--typography-label-font-size);
-    font-weight: var(--typography-label-font-weight);
-    line-height: var(--typography-label-line-height);
-    color: var(--label-foreground);
+    @include mixins.label-style;
     text-transform: uppercase;
   }
 
   .input--field {
-    font-family: var(--typography-input-font-family);
-    font-size: var(--typography-input-font-size);
-    font-weight: var(--typography-input-font-weight);
-    line-height: var(--typography-input-line-height);
-    color: var(--input-foreground);
-    height: 3rem;
-    padding: 0.5rem 1rem;
-    background-color: var(--input-background);
-    border: none;
-    border-radius: var(--geometry-border-radius);
+    width: 100%;
+    box-sizing: border-box;
+    font-family: var(--font-mono);
+    font-size: 1em;
+    font-weight: 400;
+    line-height: 1.5;
+    color: var(--foreground);
+    height: 2.75rem;
+    padding: 0.625rem 1rem;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 6px;
+    transition: all 0.2s ease;
 
     &::placeholder {
-      color: var(--input-placeholder);
+      font-size: 1em;
+      color: var(--text-muted-faint);
     }
 
-    *:focus-visible {
+    &:hover {
+      border-color: var(--glass-border-strong);
+    }
+
+    &:focus {
+      outline: none;
+      border-color: var(--accent-glow);
+      box-shadow: 0 0 0 2px var(--accent-glow-faint);
+    }
+
+    &:focus-visible {
       outline: none;
     }
-  }
-
-  &:focus-visible {
-    outline: none;
   }
 }

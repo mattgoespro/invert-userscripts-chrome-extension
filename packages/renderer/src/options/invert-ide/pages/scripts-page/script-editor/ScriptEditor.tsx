@@ -1,20 +1,44 @@
-import { CodeEditor } from "@/options/invert-ide/code-editor/CodeEditor";
-import { UserscriptSourceCode } from "@shared/model";
-import { ScriptMetadata } from "./script-metadata/ScriptMetadata";
-import "./ScriptEditor.scss";
+import { CodeEditor } from "@/options/invert-ide/components/code-editor/CodeEditor";
+import { ResizeHandle } from "@/shared/components/resize-handle/ResizeHandle";
 import { useAppDispatch, useAppSelector } from "@/shared/store/hooks";
 import {
+  markUserscriptModified,
   selectCurrentUserscript,
   updateUserscriptCode,
 } from "@/shared/store/slices/userscripts.slice";
+import { selectAutoFormat, selectTheme } from "@/shared/store/slices/settings.slice";
+import { UserscriptSourceCode } from "@shared/model";
+import { useCallback, useRef, useState } from "react";
+import { ScriptMetadata } from "./script-metadata/ScriptMetadata";
+import "./ScriptEditor.scss";
+
+const MIN_PANEL_WIDTH_PERCENT = 20;
+const MAX_PANEL_WIDTH_PERCENT = 80;
 
 export function ScriptEditor() {
   const dispatch = useAppDispatch();
   const script = useAppSelector(selectCurrentUserscript);
+  const autoFormat = useAppSelector(selectAutoFormat);
+  const theme = useAppSelector(selectTheme);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [leftPanelPercent, setLeftPanelPercent] = useState(50);
 
-  const onCodeModified = (_language: UserscriptSourceCode, _code: string) => {
-    console.log("Code modified...");
-    // TODO: If needed, we could handle live code modifications here
+  const handleResize = useCallback((delta: number) => {
+    if (!containerRef.current) return;
+
+    const containerWidth = containerRef.current.offsetWidth;
+    const deltaPercent = (delta / containerWidth) * 100;
+
+    setLeftPanelPercent((prev) => {
+      const newPercent = prev + deltaPercent;
+      return Math.max(MIN_PANEL_WIDTH_PERCENT, Math.min(MAX_PANEL_WIDTH_PERCENT, newPercent));
+    });
+  }, []);
+
+  const onCodeModified = () => {
+    if (script.status !== "modified") {
+      dispatch(markUserscriptModified(script.id));
+    }
   };
 
   const onCodeSaved = async (language: UserscriptSourceCode, code: string) => {
@@ -26,22 +50,33 @@ export function ScriptEditor() {
       <div className="script-editor--editor-header">
         <ScriptMetadata script={script} />
       </div>
-      <div className="script-editor--editor-container">
-        <div className="script-editor--code-editor">
+      <div className="script-editor--editor-container" ref={containerRef}>
+        <div
+          className="script-editor--code-editor"
+          style={{ flex: `0 0 calc(${leftPanelPercent}% - 6px)` }}
+        >
           <CodeEditor
-            theme="vs-dark"
+            modelId={script.id}
+            theme={theme}
             language="typescript"
             contents={script.code.source.typescript}
-            onCodeModified={(code) => onCodeModified("typescript", code)}
+            autoFormat={autoFormat}
+            onCodeModified={() => onCodeModified()}
             onCodeSaved={(code) => onCodeSaved("typescript", code)}
           />
         </div>
-        <div className="script-editor--code-editor">
+        <ResizeHandle direction="horizontal" onResize={handleResize} />
+        <div
+          className="script-editor--code-editor"
+          style={{ flex: `0 0 calc(${100 - leftPanelPercent}% - 6px)` }}
+        >
           <CodeEditor
-            theme="vs-dark"
+            modelId={script.id}
+            theme={theme}
             language="scss"
             contents={script.code.source.scss}
-            onCodeModified={(code) => onCodeModified("scss", code)}
+            autoFormat={autoFormat}
+            onCodeModified={() => onCodeModified()}
             onCodeSaved={(code) => onCodeSaved("scss", code)}
           />
         </div>

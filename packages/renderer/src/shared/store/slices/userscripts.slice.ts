@@ -67,6 +67,8 @@ export const updateUserscript = createAsyncThunk<Userscript, Userscript, { state
 export const updateUserscriptCode = createAsyncThunk(
   "userscripts/updateUserscriptCode",
   async ({ id, language, code }: { id: string; language: UserscriptSourceCode; code: string }) => {
+    console.log("updateUserscriptCode received:", { id, language, code: code.substring(0, 100) });
+
     const scriptsMap = await StorageManager.getAllScripts();
     const script = scriptsMap[id];
 
@@ -90,6 +92,7 @@ export const updateUserscriptCode = createAsyncThunk(
       script.code.compiled.css = compiled.code ?? "";
     }
 
+    script.status = "saved";
     script.updatedAt = Date.now();
 
     await StorageManager.updateScript(id, script);
@@ -126,6 +129,22 @@ const userscriptsSlice = createSlice({
         state.currentUserscript = state.scripts[action.payload.id];
       },
     },
+    markUserscriptModified: {
+      prepare: (id: string) => {
+        return {
+          payload: { id },
+        };
+      },
+      reducer: (state, action: PayloadAction<{ id: string }>) => {
+        const script = state.scripts[action.payload.id];
+        if (script && script.status !== "modified") {
+          script.status = "modified";
+          if (state.currentUserscript?.id === action.payload.id) {
+            state.currentUserscript.status = "modified";
+          }
+        }
+      },
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -155,13 +174,16 @@ const userscriptsSlice = createSlice({
         const updatedScript = action.payload;
 
         state.scripts[updatedScript.id] = updatedScript;
+
+        if (state.currentUserscript?.id === updatedScript.id) {
+          state.currentUserscript = updatedScript;
+        }
       })
       .addCase(updateUserscriptCode.fulfilled, (state, action) => {
         const updatedScript = action.payload;
 
         state.scripts[updatedScript.id] = updatedScript;
 
-        // Also update currentUserscript if it's the one being edited
         if (state.currentUserscript?.id === updatedScript.id) {
           state.currentUserscript = updatedScript;
         }
@@ -169,7 +191,7 @@ const userscriptsSlice = createSlice({
   },
 });
 
-export const { setCurrentUserscript } = userscriptsSlice.actions;
+export const { setCurrentUserscript, markUserscriptModified } = userscriptsSlice.actions;
 
 export const {
   selectAllUserscripts,
