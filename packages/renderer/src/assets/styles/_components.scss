@@ -1,5 +1,5 @@
 // =============================================================================
-// Component Tokens
+// Component Tokens — Warm Carbon Theme
 // =============================================================================
 // Themeable tokens for UI components. These define the styling contract
 // that themes can override. Components consume these via var(--token-name).
@@ -22,7 +22,7 @@
   // ===========================================================================
   // Button
   // ===========================================================================
-  --button-foreground: var(--base-white);
+  --button-foreground: var(--base-accent);
   --button-background: var(--base-button-bg);
   --button-hover-background: var(--base-button-hover-bg);
   --button-active-background: var(--base-button-active-bg);
@@ -32,8 +32,8 @@
   // ===========================================================================
   // Icon Button
   // ===========================================================================
-  --icon-button-foreground: var(--base-white);
-  --icon-button-background: none;
+  --icon-button-foreground: var(--base-text-muted-strong);
+  --icon-button-background: transparent;
   --icon-button-border: var(--base-icon-button-border);
   --icon-button-hover-background: var(--base-icon-button-hover-bg);
   --icon-button-focus-background: var(--base-icon-button-focus-bg);
@@ -46,7 +46,6 @@
   --switch-checked-foreground: var(--base-switch-checked-fg);
   --switch-checked-background: var(--base-switch-checked-bg);
   --switch-border: var(--base-switch-border);
-  --switch-border-strong: var(--base-switch-border-strong);
 
   // ===========================================================================
   // Select
@@ -61,13 +60,13 @@
   // ===========================================================================
   --checkbox-foreground: var(--base-white);
   --checkbox-background: var(--base-input-bg);
-  --checkbox-border: var(--base-input-border);
+  --checkbox-border: var(--base-border);
   --checkbox-checked-background: var(--accent);
-  --checkbox-checked-foreground: var(--base-white);
+  --checkbox-checked-foreground: var(--base-black);
 
   // ===========================================================================
   // Typography
   // ===========================================================================
   --title-foreground: var(--base-white);
-  --subtitle-foreground: var(--base-grey);
+  --subtitle-foreground: var(--base-text-muted);
 }

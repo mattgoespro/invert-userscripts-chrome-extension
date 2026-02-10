@@ -1,5 +1,6 @@
 import { SassCompiler } from "@/sandbox/compiler";
 import { registerCodeEditorThemes } from "@/shared/components/CodeEditorThemes";
+import { ThemeSwitcher } from "@/shared/components/theme-switcher/ThemeSwitcher";
 import { useAppDispatch } from "@/shared/store/hooks";
 import { loadUserscripts } from "@/shared/store/slices/userscripts.slice";
 import { useEffect, useState } from "react";
@@ -38,6 +39,7 @@ export function InvertIde() {
           {active === "settings" && <Settings />}
         </div>
       </div>
+      <ThemeSwitcher />
     </div>
   );
 }

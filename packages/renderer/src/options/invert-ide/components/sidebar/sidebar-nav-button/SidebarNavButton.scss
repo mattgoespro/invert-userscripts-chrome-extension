@@ -4,26 +4,27 @@
   width: 44px;
   height: 44px;
   border-radius: 12px;
-  transition: all 0.2s ease;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease;
   color: var(--text-muted);
   background: transparent;
   position: relative;
 
   &:hover {
-    background: var(--glass-white);
+    background: var(--hover-overlay);
     color: var(--text-muted-strong);
   }
 }
 
 .sidebar-nav-button--button-active {
-  background: var(--accent-glow-faint);
+  background: var(--accent-subtle);
   color: var(--accent);
-  box-shadow: 0 0 20px var(--accent-glow-faint);
   border-left: 3px solid var(--accent);
 
   &:hover {
     border-left: 3px solid var(--accent);
-    background: var(--accent-glow-soft);
+    background: var(--accent-muted);
     color: var(--accent);
   }
 }

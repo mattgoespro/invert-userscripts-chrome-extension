@@ -1,0 +1,204 @@
+.theme-switcher {
+  position: fixed;
+  bottom: 16px;
+  left: 16px;
+  z-index: 9999;
+  font-family: "JetBrains Mono", monospace;
+}
+
+// ---------------------------------------------------------------------------
+// Toggle button — always visible pill
+// ---------------------------------------------------------------------------
+.theme-switcher--toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--geometry-border-radius);
+  color: var(--text-muted-strong);
+  cursor: pointer;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  transition: border-color 150ms ease;
+  user-select: none;
+
+  &:hover {
+    border-color: var(--accent-border);
+    color: var(--foreground);
+  }
+}
+
+.theme-switcher--swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.theme-switcher--label {
+  white-space: nowrap;
+}
+
+// ---------------------------------------------------------------------------
+// Expanded panel — theme list
+// ---------------------------------------------------------------------------
+.theme-switcher--panel {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  min-width: 220px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--geometry-border-radius);
+  overflow: hidden;
+  animation: theme-switcher-reveal 120ms ease-out;
+}
+
+@keyframes theme-switcher-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.theme-switcher--panel-header {
+  padding: 10px 14px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted-strong);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.theme-switcher--panel-prefix {
+  color: var(--text-muted-faint);
+  font-weight: 400;
+}
+
+.theme-switcher--options {
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 360px;
+  overflow-y: auto;
+
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 2px;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Individual theme option row
+// ---------------------------------------------------------------------------
+.theme-switcher--option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 3px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  text-align: left;
+  transition:
+    background-color 100ms ease,
+    color 100ms ease;
+
+  &:hover {
+    background: var(--hover-overlay);
+    color: var(--foreground);
+  }
+}
+
+.theme-switcher--option-active {
+  color: var(--accent);
+  background: var(--accent-subtle);
+
+  &:hover {
+    background: var(--accent-muted);
+    color: var(--accent);
+  }
+}
+
+.theme-switcher--option-swatches {
+  display: flex;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.theme-switcher--option-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.theme-switcher--option-label {
+  flex: 1;
+}
+
+.theme-switcher--option-check {
+  font-size: 12px;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+// ---------------------------------------------------------------------------
+// Group separator between theme categories
+// ---------------------------------------------------------------------------
+.theme-switcher--group-separator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px 4px;
+  margin-top: 4px;
+
+  &::before {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--border-subtle);
+  }
+}
+
+.theme-switcher--group-label {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted-faint);
+  white-space: nowrap;
+
+  &::after {
+    content: "";
+    display: inline-block;
+    width: 30px;
+    height: 1px;
+    background: var(--border-subtle);
+    vertical-align: middle;
+    margin-left: 8px;
+  }
+}

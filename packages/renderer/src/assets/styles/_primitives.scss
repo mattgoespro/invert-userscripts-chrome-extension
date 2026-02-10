@@ -1,24 +1,29 @@
 @use "sass:color";
 
 // =============================================================================
-// Primitive Tokens
+// Primitive Tokens — Warm Carbon Theme
 // =============================================================================
 // Raw color values as SCSS variables (for transformations) and CSS custom
 // properties. These are the foundational building blocks — never use these
 // directly in components. Use semantic tokens instead.
+//
+// Palette: warm charcoal surfaces, burnished gold accent, cream text.
+// Zero glass, zero blur, zero glow. Flat and matte throughout.
 // =============================================================================
 
 // -----------------------------------------------------------------------------
 // Base Colors (SCSS variables for color.scale() transformations)
 // -----------------------------------------------------------------------------
-$black: #1e1e1e;
-$white: #f0f0f0;
-$dark-grey: #2d2d2d;
-$grey: #808080;
-$blue: #1868c4;
-$purple: #a13b88;
-$orange: #ffba00;
-$red: #a02a2a;
+$black: #12100e;
+$white: #e8e0d4;
+$surface-raised: #1c1916;
+$surface-overlay: #24201c;
+$border: #332e28;
+$grey: #8a7e70;
+$blue: #6b9edd;
+$gold: #d4a054;
+$red: #c45353;
+$green: #7ab06a;
 
 // -----------------------------------------------------------------------------
 // CSS Custom Properties — Primitives
@@ -27,128 +32,112 @@ $red: #a02a2a;
   // ===========================================================================
   // Core Palette
   // ===========================================================================
-  --base-black: #1e1e1e;
-  --base-white: #f0f0f0;
-  --base-dark-grey: #2d2d2d;
-  --base-grey: #808080;
+  --base-black: #{$black};
+  --base-white: #{$white};
+  --base-grey: #{$grey};
   --base-blue: #{$blue};
-  --base-blue-light: #{color.scale($blue, $lightness: 40%)};
-  --base-blue-hover: #{color.scale($blue, $lightness: 10%)};
-  --base-blue-active: #{color.scale($blue, $lightness: -10%)};
-  --base-purple: #a13b88;
-  --base-orange: #ffba00;
-  --base-red: #a02a2a;
+  --base-blue-light: #{color.scale($blue, $lightness: 20%)};
+  --base-gold: #{$gold};
+  --base-red: #{$red};
+  --base-green: #{$green};
 
   // ===========================================================================
-  // Surfaces (dark backgrounds for layering)
+  // Surfaces (warm charcoal layering)
   // ===========================================================================
-  --base-surface-base: #0a0a0c;
-  --base-surface-raised: #141418;
-  --base-surface-overlay: #1a1a22;
+  --base-surface-base: #{$black};
+  --base-surface-raised: #{$surface-raised};
+  --base-surface-overlay: #{$surface-overlay};
+  --base-surface-input: #18150f;
 
   // ===========================================================================
-  // Glass (semi-transparent backgrounds)
+  // Borders (warm-toned)
   // ===========================================================================
-  --base-glass-bg-soft: rgba(30, 30, 30, 0.4);
-  --base-glass-bg: rgba(30, 30, 30, 0.6);
-  --base-glass-bg-heavy: rgba(30, 30, 30, 0.8);
-  --base-glass-white: rgba(255, 255, 255, 0.08);
+  --base-border: #{$border};
+  --base-border-subtle: #2a2622;
+  --base-border-focus: #{$gold}50;
 
   // ===========================================================================
-  // Glass Borders
+  // Text
   // ===========================================================================
-  --base-glass-border-soft: rgba(255, 255, 255, 0.08);
-  --base-glass-border: rgba(255, 255, 255, 0.1);
-  --base-glass-border-strong: rgba(255, 255, 255, 0.2);
+  --base-text: #{$white};
+  --base-text-muted: #c4b8a8;
+  --base-text-muted-faint: #5a5248;
+  --base-text-muted-strong: #{$grey};
 
   // ===========================================================================
-  // Text Opacity Variants
+  // Accent (burnished gold)
   // ===========================================================================
-  --base-text: var(--base-white);
-  --base-text-faint: color.scale(var(--base-white), $alpha: -50%);
-  --base-text-muted: color.scale(var(--base-white), $alpha: -30%);
-  --base-text-muted-strong: color.scale(var(--base-white), $alpha: -50%);
-
-  // ===========================================================================
-  // Accent Glow (orange-based)
-  // ===========================================================================
-  --base-accent-glow-faint: rgba(255, 186, 0, 0.1);
-  --base-accent-glow-soft: rgba(255, 186, 0, 0.25);
-  --base-accent-glow: rgba(255, 186, 0, 0.4);
-  --base-accent-glow-strong: rgba(255, 186, 0, 0.7);
+  --base-accent: #{$gold};
+  --base-accent-hover: #{color.scale($gold, $lightness: 15%)};
+  --base-accent-muted: #{$gold}25;
+  --base-accent-subtle: #{$gold}12;
+  --base-accent-border: #{$gold}50;
 
   // ===========================================================================
   // Danger/Red Variants
   // ===========================================================================
-  --base-danger-soft: rgba(160, 42, 42, 0.3);
-  --base-danger: rgba(160, 42, 42, 0.5);
-  --base-danger-strong: rgba(160, 42, 42, 0.8);
+  --base-danger: #{$red};
+  --base-danger-soft: #{$red}30;
+  --base-danger-strong: #{$red}cc;
 
   // ===========================================================================
-  // Shadows
+  // Interactive Overlays (micro white wash on hover)
   // ===========================================================================
-  --base-shadow-soft: rgba(0, 0, 0, 0.2);
-  --base-shadow: rgba(0, 0, 0, 0.35);
-  --base-shadow-heavy: rgba(0, 0, 0, 0.55);
-
-  // ===========================================================================
-  // Decorative (grid patterns, subtle glows)
-  // ===========================================================================
-  --base-grid-line: rgba(255, 255, 255, 0.02);
-  --base-grid-highlight: rgba(255, 255, 255, 0.05);
-  --base-glow-ambient: rgba(180, 180, 180, 0.05);
+  --base-hover-overlay: rgba(255, 255, 255, 0.03);
+  --base-active-overlay: rgba(255, 255, 255, 0.06);
 
   // ===========================================================================
   // Error States
   // ===========================================================================
-  --base-error-accent: #f87171;
-  --base-error-accent-soft: rgba(248, 113, 113, 0.25);
-  --base-error-glow: rgba(220, 38, 38, 0.15);
-  --base-error-surface: #18181b;
-  --base-error-surface-dark: #09090b;
-  --base-error-text: #fafafa;
-  --base-error-text-muted: #71717a;
-  --base-error-border: #27272a;
+  --base-error-accent: #e87070;
+  --base-error-accent-soft: rgba(232, 112, 112, 0.2);
+  --base-error-glow: rgba(196, 83, 83, 0.12);
+  --base-error-surface: #1c1816;
+  --base-error-surface-dark: #100e0c;
+  --base-error-text: #{$white};
+  --base-error-text-muted: #{$grey};
+  --base-error-border: #{$border};
 
   // ===========================================================================
-  // Syntax Highlighting
+  // Syntax Highlighting (retuned for warm backgrounds)
   // ===========================================================================
-  --base-syntax-keyword: #da70d6;
-  --base-syntax-member: #569cd6;
-  --base-syntax-function: #dcdcaa;
-  --base-syntax-param: #9cdcfe;
-  --base-syntax-type: #4ec9b0;
-  --base-syntax-punctuation: rgba(255, 255, 255, 0.6);
+  --base-syntax-keyword: #da9bf5;
+  --base-syntax-member: #7eb4e0;
+  --base-syntax-function: #e8d08a;
+  --base-syntax-param: #a0cce8;
+  --base-syntax-type: #6bc4b0;
+  --base-syntax-punctuation: #{$white}99;
+  --base-syntax-comment: #{$grey};
 
   // ===========================================================================
   // Component-Specific Primitives
   // ===========================================================================
   // Input
-  --base-input-bg: #{$dark-grey};
-  --base-input-border: #{$dark-grey};
-  --base-input-placeholder: #{$grey};
+  --base-input-bg: var(--base-surface-input);
+  --base-input-border: var(--base-border);
+  --base-input-placeholder: var(--base-text-muted-faint);
 
   // Button
-  --base-button-bg: #{$blue};
-  --base-button-hover-bg: #{color.scale($blue, $lightness: 10%)};
-  --base-button-active-bg: #{color.scale($blue, $lightness: -10%)};
-  --base-button-disabled-fg: #{color.scale($grey, $lightness: -20%)};
-  --base-button-disabled-bg: #{color.scale($dark-grey, $lightness: -10%)};
+  --base-button-bg: transparent;
+  --base-button-hover-bg: #{$gold}18;
+  --base-button-active-bg: #{$gold}25;
+  --base-button-disabled-fg: #{color.scale($grey, $lightness: -30%)};
+  --base-button-disabled-bg: #{color.scale($surface-raised, $lightness: -5%)};
 
   // Icon Button
-  --base-icon-button-border: #{$dark-grey};
-  --base-icon-button-hover-bg: #{color.scale($dark-grey, $lightness: 10%)};
-  --base-icon-button-focus-bg: #{color.scale($dark-grey, $lightness: -10%)};
+  --base-icon-button-border: var(--base-border);
+  --base-icon-button-hover-bg: var(--base-hover-overlay);
+  --base-icon-button-focus-bg: var(--base-active-overlay);
 
   // Switch
   --base-switch-fg: #{$grey};
-  --base-switch-bg: #{color.scale($dark-grey, $lightness: 10%)};
-  --base-switch-checked-fg: #{$dark-grey};
-  --base-switch-checked-bg: #{$orange};
-  --base-switch-border: #{$dark-grey};
+  --base-switch-bg: #{color.scale($surface-raised, $lightness: 10%)};
+  --base-switch-checked-fg: #{$black};
+  --base-switch-checked-bg: #{$gold};
+  --base-switch-border: var(--base-border);
 
   // Select
-  --base-select-bg: #{$dark-grey};
-  --base-select-border: #{$dark-grey};
-  --base-select-placeholder: #{$grey};
+  --base-select-bg: var(--base-surface-input);
+  --base-select-border: var(--base-border);
+  --base-select-placeholder: var(--base-text-muted-faint);
 }

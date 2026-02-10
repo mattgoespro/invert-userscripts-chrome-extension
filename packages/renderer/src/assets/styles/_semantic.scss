@@ -1,8 +1,11 @@
 // =============================================================================
-// Semantic Tokens
+// Semantic Tokens — Warm Carbon Theme
 // =============================================================================
 // Purpose-driven tokens that reference primitives. These are the tokens
 // components should use — they describe intent, not raw values.
+//
+// Eliminated: glass effects, glow tokens, shadow tokens, grid/ambient tokens.
+// Added: hover/active overlays, accent border, focus states.
 // =============================================================================
 
 :root {
@@ -11,13 +14,19 @@
   // ===========================================================================
   --primary: var(--base-blue);
   --primary-hover: var(--base-blue-light);
-  --secondary: var(--base-purple);
-  --accent: var(--base-orange);
-  --danger: var(--base-red);
+  --accent: var(--base-accent);
+  --accent-hover: var(--base-accent-hover);
+  --accent-muted: var(--base-accent-muted);
+  --accent-subtle: var(--base-accent-subtle);
+  --accent-border: var(--base-accent-border);
+  --danger: var(--base-danger);
+  --success: var(--base-green);
 
   --background: var(--base-black);
   --foreground: var(--base-white);
-  --border: var(--base-dark-grey);
+  --border: var(--base-border);
+  --border-subtle: var(--base-border-subtle);
+  --border-focus: var(--base-border-focus);
 
   // ===========================================================================
   // Surfaces
@@ -25,53 +34,26 @@
   --surface-base: var(--base-surface-base);
   --surface-raised: var(--base-surface-raised);
   --surface-overlay: var(--base-surface-overlay);
-
-  // ===========================================================================
-  // Glass Effects
-  // ===========================================================================
-  --glass-bg-soft: var(--base-glass-bg-soft);
-  --glass-bg: var(--base-glass-bg);
-  --glass-bg-heavy: var(--base-glass-bg-heavy);
-  --glass-white: var(--base-glass-white);
-
-  --glass-border-soft: var(--base-glass-border-soft);
-  --glass-border: var(--base-glass-border);
-  --glass-border-strong: var(--base-glass-border-strong);
+  --surface-input: var(--base-surface-input);
 
   // ===========================================================================
   // Text
   // ===========================================================================
-  --text-muted-faint: var(--base-text-faint);
   --text-muted: var(--base-text-muted);
+  --text-muted-faint: var(--base-text-muted-faint);
   --text-muted-strong: var(--base-text-muted-strong);
 
   // ===========================================================================
-  // Accent Glow
+  // Interactive Overlays
   // ===========================================================================
-  --accent-glow-faint: var(--base-accent-glow-faint);
-  --accent-glow-soft: var(--base-accent-glow-soft);
-  --accent-glow: var(--base-accent-glow);
-  --accent-glow-strong: var(--base-accent-glow-strong);
+  --hover-overlay: var(--base-hover-overlay);
+  --active-overlay: var(--base-active-overlay);
 
   // ===========================================================================
   // Danger States
   // ===========================================================================
   --danger-soft: var(--base-danger-soft);
   --danger-strong: var(--base-danger-strong);
-
-  // ===========================================================================
-  // Shadows
-  // ===========================================================================
-  --shadow-soft: var(--base-shadow-soft);
-  --shadow: var(--base-shadow);
-  --shadow-heavy: var(--base-shadow-heavy);
-
-  // ===========================================================================
-  // Decorative
-  // ===========================================================================
-  --grid-line: var(--base-grid-line);
-  --grid-highlight: var(--base-grid-highlight);
-  --glow-ambient: var(--base-glow-ambient);
 
   // ===========================================================================
   // Error Boundary
@@ -94,16 +76,17 @@
   --syntax-param: var(--base-syntax-param);
   --syntax-type: var(--base-syntax-type);
   --syntax-punctuation: var(--base-syntax-punctuation);
+  --syntax-comment: var(--base-syntax-comment);
 
   // ===========================================================================
   // Status Colors
   // ===========================================================================
   --info: var(--base-blue);
-  --warning: var(--base-orange);
+  --warning: var(--base-accent);
   --error: var(--base-red);
 
   // ===========================================================================
   // Geometry
   // ===========================================================================
-  --geometry-border-radius: 6px;
+  --geometry-border-radius: 4px;
 }

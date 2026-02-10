@@ -26,9 +26,6 @@
     border: 1px solid var(--error-border);
     border-radius: 16px;
     overflow: hidden;
-    box-shadow:
-      0 0 0 1px var(--shadow-heavy),
-      0 25px 50px -12px var(--shadow-heavy);
   }
 
   &__header {
@@ -156,7 +153,7 @@
     display: flex;
     justify-content: flex-end;
     padding: 20px 28px;
-    background: var(--shadow-soft);
+    background: var(--error-surface-dark);
     border-top: 1px solid var(--error-border);
   }
 }

@@ -2,16 +2,18 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--glass-bg-soft);
-  border: 1px solid var(--glass-border-soft);
-  border-radius: 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--geometry-border-radius);
   cursor: pointer;
-  color: var(--syntax-punctuation);
-  transition: all 0.2s ease;
+  color: var(--text-muted);
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease;
 
   &:hover {
-    background: var(--glass-white);
-    border-color: var(--glass-border);
+    background: var(--hover-overlay);
     color: var(--text-muted-strong);
   }
 
@@ -21,8 +23,7 @@
 
   &:focus-visible {
     outline: none;
-    border-color: var(--accent-glow);
-    box-shadow: 0 0 0 3px var(--accent-glow-faint);
+    border-color: var(--accent-border);
   }
 }
 
@@ -30,8 +31,7 @@
   @include icon-btn;
 
   &:hover {
-    background: var(--accent-glow-faint);
-    border-color: var(--accent-glow-soft);
+    background: var(--accent-subtle);
     color: var(--accent);
   }
 }
@@ -43,12 +43,11 @@
 .icon-btn--outlined {
   @include icon-btn;
 
-  background: transparent;
-  border: 1px solid var(--glass-border-strong);
+  border: 1px solid var(--border);
   color: var(--text-muted-strong);
 
   &:hover {
-    border-color: var(--accent-glow);
+    border-color: var(--accent-muted);
     color: var(--accent);
   }
 }
@@ -56,11 +55,8 @@
 .icon-btn--ghost {
   @include icon-btn;
 
-  background: transparent;
-  border: none;
-
   &:hover {
-    background: var(--glass-white);
+    background: var(--hover-overlay);
   }
 }
 
@@ -68,7 +64,7 @@
   @include icon-btn;
 
   &:hover {
-    background: var(--danger-soft);
+    background: var(--error-surface);
     border-color: var(--danger);
     color: var(--error-accent);
   }

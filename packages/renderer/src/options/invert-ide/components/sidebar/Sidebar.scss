@@ -5,20 +5,7 @@
   gap: 0.25rem;
   width: 64px;
   padding: 1rem 0;
-  background: var(--surface-base);
-  border-right: 1px solid var(--glass-border-soft);
-  backdrop-filter: blur(8px);
+  background: var(--surface-raised);
+  border-right: 1px solid var(--border);
   position: relative;
-
-  // Subtle top glow effect
-  &::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 120px;
-    background: linear-gradient(to bottom, var(--accent-glow-faint), transparent);
-    pointer-events: none;
-  }
 }

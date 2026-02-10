@@ -15,26 +15,27 @@
     width: 20px;
     height: 20px;
     appearance: none;
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border-strong);
+    background: var(--surface-input);
+    border: 1px solid var(--border);
     border-radius: 4px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition:
+      border-color 150ms ease,
+      background-color 150ms ease;
     position: relative;
 
     &:hover {
-      border-color: var(--glass-border-strong);
+      border-color: var(--text-muted);
     }
 
     &:focus-visible {
       outline: none;
-      border-color: var(--accent-glow);
-      box-shadow: 0 0 0 3px var(--accent-glow-faint);
+      border-color: var(--accent-border);
     }
 
     &:checked {
-      background: var(--accent-glow-soft);
-      border-color: var(--accent-glow);
+      background: var(--accent-muted);
+      border-color: var(--accent-border);
 
       &::after {
         content: "";

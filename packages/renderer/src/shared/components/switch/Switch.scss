@@ -1,4 +1,4 @@
-$transition-duration: 0.2s;
+$transition-duration: 0.15s;
 
 .switch--wrapper {
   position: relative;
@@ -23,7 +23,9 @@ $transition-duration: 0.2s;
   bottom: 0;
   background: var(--switch-background);
   border: 1px solid var(--switch-border);
-  transition: all $transition-duration ease;
+  transition:
+    background-color $transition-duration ease,
+    border-color $transition-duration ease;
   border-radius: 20px;
 
   // toggle indicator
@@ -35,31 +37,32 @@ $transition-duration: 0.2s;
     left: 3px;
     bottom: 2px;
     background: var(--switch-foreground);
-    transition: all $transition-duration ease;
+    transition:
+      transform $transition-duration ease,
+      background-color $transition-duration ease;
     border-radius: 50%;
   }
 }
 
 // hover state
 .switch--wrapper:hover .switch--slider {
-  border-color: var(--switch-border-strong);
+  border-color: var(--text-muted);
 }
 
 // checked state
 input:checked + .switch--slider {
-  background: var(--accent-glow-soft);
-  border-color: var(--accent-glow);
+  background: var(--accent-muted);
+  border-color: var(--accent-border);
 
   // toggle indicator
   &:before {
     background: var(--accent);
-    box-shadow: 0 0 12px var(--accent-glow-strong);
     transform: translateX(14px);
   }
 }
 
 input:focus-visible + .switch--slider {
-  box-shadow: 0 0 0 3px var(--accent-glow-faint);
+  border-color: var(--accent-border);
 }
 
 .switch--label {

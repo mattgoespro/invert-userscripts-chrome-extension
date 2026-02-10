@@ -12,11 +12,11 @@
   user-select: none;
 
   .code-comment--prefix {
-    color: var(--comment);
+    color: var(--syntax-comment);
     font-style: normal;
   }
 
   .code-comment--text {
-    color: var(--comment);
+    color: var(--syntax-comment);
   }
 }

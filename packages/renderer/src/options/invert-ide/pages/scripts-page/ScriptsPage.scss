@@ -5,9 +5,8 @@
 
   .scripts--sidebar {
     width: 300px;
-    background: var(--glass-bg-soft);
-    border-right: 1px solid var(--glass-border-soft);
-    backdrop-filter: blur(8px);
+    background: var(--surface-raised);
+    border-right: 1px solid var(--border);
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -17,7 +16,7 @@
       justify-content: space-between;
       align-items: center;
       padding: 20px 16px;
-      border-bottom: 1px solid var(--glass-border-soft);
+      border-bottom: 1px solid var(--border);
 
       // Code-style decoration
       &::before {
