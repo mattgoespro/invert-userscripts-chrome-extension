@@ -886,6 +886,18 @@ tsconfig.json (root — includes tools/, *.ts at root)
 - **Lib**: `dom`, `dom.iterable`
 - **Includes**: `src/**/*.ts` + `../renderer/src/sandbox/compiler.ts` (cross-package)
 
+#### TypeScript Best Practices
+
+1. **Use explicit types** for function parameters and return values
+2. **Avoid `any`** — prefer specific types or `unknown` with type guards
+3. **Use `interface` for object shapes** and `type` for unions/intersections
+4. **Prefix unused variables with `_`** to comply with lint rules
+5. **Use `as const` for literal types** when appropriate (e.g., action type constants)
+6. **Leverage TypeScript's type inference** where possible, but be explicit in public APIs
+7. **Avoid single-line `if` statements** without braces for better readability
+8. **Use `error` as the variable name in `catch` blocks** for consistency
+9. **Use `event` as the variable name for event handlers** for clarity
+
 ---
 
 ## File Organization

@@ -1,7 +1,7 @@
 import { editor, Uri } from "monaco-editor";
 import { useEffect, useRef } from "react";
 import { FormatterLanguage, PrettierFormatter } from "@/sandbox/formatter";
-import { getCodeEditorThemeName } from "@/shared/components/CodeEditorThemes";
+import { getCodeEditorThemeName } from "@/shared/components/model";
 import { useAppSelector } from "@/shared/store/hooks";
 import { selectEditorSettings } from "@/shared/store/slices/settings.slice";
 
@@ -89,7 +89,10 @@ export function CodeEditor({
   // Swap model when modelId changes (switching scripts)
   useEffect(() => {
     const editorInstance = editorInstanceRef.current;
-    if (!editorInstance) return;
+
+    if (!editorInstance) {
+      return;
+    }
 
     const uri = `file:///${modelId}.${language}`;
     const model = getOrCreateModel(uri, language, contents);
@@ -107,7 +110,10 @@ export function CodeEditor({
   // Handle Ctrl+S on the container
   useEffect(() => {
     const container = editorRef.current;
-    if (!container) return;
+
+    if (!container) {
+      return;
+    }
 
     const handleKeyDown = async (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === "s") {
@@ -115,7 +121,10 @@ export function CodeEditor({
         e.stopPropagation();
 
         const editorInstance = editorInstanceRef.current;
-        if (!editorInstance) return;
+
+        if (!editorInstance) {
+          return;
+        }
 
         let code = editorInstance.getValue();
 

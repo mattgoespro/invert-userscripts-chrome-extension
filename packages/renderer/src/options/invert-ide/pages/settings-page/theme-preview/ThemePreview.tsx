@@ -1,4 +1,4 @@
-import { CodeEditorThemeName, EditorThemes } from "@/shared/components/CodeEditorThemes";
+import { CodeEditorThemeName, EditorThemes } from "@/shared/components/model";
 import { useMemo } from "react";
 import "./ThemePreview.scss";
 

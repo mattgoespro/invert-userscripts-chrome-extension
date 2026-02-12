@@ -1,29 +1,29 @@
 @use "sass:color";
 
 // =============================================================================
-// Primitive Tokens — Warm Carbon Theme
+// Primitive Tokens — Graphite Theme (Default)
 // =============================================================================
 // Raw color values as SCSS variables (for transformations) and CSS custom
 // properties. These are the foundational building blocks — never use these
 // directly in components. Use semantic tokens instead.
 //
-// Palette: warm charcoal surfaces, burnished gold accent, cream text.
+// Palette: VS Code Dark Modern — cool neutral greys, blue accent, clean.
 // Zero glass, zero blur, zero glow. Flat and matte throughout.
 // =============================================================================
 
 // -----------------------------------------------------------------------------
 // Base Colors (SCSS variables for color.scale() transformations)
 // -----------------------------------------------------------------------------
-$black: #12100e;
-$white: #e8e0d4;
-$surface-raised: #1c1916;
-$surface-overlay: #24201c;
-$border: #332e28;
-$grey: #8a7e70;
-$blue: #6b9edd;
-$gold: #d4a054;
-$red: #c45353;
-$green: #7ab06a;
+$black: #1e1e1e;
+$white: #d4d4d4;
+$surface-raised: #252526;
+$surface-overlay: #2d2d30;
+$border: #3e3e42;
+$grey: #858585;
+$blue: #4fc1ff;
+$gold: #569cd6;
+$red: #f44747;
+$green: #6a9955;
 
 // -----------------------------------------------------------------------------
 // CSS Custom Properties — Primitives
@@ -42,30 +42,30 @@ $green: #7ab06a;
   --base-green: #{$green};
 
   // ===========================================================================
-  // Surfaces (warm charcoal layering)
+  // Surfaces (cool neutral layering)
   // ===========================================================================
   --base-surface-base: #{$black};
   --base-surface-raised: #{$surface-raised};
   --base-surface-overlay: #{$surface-overlay};
-  --base-surface-input: #18150f;
+  --base-surface-input: #1b1b1c;
 
   // ===========================================================================
-  // Borders (warm-toned)
+  // Borders (cool-toned)
   // ===========================================================================
   --base-border: #{$border};
-  --base-border-subtle: #2a2622;
+  --base-border-subtle: #333336;
   --base-border-focus: #{$gold}50;
 
   // ===========================================================================
   // Text
   // ===========================================================================
   --base-text: #{$white};
-  --base-text-muted: #c4b8a8;
-  --base-text-muted-faint: #5a5248;
+  --base-text-muted: #a0a0a0;
+  --base-text-muted-faint: #5a5a5e;
   --base-text-muted-strong: #{$grey};
 
   // ===========================================================================
-  // Accent (burnished gold)
+  // Accent (VS Code blue)
   // ===========================================================================
   --base-accent: #{$gold};
   --base-accent-hover: #{color.scale($gold, $lightness: 15%)};
@@ -83,31 +83,31 @@ $green: #7ab06a;
   // ===========================================================================
   // Interactive Overlays (micro white wash on hover)
   // ===========================================================================
-  --base-hover-overlay: rgba(255, 255, 255, 0.03);
-  --base-active-overlay: rgba(255, 255, 255, 0.06);
+  --base-hover-overlay: rgba(255, 255, 255, 0.04);
+  --base-active-overlay: rgba(255, 255, 255, 0.07);
 
   // ===========================================================================
   // Error States
   // ===========================================================================
-  --base-error-accent: #e87070;
-  --base-error-accent-soft: rgba(232, 112, 112, 0.2);
-  --base-error-glow: rgba(196, 83, 83, 0.12);
-  --base-error-surface: #1c1816;
-  --base-error-surface-dark: #100e0c;
+  --base-error-accent: #f48771;
+  --base-error-accent-soft: rgba(244, 135, 113, 0.2);
+  --base-error-glow: rgba(244, 71, 71, 0.12);
+  --base-error-surface: #2d2020;
+  --base-error-surface-dark: #1e1616;
   --base-error-text: #{$white};
   --base-error-text-muted: #{$grey};
-  --base-error-border: #{$border};
+  --base-error-border: #5a3030;
 
   // ===========================================================================
-  // Syntax Highlighting (retuned for warm backgrounds)
+  // Syntax Highlighting (VS Code Dark Modern palette)
   // ===========================================================================
-  --base-syntax-keyword: #da9bf5;
-  --base-syntax-member: #7eb4e0;
-  --base-syntax-function: #e8d08a;
-  --base-syntax-param: #a0cce8;
-  --base-syntax-type: #6bc4b0;
+  --base-syntax-keyword: #c586c0;
+  --base-syntax-member: #9cdcfe;
+  --base-syntax-function: #dcdcaa;
+  --base-syntax-param: #9cdcfe;
+  --base-syntax-type: #4ec9b0;
   --base-syntax-punctuation: #{$white}99;
-  --base-syntax-comment: #{$grey};
+  --base-syntax-comment: #{$green};
 
   // ===========================================================================
   // Component-Specific Primitives
@@ -121,8 +121,8 @@ $green: #7ab06a;
   --base-button-bg: transparent;
   --base-button-hover-bg: #{$gold}18;
   --base-button-active-bg: #{$gold}25;
-  --base-button-disabled-fg: #{color.scale($grey, $lightness: -30%)};
-  --base-button-disabled-bg: #{color.scale($surface-raised, $lightness: -5%)};
+  --base-button-disabled-fg: #5a5a5e;
+  --base-button-disabled-bg: #232324;
 
   // Icon Button
   --base-icon-button-border: var(--base-border);
@@ -131,7 +131,7 @@ $green: #7ab06a;
 
   // Switch
   --base-switch-fg: #{$grey};
-  --base-switch-bg: #{color.scale($surface-raised, $lightness: 10%)};
+  --base-switch-bg: #333336;
   --base-switch-checked-fg: #{$black};
   --base-switch-checked-bg: #{$gold};
   --base-switch-border: var(--base-border);

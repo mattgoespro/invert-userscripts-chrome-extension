@@ -3,6 +3,8 @@
   "include": ["tools", "*.ts"],
   "compilerOptions": {
     "noEmit": true,
-    "allowImportingTsExtensions": true
+    "allowImportingTsExtensions": true,
+    "checkJs": true,
+    "lib": ["dom"]
   }
 }

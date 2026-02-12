@@ -1,0 +1,78 @@
+// -----------------------------------------------------------------------------
+// Obsidian Frost — Steel-blue accent, cooler grey tones
+// Same monochrome restraint, but the single punctuation color is icy cool.
+// -----------------------------------------------------------------------------
+[data-theme="obsidian-frost"] {
+  --base-black: #141618;
+  --base-white: #c4c8cc;
+  --base-grey: #687078;
+  --base-blue: #8aacc8;
+  --base-blue-light: #a2c0d8;
+  --base-gold: #8aacc8;
+  --base-red: #c86868;
+  --base-green: #70b890;
+
+  --base-surface-base: #141618;
+  --base-surface-raised: #1b1e22;
+  --base-surface-overlay: #24272c;
+  --base-surface-input: #111315;
+
+  --base-border: #2e3238;
+  --base-border-subtle: #252830;
+  --base-border-focus: #{#8aacc8}50;
+
+  --base-text: #c4c8cc;
+  --base-text-muted: #909498;
+  --base-text-muted-faint: #3e4248;
+  --base-text-muted-strong: #687078;
+
+  --base-accent: #8aacc8;
+  --base-accent-hover: #9ebcd4;
+  --base-accent-muted: #{#8aacc8}25;
+  --base-accent-subtle: #{#8aacc8}12;
+  --base-accent-border: #{#8aacc8}50;
+
+  --base-danger: #c86868;
+  --base-danger-soft: #{#c86868}30;
+  --base-danger-strong: #{#c86868}cc;
+
+  --base-hover-overlay: rgba(240, 248, 255, 0.03);
+  --base-active-overlay: rgba(240, 248, 255, 0.06);
+
+  --base-error-accent: #d87070;
+  --base-error-accent-soft: rgba(216, 112, 112, 0.2);
+  --base-error-glow: rgba(200, 104, 104, 0.12);
+  --base-error-surface: #1e1c20;
+  --base-error-surface-dark: #161418;
+  --base-error-text: #c4c8cc;
+  --base-error-text-muted: #687078;
+  --base-error-border: #402e2e;
+
+  --base-syntax-keyword: #b898d8;
+  --base-syntax-member: #8aacc8;
+  --base-syntax-function: #8aacc8;
+  --base-syntax-param: #a0d4e8;
+  --base-syntax-type: #70b890;
+  --base-syntax-punctuation: #{#c4c8cc}99;
+  --base-syntax-comment: #4a4e54;
+
+  --base-input-bg: var(--base-surface-input);
+  --base-input-border: var(--base-border);
+  --base-input-placeholder: var(--base-text-muted-faint);
+  --base-button-bg: transparent;
+  --base-button-hover-bg: #{#8aacc8}18;
+  --base-button-active-bg: #{#8aacc8}25;
+  --base-button-disabled-fg: #3e4248;
+  --base-button-disabled-bg: #181a1c;
+  --base-icon-button-border: var(--base-border);
+  --base-icon-button-hover-bg: var(--base-hover-overlay);
+  --base-icon-button-focus-bg: var(--base-active-overlay);
+  --base-switch-fg: #687078;
+  --base-switch-bg: #252830;
+  --base-switch-checked-fg: #141618;
+  --base-switch-checked-bg: #8aacc8;
+  --base-switch-border: var(--base-border);
+  --base-select-bg: var(--base-surface-input);
+  --base-select-border: var(--base-border);
+  --base-select-placeholder: var(--base-text-muted-faint);
+}

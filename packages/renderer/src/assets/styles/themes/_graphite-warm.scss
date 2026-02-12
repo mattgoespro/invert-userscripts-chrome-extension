@@ -1,0 +1,32 @@
+// -----------------------------------------------------------------------------
+// Graphite Warm — Same clean greys, golden amber accent
+// Professional grey meets a warm punctuation color.
+// -----------------------------------------------------------------------------
+[data-theme="graphite-warm"] {
+  --base-gold: #d4a054;
+  --base-red: #d46050;
+  --base-green: #7ab06a;
+
+  --base-border-focus: #{#d4a054}50;
+
+  --base-accent: #d4a054;
+  --base-accent-hover: #deb06a;
+  --base-accent-muted: #{#d4a054}25;
+  --base-accent-subtle: #{#d4a054}12;
+  --base-accent-border: #{#d4a054}50;
+
+  --base-danger: #d46050;
+  --base-danger-soft: #{#d46050}30;
+  --base-danger-strong: #{#d46050}cc;
+
+  --base-syntax-keyword: #c586c0;
+  --base-syntax-member: #9cdcfe;
+  --base-syntax-function: #d4a054;
+  --base-syntax-param: #9cdcfe;
+  --base-syntax-type: #4ec9b0;
+  --base-syntax-comment: #6a9955;
+
+  --base-button-hover-bg: #{#d4a054}18;
+  --base-button-active-bg: #{#d4a054}25;
+  --base-switch-checked-bg: #d4a054;
+}

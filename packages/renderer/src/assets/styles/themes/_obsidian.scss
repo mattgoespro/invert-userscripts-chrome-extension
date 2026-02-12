@@ -1,0 +1,78 @@
+// -----------------------------------------------------------------------------
+// Obsidian — Near-monochrome, single amber accent
+// Maximum restraint. Shades of grey with one warm punctuation color.
+// -----------------------------------------------------------------------------
+[data-theme="obsidian"] {
+  --base-black: #161616;
+  --base-white: #c8c8c8;
+  --base-grey: #6e6e6e;
+  --base-blue: #82aaff;
+  --base-blue-light: #a0bbff;
+  --base-gold: #e2a555;
+  --base-red: #d16969;
+  --base-green: #73c991;
+
+  --base-surface-base: #161616;
+  --base-surface-raised: #1e1e1e;
+  --base-surface-overlay: #262626;
+  --base-surface-input: #131313;
+
+  --base-border: #333333;
+  --base-border-subtle: #282828;
+  --base-border-focus: #{#e2a555}50;
+
+  --base-text: #c8c8c8;
+  --base-text-muted: #999999;
+  --base-text-muted-faint: #444444;
+  --base-text-muted-strong: #6e6e6e;
+
+  --base-accent: #e2a555;
+  --base-accent-hover: #eab56e;
+  --base-accent-muted: #{#e2a555}25;
+  --base-accent-subtle: #{#e2a555}12;
+  --base-accent-border: #{#e2a555}50;
+
+  --base-danger: #d16969;
+  --base-danger-soft: #{#d16969}30;
+  --base-danger-strong: #{#d16969}cc;
+
+  --base-hover-overlay: rgba(255, 255, 255, 0.03);
+  --base-active-overlay: rgba(255, 255, 255, 0.06);
+
+  --base-error-accent: #e07070;
+  --base-error-accent-soft: rgba(224, 112, 112, 0.2);
+  --base-error-glow: rgba(209, 105, 105, 0.12);
+  --base-error-surface: #221c1c;
+  --base-error-surface-dark: #181414;
+  --base-error-text: #c8c8c8;
+  --base-error-text-muted: #6e6e6e;
+  --base-error-border: #442e2e;
+
+  --base-syntax-keyword: #c792ea;
+  --base-syntax-member: #82aaff;
+  --base-syntax-function: #e2a555;
+  --base-syntax-param: #89ddff;
+  --base-syntax-type: #73c991;
+  --base-syntax-punctuation: #{#c8c8c8}99;
+  --base-syntax-comment: #555555;
+
+  --base-input-bg: var(--base-surface-input);
+  --base-input-border: var(--base-border);
+  --base-input-placeholder: var(--base-text-muted-faint);
+  --base-button-bg: transparent;
+  --base-button-hover-bg: #{#e2a555}18;
+  --base-button-active-bg: #{#e2a555}25;
+  --base-button-disabled-fg: #444444;
+  --base-button-disabled-bg: #1a1a1a;
+  --base-icon-button-border: var(--base-border);
+  --base-icon-button-hover-bg: var(--base-hover-overlay);
+  --base-icon-button-focus-bg: var(--base-active-overlay);
+  --base-switch-fg: #6e6e6e;
+  --base-switch-bg: #282828;
+  --base-switch-checked-fg: #161616;
+  --base-switch-checked-bg: #e2a555;
+  --base-switch-border: var(--base-border);
+  --base-select-bg: var(--base-surface-input);
+  --base-select-border: var(--base-border);
+  --base-select-placeholder: var(--base-text-muted-faint);
+}

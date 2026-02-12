@@ -10,11 +10,30 @@ type ThemeOption = {
 };
 
 const THEMES: ThemeOption[] = [
-  { id: "warm-carbon", label: "Warm Carbon", accent: "#d4a054", surface: "#12100e" },
   { id: "graphite", label: "Graphite", accent: "#569cd6", surface: "#1e1e1e" },
-  { id: "nordic", label: "Nordic", accent: "#88c0d0", surface: "#1a1e24" },
   { id: "obsidian", label: "Obsidian", accent: "#e2a555", surface: "#161616" },
-  { id: "matte-terminal", label: "Matte Terminal", accent: "#5fcc8c", surface: "#0e1210" },
+  // Graphite variants
+  {
+    id: "graphite-warm",
+    label: "Graphite Warm",
+    accent: "#d4a054",
+    surface: "#1e1e1e",
+    group: "graphite variants",
+  },
+  {
+    id: "graphite-dusk",
+    label: "Graphite Dusk",
+    accent: "#a088c8",
+    surface: "#1e1d20",
+    group: "graphite variants",
+  },
+  {
+    id: "graphite-ember",
+    label: "Graphite Ember",
+    accent: "#d4785a",
+    surface: "#1e1e1e",
+    group: "graphite variants",
+  },
   // Obsidian variants
   {
     id: "obsidian-deep",
@@ -37,34 +56,13 @@ const THEMES: ThemeOption[] = [
     surface: "#141618",
     group: "obsidian variants",
   },
-  {
-    id: "obsidian-verdant",
-    label: "Obsidian Verdant",
-    accent: "#7ab88a",
-    surface: "#141614",
-    group: "obsidian variants",
-  },
-  {
-    id: "obsidian-rose",
-    label: "Obsidian Rose",
-    accent: "#c48a9a",
-    surface: "#181618",
-    group: "obsidian variants",
-  },
-  {
-    id: "obsidian-void",
-    label: "Obsidian Void",
-    accent: "#f0b060",
-    surface: "#0c0c0c",
-    group: "obsidian variants",
-  },
 ];
 
 const STORAGE_KEY = "invert-ide-devtools-theme";
 
 function applyTheme(themeId: string) {
   const root = document.documentElement;
-  if (themeId === "warm-carbon") {
+  if (themeId === "graphite") {
     root.removeAttribute("data-theme");
   } else {
     root.setAttribute("data-theme", themeId);
@@ -75,7 +73,7 @@ export function ThemeSwitcher() {
   const [expanded, setExpanded] = useState(false);
   const [activeTheme, setActiveTheme] = useState<string>(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
-    return stored ?? "warm-carbon";
+    return stored ?? "graphite";
   });
 
   // Apply on mount + when activeTheme changes

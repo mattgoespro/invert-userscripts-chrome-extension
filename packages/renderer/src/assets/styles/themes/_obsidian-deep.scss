@@ -1,0 +1,78 @@
+// -----------------------------------------------------------------------------
+// Obsidian Deep — Blacker surfaces, dimmer text, desaturated amber
+// The "lights off" version. Maximum darkness, minimum distraction.
+// -----------------------------------------------------------------------------
+[data-theme="obsidian-deep"] {
+  --base-black: #101010;
+  --base-white: #b8b8b8;
+  --base-grey: #606060;
+  --base-blue: #7a9ee0;
+  --base-blue-light: #94b2ea;
+  --base-gold: #cc9650;
+  --base-red: #c06060;
+  --base-green: #68b580;
+
+  --base-surface-base: #101010;
+  --base-surface-raised: #171717;
+  --base-surface-overlay: #1e1e1e;
+  --base-surface-input: #0d0d0d;
+
+  --base-border: #2a2a2a;
+  --base-border-subtle: #212121;
+  --base-border-focus: #{#cc9650}50;
+
+  --base-text: #b8b8b8;
+  --base-text-muted: #888888;
+  --base-text-muted-faint: #3a3a3a;
+  --base-text-muted-strong: #606060;
+
+  --base-accent: #cc9650;
+  --base-accent-hover: #d8a866;
+  --base-accent-muted: #{#cc9650}25;
+  --base-accent-subtle: #{#cc9650}12;
+  --base-accent-border: #{#cc9650}50;
+
+  --base-danger: #c06060;
+  --base-danger-soft: #{#c06060}30;
+  --base-danger-strong: #{#c06060}cc;
+
+  --base-hover-overlay: rgba(255, 255, 255, 0.025);
+  --base-active-overlay: rgba(255, 255, 255, 0.05);
+
+  --base-error-accent: #d46868;
+  --base-error-accent-soft: rgba(212, 104, 104, 0.2);
+  --base-error-glow: rgba(192, 96, 96, 0.12);
+  --base-error-surface: #1c1616;
+  --base-error-surface-dark: #141010;
+  --base-error-text: #b8b8b8;
+  --base-error-text-muted: #606060;
+  --base-error-border: #3e2828;
+
+  --base-syntax-keyword: #b888d8;
+  --base-syntax-member: #7a9ee0;
+  --base-syntax-function: #cc9650;
+  --base-syntax-param: #80c8e8;
+  --base-syntax-type: #68b580;
+  --base-syntax-punctuation: #{#b8b8b8}99;
+  --base-syntax-comment: #484848;
+
+  --base-input-bg: var(--base-surface-input);
+  --base-input-border: var(--base-border);
+  --base-input-placeholder: var(--base-text-muted-faint);
+  --base-button-bg: transparent;
+  --base-button-hover-bg: #{#cc9650}18;
+  --base-button-active-bg: #{#cc9650}25;
+  --base-button-disabled-fg: #3a3a3a;
+  --base-button-disabled-bg: #141414;
+  --base-icon-button-border: var(--base-border);
+  --base-icon-button-hover-bg: var(--base-hover-overlay);
+  --base-icon-button-focus-bg: var(--base-active-overlay);
+  --base-switch-fg: #606060;
+  --base-switch-bg: #212121;
+  --base-switch-checked-fg: #101010;
+  --base-switch-checked-bg: #cc9650;
+  --base-switch-border: var(--base-border);
+  --base-select-bg: var(--base-surface-input);
+  --base-select-border: var(--base-border);
+  --base-select-placeholder: var(--base-text-muted-faint);
+}

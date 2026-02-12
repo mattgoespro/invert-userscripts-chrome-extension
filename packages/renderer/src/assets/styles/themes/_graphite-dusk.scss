@@ -1,0 +1,78 @@
+// -----------------------------------------------------------------------------
+// Graphite Dusk — Slightly warmer surfaces, muted violet accent
+// Twilight-inspired. A restrained purple against warm charcoal grain.
+// -----------------------------------------------------------------------------
+[data-theme="graphite-dusk"] {
+  --base-black: #1e1d20;
+  --base-white: #d2d0d6;
+  --base-grey: #82808a;
+  --base-blue: #a4a0e0;
+  --base-blue-light: #b8b4ea;
+  --base-gold: #a088c8;
+  --base-red: #d06878;
+  --base-green: #6a9955;
+
+  --base-surface-base: #1e1d20;
+  --base-surface-raised: #252428;
+  --base-surface-overlay: #2d2c32;
+  --base-surface-input: #1a1a1d;
+
+  --base-border: #3c3a42;
+  --base-border-subtle: #323036;
+  --base-border-focus: #{#a088c8}50;
+
+  --base-text: #d2d0d6;
+  --base-text-muted: #9e9aa4;
+  --base-text-muted-faint: #58545e;
+  --base-text-muted-strong: #82808a;
+
+  --base-accent: #a088c8;
+  --base-accent-hover: #b09ad4;
+  --base-accent-muted: #{#a088c8}25;
+  --base-accent-subtle: #{#a088c8}12;
+  --base-accent-border: #{#a088c8}50;
+
+  --base-danger: #d06878;
+  --base-danger-soft: #{#d06878}30;
+  --base-danger-strong: #{#d06878}cc;
+
+  --base-hover-overlay: rgba(255, 255, 255, 0.04);
+  --base-active-overlay: rgba(255, 255, 255, 0.07);
+
+  --base-error-accent: #e08080;
+  --base-error-accent-soft: rgba(224, 128, 128, 0.2);
+  --base-error-glow: rgba(208, 104, 120, 0.12);
+  --base-error-surface: #2a2024;
+  --base-error-surface-dark: #1e1618;
+  --base-error-text: #d2d0d6;
+  --base-error-text-muted: #82808a;
+  --base-error-border: #503040;
+
+  --base-syntax-keyword: #c586c0;
+  --base-syntax-member: #a4a0e0;
+  --base-syntax-function: #dcdcaa;
+  --base-syntax-param: #b8b4ea;
+  --base-syntax-type: #4ec9b0;
+  --base-syntax-punctuation: #{#d2d0d6}99;
+  --base-syntax-comment: #626068;
+
+  --base-input-bg: var(--base-surface-input);
+  --base-input-border: var(--base-border);
+  --base-input-placeholder: var(--base-text-muted-faint);
+  --base-button-bg: transparent;
+  --base-button-hover-bg: #{#a088c8}18;
+  --base-button-active-bg: #{#a088c8}25;
+  --base-button-disabled-fg: #58545e;
+  --base-button-disabled-bg: #222124;
+  --base-icon-button-border: var(--base-border);
+  --base-icon-button-hover-bg: var(--base-hover-overlay);
+  --base-icon-button-focus-bg: var(--base-active-overlay);
+  --base-switch-fg: #82808a;
+  --base-switch-bg: #323036;
+  --base-switch-checked-fg: #1e1d20;
+  --base-switch-checked-bg: #a088c8;
+  --base-switch-border: var(--base-border);
+  --base-select-bg: var(--base-surface-input);
+  --base-select-border: var(--base-border);
+  --base-select-placeholder: var(--base-text-muted-faint);
+}

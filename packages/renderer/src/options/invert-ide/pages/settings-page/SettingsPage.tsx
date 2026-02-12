@@ -1,5 +1,5 @@
 import { Checkbox } from "@/shared/components/checkbox/Checkbox";
-import { CodeEditorThemeNames } from "@/shared/components/CodeEditorThemes";
+import { CodeEditorThemeNames } from "@/shared/components/model";
 import { Input } from "@/shared/components/input/Input";
 import { Select } from "@/shared/components/select/Select";
 import { Typography } from "@/shared/components/typography/Typography";

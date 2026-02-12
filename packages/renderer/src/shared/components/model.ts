@@ -722,15 +722,54 @@ export const EditorThemes: Record<
       },
     },
   },
+
+  // ===========================================================================
+  // Invert IDE App Themes
+  // ===========================================================================
+  "Graphite Dusk": {
+    name: "graphite-dusk",
+    definition: {
+      base: "vs-dark",
+      inherit: true,
+      rules: [
+        { token: "", background: "1e1d20", foreground: "d2d0d6" },
+        { token: "keyword", foreground: "c586c0", fontStyle: "bold" },
+        { token: "keyword.control", foreground: "c586c0" },
+        { token: "type", foreground: "4ec9b0" },
+        { token: "type.identifier", foreground: "4ec9b0" },
+        { token: "string", foreground: "ce9178" },
+        { token: "string.escape", foreground: "d7ba7d" },
+        { token: "comment", foreground: "626068", fontStyle: "italic" },
+        { token: "function", foreground: "dcdcaa" },
+        { token: "variable", foreground: "b8b4ea" },
+        { token: "variable.parameter", foreground: "b8b4ea" },
+        { token: "number", foreground: "b5cea8" },
+        { token: "constant", foreground: "a4a0e0" },
+        { token: "operator", foreground: "d2d0d6" },
+        { token: "delimiter", foreground: "82808a" },
+        { token: "tag", foreground: "a4a0e0" },
+        { token: "attribute.name", foreground: "b8b4ea" },
+        { token: "attribute.value", foreground: "ce9178" },
+      ],
+      colors: {
+        "editor.background": "#1e1d20",
+        "editor.foreground": "#d2d0d6",
+        "editorLineNumber.foreground": "#58545e",
+        "editorLineNumber.activeForeground": "#d2d0d6",
+        "editorCursor.foreground": "#a088c8",
+        "editor.selectionBackground": "#a088c840",
+        "editor.inactiveSelectionBackground": "#a088c825",
+        "editorIndentGuide.background1": "#323036",
+        "editorIndentGuide.activeBackground1": "#3c3a42",
+        "editor.lineHighlightBackground": "#252428",
+        "editorBracketMatch.background": "#a088c830",
+        "editorBracketMatch.border": "#a088c8",
+      },
+    },
+  },
 };
 
 export const CodeEditorThemeNames: string[] = Object.keys(EditorThemes);
-
-export function getCodeEditorThemeDefinition(
-  themeName: string
-): monaco.editor.IStandaloneThemeData {
-  return EditorThemes[themeName].definition;
-}
 
 export function getCodeEditorThemeName(displayName: string): string {
   return EditorThemes[displayName]?.name ?? "vs-dark";
