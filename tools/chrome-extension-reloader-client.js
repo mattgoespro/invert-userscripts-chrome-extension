@@ -9,47 +9,13 @@
       scroll: { x: window.scrollX, y: window.scrollY },
       inputs: Array.from(document.querySelectorAll("input, textarea, select")).map((el) => ({
         id: el.id ?? null,
-        selector: getUniqueSelector(el),
+        name:
+          /** @type {HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement} */ (el).name ??
+          null,
         value: "value" in el ? el.value : null,
         checked: "checked" in el ? el.checked : null,
       })),
     };
-  }
-
-  /**
-   * @param {Element} elem
-   * @returns {string}
-   */
-  function getUniqueSelector(elem) {
-    const { tagName, id, className, parentNode } = elem;
-
-    if (tagName === "HTML") return "HTML";
-
-    let str = tagName;
-
-    str += id !== "" ? `#${id}` : "";
-
-    if (className) {
-      const classes = className.split(/\s/);
-      for (let i = 0; i < classes.length; i++) {
-        str += `.${classes[i]}`;
-      }
-    }
-
-    let childIndex = 1;
-
-    for (let e = elem; e.previousElementSibling; e = e.previousElementSibling) {
-      childIndex += 1;
-    }
-
-    str += `:nth-child(${childIndex})`;
-
-    if (parentNode && parentNode.nodeType === Node.ELEMENT_NODE) {
-      const elementNode = /** @type {Element} */ (parentNode);
-      return `${getUniqueSelector(elementNode)} > ${str}`;
-    }
-
-    return str;
   }
 
   function restoreState() {
@@ -69,7 +35,7 @@
       for (const input of state.inputs) {
         const element =
           (input.id && document.getElementById(input.id)) ||
-          (input.selector && document.querySelector(input.selector));
+          (input.name && document.querySelector(`[name="${input.name}"]`));
 
         if (!element) {
           continue;
