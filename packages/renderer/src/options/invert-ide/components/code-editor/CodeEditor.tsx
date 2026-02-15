@@ -1,27 +1,30 @@
-import { editor, Uri } from "monaco-editor";
-import { useEffect, useRef } from "react";
 import { FormatterLanguage, PrettierFormatter } from "@/sandbox/formatter";
-import { getCodeEditorThemeName } from "@/shared/components/model";
+import { getCodeEditorThemeName } from "@/shared/monaco/monaco";
 import { useAppSelector } from "@/shared/store/hooks";
 import { selectEditorSettings } from "@/shared/store/slices/settings.slice";
+import { useEffect, useRef } from "react";
+import * as monaco from "monaco-editor-core";
 
 // Cache models by URI to preserve undo history and cursor position
-const modelCache = new Map<string, editor.ITextModel>();
+const modelCache = new Map<string, monaco.editor.ITextModel>();
 
-function getOrCreateModel(uri: string, language: string, contents: string): editor.ITextModel {
+function getOrCreateModel(
+  uri: string,
+  language: string,
+  contents: string
+): monaco.editor.ITextModel {
   const existing = modelCache.get(uri);
   if (existing && !existing.isDisposed()) {
     return existing;
   }
 
-  const model = editor.createModel(contents, language, Uri.parse(uri));
+  const model = monaco.editor.createModel(contents, language, monaco.Uri.parse(uri));
   modelCache.set(uri, model);
   return model;
 }
 
 type CodeEditorProps = {
-  /** Unique identifier for this editor's content (e.g., scriptId) */
-  modelId: string;
+  modelId: string; /** Unique identifier for this editor's content (e.g., scriptId) */
   theme: string;
   language: FormatterLanguage;
   contents: string;
@@ -30,18 +33,11 @@ type CodeEditorProps = {
   onCodeSaved: (value: string) => void;
 };
 
-export function CodeEditor({
-  modelId,
-  theme,
-  language,
-  contents,
-  autoFormat = false,
-  onCodeModified,
-  onCodeSaved,
-}: CodeEditorProps) {
-  const settings = useAppSelector(selectEditorSettings);
+export function CodeEditor(props: CodeEditorProps) {
+  const { modelId, language, contents, onCodeModified, onCodeSaved } = props;
+  const { theme, autoFormat, fontSize } = useAppSelector(selectEditorSettings);
   const editorRef = useRef<HTMLDivElement>(null);
-  const editorInstanceRef = useRef<editor.IStandaloneCodeEditor | null>(null);
+  const editorInstanceRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
   const onCodeModifiedRef = useRef(onCodeModified);
 
   // Keep callback ref in sync (needed for model change listener)
@@ -51,11 +47,13 @@ export function CodeEditor({
 
   // Initialize editor once on mount
   useEffect(() => {
-    if (!editorRef.current) return;
+    if (!editorRef.current) {
+      return;
+    }
 
-    const editorInstance = editor.create(editorRef.current, {
+    const editorInstance = monaco.editor.create(editorRef.current, {
       theme: getCodeEditorThemeName(theme),
-      fontSize: settings.fontSize,
+      fontSize: fontSize,
       automaticLayout: true,
       padding: { top: 25, bottom: 10 },
       fixedOverflowWidgets: true,
@@ -79,11 +77,11 @@ export function CodeEditor({
       editorInstance.dispose();
       editorInstanceRef.current = null;
     };
-  }, [settings.fontSize]);
+  }, [fontSize]);
 
   // Update theme dynamically without recreating the editor
   useEffect(() => {
-    editor.setTheme(getCodeEditorThemeName(theme));
+    monaco.editor.setTheme(getCodeEditorThemeName(theme));
   }, [theme]);
 
   // Swap model when modelId changes (switching scripts)

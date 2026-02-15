@@ -62,10 +62,10 @@
   "scssFormatter.printWidth": 100,
   "scssFormatter.trailingComma": "es5",
   "search.exclude": {
+    "**/*.json": true,
+    "**/*.md": true,
     "**/.vscode/**": true,
-    "**/dist/**": true,
-    "*.json": true,
-    "*.{ts,js,mjs}": true
+    "**/dist/**": true
   },
   "terminal.integrated.automationProfile.windows": {
     "args": ["-l"],

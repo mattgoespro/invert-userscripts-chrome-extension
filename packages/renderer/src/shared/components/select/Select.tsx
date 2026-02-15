@@ -1,7 +1,12 @@
 import "./Select.scss";
 
+type SelectOption = {
+  value: string;
+  label?: string;
+};
+
 type SelectProps<T> = {
-  options: Array<{ value: string; label?: string }>;
+  options: SelectOption[];
   label?: string;
   value: T;
   onChange: (newValue: T) => void;

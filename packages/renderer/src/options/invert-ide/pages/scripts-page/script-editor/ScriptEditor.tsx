@@ -1,14 +1,15 @@
 import { CodeEditor } from "@/options/invert-ide/components/code-editor/CodeEditor";
 import { ResizeHandle } from "@/shared/components/resize-handle/ResizeHandle";
+import { registerMonaco } from "@/shared/monaco/monaco";
 import { useAppDispatch, useAppSelector } from "@/shared/store/hooks";
+import { selectAutoFormat, selectTheme } from "@/shared/store/slices/settings.slice";
 import {
   markUserscriptModified,
   selectCurrentUserscript,
   updateUserscriptCode,
 } from "@/shared/store/slices/userscripts.slice";
-import { selectAutoFormat, selectTheme } from "@/shared/store/slices/settings.slice";
 import { UserscriptSourceCode } from "@shared/model";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ScriptMetadata } from "./script-metadata/ScriptMetadata";
 import "./ScriptEditor.scss";
 
@@ -23,8 +24,14 @@ export function ScriptEditor() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [leftPanelPercent, setLeftPanelPercent] = useState(50);
 
+  useEffect(() => {
+    registerMonaco();
+  }, []);
+
   const handleResize = useCallback((delta: number) => {
-    if (!containerRef.current) return;
+    if (!containerRef.current) {
+      return;
+    }
 
     const containerWidth = containerRef.current.offsetWidth;
     const deltaPercent = (delta / containerWidth) * 100;

@@ -1,9 +1,9 @@
-import { CodeEditorThemeName, EditorThemes } from "@/shared/components/model";
+import { MonacoEditorThemes } from "@/shared/monaco/monaco";
 import { useMemo } from "react";
 import "./ThemePreview.scss";
 
 type ThemePreviewProps = {
-  theme: CodeEditorThemeName;
+  theme: string;
 };
 
 type TokenColorMap = {
@@ -20,9 +20,9 @@ type TokenColorMap = {
   foreground: string;
 };
 
-function extractTokenColors(theme: CodeEditorThemeName): TokenColorMap {
-  const def = EditorThemes[theme]?.definition;
-  if (!def) {
+function extractTokenColors(theme: string): TokenColorMap {
+  const themeData = MonacoEditorThemes[theme];
+  if (!themeData) {
     return {
       keyword: "#da70d6",
       type: "#4ec9b0",
@@ -39,13 +39,18 @@ function extractTokenColors(theme: CodeEditorThemeName): TokenColorMap {
   }
 
   const colorMap: Record<string, string> = {};
-  for (const rule of def.rules) {
-    if (rule.token && rule.foreground) {
-      colorMap[rule.token] = `#${rule.foreground}`;
+  for (const entry of themeData.settings) {
+    const scope = entry.scope;
+    const fg = entry.settings.foreground;
+    if (scope && fg) {
+      const scopes = Array.isArray(scope) ? scope : [scope];
+      for (const s of scopes) {
+        colorMap[s] = fg;
+      }
     }
   }
 
-  const fg = def.colors["editor.foreground"] ?? "#f0f0f0";
+  const fg = themeData.colors?.["editor.foreground"] ?? "#f0f0f0";
 
   return {
     keyword: colorMap["keyword"] ?? fg,
@@ -112,11 +117,11 @@ function buildPreviewLines(colors: TokenColorMap): Token[][] {
 }
 
 export function ThemePreview({ theme }: ThemePreviewProps) {
-  const def = EditorThemes[theme]?.definition;
-  const bg = def?.colors["editor.background"] ?? "#0a0a0c";
-  const lineNumColor = def?.colors["editorLineNumber.foreground"] ?? "#808080";
-  const lineHighlight = def?.colors["editor.lineHighlightBackground"] ?? "transparent";
-  const cursorColor = def?.colors["editorCursor.foreground"] ?? "#f0f0f0";
+  const themeData = MonacoEditorThemes[theme];
+  const bg = themeData?.colors?.["editor.background"] ?? "#0a0a0c";
+  const lineNumColor = themeData?.colors?.["editorLineNumber.foreground"] ?? "#808080";
+  const lineHighlight = themeData?.colors?.["editor.lineHighlightBackground"] ?? "transparent";
+  const cursorColor = themeData?.colors?.["editorCursor.foreground"] ?? "#f0f0f0";
 
   const colors = useMemo(() => extractTokenColors(theme), [theme]);
   const lines = useMemo(() => buildPreviewLines(colors), [colors]);

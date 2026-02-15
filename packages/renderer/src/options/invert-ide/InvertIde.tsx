@@ -1,5 +1,4 @@
 import { SassCompiler } from "@/sandbox/compiler";
-import { registerCodeEditorThemes } from "@/shared/components/model";
 import { ThemeSwitcher } from "@/shared/components/theme-switcher/ThemeSwitcher";
 import { useAppDispatch } from "@/shared/store/hooks";
 import { loadUserscripts } from "@/shared/store/slices/userscripts.slice";
@@ -16,8 +15,6 @@ export function InvertIde() {
   const dispatch = useAppDispatch();
 
   useEffect(() => {
-    registerCodeEditorThemes();
-
     // Initialize the SASS sandbox compiler early so it's ready when needed
     SassCompiler.initialize();
 
