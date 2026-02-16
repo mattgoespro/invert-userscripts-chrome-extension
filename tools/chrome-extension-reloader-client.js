@@ -3,6 +3,12 @@
   const serverWebsocketUrl = `ws://localhost:${serverWebsocketPort}`;
   const storageKey = `__${chrome.runtime.id}__chrome_ext_snapshot__`;
 
+  const consoleFns = {
+    log: console.log,
+    warn: console.warn,
+    error: console.error,
+  };
+
   function getState() {
     return {
       url: location.href,
@@ -73,10 +79,41 @@
   }
 
   function connect() {
+    /** @type { WebSocket } */
     let websocket;
 
     try {
       websocket = new WebSocket(serverWebsocketUrl);
+
+      // // Patch console logging so that logs are also sent to the server
+      // console.log = (...args) => {
+      //   websocket.send(JSON.stringify({ type: "log", data: args }));
+      //   consoleFns.log(...args);
+      // };
+
+      // console.warn = (...args) => {
+      //   websocket.send(JSON.stringify({ type: "log", data: args }));
+      //   consoleFns.warn(...args);
+      // };
+
+      // console.error = (...args) => {
+      //   websocket.send(JSON.stringify({ type: "log", data: args }));
+      //   consoleFns.error(...args);
+      // };
+      Object.assign(console, {
+        log: (...args) => {
+          websocket.send(JSON.stringify({ type: "log", data: args }));
+          consoleFns.log(...args);
+        },
+        warn: (...args) => {
+          websocket.send(JSON.stringify({ type: "log", data: args }));
+          consoleFns.warn(...args);
+        },
+        error: (...args) => {
+          websocket.send(JSON.stringify({ type: "log", data: args }));
+          consoleFns.error(...args);
+        },
+      });
     } catch {
       console.warn("Unable to connect, retrying in 1s...");
       setTimeout(connect, 1000);
@@ -100,14 +137,6 @@
     };
 
     websocket.onclose = () => setTimeout(connect, 1000);
-
-    websocket.onerror = () => {
-      try {
-        websocket.close();
-      } catch {
-        console.error("Error closing websocket.");
-      }
-    };
   }
 
   if (document.readyState === "complete") {

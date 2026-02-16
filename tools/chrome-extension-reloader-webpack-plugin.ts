@@ -69,13 +69,26 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
   private startPluginWebsocketServer() {
     this._wss = new WebSocketServer({ port: this._options.port });
 
-    this._wss.on("connection", () => {
+    this._wss.on("connection", (ws) => {
       this._log.verbose("Extension client connected from the browser.");
 
       this.broadcastExtClientMessage({
         type: "log",
         data: this._log.createMessage("INFO", "Connected to Chrome Extension Reloader."),
       });
+
+      ws.onmessage = (event) => {
+        try {
+          const message: BroadcastMessage = JSON.parse(event.data.toString());
+
+          if (message.type === "log") {
+            this._log.info(message.data);
+          }
+        } catch (error) {
+          this._log.error("Failed to parse message from client:");
+          this._log.error(error);
+        }
+      };
     });
 
     this._log.verbose(`Listening on port: ${this._options.port}`);

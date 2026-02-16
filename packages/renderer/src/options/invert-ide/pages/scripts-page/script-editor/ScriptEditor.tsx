@@ -23,9 +23,10 @@ export function ScriptEditor() {
   const theme = useAppSelector(selectTheme);
   const containerRef = useRef<HTMLDivElement>(null);
   const [leftPanelPercent, setLeftPanelPercent] = useState(50);
+  const [monacoReady, setMonacoReady] = useState(false);
 
   useEffect(() => {
-    registerMonaco();
+    registerMonaco().then(() => setMonacoReady(true));
   }, []);
 
   const handleResize = useCallback((delta: number) => {
@@ -58,35 +59,39 @@ export function ScriptEditor() {
         <ScriptMetadata script={script} />
       </div>
       <div className="script-editor--editor-container" ref={containerRef}>
-        <div
-          className="script-editor--code-editor"
-          style={{ flex: `0 0 calc(${leftPanelPercent}% - 6px)` }}
-        >
-          <CodeEditor
-            modelId={script.id}
-            theme={theme}
-            language="typescript"
-            contents={script.code.source.typescript}
-            autoFormat={autoFormat}
-            onCodeModified={() => onCodeModified()}
-            onCodeSaved={(code) => onCodeSaved("typescript", code)}
-          />
-        </div>
-        <ResizeHandle direction="horizontal" onResize={handleResize} />
-        <div
-          className="script-editor--code-editor"
-          style={{ flex: `0 0 calc(${100 - leftPanelPercent}% - 6px)` }}
-        >
-          <CodeEditor
-            modelId={script.id}
-            theme={theme}
-            language="scss"
-            contents={script.code.source.scss}
-            autoFormat={autoFormat}
-            onCodeModified={() => onCodeModified()}
-            onCodeSaved={(code) => onCodeSaved("scss", code)}
-          />
-        </div>
+        {monacoReady && (
+          <>
+            <div
+              className="script-editor--code-editor"
+              style={{ flex: `0 0 calc(${leftPanelPercent}% - 6px)` }}
+            >
+              <CodeEditor
+                modelId={script.id}
+                theme={theme}
+                language="typescript"
+                contents={script.code.source.typescript}
+                autoFormat={autoFormat}
+                onCodeModified={() => onCodeModified()}
+                onCodeSaved={(code) => onCodeSaved("typescript", code)}
+              />
+            </div>
+            <ResizeHandle direction="horizontal" onResize={handleResize} />
+            <div
+              className="script-editor--code-editor"
+              style={{ flex: `0 0 calc(${100 - leftPanelPercent}% - 6px)` }}
+            >
+              <CodeEditor
+                modelId={script.id}
+                theme={theme}
+                language="scss"
+                contents={script.code.source.scss}
+                autoFormat={autoFormat}
+                onCodeModified={() => onCodeModified()}
+                onCodeSaved={(code) => onCodeSaved("scss", code)}
+              />
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

@@ -47,6 +47,7 @@
     "**/dist/**": true,
     "**/node_modules/**": true
   },
+  "github.copilot.nextEditSuggestions.enabled": true,
   "npm-outdated.majorUpdateProtection": false,
   "prettier.configPath": "prettier.config.mjs",
   "prettier.requireConfig": true,

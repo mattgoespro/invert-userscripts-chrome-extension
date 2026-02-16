@@ -3,7 +3,7 @@ import { getCodeEditorThemeName } from "@/shared/monaco/monaco";
 import { useAppSelector } from "@/shared/store/hooks";
 import { selectEditorSettings } from "@/shared/store/slices/settings.slice";
 import { useEffect, useRef } from "react";
-import * as monaco from "monaco-editor-core";
+import * as monaco from "monaco-editor";
 
 // Cache models by URI to preserve undo history and cursor position
 const modelCache = new Map<string, monaco.editor.ITextModel>();

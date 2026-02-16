@@ -97,6 +97,7 @@ export default (_args: unknown, { mode }: { mode: "development" | "production" }
           __dirname,
           "packages/renderer/src/assets/styles/_index.scss"
         ),
+        "monaco-editor-core": path.resolve(__dirname, "node_modules", "monaco-editor", "esm", "vs", "editor", "editor.api.js"),
         "monaco-editor": "monaco-editor/esm/vs/editor/editor.api.js",
       },
     },
