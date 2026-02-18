@@ -1,8 +1,10 @@
 {
   "extends": "./tsconfig.base.json",
-  "include": ["tools"],
+  "include": ["tools", "*.ts"],
   "compilerOptions": {
-    "lib": ["dom"],
-    "outDir": "tools"
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "checkJs": true,
+    "lib": ["dom"]
   }
 }

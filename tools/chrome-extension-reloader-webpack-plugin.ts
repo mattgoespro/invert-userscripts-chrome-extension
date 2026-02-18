@@ -1,6 +1,10 @@
 import webpack from "webpack";
 import { WebSocket, WebSocketServer } from "ws";
-import { Logger, createLogger, loadReloaderClient } from "./chrome-extension-reloader-plugin-utils";
+import {
+  type Logger,
+  createLogger,
+  loadReloaderClient,
+} from "./chrome-extension-reloader-plugin-utils.ts";
 
 export type CaptureConsoleOptions = {
   level: "log" | "info" | "warn" | "error";

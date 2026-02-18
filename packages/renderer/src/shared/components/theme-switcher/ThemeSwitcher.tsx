@@ -90,7 +90,7 @@ export function ThemeSwitcher() {
   const activeOption = THEMES.find((t) => t.id === activeTheme) ?? THEMES[0];
 
   return (
-    <div className="theme-switcher">
+    <div className="theme-switcher" onBlur={() => setExpanded(false)}>
       <button
         className="theme-switcher--toggle"
         onClick={() => setExpanded((prev) => !prev)}

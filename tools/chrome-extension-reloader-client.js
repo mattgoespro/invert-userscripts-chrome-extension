@@ -1,5 +1,3 @@
-import { type CaptureConsoleOptions } from "./chrome-extension-reloader-webpack-plugin.ts";
-
 const serverWebsocketPort = `{{port}}`;
 const serverWebsocketUrl = `ws://localhost:${serverWebsocketPort}`;
 const storageKey = `__${chrome.runtime.id}__chrome_ext_snapshot__`;
@@ -12,14 +10,12 @@ const consoleFns = {
   info: console.info,
   warn: console.warn,
   error: console.error,
-} as const;
+};
 
-type ConsoleLevel = keyof typeof consoleFns;
-
-let websocket: WebSocket;
+let websocket;
 
 (() => {
-  function patchConsole(options: CaptureConsoleOptions) {
+  function patchConsole(options) {
     if (websocket == null || websocket.readyState !== WebSocket.OPEN) {
       return;
     }
@@ -29,16 +25,16 @@ let websocket: WebSocket;
       level: typeof options.level === "boolean" && options.level ? "log" : options.level,
       filter: options.filter ?? filterDefaultFn,
     };
-    const captureLevels: ConsoleLevel[] = ["debug", "log", "info", "warn", "error"];
+    const captureLevels = ["debug", "log", "info", "warn", "error"];
 
-    const shouldPatchLevel = (level: ConsoleLevel) =>
+    const shouldPatchLevel = (level) =>
       captureLevels.indexOf(level) >= captureLevels.indexOf(captureOptions.level);
-    const shouldCaptureMessage = (...message: unknown[]) =>
+    const shouldCaptureMessage = (...message) =>
       captureOptions.filter(message) && websocket.readyState === WebSocket.OPEN;
 
     Object.assign(console, {
       debug: shouldPatchLevel("debug")
-        ? (...args: Parameters<typeof console.debug>) => {
+        ? (...args) => {
             consoleFns.debug(...args);
             if (shouldCaptureMessage(...args)) {
               websocket.send(JSON.stringify({ type: "log", data: args }));
@@ -46,7 +42,7 @@ let websocket: WebSocket;
           }
         : consoleFns.debug,
       log: shouldPatchLevel("log")
-        ? (...args: Parameters<typeof console.log>) => {
+        ? (...args) => {
             consoleFns.log(...args);
 
             if (shouldCaptureMessage(...args)) {
@@ -55,7 +51,7 @@ let websocket: WebSocket;
           }
         : consoleFns.log,
       info: shouldPatchLevel("info")
-        ? (...args: Parameters<typeof console.info>) => {
+        ? (...args) => {
             consoleFns.info(...args);
 
             if (shouldCaptureMessage(...args)) {
@@ -64,7 +60,7 @@ let websocket: WebSocket;
           }
         : consoleFns.info,
       warn: shouldPatchLevel("warn")
-        ? (...args: Parameters<typeof console.warn>) => {
+        ? (...args) => {
             consoleFns.warn(...args);
 
             if (shouldCaptureMessage(...args)) {
@@ -73,7 +69,7 @@ let websocket: WebSocket;
           }
         : consoleFns.warn,
       error: shouldPatchLevel("error")
-        ? (...args: Parameters<typeof console.error>) => {
+        ? (...args) => {
             consoleFns.error(...args);
 
             if (shouldCaptureMessage(...args)) {
