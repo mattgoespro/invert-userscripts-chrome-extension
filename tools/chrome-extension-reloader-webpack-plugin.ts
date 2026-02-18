@@ -1,16 +1,21 @@
 import webpack from "webpack";
 import { WebSocket, WebSocketServer } from "ws";
-import { createLogger, loadReloaderClient } from "./chrome-extension-reloader-plugin-utils.ts";
-import type { Logger } from "./chrome-extension-reloader-plugin-utils.ts";
+import { Logger, createLogger, loadReloaderClient } from "./chrome-extension-reloader-plugin-utils";
+
+export type CaptureConsoleOptions = {
+  level: "log" | "info" | "warn" | "error";
+  filter?: (...message: unknown[]) => boolean;
+};
 
 export interface ChromeExtensionReloaderPluginOptions {
   port?: number;
   verbose?: boolean;
   autoLaunchBrowser?: boolean;
+  captureConsole?: boolean | CaptureConsoleOptions;
 }
 
 type BroadcastMessage = {
-  type: "reload" | "log";
+  type: "configure" | "reload" | "log";
   data?: string;
 };
 
@@ -30,6 +35,7 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
       port: options.port ?? 8081,
       verbose: options.verbose ?? false,
       autoLaunchBrowser: options.autoLaunchBrowser ?? false,
+      captureConsole: options.captureConsole ?? false,
     };
 
     this._clientReloaderScriptContent = loadReloaderClient([
@@ -76,6 +82,12 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
         type: "log",
         data: this._log.createMessage("INFO", "Connected to Chrome Extension Reloader."),
       });
+      this.broadcastExtClientMessage({
+        type: "configure",
+        data: JSON.stringify({
+          captureConsole: this._options.captureConsole,
+        }),
+      });
 
       ws.onmessage = (event) => {
         try {
@@ -109,6 +121,11 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
     };
 
     switch (message.type) {
+      case "configure": {
+        this._log.info("Sending configuration to extension client...");
+        sendMessageToClients(message);
+        break;
+      }
       case "reload": {
         this._log.info("Reloading extension...");
         sendMessageToClients(message);
@@ -117,6 +134,7 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
       }
       case "log": {
         sendMessageToClients(message);
+        break;
       }
     }
   }
