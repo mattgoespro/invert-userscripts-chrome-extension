@@ -1,6 +1,7 @@
 import { SassCompiler } from "@/sandbox/compiler";
 import { DevTools } from "../../shared/components/devtools/DevTools";
 import { useAppDispatch } from "@/shared/store/hooks";
+import { loadSettings } from "@/shared/store/slices/settings.slice";
 import { loadUserscripts } from "@/shared/store/slices/userscripts.slice";
 import { useEffect, useState } from "react";
 import "./InvertIde.scss";
@@ -19,6 +20,7 @@ export function InvertIde() {
     SassCompiler.initialize();
 
     dispatch(loadUserscripts());
+    dispatch(loadSettings());
   }, [dispatch]);
 
   const onNavigate = (button: SidebarButton) => {

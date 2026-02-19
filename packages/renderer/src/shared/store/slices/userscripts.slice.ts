@@ -3,6 +3,7 @@ import { Userscript, UserscriptSourceCode, Userscripts } from "@shared/model";
 import { StorageManager } from "@shared/storage";
 import { TypeScriptCompiler, SassCompiler } from "@/sandbox/compiler";
 import type { RootState } from "../store";
+import { uuid } from "@/shared/utils";
 
 export type UserscriptsState = {
   scripts?: Userscripts;
@@ -18,14 +19,32 @@ export const loadUserscripts = createAsyncThunk("userscripts/loadUserscripts", a
   return Object.values(scriptsMap);
 });
 
-export const createUserscript = createAsyncThunk(
-  "userscripts/createUserscript",
-  async (script: Userscript) => {
-    await StorageManager.saveScript(script);
-    console.log("Saved new userscript to storage:", script.id);
-    return script;
-  }
-);
+export const createUserscript = createAsyncThunk("userscripts/createUserscript", async () => {
+  const timestamp = Date.now();
+  const script: Userscript = {
+    id: uuid(),
+    name: "New Script",
+    enabled: false,
+    status: "modified",
+    code: {
+      source: {
+        typescript: "// Your code here",
+        scss: "/* Your styles here */",
+      },
+      compiled: {
+        javascript: "",
+        css: "",
+      },
+    },
+    urlPatterns: [],
+    runAt: "beforePageLoad",
+    createdAt: timestamp,
+    updatedAt: timestamp,
+  };
+  await StorageManager.saveScript(script);
+  console.log("Saved new userscript to storage:", script.id);
+  return script;
+});
 
 export const deleteUserscript = createAsyncThunk(
   "userscripts/deleteUserscript",

@@ -23,33 +23,29 @@ export class StorageManager {
   }
 
   static async saveScript(script: Userscript): Promise<void> {
-    await this.withLogging(`Save script ${script.id}`, async () => {
-      const allScripts = await this.getAllScripts();
-      await chrome.storage.sync.set({ userscripts: { ...allScripts, [script.id]: script } });
-    });
+    const allScripts = await this.getAllScripts();
+    await chrome.storage.sync.set({ userscripts: { ...allScripts, [script.id]: script } });
   }
 
   static async updateScript(id: string, updates: Partial<Omit<Userscript, "id">>): Promise<void> {
-    await this.withLogging(`Update script ${id}`, async () => {
-      const allScripts = await this.getAllScripts();
+    const allScripts = await this.getAllScripts();
 
-      const script = allScripts[id];
+    const script = allScripts[id];
 
-      if (!script) {
-        throw new Error(`Userscript not found: ${id}`);
-      }
+    if (!script) {
+      throw new Error(`Userscript not found: ${id}`);
+    }
 
-      const updatedScript = { ...script, ...updates };
-      allScripts[id] = updatedScript;
+    const updatedScript = { ...script, ...updates };
+    allScripts[id] = updatedScript;
 
-      console.log("StorageManager: Saving updated script:", {
-        id,
-        typescript: updatedScript.code?.source?.typescript?.substring(0, 100),
-        scss: updatedScript.code?.source?.scss?.substring(0, 100),
-      });
-
-      await chrome.storage.sync.set({ userscripts: allScripts });
+    console.log("StorageManager: Saving updated script:", {
+      id,
+      typescript: updatedScript.code?.source?.typescript?.substring(0, 100),
+      scss: updatedScript.code?.source?.scss?.substring(0, 100),
     });
+
+    await chrome.storage.sync.set({ userscripts: allScripts });
   }
 
   static async deleteScript(scriptId: string): Promise<void> {
@@ -89,13 +85,5 @@ export class StorageManager {
   static async saveEditorSettings(editorSettings: Partial<EditorSettings>): Promise<void> {
     const current = await this.getEditorSettings();
     await chrome.storage.sync.set({ editorSettings: { ...current, ...editorSettings } });
-  }
-
-  static async withLogging(operation: string, func: () => Promise<void>): Promise<void> {
-    console.log(`StorageManager: Starting operation "${operation}"`);
-    await func();
-    console.log(`StorageManager: Completed operation "${operation}"`);
-    console.log("StorageManager: State");
-    console.log(await this.getAll());
   }
 }

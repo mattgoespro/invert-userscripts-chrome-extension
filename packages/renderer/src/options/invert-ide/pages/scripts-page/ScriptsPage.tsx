@@ -7,7 +7,6 @@ import {
   selectAllUserscripts,
   setCurrentUserscript,
 } from "@/shared/store/slices/userscripts.slice";
-import { uuid } from "@/shared/utils";
 import { PlusIcon } from "lucide-react";
 import { useEffect } from "react";
 import { ScriptEditor } from "./script-editor/ScriptEditor";
@@ -20,30 +19,7 @@ export function ScriptsPage() {
   const selectedScript = useAppSelector((state) => state.userscripts.currentUserscript);
 
   const onCreateScript = async () => {
-    const timestamp = Date.now();
-
-    dispatch(
-      createUserscript({
-        id: uuid(),
-        name: "New Script",
-        enabled: false,
-        status: "modified",
-        code: {
-          source: {
-            typescript: "// Your code here",
-            scss: "/* Your styles here */",
-          },
-          compiled: {
-            javascript: "",
-            css: "",
-          },
-        },
-        urlPatterns: [],
-        runAt: "beforePageLoad",
-        createdAt: timestamp,
-        updatedAt: timestamp,
-      })
-    );
+    dispatch(createUserscript());
   };
 
   useEffect(() => {

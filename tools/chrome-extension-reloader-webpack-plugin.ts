@@ -1,5 +1,5 @@
 import webpack from "webpack";
-import { WebSocket, WebSocketServer } from "ws";
+import ws, { WebSocket, WebSocketServer } from "ws";
 import {
   type Logger,
   createLogger,
@@ -20,7 +20,7 @@ export interface ChromeExtensionReloaderPluginOptions {
 
 type BroadcastMessage = {
   type: "configure" | "reload" | "log";
-  data?: string;
+  data?: unknown;
 };
 
 export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPluginInstance {
@@ -88,9 +88,9 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
       });
       this.broadcastExtClientMessage({
         type: "configure",
-        data: JSON.stringify({
+        data: {
           captureConsole: this._options.captureConsole,
-        }),
+        },
       });
 
       ws.onmessage = (event) => {
@@ -98,7 +98,7 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
           const message: BroadcastMessage = JSON.parse(event.data.toString());
 
           if (message.type === "log") {
-            this._log.info(message.data);
+            this._log.info(message.data as string);
           }
         } catch (error) {
           this._log.error("Failed to parse message from client:");
@@ -114,7 +114,7 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
     const sendMessageToClients = (message: BroadcastMessage) => {
       for (const client of this._wss.clients) {
         if (client.readyState !== WebSocket.OPEN) {
-          this._log.verbose("An existing client is not ready.");
+          this._log.verbose("An existing client is not ready to receive messages. Skipping...");
           continue;
         }
 
@@ -126,8 +126,8 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
 
     switch (message.type) {
       case "configure": {
-        this._log.info("Sending configuration to extension client...");
         sendMessageToClients(message);
+        this._log.verbose("Sent configuration to extension client.");
         break;
       }
       case "reload": {

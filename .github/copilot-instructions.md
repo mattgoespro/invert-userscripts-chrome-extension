@@ -825,19 +825,6 @@ Consistent code formatting is enforced via Prettier (`prettier.config.mjs`):
 | `tabWidth`      | `2`     |
 | `useTabs`       | `false` |
 
-### Agent Compliance Requirements
-
-When generating or modifying code:
-
-1. **Always use double quotes** for strings (not single quotes)
-2. **Always include semicolons** at the end of statements
-3. **Limit line length to 100 characters** — break long lines appropriately
-4. **Use 2-space indentation** (no tabs)
-5. **Include trailing commas** in multi-line arrays/objects (ES5 style)
-6. **Prefix unused variables with `_`** to avoid lint warnings (e.g., `_unusedParam`)
-7. **Avoid `any` types** — use explicit types or `unknown` with type guards
-8. **Run `npm run lint`** mentally before suggesting code to ensure compliance
-
 ---
 
 ## TypeScript Configuration
@@ -886,17 +873,23 @@ tsconfig.json (root — includes tools/, *.ts at root)
 - **Lib**: `dom`, `dom.iterable`
 - **Includes**: `src/**/*.ts` + `../renderer/src/sandbox/compiler.ts` (cross-package)
 
-#### TypeScript Best Practices
+## TypeScript Best Practices
+
+When writing, refactoring, or updating TypeScript code:
 
 1. **Use explicit types** for function parameters and return values
 2. **Avoid `any`** — prefer specific types or `unknown` with type guards
 3. **Use `interface` for object shapes** and `type` for unions/intersections
-4. **Prefix unused variables with `_`** to comply with lint rules
-5. **Use `as const` for literal types** when appropriate (e.g., action type constants)
-6. **Leverage TypeScript's type inference** where possible, but be explicit in public APIs
-7. **Avoid single-line `if` statements** without braces for better readability
-8. **Use `error` as the variable name in `catch` blocks** for consistency
-9. **Use `event` as the variable name for event handlers** for clarity
+4. **Use `as const` for literal types** when appropriate (e.g., action type constants)
+5. **Leverage TypeScript's type inference** where possible, but be explicit in public APIs
+6. **Use scoped control flow blocks** (e.g., `if`, `for`, `try/catch`) with proper block scoping and avoid single-line statements without braces
+7. **Use `error` as the variable name in `catch` blocks** for consistency
+8. **Use `event` as the variable name for event handlers** for clarity
+
+### Additional Rules
+
+For additional code quality, refer to the ESLint rules defined in `eslint.config.mjs`, especially those related to TypeScript and React.
+For formatting consistency, refer to the Prettier configuration in `prettier.config.mjs`.
 
 ---
 

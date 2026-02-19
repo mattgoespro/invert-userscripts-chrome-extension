@@ -2,7 +2,7 @@ import { CodeEditor } from "@/options/invert-ide/components/code-editor/CodeEdit
 import { ResizeHandle } from "@/shared/components/resize-handle/ResizeHandle";
 import { registerMonaco } from "@/shared/monaco/monaco";
 import { useAppDispatch, useAppSelector } from "@/shared/store/hooks";
-import { selectAutoFormat, selectTheme } from "@/shared/store/slices/settings.slice";
+import { selectEditorSettings } from "@/shared/store/slices/settings.slice";
 import {
   markUserscriptModified,
   selectCurrentUserscript,
@@ -19,8 +19,7 @@ const MAX_PANEL_WIDTH_PERCENT = 80;
 export function ScriptEditor() {
   const dispatch = useAppDispatch();
   const script = useAppSelector(selectCurrentUserscript);
-  const autoFormat = useAppSelector(selectAutoFormat);
-  const theme = useAppSelector(selectTheme);
+  const editorSettings = useAppSelector(selectEditorSettings);
   const containerRef = useRef<HTMLDivElement>(null);
   const [leftPanelPercent, setLeftPanelPercent] = useState(50);
   const [monacoReady, setMonacoReady] = useState(false);
@@ -67,10 +66,13 @@ export function ScriptEditor() {
             >
               <CodeEditor
                 modelId={script.id}
-                theme={theme}
                 language="typescript"
                 contents={script.code.source.typescript}
-                autoFormat={autoFormat}
+                settings={{
+                  theme: editorSettings.theme,
+                  autoFormat: editorSettings.autoFormat,
+                  fontSize: editorSettings.fontSize,
+                }}
                 onCodeModified={() => onCodeModified()}
                 onCodeSaved={(code) => onCodeSaved("typescript", code)}
               />
@@ -82,10 +84,13 @@ export function ScriptEditor() {
             >
               <CodeEditor
                 modelId={script.id}
-                theme={theme}
                 language="scss"
                 contents={script.code.source.scss}
-                autoFormat={autoFormat}
+                settings={{
+                  theme: editorSettings.theme,
+                  autoFormat: editorSettings.autoFormat,
+                  fontSize: editorSettings.fontSize,
+                }}
                 onCodeModified={() => onCodeModified()}
                 onCodeSaved={(code) => onCodeSaved("scss", code)}
               />

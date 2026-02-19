@@ -1,7 +1,5 @@
 import { FormatterLanguage, PrettierFormatter } from "@/sandbox/formatter";
 import { getCodeEditorThemeName } from "@/shared/monaco/monaco";
-import { useAppSelector } from "@/shared/store/hooks";
-import { selectEditorSettings } from "@/shared/store/slices/settings.slice";
 import { useEffect, useRef } from "react";
 import * as monaco from "monaco-editor";
 
@@ -25,17 +23,20 @@ function getOrCreateModel(
 
 type CodeEditorProps = {
   modelId: string; /** Unique identifier for this editor's content (e.g., scriptId) */
-  theme: string;
-  language: FormatterLanguage;
   contents: string;
-  autoFormat?: boolean;
+  language: FormatterLanguage;
+  settings?: {
+    theme: string;
+    autoFormat: boolean;
+    fontSize: number;
+  };
   onCodeModified: (value: string) => void;
   onCodeSaved: (value: string) => void;
 };
 
 export function CodeEditor(props: CodeEditorProps) {
-  const { modelId, language, contents, onCodeModified, onCodeSaved } = props;
-  const { theme, autoFormat, fontSize } = useAppSelector(selectEditorSettings);
+  const { modelId, language, contents, settings, onCodeModified, onCodeSaved } = props;
+
   const editorRef = useRef<HTMLDivElement>(null);
   const editorInstanceRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
   const onCodeModifiedRef = useRef(onCodeModified);
@@ -52,8 +53,8 @@ export function CodeEditor(props: CodeEditorProps) {
     }
 
     const editorInstance = monaco.editor.create(editorRef.current, {
-      theme: getCodeEditorThemeName(theme),
-      fontSize: fontSize,
+      theme: getCodeEditorThemeName(settings?.theme),
+      fontSize: settings?.fontSize,
       automaticLayout: true,
       padding: { top: 25, bottom: 10 },
       fixedOverflowWidgets: true,
@@ -77,12 +78,17 @@ export function CodeEditor(props: CodeEditorProps) {
       editorInstance.dispose();
       editorInstanceRef.current = null;
     };
-  }, [fontSize]);
+  }, []);
 
   // Update theme dynamically without recreating the editor
   useEffect(() => {
-    monaco.editor.setTheme(getCodeEditorThemeName(theme));
-  }, [theme]);
+    monaco.editor.setTheme(getCodeEditorThemeName(settings?.theme));
+  }, [settings?.theme]);
+
+  // Update font size dynamically without recreating the editor
+  useEffect(() => {
+    editorInstanceRef.current?.updateOptions({ fontSize: settings?.fontSize });
+  }, [settings?.fontSize]);
 
   // Swap model when modelId changes (switching scripts)
   useEffect(() => {
@@ -126,7 +132,7 @@ export function CodeEditor(props: CodeEditorProps) {
 
         let code = editorInstance.getValue();
 
-        if (autoFormat) {
+        if (settings?.autoFormat) {
           code = await PrettierFormatter.format(code, language);
           editorInstance.setValue(code);
         }
@@ -137,7 +143,7 @@ export function CodeEditor(props: CodeEditorProps) {
 
     container.addEventListener("keydown", handleKeyDown);
     return () => container.removeEventListener("keydown", handleKeyDown);
-  }, [autoFormat, language, onCodeSaved]);
+  }, [settings?.autoFormat, language, onCodeSaved]);
 
   return (
     <div

@@ -8,10 +8,7 @@ import {
   loadSettings,
   selectEditorSettings,
   selectIsLoading,
-  updateAutoFormat,
-  updateFontSize,
-  updateTabSize,
-  updateTheme,
+  updateSettings,
 } from "@/shared/store/slices/settings.slice";
 import { useEffect } from "react";
 import "./SettingsPage.scss";
@@ -27,23 +24,23 @@ export function Settings() {
   }, [dispatch]);
 
   const handleThemeChange = (theme: string) => {
-    dispatch(updateTheme(theme));
+    dispatch(updateSettings({ theme }));
   };
 
   const handleFontSizeChange = (fontSize: number) => {
     if (!isNaN(fontSize) && fontSize >= 8 && fontSize <= 32) {
-      dispatch(updateFontSize(fontSize));
+      dispatch(updateSettings({ fontSize }));
     }
   };
 
   const handleTabSizeChange = (tabSize: number) => {
     if (!isNaN(tabSize) && tabSize >= 2 && tabSize <= 8) {
-      dispatch(updateTabSize(tabSize));
+      dispatch(updateSettings({ tabSize }));
     }
   };
 
   const handleAutoFormatChange = (autoFormat: boolean) => {
-    dispatch(updateAutoFormat(autoFormat));
+    dispatch(updateSettings({ autoFormat }));
   };
 
   if (isLoading) {

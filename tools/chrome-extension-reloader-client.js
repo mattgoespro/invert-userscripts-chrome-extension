@@ -20,63 +20,33 @@ let websocket;
       return;
     }
 
-    const filterDefaultFn = () => true;
     const captureOptions = {
       level: typeof options.level === "boolean" && options.level ? "log" : options.level,
-      filter: options.filter ?? filterDefaultFn,
+      filter: options.filter ?? (() => false),
     };
     const captureLevels = ["debug", "log", "info", "warn", "error"];
 
     const shouldPatchLevel = (level) =>
       captureLevels.indexOf(level) >= captureLevels.indexOf(captureOptions.level);
-    const shouldCaptureMessage = (...message) =>
-      captureOptions.filter(message) && websocket.readyState === WebSocket.OPEN;
+    const shouldCaptureMessage = (message) =>
+      websocket.readyState === WebSocket.OPEN && !captureOptions.filter(message);
+    const assignFunction = (level) =>
+      shouldPatchLevel(level)
+        ? (...args) => {
+            consoleFns[level](...args);
+
+            if (shouldCaptureMessage(args)) {
+              websocket.send(JSON.stringify({ type: "log", data: args }));
+            }
+          }
+        : consoleFns[level];
 
     Object.assign(console, {
-      debug: shouldPatchLevel("debug")
-        ? (...args) => {
-            consoleFns.debug(...args);
-            if (shouldCaptureMessage(...args)) {
-              websocket.send(JSON.stringify({ type: "log", data: args }));
-            }
-          }
-        : consoleFns.debug,
-      log: shouldPatchLevel("log")
-        ? (...args) => {
-            consoleFns.log(...args);
-
-            if (shouldCaptureMessage(...args)) {
-              websocket.send(JSON.stringify({ type: "log", data: args }));
-            }
-          }
-        : consoleFns.log,
-      info: shouldPatchLevel("info")
-        ? (...args) => {
-            consoleFns.info(...args);
-
-            if (shouldCaptureMessage(...args)) {
-              websocket.send(JSON.stringify({ type: "log", data: args }));
-            }
-          }
-        : consoleFns.info,
-      warn: shouldPatchLevel("warn")
-        ? (...args) => {
-            consoleFns.warn(...args);
-
-            if (shouldCaptureMessage(...args)) {
-              websocket.send(JSON.stringify({ type: "log", data: args }));
-            }
-          }
-        : consoleFns.warn,
-      error: shouldPatchLevel("error")
-        ? (...args) => {
-            consoleFns.error(...args);
-
-            if (shouldCaptureMessage(...args)) {
-              websocket.send(JSON.stringify({ type: "log", data: args }));
-            }
-          }
-        : consoleFns.error,
+      debug: assignFunction("debug"),
+      log: assignFunction("log"),
+      info: assignFunction("info"),
+      warn: assignFunction("warn"),
+      error: assignFunction("error"),
     });
   }
 

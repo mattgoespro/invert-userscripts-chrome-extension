@@ -1,5 +1,5 @@
 import { createHighlighterCore, ThemeRegistrationRaw } from "@shikijs/core";
-import { createJavaScriptRegexEngine } from "@shikijs/engine-javascript";
+import { createOnigurumaEngine } from "@shikijs/engine-oniguruma";
 import { shikiToMonaco } from "@shikijs/monaco";
 import * as monaco from "monaco-editor";
 
@@ -118,7 +118,9 @@ async function initializeMonaco(): Promise<void> {
   };
 
   // Create the Shiki highlighter with all app themes and language grammars.
-  // Uses the JavaScript regex engine (no WASM) for Chrome extension compatibility.
+  // Uses the WASM-based Oniguruma engine for fast, accurate TextMate tokenization.
+  // The inlined WASM binary avoids needing a separate .wasm asset file.
+  // CSP allows wasm-unsafe-eval on extension pages (see manifest.json).
   const highlighter = await createHighlighterCore({
     themes,
     langs: [
@@ -127,7 +129,7 @@ async function initializeMonaco(): Promise<void> {
       import("@shikijs/langs/css"),
       import("@shikijs/langs/scss"),
     ],
-    engine: createJavaScriptRegexEngine(),
+    engine: await createOnigurumaEngine(import("@shikijs/engine-oniguruma/wasm-inlined")),
   });
 
   // Register language IDs with Monaco so shikiToMonaco's monacoLanguageIds check passes.

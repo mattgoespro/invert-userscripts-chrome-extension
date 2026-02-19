@@ -167,7 +167,9 @@ export default (_args: unknown, { mode }: { mode: "development" | "production" }
           },
         },
       }),
-      mode === "development" ? new ChromeExtensionReloaderWebpackPlugin() : false,
+      mode === "development"
+        ? new ChromeExtensionReloaderWebpackPlugin({ verbose: true, captureConsole: true })
+        : false,
     ],
     optimization: {
       minimize: mode === "production",
