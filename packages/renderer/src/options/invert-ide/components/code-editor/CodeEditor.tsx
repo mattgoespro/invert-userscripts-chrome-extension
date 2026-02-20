@@ -1,10 +1,17 @@
 import { FormatterLanguage, PrettierFormatter } from "@/sandbox/formatter";
-import { getCodeEditorThemeName } from "@/shared/monaco/monaco";
+import {
+  addSharedScriptExtraLib,
+  ensureTypescriptDefaults,
+  getCodeEditorThemeName,
+} from "@/shared/monaco/monaco";
 import { useEffect, useRef } from "react";
 import * as monaco from "monaco-editor";
 
 // Cache models by URI to preserve undo history and cursor position
 const modelCache = new Map<string, monaco.editor.ITextModel>();
+
+// Track extra lib disposables for shared scripts
+const sharedLibDisposables = new Map<string, monaco.IDisposable>();
 
 function getOrCreateModel(
   uri: string,
@@ -21,10 +28,63 @@ function getOrCreateModel(
   return model;
 }
 
+/**
+ * Generates a TypeScript declaration from shared script source code.
+ * Extracts exported members so Monaco can provide intellisense for
+ * `import { ... } from "shared/moduleName"`.
+ */
+function generateSharedScriptDeclaration(moduleName: string, sourceCode: string): string {
+  const lines: string[] = [];
+  lines.push(`declare module "shared/${moduleName}" {`);
+
+  // Match exported const/let/var declarations
+  const varRegex = /^export\s+(?:const|let|var)\s+(\w+)\s*(?::\s*([^=;]+?))?\s*[=;]/gm;
+  let match: RegExpExecArray | null;
+  while ((match = varRegex.exec(sourceCode)) !== null) {
+    const name = match[1];
+    const type = match[2]?.trim() || "any";
+    lines.push(`  export const ${name}: ${type};`);
+  }
+
+  // Match exported function declarations
+  const fnRegex = /^export\s+function\s+(\w+)\s*(\([^)]*\))\s*(?::\s*([^{]+?))?\s*\{/gm;
+  while ((match = fnRegex.exec(sourceCode)) !== null) {
+    const name = match[1];
+    const params = match[2];
+    const returnType = match[3]?.trim() || "any";
+    lines.push(`  export function ${name}${params}: ${returnType};`);
+  }
+
+  // Match exported class declarations
+  const classRegex = /^export\s+class\s+(\w+)/gm;
+  while ((match = classRegex.exec(sourceCode)) !== null) {
+    const name = match[1];
+    lines.push(`  export class ${name} {}`);
+  }
+
+  // Match exported type/interface declarations
+  const typeRegex = /^export\s+(?:type|interface)\s+(\w+)/gm;
+  while ((match = typeRegex.exec(sourceCode)) !== null) {
+    const name = match[1];
+    lines.push(`  export type ${name} = any;`);
+  }
+
+  lines.push("}");
+  return lines.join("\n");
+}
+
+type SharedScriptInfo = {
+  id: string;
+  name: string;
+  moduleName: string;
+  sourceCode: string;
+};
+
 type CodeEditorProps = {
   modelId: string; /** Unique identifier for this editor's content (e.g., scriptId) */
   contents: string;
   language: FormatterLanguage;
+  sharedScripts?: SharedScriptInfo[];
   settings?: {
     theme: string;
     autoFormat: boolean;
@@ -35,7 +95,8 @@ type CodeEditorProps = {
 };
 
 export function CodeEditor(props: CodeEditorProps) {
-  const { modelId, language, contents, settings, onCodeModified, onCodeSaved } = props;
+  const { modelId, language, contents, sharedScripts, settings, onCodeModified, onCodeSaved } =
+    props;
 
   const editorRef = useRef<HTMLDivElement>(null);
   const editorInstanceRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
@@ -103,6 +164,13 @@ export function CodeEditor(props: CodeEditorProps) {
 
     editorInstance.setModel(model);
 
+    // Setting a TypeScript model triggers the contribution module to load,
+    // which populates monaco.languages.typescript. Configure compiler options
+    // now that they're guaranteed to be available.
+    if (language === "typescript") {
+      ensureTypescriptDefaults();
+    }
+
     // Listen to content changes on this model
     const disposable = model.onDidChangeContent(() => {
       onCodeModifiedRef.current(model.getValue());
@@ -110,6 +178,37 @@ export function CodeEditor(props: CodeEditorProps) {
 
     return () => disposable.dispose();
   }, [modelId, language, contents]);
+
+  // Register shared script type declarations for TypeScript intellisense
+  useEffect(() => {
+    if (language !== "typescript" || !sharedScripts) {
+      return;
+    }
+
+    // Dispose previous shared lib registrations
+    for (const [key, disposable] of sharedLibDisposables) {
+      disposable.dispose();
+      sharedLibDisposables.delete(key);
+    }
+
+    // Register ambient module declarations for each shared script
+    for (const shared of sharedScripts) {
+      if (!shared.moduleName) {
+        continue;
+      }
+      const declaration = generateSharedScriptDeclaration(shared.moduleName, shared.sourceCode);
+      const filePath = `file:///node_modules/@types/shared/${shared.moduleName}/index.d.ts`;
+      const disposable = addSharedScriptExtraLib(declaration, filePath);
+      sharedLibDisposables.set(shared.id, disposable);
+    }
+
+    return () => {
+      for (const [key, disposable] of sharedLibDisposables) {
+        disposable.dispose();
+        sharedLibDisposables.delete(key);
+      }
+    };
+  }, [language, sharedScripts]);
 
   // Handle Ctrl+S on the container
   useEffect(() => {

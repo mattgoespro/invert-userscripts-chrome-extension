@@ -7,7 +7,7 @@ import {
   toggleUserscript,
 } from "@/shared/store/slices/userscripts.slice";
 import { Userscript } from "@shared/model";
-import { EllipsisIcon } from "lucide-react";
+import { EllipsisIcon, PackageIcon } from "lucide-react";
 import "./ScriptListItem.scss";
 
 type ScriptListItemProps = {
@@ -44,13 +44,16 @@ export function ScriptListItem({ script, active }: ScriptListItemProps) {
         "script-list-item--item",
         active ? "script-list-item--item-active" : null,
         script.error ? "script-list-item--item-error" : null,
+        script.shared ? "script-list-item--item-shared" : null,
       ]
         .filter(Boolean)
         .join(" ")}
       onClick={() => onSelectScript()}
     >
       {script.status === "modified" && <div className="script-list-item--unsaved-indicator" />}
+      {script.shared && <PackageIcon size={12} className="script-list-item--shared-icon" />}
       <span className="script-list-item--name">{script.name}</span>
+      {script.shared && <span className="script-list-item--shared-badge">shared</span>}
       <div className="script-list-item--actions">
         <Switch checked={script.enabled} onChange={() => onToggleScript()} />
         <IconButton

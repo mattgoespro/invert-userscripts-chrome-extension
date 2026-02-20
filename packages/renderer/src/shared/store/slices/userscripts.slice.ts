@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk, createSelector, PayloadAction } from "@reduxjs/toolkit";
 import { Userscript, UserscriptSourceCode, Userscripts } from "@shared/model";
 import { StorageManager } from "@shared/storage";
 import { TypeScriptCompiler, SassCompiler } from "@/sandbox/compiler";
@@ -26,6 +26,9 @@ export const createUserscript = createAsyncThunk("userscripts/createUserscript",
     name: "New Script",
     enabled: false,
     status: "modified",
+    shared: false,
+    moduleName: "",
+    sharedScripts: [],
     code: {
       source: {
         typescript: "// Your code here",
@@ -133,9 +136,14 @@ const userscriptsSlice = createSlice({
     selectUserscriptById(state: UserscriptsState, scriptId: string) {
       return state.scripts[scriptId];
     },
-    selectUnsavedUserscripts(state: UserscriptsState) {
-      return Object.values(state.scripts ?? {}).filter((script) => script.status === "modified");
-    },
+    selectUnsavedUserscripts: createSelector(
+      (state: UserscriptsState) => state.scripts,
+      (scripts) => Object.values(scripts ?? {}).filter((script) => script.status === "modified")
+    ),
+    selectSharedUserscripts: createSelector(
+      (state: UserscriptsState) => state.scripts,
+      (scripts) => Object.values(scripts ?? {}).filter((script) => script.shared)
+    ),
   },
   reducers: {
     setCurrentUserscript: {
@@ -217,6 +225,7 @@ export const {
   selectUserscriptById,
   selectCurrentUserscript,
   selectUnsavedUserscripts,
+  selectSharedUserscripts,
 } = userscriptsSlice.selectors;
 
 export default userscriptsSlice.reducer;

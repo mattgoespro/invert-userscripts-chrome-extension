@@ -10,6 +10,9 @@ export interface Userscript {
   enabled: boolean;
   status: UserscriptStatus;
   error?: boolean;
+  shared: boolean;
+  moduleName: string;
+  sharedScripts: string[];
   code: {
     source: {
       [key in UserscriptSourceCode]: string;

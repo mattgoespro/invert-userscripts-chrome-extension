@@ -5,11 +5,12 @@ import { useAppDispatch, useAppSelector } from "@/shared/store/hooks";
 import { selectEditorSettings } from "@/shared/store/slices/settings.slice";
 import {
   markUserscriptModified,
+  selectAllUserscripts,
   selectCurrentUserscript,
   updateUserscriptCode,
 } from "@/shared/store/slices/userscripts.slice";
 import { UserscriptSourceCode } from "@shared/model";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ScriptMetadata } from "./script-metadata/ScriptMetadata";
 import "./ScriptEditor.scss";
 
@@ -19,13 +20,35 @@ const MAX_PANEL_WIDTH_PERCENT = 80;
 export function ScriptEditor() {
   const dispatch = useAppDispatch();
   const script = useAppSelector(selectCurrentUserscript);
+  const allScripts = useAppSelector(selectAllUserscripts);
   const editorSettings = useAppSelector(selectEditorSettings);
   const containerRef = useRef<HTMLDivElement>(null);
   const [leftPanelPercent, setLeftPanelPercent] = useState(50);
   const [monacoReady, setMonacoReady] = useState(false);
 
+  // Build shared scripts info for the TypeScript editor's intellisense
+  const sharedScriptsInfo = useMemo(() => {
+    if (!script?.sharedScripts?.length || !allScripts) {
+      return undefined;
+    }
+    return script.sharedScripts
+      .map((id) => allScripts[id])
+      .filter((s) => s?.shared)
+      .map((s) => ({
+        id: s.id,
+        name: s.name,
+        moduleName: s.moduleName ?? "",
+        sourceCode: s.code.source.typescript,
+      }));
+  }, [script?.sharedScripts, allScripts]);
+
   useEffect(() => {
-    registerMonaco().then(() => setMonacoReady(true));
+    registerMonaco()
+      .then(() => setMonacoReady(true))
+      .catch((error) => {
+        console.error("[Invert IDE] Monaco initialization failed:", error);
+        setMonacoReady(true);
+      });
   }, []);
 
   const handleResize = useCallback((delta: number) => {
@@ -68,6 +91,7 @@ export function ScriptEditor() {
                 modelId={script.id}
                 language="typescript"
                 contents={script.code.source.typescript}
+                sharedScripts={sharedScriptsInfo}
                 settings={{
                   theme: editorSettings.theme,
                   autoFormat: editorSettings.autoFormat,

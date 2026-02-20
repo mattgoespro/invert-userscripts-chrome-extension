@@ -63,6 +63,37 @@
     text-overflow: ellipsis;
   }
 
+  .script-list-item--shared-icon {
+    flex-shrink: 0;
+    margin-right: 8px;
+    color: var(--syntax-keyword);
+    opacity: 0.7;
+  }
+
+  .script-list-item--shared-badge {
+    flex-shrink: 0;
+    margin-left: 8px;
+    margin-right: 4px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--syntax-keyword);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--glass-border-soft);
+    padding: 2px 6px;
+    border-radius: 3px;
+    line-height: 1;
+    user-select: none;
+  }
+
+  &.script-list-item--item-shared {
+    .script-list-item--name {
+      color: var(--syntax-keyword);
+    }
+  }
+
   .script-list-item--actions {
     display: flex;
     align-items: center;

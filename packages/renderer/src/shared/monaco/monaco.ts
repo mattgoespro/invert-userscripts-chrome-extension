@@ -3,6 +3,29 @@ import { createOnigurumaEngine } from "@shikijs/engine-oniguruma";
 import { shikiToMonaco } from "@shikijs/monaco";
 import * as monaco from "monaco-editor";
 
+/**
+ * Runtime handle for Monaco's TypeScript language service defaults.
+ * `monaco.languages.typescript` is deprecated in the type declarations but
+ * still exists at runtime when the MonacoEditorWebpackPlugin bundles the
+ * "typescript" language. We access it via a type assertion because the webpack
+ * `monaco-editor` alias redirects all deep imports to `editor.api.js`,
+ * preventing a direct ESM import of the contribution module.
+ */
+interface MonacoTypescriptDefaults {
+  setCompilerOptions(options: Record<string, unknown>): void;
+  setDiagnosticsOptions(options: Record<string, unknown>): void;
+  addExtraLib(content: string, filePath: string): monaco.IDisposable;
+}
+
+function getTypescriptDefaults(): MonacoTypescriptDefaults | null {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const ts = (monaco.languages as any).typescript;
+  if (!ts?.typescriptDefaults) {
+    return null;
+  }
+  return ts.typescriptDefaults as MonacoTypescriptDefaults;
+}
+
 // Languages managed by Shiki's TextMate tokenizer.
 const SHIKI_LANGUAGES = ["typescript", "javascript", "scss", "css"] as const;
 
@@ -145,6 +168,60 @@ async function initializeMonaco(): Promise<void> {
   // Monaco's language service workers (LSP) remain active for intellisense,
   // diagnostics, and completions — Shiki only replaces the tokenization layer.
   shikiToMonaco(highlighter, monaco);
+}
+
+/**
+ * Lazily configures the TypeScript language service compiler and diagnostics options.
+ * Must be called after a TypeScript editor model has been created, which triggers the
+ * MonacoEditorWebpackPlugin's contribution module to load and populate
+ * `monaco.languages.typescript`. Safe to call multiple times — only runs once.
+ */
+let tsDefaultsConfigured = false;
+
+export function ensureTypescriptDefaults(): void {
+  if (tsDefaultsConfigured) {
+    return;
+  }
+
+  const tsDefaults = getTypescriptDefaults();
+  if (!tsDefaults) {
+    return;
+  }
+
+  tsDefaultsConfigured = true;
+
+  // Enum values sourced from monaco.contribution.js:
+  //   ScriptTarget.ES2020 = 7, ModuleKind.ESNext = 99, ModuleResolutionKind.NodeJs = 2
+  tsDefaults.setCompilerOptions({
+    target: 7 /* ES2020 */,
+    module: 99 /* ESNext */,
+    moduleResolution: 2 /* NodeJs */,
+    allowNonTsExtensions: true,
+    allowJs: true,
+    strict: true,
+    esModuleInterop: true,
+    jsx: 1 /* Preserve */,
+    lib: ["es2020", "dom"],
+  });
+
+  tsDefaults.setDiagnosticsOptions({
+    noSemanticValidation: false,
+    noSyntaxValidation: false,
+  });
+}
+
+/**
+ * Register an ambient module declaration as an extra lib in Monaco's TypeScript
+ * language service. Returns a disposable that removes it.
+ */
+const noopDisposable: monaco.IDisposable = { dispose: () => {} };
+
+export function addSharedScriptExtraLib(declaration: string, filePath: string): monaco.IDisposable {
+  const tsDefaults = getTypescriptDefaults();
+  if (!tsDefaults) {
+    return noopDisposable;
+  }
+  return tsDefaults.addExtraLib(declaration, filePath);
 }
 
 export const MonacoEditorThemes: Record<string, ThemeRegistrationRaw> = {
