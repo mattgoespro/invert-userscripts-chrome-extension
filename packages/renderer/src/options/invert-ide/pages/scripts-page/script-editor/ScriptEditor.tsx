@@ -1,6 +1,6 @@
 import { CodeEditor } from "@/options/invert-ide/components/code-editor/CodeEditor";
 import { ResizeHandle } from "@/shared/components/resize-handle/ResizeHandle";
-import { registerMonaco } from "@/shared/monaco/monaco";
+import { registerMonaco } from "@packages/monaco";
 import { useAppDispatch, useAppSelector } from "@/shared/store/hooks";
 import { selectEditorSettings } from "@/shared/store/slices/settings.slice";
 import {
@@ -92,7 +92,7 @@ export function ScriptEditor() {
                 language="typescript"
                 contents={script.code.source.typescript}
                 sharedScripts={sharedScriptsInfo}
-                settings={{
+                editorSettings={{
                   theme: editorSettings.theme,
                   autoFormat: editorSettings.autoFormat,
                   fontSize: editorSettings.fontSize,
@@ -110,7 +110,7 @@ export function ScriptEditor() {
                 modelId={script.id}
                 language="scss"
                 contents={script.code.source.scss}
-                settings={{
+                editorSettings={{
                   theme: editorSettings.theme,
                   autoFormat: editorSettings.autoFormat,
                   fontSize: editorSettings.fontSize,

@@ -2,8 +2,6 @@ const serverWebsocketPort = `{{port}}`;
 const serverWebsocketUrl = `ws://localhost:${serverWebsocketPort}`;
 const storageKey = `__${chrome.runtime.id}__chrome_ext_snapshot__`;
 
-console.log(`Storage key: ${storageKey}`);
-
 const consoleFns = {
   debug: console.debug,
   log: console.log,
@@ -21,16 +19,17 @@ let websocket;
     }
 
     const captureOptions = {
-      level: typeof options.level === "boolean" && options.level ? "log" : options.level,
-      filter: options.filter ?? (() => false),
+      levels: options?.levels ?? ["log", "info", "warn", "error"],
+      ignore: options?.ignore ?? (() => false),
     };
     const captureLevels = ["debug", "log", "info", "warn", "error"];
 
     const shouldPatchLevel = (level) =>
-      captureLevels.indexOf(level) >= captureLevels.indexOf(captureOptions.level);
+      captureLevels.indexOf(level) >= captureLevels.indexOf(captureOptions.levels);
     const shouldCaptureMessage = (message) =>
-      websocket.readyState === WebSocket.OPEN && !captureOptions.filter(message);
-    const assignFunction = (level) =>
+      websocket.readyState === WebSocket.OPEN && !captureOptions.ignore(message);
+
+    const patchIfCapture = (level) =>
       shouldPatchLevel(level)
         ? (...args) => {
             consoleFns[level](...args);
@@ -42,11 +41,11 @@ let websocket;
         : consoleFns[level];
 
     Object.assign(console, {
-      debug: assignFunction("debug"),
-      log: assignFunction("log"),
-      info: assignFunction("info"),
-      warn: assignFunction("warn"),
-      error: assignFunction("error"),
+      debug: patchIfCapture("debug"),
+      log: patchIfCapture("log"),
+      info: patchIfCapture("info"),
+      warn: patchIfCapture("warn"),
+      error: patchIfCapture("error"),
     });
   }
 

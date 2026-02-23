@@ -53,7 +53,6 @@ export function ScriptListItem({ script, active }: ScriptListItemProps) {
       {script.status === "modified" && <div className="script-list-item--unsaved-indicator" />}
       {script.shared && <PackageIcon size={12} className="script-list-item--shared-icon" />}
       <span className="script-list-item--name">{script.name}</span>
-      {script.shared && <span className="script-list-item--shared-badge">shared</span>}
       <div className="script-list-item--actions">
         <Switch checked={script.enabled} onChange={() => onToggleScript()} />
         <IconButton

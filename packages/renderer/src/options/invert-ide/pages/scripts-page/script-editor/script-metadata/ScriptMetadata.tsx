@@ -7,19 +7,6 @@ import { AppDispatch } from "@/shared/store/store";
 import { updateUserscript } from "@/shared/store/slices/userscripts.slice";
 import { SharedScriptsSelector } from "./shared-scripts-selector/SharedScriptsSelector";
 
-/**
- * Sanitizes a raw input string into a valid JavaScript identifier suitable for
- * use as a module name in `import ... from "shared/<moduleName>"` statements.
- */
-function sanitizeModuleName(raw: string): string {
-  return raw
-    .trim()
-    .replace(/[^a-zA-Z0-9_-]/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "")
-    .toLowerCase();
-}
-
 type ScriptMetadataProps = {
   script: Userscript;
 };
@@ -36,7 +23,7 @@ export function ScriptMetadata({ script }: ScriptMetadataProps) {
   };
 
   const onModuleNameChange = (value: string) => {
-    onUpdateScriptMeta({ moduleName: sanitizeModuleName(value) });
+    onUpdateScriptMeta({ moduleName: value });
   };
 
   const onToggleSharedScript = (sharedScriptId: string, selected: boolean) => {

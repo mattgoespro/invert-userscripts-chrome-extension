@@ -31,6 +31,7 @@
     "@shikijs/engine-oniguruma": "^3.22.0",
     "@shikijs/langs": "^3.22.0",
     "@shikijs/monaco": "^3.22.0",
+    "@shikijs/themes": "^3.22.0",
     "@tanstack/react-query": "^5.90.20",
     "@types/redux-logger": "^3.0.13",
     "lucide-react": "^0.563.0",
@@ -40,6 +41,7 @@
     "react-error-boundary": "^6.1.0",
     "react-redux": "^9.2.0",
     "redux-logger": "^4.0.0",
+    "shiki": "^3.22.0",
     "uuid": "^13.0.0"
   },
   "devDependencies": {

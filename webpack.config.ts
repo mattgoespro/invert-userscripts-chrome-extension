@@ -52,6 +52,17 @@ export default (_args: unknown, { mode }: { mode: "development" | "production" }
           use: {
             loader: "esbuild-loader",
             options: {
+              tsconfig: path.join(__dirname, "packages", "monaco", "tsconfig.json"),
+            },
+          },
+          include: /packages\/monaco\/src/,
+          exclude: /node_modules/,
+        },
+        {
+          test: /\.ts$/,
+          use: {
+            loader: "esbuild-loader",
+            options: {
               tsconfig: path.join(__dirname, "packages", "runtime", "tsconfig.json"),
             },
           },
@@ -93,6 +104,7 @@ export default (_args: unknown, { mode }: { mode: "development" | "production" }
       alias: {
         "@": path.resolve(__dirname, "packages/renderer/src/"),
         "@shared": path.resolve(__dirname, "packages/shared/src/"),
+        "@packages/monaco": path.resolve(__dirname, "packages/monaco/src/"),
         "@assets/styles/invert-ide": path.resolve(
           __dirname,
           "packages/renderer/src/assets/styles/_index.scss"

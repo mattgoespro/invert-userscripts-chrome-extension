@@ -2,10 +2,11 @@ import { FormatterLanguage, PrettierFormatter } from "@/sandbox/formatter";
 import {
   addSharedScriptExtraLib,
   ensureTypescriptDefaults,
-  getCodeEditorThemeName,
-} from "@/shared/monaco/monaco";
+  getMonacoThemeId,
+} from "@packages/monaco";
 import { useEffect, useRef } from "react";
 import * as monaco from "monaco-editor";
+import { EditorSettings } from "@shared/model";
 
 // Cache models by URI to preserve undo history and cursor position
 const modelCache = new Map<string, monaco.editor.ITextModel>();
@@ -37,9 +38,11 @@ function generateSharedScriptDeclaration(moduleName: string, sourceCode: string)
   const lines: string[] = [];
   lines.push(`declare module "shared/${moduleName}" {`);
 
+  let match: RegExpExecArray;
+
   // Match exported const/let/var declarations
   const varRegex = /^export\s+(?:const|let|var)\s+(\w+)\s*(?::\s*([^=;]+?))?\s*[=;]/gm;
-  let match: RegExpExecArray | null;
+
   while ((match = varRegex.exec(sourceCode)) !== null) {
     const name = match[1];
     const type = match[2]?.trim() || "any";
@@ -48,6 +51,7 @@ function generateSharedScriptDeclaration(moduleName: string, sourceCode: string)
 
   // Match exported function declarations
   const fnRegex = /^export\s+function\s+(\w+)\s*(\([^)]*\))\s*(?::\s*([^{]+?))?\s*\{/gm;
+
   while ((match = fnRegex.exec(sourceCode)) !== null) {
     const name = match[1];
     const params = match[2];
@@ -57,6 +61,7 @@ function generateSharedScriptDeclaration(moduleName: string, sourceCode: string)
 
   // Match exported class declarations
   const classRegex = /^export\s+class\s+(\w+)/gm;
+
   while ((match = classRegex.exec(sourceCode)) !== null) {
     const name = match[1];
     lines.push(`  export class ${name} {}`);
@@ -64,12 +69,14 @@ function generateSharedScriptDeclaration(moduleName: string, sourceCode: string)
 
   // Match exported type/interface declarations
   const typeRegex = /^export\s+(?:type|interface)\s+(\w+)/gm;
+
   while ((match = typeRegex.exec(sourceCode)) !== null) {
     const name = match[1];
     lines.push(`  export type ${name} = any;`);
   }
 
   lines.push("}");
+
   return lines.join("\n");
 }
 
@@ -81,22 +88,28 @@ type SharedScriptInfo = {
 };
 
 type CodeEditorProps = {
-  modelId: string; /** Unique identifier for this editor's content (e.g., scriptId) */
+  // Unique identifier for this editor's content
+  modelId: string;
   contents: string;
   language: FormatterLanguage;
+  editorSettings: EditorSettings;
+  editable?: boolean;
   sharedScripts?: SharedScriptInfo[];
-  settings?: {
-    theme: string;
-    autoFormat: boolean;
-    fontSize: number;
-  };
-  onCodeModified: (value: string) => void;
-  onCodeSaved: (value: string) => void;
+  onCodeModified?: (value: string) => void;
+  onCodeSaved?: (value: string) => void;
 };
 
 export function CodeEditor(props: CodeEditorProps) {
-  const { modelId, language, contents, sharedScripts, settings, onCodeModified, onCodeSaved } =
-    props;
+  const {
+    modelId,
+    language,
+    contents,
+    sharedScripts,
+    editorSettings: settings,
+    editable = true,
+    onCodeModified,
+    onCodeSaved,
+  } = props;
 
   const editorRef = useRef<HTMLDivElement>(null);
   const editorInstanceRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
@@ -114,7 +127,7 @@ export function CodeEditor(props: CodeEditorProps) {
     }
 
     const editorInstance = monaco.editor.create(editorRef.current, {
-      theme: getCodeEditorThemeName(settings?.theme),
+      theme: getMonacoThemeId(settings.theme),
       fontSize: settings?.fontSize,
       automaticLayout: true,
       padding: { top: 25, bottom: 10 },
@@ -124,6 +137,11 @@ export function CodeEditor(props: CodeEditorProps) {
       overviewRulerLanes: 0,
       hideCursorInOverviewRuler: true,
       overviewRulerBorder: false,
+      readOnly: !editable,
+      domReadOnly: !editable,
+      cursorStyle: editable ? "line" : "underline-thin",
+      cursorBlinking: editable ? "blink" : "solid",
+      renderLineHighlight: editable ? "line" : "none",
       scrollbar: {
         vertical: "hidden",
         horizontal: "hidden",
@@ -143,7 +161,7 @@ export function CodeEditor(props: CodeEditorProps) {
 
   // Update theme dynamically without recreating the editor
   useEffect(() => {
-    monaco.editor.setTheme(getCodeEditorThemeName(settings?.theme));
+    monaco.editor.setTheme(getMonacoThemeId(settings?.theme));
   }, [settings?.theme]);
 
   // Update font size dynamically without recreating the editor
@@ -172,8 +190,12 @@ export function CodeEditor(props: CodeEditorProps) {
     }
 
     // Listen to content changes on this model
+    if (!onCodeModifiedRef.current) {
+      return;
+    }
+
     const disposable = model.onDidChangeContent(() => {
-      onCodeModifiedRef.current(model.getValue());
+      onCodeModifiedRef.current?.(model.getValue());
     });
 
     return () => disposable.dispose();
@@ -212,6 +234,10 @@ export function CodeEditor(props: CodeEditorProps) {
 
   // Handle Ctrl+S on the container
   useEffect(() => {
+    if (!editable || !onCodeSaved) {
+      return;
+    }
+
     const container = editorRef.current;
 
     if (!container) {
@@ -242,7 +268,7 @@ export function CodeEditor(props: CodeEditorProps) {
 
     container.addEventListener("keydown", handleKeyDown);
     return () => container.removeEventListener("keydown", handleKeyDown);
-  }, [settings?.autoFormat, language, onCodeSaved]);
+  }, [editable, settings?.autoFormat, language, onCodeSaved]);
 
   return (
     <div

@@ -14,6 +14,7 @@
     "editor.formatOnPaste": true,
     "editor.formatOnSave": true
   },
+  "markdown.preview.fontSize": 11,
   "chat.tools.terminal.autoApprove": {
     "/.*/": true
   },

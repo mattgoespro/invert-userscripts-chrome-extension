@@ -8,18 +8,20 @@
 
 ## Architecture & Monorepo Structure
 
-The project follows a monorepo architecture with three distinct packages:
+The project follows a monorepo architecture with four distinct packages:
 
-| Package             | Purpose                                                       | Key Technologies                                                |
-| ------------------- | ------------------------------------------------------------- | --------------------------------------------------------------- |
-| `packages/renderer` | React-based UI for the Options page (IDE) and extension Popup | TypeScript, React 19, React Redux, Redux Toolkit, Monaco Editor |
-| `packages/runtime`  | Background service workers and content scripts                | TypeScript, Chrome Extensions API                               |
-| `packages/shared`   | Common types, storage wrappers, and message definitions       | TypeScript                                                      |
+| Package             | Purpose                                                           | Key Technologies                                                |
+| ------------------- | ----------------------------------------------------------------- | --------------------------------------------------------------- |
+| `packages/renderer` | React-based UI for the Options page (IDE) and extension Popup     | TypeScript, React 19, React Redux, Redux Toolkit, Monaco Editor |
+| `packages/runtime`  | Background service workers and content scripts                    | TypeScript, Chrome Extensions API                               |
+| `packages/shared`   | Common types, storage wrappers, and message definitions           | TypeScript                                                      |
+| `packages/monaco`   | Monaco editor integration, Shiki tokenizer, and theme definitions | TypeScript, Monaco Editor, Shiki                                |
 
 ### Package Dependencies
 
 ```
 packages/renderer ──→ packages/shared
+packages/renderer ──→ packages/monaco
 packages/runtime  ──→ packages/shared
 packages/shared   ──→ packages/renderer/src/sandbox/compiler.ts (cross-package re-export)
 ```
@@ -45,6 +47,7 @@ packages/shared   ──→ packages/renderer/src/sandbox/compiler.ts (cross-pac
 ### Path Aliases
 
 - `@shared/*` → Maps to `packages/shared/src/*`. Use for importing shared logic across packages.
+- `@monaco/*` → Maps to `packages/monaco/src/*`. Use for importing Monaco editor integration, themes, and utilities.
 - `@/*` → Maps to `./src/*` within the renderer package (e.g., `@/shared/components` → `packages/renderer/src/shared/components`).
 - `@assets/styles/invert-ide` → Maps to the main SCSS entry file (`packages/renderer/src/assets/styles/_index.scss`).
 
@@ -202,7 +205,6 @@ import { CodeComment } from "@/shared/components/code-comment/CodeComment";
 
 ### Additional Shared Exports
 
-- `CodeEditorThemes.ts` — 17 Monaco editor themes (Invert Dark, VS Code Dark, Material Darker, Monokai, GitHub Dark, Darcula, etc.) with registration and lookup utilities.
 - `utils.ts` — Re-exports `uuid` from the `uuid` package: `export { v4 as uuid } from "uuid"`.
 
 ---
@@ -717,6 +719,7 @@ Background script (`packages/runtime/src/background.ts`) registers the Chrome ev
 | Scope                         | Loader                                    | Config              |
 | ----------------------------- | ----------------------------------------- | ------------------- |
 | `packages/shared/src/*.ts`    | `esbuild-loader`                          | Shared tsconfig     |
+| `packages/monaco/src/*.ts`    | `esbuild-loader`                          | Monaco tsconfig     |
 | `packages/runtime/**/*.ts`    | `esbuild-loader`                          | Runtime tsconfig    |
 | `packages/renderer/**/*.tsx?` | `ts-loader` (`transpileOnly`)             | Renderer tsconfig   |
 | `.scss`                       | `style-loader → css-loader → sass-loader` |                     |
@@ -727,6 +730,7 @@ Background script (`packages/runtime/src/background.ts`) registers the Chrome ev
 
 - `@` → `packages/renderer/src/`
 - `@shared` → `packages/shared/src/`
+- `@monaco` → `packages/monaco/src/`
 - `@assets/styles/invert-ide` → main SCSS index
 - `monaco-editor` → ESM editor API entry
 
@@ -860,13 +864,17 @@ tsconfig.json (root — includes tools/, *.ts at root)
 - **JSX**: `react-jsx`
 - **Lib**: `es2020`, `dom`, `dom.iterable`
 - **Types**: `chrome`, `react`, `react-dom`
-- **Path Aliases**: `@/*` → `./src/*`, `@shared/*` → `../shared/src/*`
+- **Path Aliases**: `@/*` → `./src/*`, `@shared/*` → `../shared/src/*`, `@monaco/*` → `../monaco/src/*`
 
 **Runtime Package Additions**:
 
 - **Lib**: `es2020`, `dom`, `dom.iterable`
 - **Types**: `node`, `chrome`
 - **Path Aliases**: `@/*` → `./src/*`, `@shared/*` → `../shared/src/*`
+
+**Monaco Package**:
+
+- **Lib**: `es2020`, `dom`, `dom.iterable`
 
 **Shared Package**:
 
@@ -886,6 +894,34 @@ When writing, refactoring, or updating TypeScript code:
 7. **Use `error` as the variable name in `catch` blocks** for consistency
 8. **Use `event` as the variable name for event handlers** for clarity
 
+When commenting TypeScript code, prefer JSDoc style for functions and complex logic:
+
+```typescript
+/**
+ * Compiles TypeScript code to JavaScript.
+ * @param code - The TypeScript source code to compile
+ * @returns The result of compilation, including success status and compiled code or error message
+ */
+static compile(code: string): CompileResult {
+  return this.transpileModule(code, {
+    compilerOptions: {
+      target: ts.ScriptTarget.ES2020,
+      module: ts.ModuleKind.ESNext,
+      strict: true,
+      noImplicitAny: true,
+      forceConsistentCasingInFileNames: true,
+      noImplicitThis: true,
+      esModuleInterop: true,
+      resolveJsonModule: true,
+    },
+  });
+}
+```
+
+- Comments requiring multiple lines should be block comments.
+- Comments required for a single line can be inline comments, but should still be clear and concise.
+- Use inline comments sparingly and only when they add value to the code's readability for complex logic or non-obvious decisions.
+
 ### Additional Rules
 
 For additional code quality, refer to the ESLint rules defined in `eslint.config.mjs`, especially those related to TypeScript and React.
@@ -897,107 +933,136 @@ For formatting consistency, refer to the Prettier configuration in `prettier.con
 
 ### Renderer Package Structure
 
-```
+````
+
 packages/renderer/src/
-├── assets/                     # Images and global styles
-│   ├── images/
-│   └── styles/
-│       ├── _index.scss         # Token orchestrator (imported at app root)
-│       ├── _primitives.scss    # Tier 1: Raw design values (--base-*)
-│       ├── _semantic.scss      # Tier 2: Intent aliases (--primary, etc.)
-│       ├── _components.scss    # Tier 3: Component tokens (--input-*, etc.)
-│       ├── _typography.scss    # Typography variants and font families
-│       └── _mixins.scss        # Shared mixins (grid-pattern, focus-ring)
-├── options/                    # Options page (main IDE)
-│   ├── index.html
-│   ├── index.tsx               # Entry: ErrorBoundary → Provider → InvertIde
-│   └── invert-ide/
-│       ├── InvertIde.tsx       # Root IDE component
-│       ├── InvertIde.scss
-│       ├── components/
-│       │   ├── code-editor/    # Monaco editor wrapper (CodeEditor.tsx)
-│       │   ├── dashboard-header/ # Decorative banner with syntax-highlighted snippet
-│       │   └── sidebar/        # Navigation sidebar + SidebarNavButton
-│       └── pages/
-│           ├── scripts-page/   # Script management + dual-pane editor
-│           │   ├── ScriptsPage.tsx
-│           │   ├── script-list/          # ScriptList + ScriptListItem
-│           │   └── script-editor/        # ScriptEditor + ScriptMetadata
-│           ├── modules-page/   # Global module management (direct StorageManager)
-│           └── settings-page/  # Editor settings (Redux-backed)
-├── popup/                      # Extension popup
-│   ├── index.html
-│   ├── index.tsx               # Minimal entry: just renders InvertIdePopup
-│   └── invert-ide-popup/
-├── sandbox/                    # In-browser compilation & formatting
-│   ├── compiler.ts             # TypeScriptCompiler + SassCompiler
-│   ├── formatter.ts            # PrettierFormatter
-│   ├── sass-sandbox.ts         # Iframe-side SCSS compilation listener
-│   └── sass-sandbox.html       # Sandboxed page with relaxed CSP
-└── shared/                     # Shared components and state
-    ├── utils.ts                # Re-exports uuid
-    ├── components/
-    │   ├── CodeEditorThemes.ts # 17 Monaco themes + registration
-    │   ├── button/
-    │   ├── checkbox/
-    │   ├── code-comment/
-    │   ├── error-boundary/
-    │   ├── icon-button/
-    │   ├── input/
-    │   ├── resize-handle/
-    │   ├── select/
-    │   ├── switch/
-    │   └── typography/
-    └── store/
-        ├── store.ts            # configureStore (userscripts + settings slices)
-        ├── hooks.ts            # useAppDispatch, useAppSelector, useAppStore
-        └── slices/
-            ├── userscripts.slice.ts  # Scripts CRUD + compilation thunks
-            └── settings.slice.ts     # Editor settings thunks + optimistic reducers
+├── assets/ # Images and global styles
+│ ├── images/
+│ └── styles/
+│ ├── \_index.scss # Token orchestrator (imported at app root)
+│ ├── \_primitives.scss # Tier 1: Raw design values (--base-_)
+│ ├── \_semantic.scss # Tier 2: Intent aliases (--primary, etc.)
+│ ├── \_components.scss # Tier 3: Component tokens (--input-_, etc.)
+│ ├── \_typography.scss # Typography variants and font families
+│ └── \_mixins.scss # Shared mixins (grid-pattern, focus-ring)
+├── options/ # Options page (main IDE)
+│ ├── index.html
+│ ├── index.tsx # Entry: ErrorBoundary → Provider → InvertIde
+│ └── invert-ide/
+│ ├── InvertIde.tsx # Root IDE component
+│ ├── InvertIde.scss
+│ ├── components/
+│ │ ├── code-editor/ # Monaco editor wrapper (CodeEditor.tsx)
+│ │ ├── dashboard-header/ # Decorative banner with syntax-highlighted snippet
+│ │ └── sidebar/ # Navigation sidebar + SidebarNavButton
+│ └── pages/
+│ ├── scripts-page/ # Script management + dual-pane editor
+│ │ ├── ScriptsPage.tsx
+│ │ ├── script-list/ # ScriptList + ScriptListItem
+│ │ └── script-editor/ # ScriptEditor + ScriptMetadata
+│ ├── modules-page/ # Global module management (direct StorageManager)
+│ └── settings-page/ # Editor settings (Redux-backed)
+├── popup/ # Extension popup
+│ ├── index.html
+│ ├── index.tsx # Minimal entry: just renders InvertIdePopup
+│ └── invert-ide-popup/
+├── sandbox/ # In-browser compilation & formatting
+│ ├── compiler.ts # TypeScriptCompiler + SassCompiler
+│ ├── formatter.ts # PrettierFormatter
+│ ├── sass-sandbox.ts # Iframe-side SCSS compilation listener
+│ └── sass-sandbox.html # Sandboxed page with relaxed CSP
+└── shared/ # Shared components and state
+├── utils.ts # Re-exports uuid
+├── components/
+│ ├── button/
+│ ├── checkbox/
+│ ├── code-comment/
+│ ├── error-boundary/
+│ ├── icon-button/
+│ ├── input/
+│ ├── resize-handle/
+│ ├── select/
+│ ├── switch/
+│ └── typography/
+└── store/
+├── store.ts # configureStore (userscripts + settings slices)
+├── hooks.ts # useAppDispatch, useAppSelector, useAppStore
+└── slices/
+├── userscripts.slice.ts # Scripts CRUD + compilation thunks
+└── settings.slice.ts # Editor settings thunks + optimistic reducers
+
 ```
 
 ### Runtime Package Structure
 
 ```
+
 packages/runtime/src/
-├── background.ts              # Service worker entry (registers Chrome listeners)
+├── background.ts # Service worker entry (registers Chrome listeners)
 ├── content/
-│   └── content.ts             # Content script (ping responder)
+│ └── content.ts # Content script (ping responder)
 ├── handlers/
-│   ├── component-handlers/
-│   │   └── tab.handler.ts     # Tab update listener → inject scripts
-│   └── extension-handlers/
-│       ├── navigation.handler.ts  # Web navigation completed → inject scripts
-│       └── runtime.handler.ts     # onInstalled + onMessage handlers
+│ ├── component-handlers/
+│ │ └── tab.handler.ts # Tab update listener → inject scripts
+│ └── extension-handlers/
+│ ├── navigation.handler.ts # Web navigation completed → inject scripts
+│ └── runtime.handler.ts # onInstalled + onMessage handlers
 └── ide/
-    └── scripts.ts             # URL matching + script injection via chrome.scripting
+└── scripts.ts # URL matching + script injection via chrome.scripting
+
+```
+
+### Monaco Package Structure
+
+```
+
+packages/monaco/src/
+├── index.ts # Barrel: re-exports all public API from monaco.ts
+├── monaco.ts # registerMonaco(), EditorThemes, ensureTypescriptDefaults(), etc.
+└── themes/
+├── index.ts # Barrel for all theme modules
+├── defaults.ts # Re-exports of all Shiki built-in themes
+├── invert-dark.ts # Custom Invert Dark theme
+├── graphite-dusk.ts # Custom Graphite Dusk theme
+├── bearded-anthracite.ts # Custom Bearded Anthracite theme
+├── bearded-arc.ts # Custom Bearded Arc theme
+├── bearded-vivid-black.ts # Custom Bearded Vivid Black theme
+└── monokai-pro.ts # Custom Monokai Pro theme
+
 ```
 
 ### Shared Package Structure
 
 ```
+
 packages/shared/src/
-├── index.ts       # Barrel: re-exports model, storage, and compiler (from renderer)
-├── model.ts       # All data types (Userscript, GlobalModule, EditorSettings, etc.)
-├── messages.ts    # Type-safe messaging (RuntimePortMessageEvent, sources, payloads)
-└── storage.ts     # StorageManager (chrome.storage.sync wrapper)
+├── index.ts # Barrel: re-exports model, storage, and compiler (from renderer)
+├── model.ts # All data types (Userscript, GlobalModule, EditorSettings, etc.)
+├── messages.ts # Type-safe messaging (RuntimePortMessageEvent, sources, payloads)
+└── storage.ts # StorageManager (chrome.storage.sync wrapper)
+
 ```
 
 ### Root-Level Files
 
 ```
-├── webpack.config.ts          # Build configuration (4 entry points, loaders, plugins)
-├── eslint.config.mjs          # Shared ESLint base config
-├── prettier.config.mjs        # Prettier formatting config
-├── tsconfig.json              # Root TS config for tools + root files
-├── tsconfig.base.json         # Shared compiler options for all packages
-├── TODO.md                    # Outstanding tasks and known issues
+
+├── webpack.config.ts # Build configuration (4 entry points, loaders, plugins)
+├── eslint.config.mjs # Shared ESLint base config
+├── prettier.config.mjs # Prettier formatting config
+├── tsconfig.json # Root TS config for tools + root files
+├── tsconfig.base.json # Shared compiler options for all packages
+├── TODO.md # Outstanding tasks and known issues
 ├── public/
-│   ├── manifest.json          # Chrome Extension Manifest V3
-│   └── assets/                # Static assets
-├── tools/                     # Custom dev tooling
-│   ├── chrome-extension-reloader-webpack-plugin.ts
-│   ├── chrome-extension-reloader-plugin-utils.ts
-│   └── chrome-extension-reloader-client.js
-└── resources/                 # Project resources
+│ ├── manifest.json # Chrome Extension Manifest V3
+│ └── assets/ # Static assets
+├── tools/ # Custom dev tooling
+│ ├── chrome-extension-reloader-webpack-plugin.ts
+│ ├── chrome-extension-reloader-plugin-utils.ts
+│ └── chrome-extension-reloader-client.js
+└── resources/ # Project resources
+
 ```
+
+```
+````

@@ -2,7 +2,7 @@ import { Checkbox } from "@/shared/components/checkbox/Checkbox";
 import { Input } from "@/shared/components/input/Input";
 import { Select } from "@/shared/components/select/Select";
 import { Typography } from "@/shared/components/typography/Typography";
-import { MonacoEditorThemes } from "@/shared/monaco/monaco";
+import { EditorThemeName, EditorThemes } from "@packages/monaco";
 import { useAppDispatch, useAppSelector } from "@/shared/store/hooks";
 import {
   loadSettings,
@@ -23,7 +23,7 @@ export function Settings() {
     dispatch(loadSettings());
   }, [dispatch]);
 
-  const handleThemeChange = (theme: string) => {
+  const handleThemeChange = (theme: EditorThemeName) => {
     dispatch(updateSettings({ theme }));
   };
 
@@ -69,7 +69,10 @@ export function Settings() {
             label="Theme"
             value={settings.theme}
             onChange={handleThemeChange}
-            options={Object.keys(MonacoEditorThemes).map((themeName) => ({ value: themeName }))}
+            options={Object.values(EditorThemes).map((theme) => ({
+              label: theme.displayName,
+              value: theme.name,
+            }))}
           />
           <div className="settings--theme-preview-wrapper">
             <ThemePreview theme={settings.theme} />

@@ -1,5 +1,5 @@
 import webpack from "webpack";
-import ws, { WebSocket, WebSocketServer } from "ws";
+import { WebSocket, WebSocketServer } from "ws";
 import {
   type Logger,
   createLogger,
@@ -7,8 +7,8 @@ import {
 } from "./chrome-extension-reloader-plugin-utils.ts";
 
 export type CaptureConsoleOptions = {
-  level: "log" | "info" | "warn" | "error";
-  filter?: (...message: unknown[]) => boolean;
+  levels: ("log" | "info" | "warn" | "error")[];
+  ignore?: (...message: unknown[]) => boolean;
 };
 
 export interface ChromeExtensionReloaderPluginOptions {
@@ -50,7 +50,7 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
       verbose: this._options.verbose,
     });
 
-    this.startPluginWebsocketServer();
+    this.startWebsocketServer();
   }
 
   /**
@@ -68,7 +68,7 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
     });
 
     compiler.hooks.done.tap(this.name, () => {
-      this.broadcastExtClientMessage({ type: "reload" });
+      this.broadcastClientMessage({ type: "reload" });
     });
 
     compiler.hooks.shutdown.tap(this.name, () => {
@@ -76,45 +76,34 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
     });
   }
 
-  private startPluginWebsocketServer() {
+  private startWebsocketServer() {
     this._wss = new WebSocketServer({ port: this._options.port });
 
     this._wss.on("connection", (ws) => {
       this._log.verbose("Extension client connected from the browser.");
 
-      this.broadcastExtClientMessage({
+      this.broadcastClientMessage({
         type: "log",
         data: this._log.createMessage("INFO", "Connected to Chrome Extension Reloader."),
       });
-      this.broadcastExtClientMessage({
+      this.broadcastClientMessage({
         type: "configure",
         data: {
           captureConsole: this._options.captureConsole,
         },
       });
 
-      ws.onmessage = (event) => {
-        try {
-          const message: BroadcastMessage = JSON.parse(event.data.toString());
-
-          if (message.type === "log") {
-            this._log.info(message.data as string);
-          }
-        } catch (error) {
-          this._log.error("Failed to parse message from client:");
-          this._log.error(error);
-        }
-      };
+      ws.onmessage = this.onClientMessage.bind(this);
     });
 
     this._log.verbose(`Listening on port: ${this._options.port}`);
   }
 
-  private broadcastExtClientMessage(message: BroadcastMessage) {
+  private broadcastClientMessage(message: BroadcastMessage) {
     const sendMessageToClients = (message: BroadcastMessage) => {
       for (const client of this._wss.clients) {
         if (client.readyState !== WebSocket.OPEN) {
-          this._log.verbose("An existing client is not ready to receive messages. Skipping...");
+          this._log.warn("An existing client is not ready to receive messages. Skipping...");
           continue;
         }
 
@@ -140,6 +129,19 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
         sendMessageToClients(message);
         break;
       }
+    }
+  }
+
+  private onClientMessage(message: MessageEvent) {
+    try {
+      const msg: BroadcastMessage = JSON.parse(message.data.toString());
+
+      if (msg.type === "log") {
+        this._log.info(msg.data as string);
+      }
+    } catch (error) {
+      this._log.error("Failed to parse message from client:");
+      this._log.error(error);
     }
   }
 

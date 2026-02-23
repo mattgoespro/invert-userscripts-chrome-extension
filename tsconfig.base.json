@@ -15,12 +15,14 @@
     "forceConsistentCasingInFileNames": true,
     "noImplicitThis": true,
     "paths": {
-      "@shared/*": ["packages/shared/src/*"]
+      "@shared/*": ["packages/shared/src/*"],
+      "@monaco/*": ["packages/monaco/src/*"]
     }
   },
   "exclude": ["node_modules", "dist"],
   "references": [
     { "path": "./packages/shared" },
+    { "path": "./packages/monaco" },
     { "path": "./packages/runtime" },
     { "path": "./packages/renderer" }
   ]

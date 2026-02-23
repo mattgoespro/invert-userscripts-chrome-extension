@@ -1,3 +1,5 @@
+import type { EditorThemeName } from "@packages/monaco";
+
 export type UserscriptStatus = "modified" | "saved";
 
 export type UserscriptSourceCode = "typescript" | "scss";
@@ -39,11 +41,11 @@ export interface GlobalModule {
 }
 
 export interface EditorSettings {
-  theme: string;
-  fontSize: number;
-  tabSize: number;
-  autoFormat: boolean;
-  autoSave: boolean;
+  theme?: EditorThemeName;
+  fontSize?: number;
+  tabSize?: number;
+  autoFormat?: boolean;
+  autoSave?: boolean;
 }
 
 export interface CompileResult {

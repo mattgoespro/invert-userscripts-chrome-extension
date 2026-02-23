@@ -4,7 +4,6 @@
   "compilerOptions": {
     "noEmit": true,
     "allowImportingTsExtensions": true,
-    "checkJs": true,
     "lib": ["dom"]
   }
 }
