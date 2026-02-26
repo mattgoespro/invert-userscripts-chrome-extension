@@ -1,16 +1,12 @@
 import { CodeEditor } from "@/options/invert-ide/components/code-editor/CodeEditor";
 import { ResizeHandle } from "@/shared/components/resize-handle/ResizeHandle";
-import { registerMonaco } from "@packages/monaco";
 import { useAppDispatch, useAppSelector } from "@/shared/store/hooks";
-import { selectEditorSettings } from "@/shared/store/slices/settings.slice";
+import { initializeMonaco, selectMonacoReady } from "@/shared/store/slices/editor.slice";
 import {
   markUserscriptModified,
-  selectAllUserscripts,
   selectCurrentUserscript,
-  updateUserscriptCode,
 } from "@/shared/store/slices/userscripts.slice";
-import { UserscriptSourceCode } from "@shared/model";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ScriptMetadata } from "./script-metadata/ScriptMetadata";
 import "./ScriptEditor.scss";
 
@@ -20,36 +16,13 @@ const MAX_PANEL_WIDTH_PERCENT = 80;
 export function ScriptEditor() {
   const dispatch = useAppDispatch();
   const script = useAppSelector(selectCurrentUserscript);
-  const allScripts = useAppSelector(selectAllUserscripts);
-  const editorSettings = useAppSelector(selectEditorSettings);
+  const monacoReady = useAppSelector(selectMonacoReady);
   const containerRef = useRef<HTMLDivElement>(null);
   const [leftPanelPercent, setLeftPanelPercent] = useState(50);
-  const [monacoReady, setMonacoReady] = useState(false);
-
-  // Build shared scripts info for the TypeScript editor's intellisense
-  const sharedScriptsInfo = useMemo(() => {
-    if (!script?.sharedScripts?.length || !allScripts) {
-      return undefined;
-    }
-    return script.sharedScripts
-      .map((id) => allScripts[id])
-      .filter((s) => s?.shared)
-      .map((s) => ({
-        id: s.id,
-        name: s.name,
-        moduleName: s.moduleName ?? "",
-        sourceCode: s.code.source.typescript,
-      }));
-  }, [script?.sharedScripts, allScripts]);
 
   useEffect(() => {
-    registerMonaco()
-      .then(() => setMonacoReady(true))
-      .catch((error) => {
-        console.error("[Invert IDE] Monaco initialization failed:", error);
-        setMonacoReady(true);
-      });
-  }, []);
+    dispatch(initializeMonaco());
+  }, [dispatch]);
 
   const handleResize = useCallback((delta: number) => {
     if (!containerRef.current) {
@@ -71,10 +44,6 @@ export function ScriptEditor() {
     }
   };
 
-  const onCodeSaved = async (language: UserscriptSourceCode, code: string) => {
-    dispatch(updateUserscriptCode({ id: script.id, language, code }));
-  };
-
   return (
     <div className="script-editor--editor-area">
       <div className="script-editor--editor-header">
@@ -89,16 +58,10 @@ export function ScriptEditor() {
             >
               <CodeEditor
                 modelId={script.id}
+                scriptId={script.id}
                 language="typescript"
                 contents={script.code.source.typescript}
-                sharedScripts={sharedScriptsInfo}
-                editorSettings={{
-                  theme: editorSettings.theme,
-                  autoFormat: editorSettings.autoFormat,
-                  fontSize: editorSettings.fontSize,
-                }}
                 onCodeModified={() => onCodeModified()}
-                onCodeSaved={(code) => onCodeSaved("typescript", code)}
               />
             </div>
             <ResizeHandle direction="horizontal" onResize={handleResize} />
@@ -108,15 +71,10 @@ export function ScriptEditor() {
             >
               <CodeEditor
                 modelId={script.id}
+                scriptId={script.id}
                 language="scss"
                 contents={script.code.source.scss}
-                editorSettings={{
-                  theme: editorSettings.theme,
-                  autoFormat: editorSettings.autoFormat,
-                  fontSize: editorSettings.fontSize,
-                }}
                 onCodeModified={() => onCodeModified()}
-                onCodeSaved={(code) => onCodeSaved("scss", code)}
               />
             </div>
           </>

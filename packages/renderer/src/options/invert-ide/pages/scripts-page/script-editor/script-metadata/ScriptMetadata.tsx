@@ -1,11 +1,11 @@
 import { Input } from "@/shared/components/input/Input";
-import { Switch } from "@/shared/components/switch/Switch";
 import { Userscript } from "@shared/model";
 import "./ScriptMetadata.scss";
 import { useAppDispatch } from "@/shared/store/hooks";
 import { AppDispatch } from "@/shared/store/store";
-import { updateUserscript } from "@/shared/store/slices/userscripts.slice";
+import { deleteUserscript, updateUserscript } from "@/shared/store/slices/userscripts.slice";
 import { SharedScriptsSelector } from "./shared-scripts-selector/SharedScriptsSelector";
+import { ScriptOptionsPanel } from "./script-options-panel/ScriptOptionsPanel";
 
 type ScriptMetadataProps = {
   script: Userscript;
@@ -18,12 +18,16 @@ export function ScriptMetadata({ script }: ScriptMetadataProps) {
     dispatch(updateUserscript({ ...script, ...updates }));
   };
 
-  const onToggleShared = (checked: boolean) => {
-    onUpdateScriptMeta({ shared: checked });
+  const onModuleNameChange = (value: string) => {
+    const trimmed = value.trim();
+    onUpdateScriptMeta({ moduleName: value, shared: trimmed.length > 0 });
   };
 
-  const onModuleNameChange = (value: string) => {
-    onUpdateScriptMeta({ moduleName: value });
+  const onDeleteScript = () => {
+    if (!confirm("Are you sure you want to delete this script?")) {
+      return;
+    }
+    dispatch(deleteUserscript(script.id));
   };
 
   const onToggleSharedScript = (sharedScriptId: string, selected: boolean) => {
@@ -43,14 +47,6 @@ export function ScriptMetadata({ script }: ScriptMetadataProps) {
           placeholder="Script name..."
           onChange={(e) => onUpdateScriptMeta({ name: e.target.value })}
         />
-        {script.shared && (
-          <Input
-            className="script-metadata--module-name"
-            defaultValue={script.moduleName ?? ""}
-            placeholder="module-name"
-            onChange={(e) => onModuleNameChange(e.target.value)}
-          />
-        )}
         <Input
           className="script-metadata--url-patterns"
           defaultValue={script.urlPatterns?.join(", ")}
@@ -59,9 +55,13 @@ export function ScriptMetadata({ script }: ScriptMetadataProps) {
             onUpdateScriptMeta({ urlPatterns: e.target.value.split(",").map((p) => p.trim()) })
           }
         />
-        <div className="script-metadata--shared-toggle">
-          <Switch checked={script.shared ?? false} onChange={onToggleShared} label="shared" />
-        </div>
+        <ScriptOptionsPanel
+          shared={script.shared ?? false}
+          scriptName={script.name}
+          moduleName={script.moduleName ?? ""}
+          onModuleNameChange={onModuleNameChange}
+          onDelete={onDeleteScript}
+        />
       </div>
       <div className="script-metadata--imports-row">
         <SharedScriptsSelector script={script} onToggleSharedScript={onToggleSharedScript} />

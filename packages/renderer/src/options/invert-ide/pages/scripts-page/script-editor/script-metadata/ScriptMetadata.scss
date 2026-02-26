@@ -24,32 +24,6 @@
     flex-basis: 25%;
   }
 
-  .script-metadata--module-name {
-    flex-basis: 20%;
-    position: relative;
-
-    // Module name label decoration
-    &::before {
-      content: "module:";
-      position: absolute;
-      left: 12px;
-      top: 50%;
-      transform: translateY(-50%);
-      font-family: "JetBrains Mono", monospace;
-      font-size: 12px;
-      color: var(--syntax-function);
-      pointer-events: none;
-      z-index: 1;
-    }
-
-    input {
-      padding-left: 68px;
-      font-family: var(--typography-code-font-family);
-      font-size: var(--typography-code-font-size);
-      letter-spacing: -0.02em;
-    }
-  }
-
   // Arrow separator
   .script-metadata--separator {
     color: var(--text-muted);
@@ -78,19 +52,6 @@
 
     input {
       padding-left: 52px;
-    }
-  }
-
-  .script-metadata--shared-toggle {
-    flex-shrink: 0;
-
-    .switch--label {
-      font-family: "JetBrains Mono", monospace;
-      font-size: 11px;
-      font-weight: 500;
-      color: var(--syntax-keyword);
-      text-transform: none;
-      letter-spacing: 0.01em;
     }
   }
 

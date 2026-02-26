@@ -48,8 +48,15 @@ export interface EditorSettings {
   autoSave?: boolean;
 }
 
-export interface CompileResult {
+export interface UserscriptCompileResult {
   success: boolean;
   code?: string;
   error?: Error;
+}
+
+export interface SharedScriptInfo {
+  id: string;
+  name: string;
+  moduleName: string;
+  sourceCode: string;
 }

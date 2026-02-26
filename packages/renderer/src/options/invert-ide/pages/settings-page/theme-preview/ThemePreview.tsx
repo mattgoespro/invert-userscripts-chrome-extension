@@ -32,7 +32,7 @@ export function ThemePreview({ theme }: ThemePreviewProps) {
           contents={PREVIEW_CODE}
           language="typescript"
           editable={false}
-          editorSettings={{ theme, fontSize: 12 }}
+          settingsOverride={{ theme, fontSize: 12 }}
         />
       </div>
     </div>

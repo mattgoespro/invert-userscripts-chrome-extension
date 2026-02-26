@@ -1,18 +1,11 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { EditorSettings } from "@shared/model";
-import { StorageManager } from "@shared/storage";
+import { defaultSettings, StorageManager } from "@shared/storage";
+import type { EditorThemeName } from "@packages/monaco";
 
 export type SettingsState = {
   editorSettings: EditorSettings;
   isLoading: boolean;
-};
-
-const defaultSettings: EditorSettings = {
-  theme: "Invert Dark",
-  fontSize: 14,
-  tabSize: 2,
-  autoFormat: true,
-  autoSave: true,
 };
 
 const initialState: SettingsState = {
@@ -45,7 +38,7 @@ const settingsSlice = createSlice({
     },
   },
   reducers: {
-    setTheme: (state, action: PayloadAction<string>) => {
+    setTheme: (state, action: PayloadAction<EditorThemeName>) => {
       state.editorSettings.theme = action.payload;
     },
     setFontSize: (state, action: PayloadAction<number>) => {

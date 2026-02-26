@@ -1,14 +1,14 @@
 import { Userscript, GlobalModule, EditorSettings, GlobalModules, Userscripts } from "./model";
 
-export class StorageManager {
-  private static readonly SettingsDefaults: EditorSettings = {
-    theme: "Invert Dark",
-    fontSize: 14,
-    tabSize: 2,
-    autoFormat: true,
-    autoSave: true,
-  };
+export const defaultSettings: EditorSettings = {
+  theme: "invertDark",
+  fontSize: 14,
+  tabSize: 2,
+  autoFormat: true,
+  autoSave: true,
+};
 
+export class StorageManager {
   static async getAll(): Promise<{
     userscripts: Userscripts;
     globalModules: GlobalModules;
@@ -79,7 +79,7 @@ export class StorageManager {
     const result = await chrome.storage.sync.get<{ editorSettings: EditorSettings }>([
       "editorSettings",
     ]);
-    return { ...this.SettingsDefaults, ...result.editorSettings };
+    return { ...defaultSettings, ...result.editorSettings };
   }
 
   static async saveEditorSettings(editorSettings: Partial<EditorSettings>): Promise<void> {

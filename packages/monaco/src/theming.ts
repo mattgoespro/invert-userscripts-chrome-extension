@@ -1,8 +1,8 @@
 import { createHighlighterCore, ThemeRegistration, ThemeRegistrationResolved } from "@shikijs/core";
-import * as themes from "./themes";
+import { createOnigurumaEngine } from "@shikijs/engine-oniguruma";
 import { shikiToMonaco, textmateThemeToMonacoTheme } from "@shikijs/monaco";
 import monaco from "monaco-editor";
-import { createOnigurumaEngine } from "@shikijs/engine-oniguruma";
+import * as themes from "./themes";
 
 export type EditorThemeName = keyof typeof themes;
 

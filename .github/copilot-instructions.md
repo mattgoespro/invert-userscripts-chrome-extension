@@ -19,7 +19,7 @@ The project follows a monorepo architecture with four distinct packages:
 
 ### Package Dependencies
 
-```
+```text
 packages/renderer ──→ packages/shared
 packages/renderer ──→ packages/monaco
 packages/runtime  ──→ packages/shared
@@ -215,7 +215,7 @@ import { CodeComment } from "@/shared/components/code-comment/CodeComment";
 
 Every component MUST follow this structure:
 
-```
+```text
 component-name/
   ComponentName.tsx
   ComponentName.scss
@@ -262,7 +262,7 @@ export function ComponentName({ variant = "primary", ...rest }: ComponentNamePro
 
 The styling system uses a **3-tier design token pipeline** defined in `packages/renderer/src/assets/styles/`. All tokens are CSS custom properties on `:root`, imported once at the app root via `_index.scss`.
 
-```
+```text
 _primitives.scss  →  _semantic.scss  →  _components.scss
    (raw values)      (intent aliases)    (component contracts)
                   ↘                    ↗
@@ -837,7 +837,7 @@ Consistent code formatting is enforced via Prettier (`prettier.config.mjs`):
 
 The project uses TypeScript project references:
 
-```
+```text
 tsconfig.json (root — includes tools/, *.ts at root)
 ├── tsconfig.base.json (shared compiler options)
 ├── packages/shared/tsconfig.json (composite, references nothing)
@@ -933,8 +933,7 @@ For formatting consistency, refer to the Prettier configuration in `prettier.con
 
 ### Renderer Package Structure
 
-````
-
+```text
 packages/renderer/src/
 ├── assets/ # Images and global styles
 │ ├── images/
@@ -995,8 +994,7 @@ packages/renderer/src/
 
 ### Runtime Package Structure
 
-```
-
+```text
 packages/runtime/src/
 ├── background.ts # Service worker entry (registers Chrome listeners)
 ├── content/
@@ -1009,13 +1007,11 @@ packages/runtime/src/
 │ └── runtime.handler.ts # onInstalled + onMessage handlers
 └── ide/
 └── scripts.ts # URL matching + script injection via chrome.scripting
-
 ```
 
 ### Monaco Package Structure
 
-```
-
+```text
 packages/monaco/src/
 ├── index.ts # Barrel: re-exports all public API from monaco.ts
 ├── monaco.ts # registerMonaco(), EditorThemes, ensureTypescriptDefaults(), etc.
@@ -1028,25 +1024,21 @@ packages/monaco/src/
 ├── bearded-arc.ts # Custom Bearded Arc theme
 ├── bearded-vivid-black.ts # Custom Bearded Vivid Black theme
 └── monokai-pro.ts # Custom Monokai Pro theme
-
 ```
 
 ### Shared Package Structure
 
-```
-
+```text
 packages/shared/src/
 ├── index.ts # Barrel: re-exports model, storage, and compiler (from renderer)
 ├── model.ts # All data types (Userscript, GlobalModule, EditorSettings, etc.)
 ├── messages.ts # Type-safe messaging (RuntimePortMessageEvent, sources, payloads)
 └── storage.ts # StorageManager (chrome.storage.sync wrapper)
-
 ```
 
 ### Root-Level Files
 
-```
-
+```text
 ├── webpack.config.ts # Build configuration (4 entry points, loaders, plugins)
 ├── eslint.config.mjs # Shared ESLint base config
 ├── prettier.config.mjs # Prettier formatting config
@@ -1061,8 +1053,4 @@ packages/shared/src/
 │ ├── chrome-extension-reloader-plugin-utils.ts
 │ └── chrome-extension-reloader-client.js
 └── resources/ # Project resources
-
 ```
-
-```
-````

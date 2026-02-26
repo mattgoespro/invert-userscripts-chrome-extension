@@ -1,12 +1,20 @@
-import { FormatterLanguage, PrettierFormatter } from "@/sandbox/formatter";
 import {
   addSharedScriptExtraLib,
   ensureTypescriptDefaults,
+  generateSharedScriptDeclaration,
   getMonacoThemeId,
 } from "@packages/monaco";
-import { useEffect, useRef } from "react";
+import { useAppDispatch, useAppSelector } from "@/shared/store/hooks";
+import {
+  saveEditorCode,
+  selectSharedScriptsForUserscript,
+  setTsDefaultsConfigured,
+} from "@/shared/store/slices/editor.slice";
+import { selectEditorSettings } from "@/shared/store/slices/settings.slice";
+import { useEffect, useMemo, useRef } from "react";
 import * as monaco from "monaco-editor";
 import { EditorSettings } from "@shared/model";
+import { FormatterLanguage } from "@/sandbox/formatter";
 
 // Cache models by URI to preserve undo history and cursor position
 const modelCache = new Map<string, monaco.editor.ITextModel>();
@@ -29,87 +37,37 @@ function getOrCreateModel(
   return model;
 }
 
-/**
- * Generates a TypeScript declaration from shared script source code.
- * Extracts exported members so Monaco can provide intellisense for
- * `import { ... } from "shared/moduleName"`.
- */
-function generateSharedScriptDeclaration(moduleName: string, sourceCode: string): string {
-  const lines: string[] = [];
-  lines.push(`declare module "shared/${moduleName}" {`);
-
-  let match: RegExpExecArray;
-
-  // Match exported const/let/var declarations
-  const varRegex = /^export\s+(?:const|let|var)\s+(\w+)\s*(?::\s*([^=;]+?))?\s*[=;]/gm;
-
-  while ((match = varRegex.exec(sourceCode)) !== null) {
-    const name = match[1];
-    const type = match[2]?.trim() || "any";
-    lines.push(`  export const ${name}: ${type};`);
-  }
-
-  // Match exported function declarations
-  const fnRegex = /^export\s+function\s+(\w+)\s*(\([^)]*\))\s*(?::\s*([^{]+?))?\s*\{/gm;
-
-  while ((match = fnRegex.exec(sourceCode)) !== null) {
-    const name = match[1];
-    const params = match[2];
-    const returnType = match[3]?.trim() || "any";
-    lines.push(`  export function ${name}${params}: ${returnType};`);
-  }
-
-  // Match exported class declarations
-  const classRegex = /^export\s+class\s+(\w+)/gm;
-
-  while ((match = classRegex.exec(sourceCode)) !== null) {
-    const name = match[1];
-    lines.push(`  export class ${name} {}`);
-  }
-
-  // Match exported type/interface declarations
-  const typeRegex = /^export\s+(?:type|interface)\s+(\w+)/gm;
-
-  while ((match = typeRegex.exec(sourceCode)) !== null) {
-    const name = match[1];
-    lines.push(`  export type ${name} = any;`);
-  }
-
-  lines.push("}");
-
-  return lines.join("\n");
-}
-
-type SharedScriptInfo = {
-  id: string;
-  name: string;
-  moduleName: string;
-  sourceCode: string;
-};
-
 type CodeEditorProps = {
-  // Unique identifier for this editor's content
+  /** Unique identifier for this editor's content */
   modelId: string;
+  /** Script ID for Redux selectors and save thunk (omit for read-only previews) */
+  scriptId?: string;
   contents: string;
   language: FormatterLanguage;
-  editorSettings: EditorSettings;
   editable?: boolean;
-  sharedScripts?: SharedScriptInfo[];
+  /** Override Redux-sourced settings (e.g. ThemePreview with fixed fontSize) */
+  settingsOverride?: Partial<EditorSettings>;
   onCodeModified?: (value: string) => void;
-  onCodeSaved?: (value: string) => void;
 };
 
 export function CodeEditor(props: CodeEditorProps) {
   const {
     modelId,
+    scriptId,
     language,
     contents,
-    sharedScripts,
-    editorSettings: settings,
+    settingsOverride,
     editable = true,
     onCodeModified,
-    onCodeSaved,
   } = props;
+
+  const dispatch = useAppDispatch();
+  const reduxSettings = useAppSelector(selectEditorSettings);
+  const settings = settingsOverride ? { ...reduxSettings, ...settingsOverride } : reduxSettings;
+
+  const sharedScripts = useAppSelector(
+    useMemo(() => selectSharedScriptsForUserscript(scriptId), [scriptId])
+  );
 
   const editorRef = useRef<HTMLDivElement>(null);
   const editorInstanceRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
@@ -187,6 +145,7 @@ export function CodeEditor(props: CodeEditorProps) {
     // now that they're guaranteed to be available.
     if (language === "typescript") {
       ensureTypescriptDefaults();
+      dispatch(setTsDefaultsConfigured());
     }
 
     // Listen to content changes on this model
@@ -232,9 +191,9 @@ export function CodeEditor(props: CodeEditorProps) {
     };
   }, [language, sharedScripts]);
 
-  // Handle Ctrl+S on the container
+  // Handle Ctrl+S on the container — formats (optional) and saves via Redux thunk
   useEffect(() => {
-    if (!editable || !onCodeSaved) {
+    if (!editable || !scriptId) {
       return;
     }
 
@@ -255,20 +214,27 @@ export function CodeEditor(props: CodeEditorProps) {
           return;
         }
 
-        let code = editorInstance.getValue();
+        const code = editorInstance.getValue();
 
-        if (settings?.autoFormat) {
-          code = await PrettierFormatter.format(code, language);
-          editorInstance.setValue(code);
+        const result = await dispatch(
+          saveEditorCode({
+            scriptId,
+            language,
+            code,
+            autoFormat: settings?.autoFormat ?? false,
+          })
+        );
+
+        // If formatting occurred, update the editor with the formatted code
+        if (saveEditorCode.fulfilled.match(result)) {
+          editorInstance.setValue(result.payload.code);
         }
-
-        onCodeSaved(code);
       }
     };
 
     container.addEventListener("keydown", handleKeyDown);
     return () => container.removeEventListener("keydown", handleKeyDown);
-  }, [editable, settings?.autoFormat, language, onCodeSaved]);
+  }, [editable, scriptId, settings?.autoFormat, language, dispatch]);
 
   return (
     <div
