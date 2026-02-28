@@ -2,7 +2,6 @@ import {
   addSharedScriptExtraLib,
   ensureTypescriptDefaults,
   generateSharedScriptDeclaration,
-  getMonacoThemeId,
 } from "@packages/monaco";
 import { useAppDispatch, useAppSelector } from "@/shared/store/hooks";
 import {
@@ -45,7 +44,7 @@ type CodeEditorProps = {
   contents: string;
   language: FormatterLanguage;
   editable?: boolean;
-  /** Override Redux-sourced settings (e.g. ThemePreview with fixed fontSize) */
+  /** Override the editor settings. */
   settingsOverride?: Partial<EditorSettings>;
   onCodeModified?: (value: string) => void;
 };
@@ -85,7 +84,7 @@ export function CodeEditor(props: CodeEditorProps) {
     }
 
     const editorInstance = monaco.editor.create(editorRef.current, {
-      theme: getMonacoThemeId(settings.theme),
+      theme: settings.theme,
       fontSize: settings?.fontSize,
       automaticLayout: true,
       padding: { top: 25, bottom: 10 },
@@ -99,13 +98,20 @@ export function CodeEditor(props: CodeEditorProps) {
       domReadOnly: !editable,
       cursorStyle: editable ? "line" : "underline-thin",
       cursorBlinking: editable ? "blink" : "solid",
-      renderLineHighlight: editable ? "line" : "none",
+      cursorWidth: editable ? undefined : 0,
+      renderLineHighlight: "none",
+      matchBrackets: editable ? "always" : "never",
+      occurrencesHighlight: editable ? "singleFile" : "off",
+      selectionHighlight: editable,
+      scrollBeyondLastLine: editable,
+      lineNumbers: editable ? "on" : "off",
       scrollbar: {
         vertical: "hidden",
         horizontal: "hidden",
         useShadows: false,
         verticalScrollbarSize: 0,
         horizontalScrollbarSize: 0,
+        handleMouseWheel: editable,
       },
     });
 
@@ -119,7 +125,7 @@ export function CodeEditor(props: CodeEditorProps) {
 
   // Update theme dynamically without recreating the editor
   useEffect(() => {
-    monaco.editor.setTheme(getMonacoThemeId(settings?.theme));
+    monaco.editor.setTheme(settings?.theme);
   }, [settings?.theme]);
 
   // Update font size dynamically without recreating the editor

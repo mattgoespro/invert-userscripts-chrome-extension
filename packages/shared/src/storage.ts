@@ -1,7 +1,7 @@
 import { Userscript, GlobalModule, EditorSettings, GlobalModules, Userscripts } from "./model";
 
 export const defaultSettings: EditorSettings = {
-  theme: "invertDark",
+  theme: "invert-dark",
   fontSize: 14,
   tabSize: 2,
   autoFormat: true,

@@ -42,7 +42,7 @@ export function ScriptsPage() {
             title="Create new script"
           ></IconButton>
         </div>
-        <ScriptList></ScriptList>
+        <ScriptList />
       </div>
       {selectedScript ? (
         <ScriptEditor />

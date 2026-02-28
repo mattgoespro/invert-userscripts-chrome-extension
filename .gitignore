@@ -2,7 +2,6 @@ node_modules/
 dist/
 build/
 temp/
-tools/**/*.js
 *.log
 *.zip
 .cache/

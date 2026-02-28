@@ -1,6 +1,6 @@
 {
   "extends": "./tsconfig.base.json",
-  "include": ["tools", "*.ts"],
+  "include": ["webpack.config.ts", "plugins/**/*.ts"],
   "compilerOptions": {
     "noEmit": true,
     "allowImportingTsExtensions": true,

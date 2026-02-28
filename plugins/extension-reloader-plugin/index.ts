@@ -1,29 +1,10 @@
 import webpack from "webpack";
 import { WebSocket, WebSocketServer } from "ws";
-import {
-  type Logger,
-  createLogger,
-  loadReloaderClient,
-} from "./chrome-extension-reloader-plugin-utils.ts";
+import { parseClientFileContents } from "./client/load.ts";
+import type { BroadcastMessage, ChromeExtensionReloaderPluginOptions } from "./model.ts";
+import { type Logger, createLogger } from "./utils/logger.ts";
 
-export type CaptureConsoleOptions = {
-  levels: ("log" | "info" | "warn" | "error")[];
-  ignore?: (...message: unknown[]) => boolean;
-};
-
-export interface ChromeExtensionReloaderPluginOptions {
-  port?: number;
-  verbose?: boolean;
-  autoLaunchBrowser?: boolean;
-  captureConsole?: boolean | CaptureConsoleOptions;
-}
-
-type BroadcastMessage = {
-  type: "configure" | "reload" | "log";
-  data?: unknown;
-};
-
-export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPluginInstance {
+export default class ExtensionReloaderPlugin implements webpack.WebpackPluginInstance {
   private readonly name = "ChromeExtensionReloaderWebpackPlugin";
   private readonly ChromeExtensionReloaderClientScriptName = "chrome-extension-reloader-client.js";
 
@@ -35,14 +16,14 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
 
   constructor(options: ChromeExtensionReloaderPluginOptions = {}) {
     this._options = {
-      ...options,
       port: options.port ?? 8081,
       verbose: options.verbose ?? false,
       autoLaunchBrowser: options.autoLaunchBrowser ?? false,
-      captureConsole: options.captureConsole ?? false,
+      excludeAssets: options.excludeAssets ?? [],
+      consoleOptions: options.consoleOptions,
     };
 
-    this._clientReloaderScriptContent = loadReloaderClient([
+    this._clientReloaderScriptContent = parseClientFileContents([
       ["port", this._options.port.toString()],
     ]);
 
@@ -67,8 +48,14 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
       );
     });
 
-    compiler.hooks.done.tap(this.name, () => {
-      this.broadcastClientMessage({ type: "reload" });
+    compiler.hooks.done.tap(this.name, (stats) => {
+      if (stats.hasErrors()) {
+        this._log.error("Build failed with errors. Skipping reload.");
+        return;
+      }
+
+      this._log.verbose("Build done. Broadcasting reload message to clients...");
+      this.broadcastMessageToClients({ type: "reload" });
     });
 
     compiler.hooks.shutdown.tap(this.name, () => {
@@ -81,29 +68,35 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
 
     this._wss.on("connection", (ws) => {
       this._log.verbose("Extension client connected from the browser.");
+      this._log.verbose("Sending connection message to the client...");
+      ws.send(
+        JSON.stringify({
+          type: "log",
+          data: this._log.createMessage("INFO", "Connected to the Extension Reloader Plugin."),
+        })
+      );
 
-      this.broadcastClientMessage({
-        type: "log",
-        data: this._log.createMessage("INFO", "Connected to Chrome Extension Reloader."),
-      });
-      this.broadcastClientMessage({
-        type: "configure",
-        data: {
-          captureConsole: this._options.captureConsole,
-        },
-      });
+      this._log.verbose("Sending initial configuration to the client...");
+      ws.send(
+        JSON.stringify({
+          type: "configure",
+          data: {
+            config: { consoleOptions: this._options.consoleOptions },
+          },
+        })
+      );
 
-      ws.onmessage = this.onClientMessage.bind(this);
+      ws.onmessage = this.onReceiveClientMessage.bind(this);
     });
 
     this._log.verbose(`Listening on port: ${this._options.port}`);
   }
 
-  private broadcastClientMessage(message: BroadcastMessage) {
-    const sendMessageToClients = (message: BroadcastMessage) => {
+  private broadcastMessageToClients(message: BroadcastMessage) {
+    const broadcastMessage = (message: BroadcastMessage) => {
       for (const client of this._wss.clients) {
         if (client.readyState !== WebSocket.OPEN) {
-          this._log.warn("An existing client is not ready to receive messages. Skipping...");
+          this._log.verbose("An existing client is not ready to receive messages. Skipping...");
           continue;
         }
 
@@ -115,29 +108,44 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
 
     switch (message.type) {
       case "configure": {
-        sendMessageToClients(message);
-        this._log.verbose("Sent configuration to extension client.");
+        broadcastMessage(message);
+        this._log.verbose("Sent configuration to extension clients.");
         break;
       }
       case "reload": {
         this._log.info("Reloading extension...");
-        sendMessageToClients(message);
+        broadcastMessage(message);
         this._log.info("Reload complete.");
         break;
       }
       case "log": {
-        sendMessageToClients(message);
+        broadcastMessage(message);
         break;
       }
     }
   }
 
-  private onClientMessage(message: MessageEvent) {
+  private onReceiveClientMessage(message: MessageEvent) {
     try {
-      const msg: BroadcastMessage = JSON.parse(message.data.toString());
+      const { type, data } = JSON.parse(message.data.toString());
 
-      if (msg.type === "log") {
-        this._log.info(msg.data as string);
+      switch (type) {
+        case "log": {
+          const { level, message } = data;
+
+          switch (level) {
+            case "info":
+              this._log.info(message);
+              break;
+            case "warn":
+              this._log.warn(message);
+              break;
+            case "error":
+              this._log.error(message);
+              break;
+          }
+          break;
+        }
       }
     } catch (error) {
       this._log.error("Failed to parse message from client:");
@@ -155,9 +163,8 @@ export class ChromeExtensionReloaderWebpackPlugin implements webpack.WebpackPlug
       new webpack.sources.RawSource(this._clientReloaderScriptContent)
     );
 
-    // Insert the client script into all HTML assets.
     for (const name of Object.keys(assets)) {
-      if (!name.endsWith(".html")) {
+      if (!name.endsWith(".html") || this._options.excludeAssets.includes(name)) {
         continue;
       }
 

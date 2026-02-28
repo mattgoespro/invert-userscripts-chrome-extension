@@ -60,5 +60,11 @@
   .theme-preview--editor {
     height: 10rem;
     min-height: 0;
+
+    // Force-hide cursor in read-only preview
+    .cursor,
+    .cursors-layer {
+      display: none !important;
+    }
   }
 }

@@ -1,11 +1,11 @@
 import CopyWebpackPlugin from "copy-webpack-plugin";
 import FaviconsWebpackPlugin from "favicons-webpack-plugin";
 import HtmlWebpackPlugin from "html-webpack-plugin";
+import MonacoEditorWebpackPlugin from "monaco-editor-webpack-plugin";
 import path from "path";
+import { ChromeExtensionReloaderWebpackPlugin } from "./plugins/index.ts";
 import TerserPlugin from "terser-webpack-plugin";
 import webpack from "webpack";
-import { ChromeExtensionReloaderWebpackPlugin } from "./tools/chrome-extension-reloader-webpack-plugin.ts";
-import MonacoEditorWebpackPlugin from "monaco-editor-webpack-plugin";
 import packageJson from "./package.json" with { type: "json" };
 
 const __dirname = import.meta.dirname;
@@ -13,7 +13,7 @@ const __dirname = import.meta.dirname;
 export default (_args: unknown, { mode }: { mode: "development" | "production" }) =>
   ({
     mode,
-    devtool: mode === "production" ? false : "inline-source-map",
+    devtool: mode === "production" ? false : "cheap-module-source-map",
     entry: {
       background: {
         import: "./packages/runtime/src/background.ts",
@@ -32,6 +32,7 @@ export default (_args: unknown, { mode }: { mode: "development" | "production" }
       filename: "[name].js",
       chunkFilename: "chunks/[chunkhash].js",
       publicPath: "/",
+      pathinfo: false, // reduce garbage collector pressure from storing module info for each chunk
       clean: true,
     },
     module: {
@@ -72,10 +73,11 @@ export default (_args: unknown, { mode }: { mode: "development" | "production" }
         {
           test: /\.tsx?$/,
           use: {
-            loader: "ts-loader",
+            loader: "esbuild-loader",
             options: {
-              configFile: path.join(__dirname, "packages", "renderer", "tsconfig.json"),
-              transpileOnly: true,
+              loader: "tsx",
+              tsconfig: path.join(__dirname, "packages", "renderer", "tsconfig.json"),
+              jsx: "automatic",
             },
           },
           include: /packages/,
@@ -165,7 +167,7 @@ export default (_args: unknown, { mode }: { mode: "development" | "production" }
       new FaviconsWebpackPlugin({
         logo: path.resolve(__dirname, "public", "assets", "icon.png"),
         mode: "webapp",
-        cache: false,
+        cache: true,
         outputPath: "assets/favicons",
         prefix: "assets/favicons/",
         favicons: {
@@ -180,7 +182,13 @@ export default (_args: unknown, { mode }: { mode: "development" | "production" }
         },
       }),
       mode === "development"
-        ? new ChromeExtensionReloaderWebpackPlugin({ verbose: true, captureConsole: true })
+        ? new ChromeExtensionReloaderWebpackPlugin({
+            verbose: true,
+            consoleOptions: {
+              captureLevels: ["warn", "error"],
+            },
+            excludeAssets: ["sass-sandbox.html", "popup.html"],
+          })
         : false,
     ],
     optimization: {
@@ -193,22 +201,27 @@ export default (_args: unknown, { mode }: { mode: "development" | "production" }
               }),
             ]
           : undefined,
-      splitChunks: {
-        cacheGroups: {
-          monacoEditor: {
-            test: /[\\/]node_modules[\\/]monaco-editor[\\/]/,
-            name: "monaco-editor",
-            filename: "monaco-editor/[chunkhash].js",
-            chunks: "all",
-          },
-          sass: {
-            test: /[\\/]node_modules[\\/]sass[\\/]/,
-            name: "sass",
-            filename: "sass/[chunkhash].js",
-            chunks: (chunk) => chunk.name === "sass-sandbox",
-          },
-        },
-      },
+      splitChunks:
+        mode === "production"
+          ? {
+              cacheGroups: {
+                monacoEditor: {
+                  test: /[\\/]node_modules[\\/]monaco-editor[\\/]/,
+                  name: "monaco-editor",
+                  filename: "monaco-editor/[chunkhash].js",
+                  chunks: "all",
+                },
+                sass: {
+                  test: /[\\/]node_modules[\\/]sass[\\/]/,
+                  name: "sass",
+                  filename: "sass/[chunkhash].js",
+                  chunks: (chunk) => chunk.name === "sass-sandbox",
+                },
+              },
+            }
+          : undefined,
     },
-    cache: true,
+    cache: {
+      type: "filesystem",
+    },
   }) satisfies webpack.Configuration;

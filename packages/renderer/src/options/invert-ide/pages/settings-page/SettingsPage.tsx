@@ -2,7 +2,7 @@ import { Checkbox } from "@/shared/components/checkbox/Checkbox";
 import { Input } from "@/shared/components/input/Input";
 import { Select } from "@/shared/components/select/Select";
 import { Typography } from "@/shared/components/typography/Typography";
-import { EditorThemeName, EditorThemes } from "@packages/monaco";
+import { EditorThemeName, getThemeOptions } from "@packages/monaco";
 import { useAppDispatch, useAppSelector } from "@/shared/store/hooks";
 import {
   loadSettings,
@@ -69,10 +69,7 @@ export function Settings() {
             label="Theme"
             value={settings.theme}
             onChange={handleThemeChange}
-            options={Object.values(EditorThemes).map((theme) => ({
-              label: theme.displayName,
-              value: theme.name,
-            }))}
+            options={getThemeOptions()}
           />
           <div className="settings--theme-preview-wrapper">
             <ThemePreview theme={settings.theme} />

@@ -1,69 +1,39 @@
 /**
- * Re-exports of all default themes shipped with Shiki (`@shikijs/themes`).
- * Each export is a `ThemeRegistration` object that can be passed directly
- * to Shiki's highlighter or converted to a Monaco theme.
+ * Re-exports of a hand-picked subset of dark themes shipped with Shiki (`@shikijs/themes`), appropriate for the app's dark editor themes.
  */
 export { default as andromeeda } from "@shikijs/themes/andromeeda";
 export { default as auroraX } from "@shikijs/themes/aurora-x";
 export { default as ayuDark } from "@shikijs/themes/ayu-dark";
-export { default as ayuLight } from "@shikijs/themes/ayu-light";
 export { default as ayuMirage } from "@shikijs/themes/ayu-mirage";
-export { default as catppuccinFrappe } from "@shikijs/themes/catppuccin-frappe";
-export { default as catppuccinLatte } from "@shikijs/themes/catppuccin-latte";
-export { default as catppuccinMacchiato } from "@shikijs/themes/catppuccin-macchiato";
-export { default as catppuccinMocha } from "@shikijs/themes/catppuccin-mocha";
 export { default as darkPlus } from "@shikijs/themes/dark-plus";
 export { default as dracula } from "@shikijs/themes/dracula";
 export { default as draculaSoft } from "@shikijs/themes/dracula-soft";
 export { default as everforestDark } from "@shikijs/themes/everforest-dark";
-export { default as everforestLight } from "@shikijs/themes/everforest-light";
 export { default as githubDark } from "@shikijs/themes/github-dark";
 export { default as githubDarkDefault } from "@shikijs/themes/github-dark-default";
 export { default as githubDarkDimmed } from "@shikijs/themes/github-dark-dimmed";
 export { default as githubDarkHighContrast } from "@shikijs/themes/github-dark-high-contrast";
-export { default as githubLight } from "@shikijs/themes/github-light";
-export { default as githubLightDefault } from "@shikijs/themes/github-light-default";
-export { default as githubLightHighContrast } from "@shikijs/themes/github-light-high-contrast";
 export { default as gruvboxDarkHard } from "@shikijs/themes/gruvbox-dark-hard";
 export { default as gruvboxDarkMedium } from "@shikijs/themes/gruvbox-dark-medium";
 export { default as gruvboxDarkSoft } from "@shikijs/themes/gruvbox-dark-soft";
-export { default as gruvboxLightHard } from "@shikijs/themes/gruvbox-light-hard";
-export { default as gruvboxLightMedium } from "@shikijs/themes/gruvbox-light-medium";
-export { default as gruvboxLightSoft } from "@shikijs/themes/gruvbox-light-soft";
 export { default as horizon } from "@shikijs/themes/horizon";
 export { default as houston } from "@shikijs/themes/houston";
 export { default as kanagawaDragon } from "@shikijs/themes/kanagawa-dragon";
-export { default as kanagawaLotus } from "@shikijs/themes/kanagawa-lotus";
 export { default as kanagawaWave } from "@shikijs/themes/kanagawa-wave";
 export { default as laserwave } from "@shikijs/themes/laserwave";
-export { default as lightPlus } from "@shikijs/themes/light-plus";
 export { default as materialTheme } from "@shikijs/themes/material-theme";
 export { default as materialThemeDarker } from "@shikijs/themes/material-theme-darker";
-export { default as materialThemeLighter } from "@shikijs/themes/material-theme-lighter";
 export { default as materialThemeOcean } from "@shikijs/themes/material-theme-ocean";
 export { default as materialThemePalenight } from "@shikijs/themes/material-theme-palenight";
 export { default as minDark } from "@shikijs/themes/min-dark";
-export { default as minLight } from "@shikijs/themes/min-light";
 export { default as monokai } from "@shikijs/themes/monokai";
-export { default as nightOwl } from "@shikijs/themes/night-owl";
-export { default as nightOwlLight } from "@shikijs/themes/night-owl-light";
 export { default as nord } from "@shikijs/themes/nord";
 export { default as oneDarkPro } from "@shikijs/themes/one-dark-pro";
-export { default as oneLight } from "@shikijs/themes/one-light";
 export { default as plastic } from "@shikijs/themes/plastic";
 export { default as poimandres } from "@shikijs/themes/poimandres";
-export { default as red } from "@shikijs/themes/red";
 export { default as rosePine } from "@shikijs/themes/rose-pine";
-export { default as rosePineDawn } from "@shikijs/themes/rose-pine-dawn";
-export { default as rosePineMoon } from "@shikijs/themes/rose-pine-moon";
 export { default as slackDark } from "@shikijs/themes/slack-dark";
-export { default as slackOchin } from "@shikijs/themes/slack-ochin";
-export { default as snazzyLight } from "@shikijs/themes/snazzy-light";
-export { default as solarizedDark } from "@shikijs/themes/solarized-dark";
-export { default as solarizedLight } from "@shikijs/themes/solarized-light";
-export { default as synthwave84 } from "@shikijs/themes/synthwave-84";
 export { default as tokyoNight } from "@shikijs/themes/tokyo-night";
 export { default as vesper } from "@shikijs/themes/vesper";
 export { default as vitesseBlack } from "@shikijs/themes/vitesse-black";
 export { default as vitesseDark } from "@shikijs/themes/vitesse-dark";
-export { default as vitesseLight } from "@shikijs/themes/vitesse-light";

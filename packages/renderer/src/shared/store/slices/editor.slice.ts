@@ -73,8 +73,10 @@ const editorSlice = createSlice({
       .addCase(initializeMonaco.fulfilled, (state) => {
         state.monacoReady = true;
       })
-      .addCase(initializeMonaco.rejected, (state) => {
-        // Allow rendering even if Shiki initialization fails
+      .addCase(initializeMonaco.rejected, (state, action) => {
+        console.error("Shiki highlighter initialization failed:", action.error);
+        // Allow rendering even if Shiki initialization fails — Monarch tokenizers
+        // remain active as a fallback since they are only blocked after Shiki succeeds.
         state.monacoReady = true;
       })
       // saveEditorCode

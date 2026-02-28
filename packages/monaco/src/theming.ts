@@ -1,131 +1,64 @@
-import { createHighlighterCore, ThemeRegistration, ThemeRegistrationResolved } from "@shikijs/core";
+import { createHighlighterCore, ThemeRegistration } from "@shikijs/core";
 import { createOnigurumaEngine } from "@shikijs/engine-oniguruma";
-import { shikiToMonaco, textmateThemeToMonacoTheme } from "@shikijs/monaco";
+import { shikiToMonaco } from "@shikijs/monaco";
 import monaco from "monaco-editor";
 import * as themes from "./themes";
+import { CamelToKebabCase } from "./utils";
 
-export type EditorThemeName = keyof typeof themes;
+export type EditorThemeName = CamelToKebabCase<keyof typeof themes>;
 
 /**
- * Raw TextMate theme definitions for all editor themes loaded into the Shiki highlighter.
+ * Raw TextMate theme definitions for all editor themes.
  */
-export const EditorThemes: Record<EditorThemeName, ThemeRegistration> = {
+const EditorThemes: Record<EditorThemeName, ThemeRegistration> = {
   andromeeda: themes.andromeeda,
-  auroraX: themes.auroraX,
-  ayuDark: themes.ayuDark,
-  ayuLight: themes.ayuLight,
-  ayuMirage: themes.ayuMirage,
-  beardedAnthracite: themes.beardedAnthracite,
-  beardedArc: themes.beardedArc,
-  beardedVividBlack: themes.beardedVividBlack,
-  catppuccinFrappe: themes.catppuccinFrappe,
-  catppuccinLatte: themes.catppuccinLatte,
-  catppuccinMacchiato: themes.catppuccinMacchiato,
-  catppuccinMocha: themes.catppuccinMocha,
-  darkPlus: themes.darkPlus,
+  "aurora-x": themes.auroraX,
+  "ayu-dark": themes.ayuDark,
+  "ayu-mirage": themes.ayuMirage,
+  "bearded-anthracite": themes.beardedAnthracite,
+  "bearded-vivid-black": themes.beardedVividBlack,
+  "dark-plus": themes.darkPlus,
   dracula: themes.dracula,
-  draculaSoft: themes.draculaSoft,
-  everforestDark: themes.everforestDark,
-  everforestLight: themes.everforestLight,
-  githubDark: themes.githubDark,
-  githubDarkDefault: themes.githubDarkDefault,
-  githubDarkDimmed: themes.githubDarkDimmed,
-  githubDarkHighContrast: themes.githubDarkHighContrast,
-  githubLight: themes.githubLight,
-  githubLightDefault: themes.githubLightDefault,
-  githubLightHighContrast: themes.githubLightHighContrast,
-  graphiteDusk: themes.graphiteDusk,
-  gruvboxDarkHard: themes.gruvboxDarkHard,
-  gruvboxDarkMedium: themes.gruvboxDarkMedium,
-  gruvboxDarkSoft: themes.gruvboxDarkSoft,
-  gruvboxLightHard: themes.gruvboxLightHard,
-  gruvboxLightMedium: themes.gruvboxLightMedium,
-  gruvboxLightSoft: themes.gruvboxLightSoft,
+  "dracula-soft": themes.draculaSoft,
+  "everforest-dark": themes.everforestDark,
+  "github-dark": themes.githubDark,
+  "github-dark-default": themes.githubDarkDefault,
+  "github-dark-dimmed": themes.githubDarkDimmed,
+  "github-dark-high-contrast": themes.githubDarkHighContrast,
+  "graphite-dusk": themes.graphiteDusk,
+  "gruvbox-dark-hard": themes.gruvboxDarkHard,
+  "gruvbox-dark-medium": themes.gruvboxDarkMedium,
+  "gruvbox-dark-soft": themes.gruvboxDarkSoft,
   horizon: themes.horizon,
   houston: themes.houston,
-  invertDark: themes.invertDark,
-  kanagawaDragon: themes.kanagawaDragon,
-  kanagawaLotus: themes.kanagawaLotus,
-  kanagawaWave: themes.kanagawaWave,
+  "invert-dark": themes.invertDark,
+  "kanagawa-dragon": themes.kanagawaDragon,
+  "kanagawa-wave": themes.kanagawaWave,
   laserwave: themes.laserwave,
-  lightPlus: themes.lightPlus,
-  materialTheme: themes.materialTheme,
-  materialThemeDarker: themes.materialThemeDarker,
-  materialThemeLighter: themes.materialThemeLighter,
-  materialThemeOcean: themes.materialThemeOcean,
-  materialThemePalenight: themes.materialThemePalenight,
-  minDark: themes.minDark,
-  minLight: themes.minLight,
+  "material-theme": themes.materialTheme,
+  "material-theme-darker": themes.materialThemeDarker,
+  "material-theme-ocean": themes.materialThemeOcean,
+  "material-theme-palenight": themes.materialThemePalenight,
+  "min-dark": themes.minDark,
   monokai: themes.monokai,
-  monokaiPro: themes.monokaiPro,
-  nightOwl: themes.nightOwl,
-  nightOwlLight: themes.nightOwlLight,
+  "monokai-pro": themes.monokaiPro,
   nord: themes.nord,
-  oneDarkPro: themes.oneDarkPro,
-  oneLight: themes.oneLight,
+  "one-dark-pro": themes.oneDarkPro,
   plastic: themes.plastic,
   poimandres: themes.poimandres,
-  red: themes.red,
-  rosePine: themes.rosePine,
-  rosePineDawn: themes.rosePineDawn,
-  rosePineMoon: themes.rosePineMoon,
-  slackDark: themes.slackDark,
-  slackOchin: themes.slackOchin,
-  snazzyLight: themes.snazzyLight,
-  solarizedDark: themes.solarizedDark,
-  solarizedLight: themes.solarizedLight,
-  synthwave84: themes.synthwave84,
-  tokyoNight: themes.tokyoNight,
+  "rose-pine": themes.rosePine,
+  "slack-dark": themes.slackDark,
+  "tokyo-night": themes.tokyoNight,
   vesper: themes.vesper,
-  vitesseBlack: themes.vitesseBlack,
-  vitesseDark: themes.vitesseDark,
-  vitesseLight: themes.vitesseLight,
+  "vitesse-black": themes.vitesseBlack,
+  "vitesse-dark": themes.vitesseDark,
 };
 
-// Monaco-ready theme definitions derived from the raw TextMate themes passed to the Shiki highlighter and registered via `monaco.editor.defineTheme()`.
-const MonacoEditorThemes: Record<string, monaco.editor.IStandaloneThemeData> = Object.fromEntries(
-  Object.entries(EditorThemes).map(([displayName, theme]) => [
-    displayName,
-    textmateThemeToMonacoTheme(theme as ThemeRegistrationResolved),
-  ])
-);
-
-export function getThemeDisplayName(name: EditorThemeName): string {
-  const themeDefinition = EditorThemes[name];
-
-  if (!themeDefinition) {
-    console.warn(`Theme with display name "${name}" not found. Falling back to default theme.`);
-    return EditorThemes["darkPlus"].displayName;
-  }
-
-  return themeDefinition.displayName;
-}
-
-/**
- * Maps an EditorThemeName key to the theme's registered Monaco ID.
- * shikiToMonaco registers themes using the theme's `name` property
- * (e.g. "bearded-arc"), NOT the camelCase key or the displayName.
- */
-export function getMonacoThemeId(name: EditorThemeName): string {
-  const themeDefinition = EditorThemes[name];
-
-  if (!themeDefinition) {
-    console.warn(`Theme "${name}" not found. Falling back to default theme.`);
-    return EditorThemes["darkPlus"].name!;
-  }
-
-  return themeDefinition.name!;
-}
-
-export function getTheme(name: EditorThemeName): monaco.editor.IStandaloneThemeData {
-  const themeDefinition = EditorThemes[name];
-
-  if (!themeDefinition) {
-    console.warn(`Theme with name "${name}" not found. Falling back to default theme.`);
-    return MonacoEditorThemes[EditorThemes["darkPlus"].displayName];
-  }
-
-  return MonacoEditorThemes[themeDefinition.displayName];
+export function getThemeOptions(): { label: string; value: EditorThemeName }[] {
+  return Object.entries(EditorThemes).map(([key, theme]) => ({
+    label: theme.displayName,
+    value: key as EditorThemeName,
+  }));
 }
 
 /**
@@ -141,18 +74,6 @@ export async function applyHighlighter(): Promise<void> {
   const SHIKI_LANGUAGES = ["typescript", "javascript", "scss", "css"] as const;
   const shikiLanguageSet = new Set<string>(SHIKI_LANGUAGES);
 
-  const _setMonarch = monaco.languages.setMonarchTokensProvider.bind(monaco.languages);
-
-  monaco.languages.setMonarchTokensProvider = (languageId, languageDef) => {
-    if (shikiLanguageSet.has(languageId)) {
-      console.log(
-        `Monarch token provider registration blocked for language "${languageId}" because it's managed by Shiki's TextMate tokenizer.`
-      );
-      return { dispose: () => {} };
-    }
-    return _setMonarch(languageId, languageDef);
-  };
-
   // Create the Shiki highlighter with all app themes and language grammars.
   const highlighter = await createHighlighterCore({
     themes: Object.values(EditorThemes),
@@ -166,6 +87,23 @@ export async function applyHighlighter(): Promise<void> {
     ],
     engine: await createOnigurumaEngine(import("@shikijs/engine-oniguruma/wasm-inlined")),
   });
+
+  /**
+   * Block Monarch tokenizers for Shiki-managed languages. This is done AFTER the highlighter is
+   * successfully created so that if Shiki initialization fails, Monaco's built-in Monarch
+   * tokenizers remain active as a fallback.
+   */
+  const _setMonarch = monaco.languages.setMonarchTokensProvider.bind(monaco.languages);
+
+  monaco.languages.setMonarchTokensProvider = (languageId, languageDef) => {
+    if (shikiLanguageSet.has(languageId)) {
+      console.log(
+        `Monarch token provider registration blocked for language "${languageId}" because it's managed by Shiki's TextMate tokenizer.`
+      );
+      return { dispose: () => {} };
+    }
+    return _setMonarch(languageId, languageDef);
+  };
 
   // Register language IDs with Monaco so shikiToMonaco's monacoLanguageIds check passes.
   for (const lang of SHIKI_LANGUAGES) {
@@ -181,5 +119,14 @@ export async function applyHighlighter(): Promise<void> {
    * Monaco's language service workers (LSP) remain active for intellisense,
    * diagnostics, and completions — Shiki only replaces the tokenization layer.
    */
-  shikiToMonaco(highlighter, monaco);
+  shikiToMonaco(highlighter, monaco, {
+    /**
+     * Disable the per-line tokenization time limit. The default 500ms timeout causes
+     * vscode-textmate to return a corrupted mid-parse ruleStack when exceeded. Monaco
+     * feeds this corrupted state to subsequent lines, causing a cascade where all lines
+     * after the timeout lose syntax highlighting. Setting 0 disables the timeout entirely,
+     * ensuring each line always completes full tokenization.
+     */
+    tokenizeTimeLimit: 0,
+  });
 }
