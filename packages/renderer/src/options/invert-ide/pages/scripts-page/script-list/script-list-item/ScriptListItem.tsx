@@ -1,13 +1,8 @@
-import { IconButton } from "@/shared/components/icon-button/IconButton";
 import { Switch } from "@/shared/components/switch/Switch";
 import { useAppDispatch } from "@/shared/store/hooks";
-import {
-  deleteUserscript,
-  setCurrentUserscript,
-  toggleUserscript,
-} from "@/shared/store/slices/userscripts.slice";
+import { setCurrentUserscript, toggleUserscript } from "@/shared/store/slices/userscripts.slice";
 import { Userscript } from "@shared/model";
-import { EllipsisIcon, PackageIcon } from "lucide-react";
+import { PackageIcon } from "lucide-react";
 import "./ScriptListItem.scss";
 
 type ScriptListItemProps = {
@@ -30,14 +25,6 @@ export function ScriptListItem({ script, active }: ScriptListItemProps) {
     dispatch(toggleUserscript(script.id));
   };
 
-  const onDeleteScript = async () => {
-    if (!confirm("Are you sure you want to delete this script?")) {
-      return;
-    }
-
-    dispatch(deleteUserscript(script.id));
-  };
-
   return (
     <div
       className={[
@@ -55,15 +42,6 @@ export function ScriptListItem({ script, active }: ScriptListItemProps) {
       <span className="script-list-item--name">{script.name}</span>
       <div className="script-list-item--actions">
         <Switch checked={script.enabled} onChange={() => onToggleScript()} />
-        <IconButton
-          icon={EllipsisIcon}
-          size="sm"
-          onClick={(event) => {
-            event.stopPropagation();
-            onDeleteScript();
-          }}
-          title="More"
-        ></IconButton>
       </div>
     </div>
   );

@@ -2,9 +2,9 @@ import type { EditorThemeName } from "@packages/monaco";
 
 export type UserscriptStatus = "modified" | "saved";
 
-export type UserscriptSourceCode = "typescript" | "scss";
+export type UserscriptSourceLanguage = "typescript" | "scss";
 
-export type UserscriptCompiledCode = "javascript" | "css";
+export type UserscriptCompiledLanguage = "javascript" | "css";
 
 export interface Userscript {
   id: string;
@@ -17,10 +17,10 @@ export interface Userscript {
   sharedScripts: string[];
   code: {
     source: {
-      [key in UserscriptSourceCode]: string;
+      [key in UserscriptSourceLanguage]: string;
     };
     compiled: {
-      [key in UserscriptCompiledCode]: string;
+      [key in UserscriptCompiledLanguage]: string;
     };
   };
   urlPatterns: string[];

@@ -1,9 +1,14 @@
 import { createSlice, createAsyncThunk, createSelector } from "@reduxjs/toolkit";
-import { SharedScriptInfo, UserscriptSourceCode } from "@shared/model";
-import { registerMonaco } from "@packages/monaco";
+import { SharedScriptInfo, UserscriptSourceLanguage } from "@shared/model";
+import {
+  addSharedScriptExtraLib,
+  ensureTypescriptDefaults,
+  generateSharedScriptDeclaration,
+  registerMonaco,
+} from "@packages/monaco";
 import { PrettierFormatter } from "@/sandbox/formatter";
 import { updateUserscriptCode } from "./userscripts.slice";
-import type { RootState } from "../store";
+import type { AppDispatch, RootState } from "../store";
 
 export type EditorState = {
   monacoReady: boolean;
@@ -23,6 +28,57 @@ export const initializeMonaco = createAsyncThunk("editor/initializeMonaco", asyn
   await registerMonaco();
 });
 
+// ── Shared Script Extra Lib Management ────────────────────────────────────────
+
+// Module-level disposable tracking — non-serializable, kept outside Redux state.
+const sharedLibDisposables = new Map<string, { dispose(): void }>();
+
+/**
+ * Configures the TypeScript language service compiler and diagnostics options.
+ * Safe to call multiple times — `ensureTypescriptDefaults` is idempotent and
+ * the `setTsDefaultsConfigured` flag prevents redundant dispatches.
+ */
+export const configureTypescriptDefaults = () => (dispatch: AppDispatch) => {
+  ensureTypescriptDefaults();
+  dispatch(setTsDefaultsConfigured());
+};
+
+/**
+ * Disposes all current shared-script extra lib registrations, then registers
+ * ambient module declarations for each provided shared script so Monaco's
+ * TypeScript language service can resolve `import { … } from "shared/…"`.
+ */
+export const syncSharedScriptLibs = (sharedScripts: SharedScriptInfo[]) => () => {
+  // Dispose previous registrations
+  for (const [key, disposable] of sharedLibDisposables) {
+    disposable.dispose();
+    sharedLibDisposables.delete(key);
+  }
+
+  // Register ambient module declarations for each shared script
+  for (const shared of sharedScripts) {
+    if (!shared.moduleName) {
+      continue;
+    }
+
+    const declaration = generateSharedScriptDeclaration(shared.moduleName, shared.sourceCode);
+    const filePath = `file:///node_modules/@types/shared/${shared.moduleName}/index.d.ts`;
+    const disposable = addSharedScriptExtraLib(declaration, filePath);
+    sharedLibDisposables.set(shared.id, disposable);
+  }
+};
+
+/**
+ * Disposes all shared-script extra lib registrations.
+ * Call on component unmount or when shared scripts are no longer needed.
+ */
+export const disposeSharedScriptLibs = () => () => {
+  for (const [key, disposable] of sharedLibDisposables) {
+    disposable.dispose();
+    sharedLibDisposables.delete(key);
+  }
+};
+
 export const saveEditorCode = createAsyncThunk(
   "editor/saveEditorCode",
   async (
@@ -31,7 +87,7 @@ export const saveEditorCode = createAsyncThunk(
       language,
       code,
       autoFormat,
-    }: { scriptId: string; language: UserscriptSourceCode; code: string; autoFormat: boolean },
+    }: { scriptId: string; language: UserscriptSourceLanguage; code: string; autoFormat: boolean },
     { dispatch }
   ) => {
     let formattedCode = code;

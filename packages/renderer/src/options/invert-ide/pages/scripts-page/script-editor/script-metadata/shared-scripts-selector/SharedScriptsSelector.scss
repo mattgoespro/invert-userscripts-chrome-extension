@@ -34,7 +34,7 @@
   .shared-scripts-selector--list {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: var(--spacing-sm);
     flex-wrap: wrap;
   }
 

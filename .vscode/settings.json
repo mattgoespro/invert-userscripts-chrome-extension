@@ -1,4 +1,10 @@
 {
+  "[chatagent]": {
+    "editor.defaultFormatter": "yzhang.markdown-all-in-one"
+  },
+  "[instructions]": {
+    "editor.defaultFormatter": "yzhang.markdown-all-in-one"
+  },
   "[scss]": {
     "editor.defaultFormatter": "sibiraj-s.vscode-scss-formatter",
     "editor.formatOnPaste": true,
@@ -46,12 +52,6 @@
     "**/.git/**": true,
     "**/dist/**": true,
     "**/node_modules/**": true
-  },
-  "[chatagent]": {
-    "editor.defaultFormatter": "yzhang.markdown-all-in-one"
-  },
-  "[instructions]": {
-    "editor.defaultFormatter": "yzhang.markdown-all-in-one"
   },
   "github.copilot.nextEditSuggestions.enabled": true,
   "markdown.extension.completion.enabled": true,

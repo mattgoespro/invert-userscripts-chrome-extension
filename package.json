@@ -40,6 +40,7 @@
     "react-dom": "^19.2.3",
     "react-error-boundary": "^6.1.0",
     "react-redux": "^9.2.0",
+    "react-resizable-panels": "^4.6.5",
     "redux-logger": "^4.0.0",
     "shiki": "^3.22.0",
     "uuid": "^13.0.0"

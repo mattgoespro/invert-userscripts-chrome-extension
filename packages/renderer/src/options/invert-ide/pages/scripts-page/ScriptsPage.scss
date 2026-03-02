@@ -1,13 +1,13 @@
 .scripts--content {
-  display: flex;
   flex: 1;
   height: 100%;
+  min-width: 0;
+  overflow: hidden;
 
   .scripts--sidebar {
-    width: 300px;
+    height: 100%;
     background: var(--surface-raised);
     border-right: 1px solid var(--border);
-    overflow: hidden;
     display: flex;
     flex-direction: column;
 
@@ -15,7 +15,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 20px 16px;
+      padding: var(--spacing-md) var(--spacing-md);
       border-bottom: 1px solid var(--border);
 
       // Code-style decoration

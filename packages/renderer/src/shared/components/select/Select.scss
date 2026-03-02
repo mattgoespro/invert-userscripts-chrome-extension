@@ -22,7 +22,7 @@
   gap: 8px;
   width: 100%;
   padding: 8px 14px;
-  height: 2.75rem;
+  height: var(--input-height);
   background: var(--select-background);
   border: 1px solid var(--select-border);
   border-radius: var(--geometry-border-radius);

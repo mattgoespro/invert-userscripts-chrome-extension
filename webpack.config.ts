@@ -100,6 +100,10 @@ export default (_args: unknown, { mode }: { mode: "development" | "production" }
           },
         },
       ],
+      noParse: [
+        /node_modules[\\/]typescript[\\/]lib[\\/]typescript\.js/,
+        /node_modules[\\/]sass[\\/]sass\.dart\.js/,
+      ],
     },
     resolve: {
       extensions: [".tsx", ".ts", ".js", ".scss", ".css"],
@@ -189,7 +193,7 @@ export default (_args: unknown, { mode }: { mode: "development" | "production" }
             },
             excludeAssets: ["sass-sandbox.html", "popup.html"],
           })
-        : false,
+        : undefined,
     ],
     optimization: {
       minimize: mode === "production",

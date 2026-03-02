@@ -1,29 +1,23 @@
-import {
-  addSharedScriptExtraLib,
-  ensureTypescriptDefaults,
-  generateSharedScriptDeclaration,
-} from "@packages/monaco";
+import { FormatterLanguage } from "@/sandbox/formatter";
 import { useAppDispatch, useAppSelector } from "@/shared/store/hooks";
 import {
+  configureTypescriptDefaults,
+  disposeSharedScriptLibs,
   saveEditorCode,
   selectSharedScriptsForUserscript,
-  setTsDefaultsConfigured,
+  syncSharedScriptLibs,
 } from "@/shared/store/slices/editor.slice";
 import { selectEditorSettings } from "@/shared/store/slices/settings.slice";
-import { useEffect, useMemo, useRef } from "react";
+import { EditorSettings, UserscriptSourceLanguage } from "@shared/model";
 import * as monaco from "monaco-editor";
-import { EditorSettings } from "@shared/model";
-import { FormatterLanguage } from "@/sandbox/formatter";
+import { useEffect, useMemo, useRef } from "react";
 
 // Cache models by URI to preserve undo history and cursor position
 const modelCache = new Map<string, monaco.editor.ITextModel>();
 
-// Track extra lib disposables for shared scripts
-const sharedLibDisposables = new Map<string, monaco.IDisposable>();
-
 function getOrCreateModel(
   uri: string,
-  language: string,
+  language: UserscriptSourceLanguage,
   contents: string
 ): monaco.editor.ITextModel {
   const existing = modelCache.get(uri);
@@ -72,11 +66,6 @@ export function CodeEditor(props: CodeEditorProps) {
   const editorInstanceRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
   const onCodeModifiedRef = useRef(onCodeModified);
 
-  // Keep callback ref in sync (needed for model change listener)
-  useEffect(() => {
-    onCodeModifiedRef.current = onCodeModified;
-  }, [onCodeModified]);
-
   // Initialize editor once on mount
   useEffect(() => {
     if (!editorRef.current) {
@@ -84,27 +73,22 @@ export function CodeEditor(props: CodeEditorProps) {
     }
 
     const editorInstance = monaco.editor.create(editorRef.current, {
-      theme: settings.theme,
-      fontSize: settings?.fontSize,
       automaticLayout: true,
-      padding: { top: 25, bottom: 10 },
-      fixedOverflowWidgets: true,
-      wordWrap: "on",
-      minimap: { enabled: false },
-      overviewRulerLanes: 0,
-      hideCursorInOverviewRuler: true,
-      overviewRulerBorder: false,
-      readOnly: !editable,
-      domReadOnly: !editable,
-      cursorStyle: editable ? "line" : "underline-thin",
+      overflowWidgetsDomNode: editorRef.current,
       cursorBlinking: editable ? "blink" : "solid",
+      cursorStyle: editable ? "line" : "underline-thin",
       cursorWidth: editable ? undefined : 0,
-      renderLineHighlight: "none",
-      matchBrackets: editable ? "always" : "never",
-      occurrencesHighlight: editable ? "singleFile" : "off",
-      selectionHighlight: editable,
-      scrollBeyondLastLine: editable,
+      domReadOnly: !editable,
+      fixedOverflowWidgets: true,
+      fontSize: settings.fontSize,
+      hideCursorInOverviewRuler: true,
       lineNumbers: editable ? "on" : "off",
+      matchBrackets: editable ? "always" : "never",
+      minimap: { enabled: false },
+      occurrencesHighlight: editable ? "singleFile" : "off",
+      padding: { top: 25, bottom: 10 },
+      readOnly: !editable,
+      renderLineHighlight: editable ? "gutter" : "none",
       scrollbar: {
         vertical: "hidden",
         horizontal: "hidden",
@@ -113,6 +97,10 @@ export function CodeEditor(props: CodeEditorProps) {
         horizontalScrollbarSize: 0,
         handleMouseWheel: editable,
       },
+      scrollBeyondLastLine: editable,
+      selectionHighlight: editable,
+      theme: settings.theme,
+      wordWrap: "on",
     });
 
     editorInstanceRef.current = editorInstance;
@@ -123,15 +111,20 @@ export function CodeEditor(props: CodeEditorProps) {
     };
   }, []);
 
+  // Keep callback ref in sync (needed for model change listener)
+  useEffect(() => {
+    onCodeModifiedRef.current = onCodeModified;
+  }, [onCodeModified]);
+
   // Update theme dynamically without recreating the editor
   useEffect(() => {
-    monaco.editor.setTheme(settings?.theme);
-  }, [settings?.theme]);
+    monaco.editor.setTheme(settings.theme);
+  }, [settings.theme]);
 
   // Update font size dynamically without recreating the editor
   useEffect(() => {
-    editorInstanceRef.current?.updateOptions({ fontSize: settings?.fontSize });
-  }, [settings?.fontSize]);
+    editorInstanceRef.current?.updateOptions({ fontSize: settings.fontSize });
+  }, [settings.fontSize]);
 
   // Swap model when modelId changes (switching scripts)
   useEffect(() => {
@@ -146,12 +139,14 @@ export function CodeEditor(props: CodeEditorProps) {
 
     editorInstance.setModel(model);
 
-    // Setting a TypeScript model triggers the contribution module to load,
-    // which populates monaco.languages.typescript. Configure compiler options
-    // now that they're guaranteed to be available.
+    /**
+     * Setting a TypeScript model for the Monaco Editor instance triggers the TypeScript contribution module to load.
+     *
+     * We need to ensure the TypeScript language service defaults are configured after this happens so that our custom
+     * compiler options are applied, then Monaco can provide accurate intellisense and diagnostics for userscript code.
+     */
     if (language === "typescript") {
-      ensureTypescriptDefaults();
-      dispatch(setTsDefaultsConfigured());
+      dispatch(configureTypescriptDefaults());
     }
 
     // Listen to content changes on this model
@@ -172,30 +167,12 @@ export function CodeEditor(props: CodeEditorProps) {
       return;
     }
 
-    // Dispose previous shared lib registrations
-    for (const [key, disposable] of sharedLibDisposables) {
-      disposable.dispose();
-      sharedLibDisposables.delete(key);
-    }
-
-    // Register ambient module declarations for each shared script
-    for (const shared of sharedScripts) {
-      if (!shared.moduleName) {
-        continue;
-      }
-      const declaration = generateSharedScriptDeclaration(shared.moduleName, shared.sourceCode);
-      const filePath = `file:///node_modules/@types/shared/${shared.moduleName}/index.d.ts`;
-      const disposable = addSharedScriptExtraLib(declaration, filePath);
-      sharedLibDisposables.set(shared.id, disposable);
-    }
+    dispatch(syncSharedScriptLibs(sharedScripts));
 
     return () => {
-      for (const [key, disposable] of sharedLibDisposables) {
-        disposable.dispose();
-        sharedLibDisposables.delete(key);
-      }
+      dispatch(disposeSharedScriptLibs());
     };
-  }, [language, sharedScripts]);
+  }, [language, sharedScripts, dispatch]);
 
   // Handle Ctrl+S on the container — formats (optional) and saves via Redux thunk
   useEffect(() => {

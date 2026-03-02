@@ -6,8 +6,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 2.75rem;
-    height: 2.75rem;
+    width: var(--input-height);
+    height: var(--input-height);
     background: var(--surface-input);
     border: 1px solid var(--border);
     border-radius: var(--geometry-border-radius);

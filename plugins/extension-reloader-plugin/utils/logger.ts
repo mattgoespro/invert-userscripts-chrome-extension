@@ -6,15 +6,7 @@ export const createLogger = (name: string, options: { verbose?: boolean }) => {
   const Colors = webpack.cli.createColors();
   const loggerName = `${Colors.italic(Colors.cyan(name))} `;
 
-  const padLevel = (level: LogLevel) => level.padEnd(5);
-
-  const styleLevel = (level: LogLevel, color: (text: string) => string) =>
-    Colors.bold(color(padLevel(level)));
-
-  const createMessage = (level: LogLevel, message: string) =>
-    `${loggerName} ${styleLevel(level, getColorFunction(level))} ${message}`;
-
-  const getColorFunction = (level: LogLevel) => {
+  const getLevelColor = (level: LogLevel) => {
     switch (level) {
       case "INFO":
         return Colors.greenBright;
@@ -29,37 +21,64 @@ export const createLogger = (name: string, options: { verbose?: boolean }) => {
     }
   };
 
+  const levelIndent = 5; // Pad log level to 5 characters for alignment
+
+  const stringifyLevel = (level: LogLevel) =>
+    Colors.bold(getLevelColor(level)(level.padEnd(levelIndent)));
+
+  const stringifyMessage = (level: LogLevel, message: string) =>
+    level === "VERB" ? Colors.italic(getLevelColor(level)(message)) : getLevelColor(level)(message);
+
+  const createMessage = (level: LogLevel, message: string) =>
+    `${loggerName} ${stringifyLevel(level)} ${stringifyMessage(level, message)}`;
+
+  const printMessage = (level: LogLevel, message: string) => {
+    if (!message.includes("\n")) {
+      console.log(createMessage(level, message));
+      return;
+    }
+
+    const lines = message.split("\n");
+
+    // trim off any empty lines at the start of the message
+    while (lines.length > 0 && lines[0].trim() === "") {
+      lines.shift();
+    }
+
+    // trim off any empty lines at the end of the message
+    while (lines.length > 0 && lines[lines.length - 1].trim() === "") {
+      lines.pop();
+    }
+
+    for (const line of lines) {
+      console.log(createMessage(level, line.trim()));
+    }
+    return;
+  };
+
   return {
     info: (message: string) => {
-      console.info(
-        `${loggerName} ${styleLevel("INFO", Colors.green)} ${Colors.greenBright(message)}`
-      );
+      printMessage("INFO", message);
     },
     warn: (message: string) => {
-      console.warn(
-        `${loggerName} ${styleLevel("WARN", Colors.yellow)} ${Colors.yellowBright(message)}`
-      );
+      printMessage("WARN", message);
     },
     error: (message: string) => {
-      console.error(
-        `${loggerName} ${styleLevel("ERROR", Colors.red)} ${Colors.redBright(message)}`
-      );
+      printMessage("ERROR", message);
     },
     verbose: (message: string | object) => {
       if (!options.verbose) {
         return;
       }
 
-      if (message && Object.getPrototypeOf(message) === Object.prototype) {
-        console.info(Colors.gray(Colors.italic(JSON.stringify(message, null, 2))));
+      if (typeof message === "object" || Object.getPrototypeOf(message) === Object.prototype) {
+        printMessage("VERB", JSON.stringify(message, null, 2));
         return;
       }
 
-      console.info(
-        `${loggerName} ${styleLevel("VERB", Colors.gray)} ${Colors.gray(Colors.italic(message))}`
-      );
+      printMessage("VERB", message);
     },
-    createMessage,
+    createMessage: createMessage,
   };
 };
 

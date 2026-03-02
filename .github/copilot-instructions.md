@@ -917,9 +917,21 @@ static compile(code: string): CompileResult {
   });
 }
 ```
+- When prompted to write JSDoc comments for types and properties, always use multiline JSDoc comments in the format:
 
-- Comments requiring multiple lines should be block comments.
-- Comments required for a single line can be inline comments, but should still be clear and concise.
+```typescript
+/**
+ * Represents test data for demonstration purposes.
+ */
+export interface Test {
+  /**
+   * Test ID
+   */
+  id: string;
+}
+```
+
+- Inline comments requiring multiple lines should be block comments.
 - Use inline comments sparingly and only when they add value to the code's readability for complex logic or non-obvious decisions.
 
 ### Additional Rules

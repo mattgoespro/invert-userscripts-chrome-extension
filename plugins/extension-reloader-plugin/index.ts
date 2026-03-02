@@ -8,11 +8,11 @@ export default class ExtensionReloaderPlugin implements webpack.WebpackPluginIns
   private readonly name = "ChromeExtensionReloaderWebpackPlugin";
   private readonly ChromeExtensionReloaderClientScriptName = "chrome-extension-reloader-client.js";
 
+  private _options: ChromeExtensionReloaderPluginOptions;
+
   private _log: Logger;
   private _wss: WebSocketServer;
   private _clientReloaderScriptContent: string;
-
-  private _options: ChromeExtensionReloaderPluginOptions;
 
   constructor(options: ChromeExtensionReloaderPluginOptions = {}) {
     this._options = {
@@ -69,22 +69,20 @@ export default class ExtensionReloaderPlugin implements webpack.WebpackPluginIns
     this._wss.on("connection", (ws) => {
       this._log.verbose("Extension client connected from the browser.");
       this._log.verbose("Sending connection message to the client...");
-      ws.send(
-        JSON.stringify({
-          type: "log",
-          data: this._log.createMessage("INFO", "Connected to the Extension Reloader Plugin."),
-        })
-      );
+
+      this.sendMessageToClient(ws, {
+        type: "log",
+        data: this._log.createMessage("INFO", "Connected to Extension Reloader Plugin."),
+      });
 
       this._log.verbose("Sending initial configuration to the client...");
-      ws.send(
-        JSON.stringify({
-          type: "configure",
-          data: {
-            config: { consoleOptions: this._options.consoleOptions },
-          },
-        })
-      );
+
+      this.sendMessageToClient(ws, {
+        type: "configure",
+        data: {
+          config: { consoleOptions: this._options.consoleOptions },
+        },
+      });
 
       ws.onmessage = this.onReceiveClientMessage.bind(this);
     });
@@ -93,16 +91,22 @@ export default class ExtensionReloaderPlugin implements webpack.WebpackPluginIns
   }
 
   private broadcastMessageToClients(message: BroadcastMessage) {
+    if (this._wss.clients.size === 0) {
+      this._log.warn(`
+        No extension clients are connected.
+        Ensure that:
+          > a browser window is running
+          > the browser extension is installed and activated
+      `);
+    }
+
     const broadcastMessage = (message: BroadcastMessage) => {
       for (const client of this._wss.clients) {
         if (client.readyState !== WebSocket.OPEN) {
-          this._log.verbose("An existing client is not ready to receive messages. Skipping...");
-          continue;
+          throw new Error("An existing client is not ready to receive messages. Skipping...");
         }
 
-        if (client.readyState === WebSocket.OPEN) {
-          client.send(JSON.stringify(message));
-        }
+        this.sendMessageToClient(client, message);
       }
     };
 
@@ -123,6 +127,10 @@ export default class ExtensionReloaderPlugin implements webpack.WebpackPluginIns
         break;
       }
     }
+  }
+
+  private sendMessageToClient(client: WebSocket, message: BroadcastMessage) {
+    client.send(JSON.stringify(message));
   }
 
   private onReceiveClientMessage(message: MessageEvent) {

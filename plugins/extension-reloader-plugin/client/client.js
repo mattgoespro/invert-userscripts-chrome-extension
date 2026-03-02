@@ -52,6 +52,8 @@ function connect() {
           });
         }
 
+        configured = true;
+
         break;
       }
       case "reload": {
