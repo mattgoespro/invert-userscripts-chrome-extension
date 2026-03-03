@@ -3,33 +3,11 @@ import { CodeEditor } from "@/options/invert-ide/components/code-editor/CodeEdit
 import "./ThemePreview.scss";
 
 const PREVIEW_CODE = `// Invert IDE — theme preview
-/**
- *
-class Greeter {
-    private greeting: string;
-
-    constructor(message: string) {
-        this.greeting = message;
-    }
-
-    public greet(): string {
-        return "Hello, " + this.greeting;
-    }
-}
-
-/**
- * Greets the user with a welcome message.
- * @param name - The name of the user to greet.
- * @returns A greeting message string.
- */
-export function greet(name: string): string {
-    const greeter = new Greeter(name);
-    return greeter.greet();
-}
-
-// Example usage
-greet("Invert IDE User");
-`;
+const greet = (name: string): string => {
+  const count = 42;
+  const msg = \`Hello, \${name}!\`;
+  return { msg, count };
+};`;
 
 type ThemePreviewProps = {
   theme: EditorThemeName;
