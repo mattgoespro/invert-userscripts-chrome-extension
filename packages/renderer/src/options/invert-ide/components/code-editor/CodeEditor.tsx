@@ -65,6 +65,10 @@ export function CodeEditor(props: CodeEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null);
   const editorInstanceRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
   const onCodeModifiedRef = useRef(onCodeModified);
+  // When true, the model content change listener is muted. Used to prevent
+  // programmatic setValue calls (e.g. post-save formatter apply) from being
+  // misinterpreted as user edits and re-dispatching markUserscriptModified.
+  const suppressModelChangeRef = useRef(false);
 
   // Initialize editor once on mount
   useEffect(() => {
@@ -126,7 +130,7 @@ export function CodeEditor(props: CodeEditorProps) {
     editorInstanceRef.current?.updateOptions({ fontSize: settings.fontSize });
   }, [settings.fontSize]);
 
-  // Swap model when modelId changes (switching scripts)
+  // Swap model when modelId/language changes, or sync value for read-only editors when contents changes
   useEffect(() => {
     const editorInstance = editorInstanceRef.current;
 
@@ -136,8 +140,15 @@ export function CodeEditor(props: CodeEditorProps) {
 
     const uri = `file:///${modelId}.${language}`;
     const model = getOrCreateModel(uri, language, contents);
+    const currentModel = editorInstance.getModel();
 
-    editorInstance.setModel(model);
+    if (currentModel !== model) {
+      editorInstance.setModel(model);
+    } else if (!editable && model.getValue() !== contents) {
+      // For read-only editors (e.g. compiled output viewers), sync external content changes
+      // into the existing model without calling setModel (which would reset scroll position).
+      model.setValue(contents);
+    }
 
     /**
      * Setting a TypeScript model for the Monaco Editor instance triggers the TypeScript contribution module to load.
@@ -155,11 +166,13 @@ export function CodeEditor(props: CodeEditorProps) {
     }
 
     const disposable = model.onDidChangeContent(() => {
-      onCodeModifiedRef.current?.(model.getValue());
+      if (!suppressModelChangeRef.current) {
+        onCodeModifiedRef.current?.(model.getValue());
+      }
     });
 
     return () => disposable.dispose();
-  }, [modelId, language, contents]);
+  }, [modelId, language, contents, editable]);
 
   // Register shared script type declarations for TypeScript intellisense
   useEffect(() => {
@@ -208,9 +221,28 @@ export function CodeEditor(props: CodeEditorProps) {
           })
         );
 
-        // If formatting occurred, update the editor with the formatted code
+        // Apply (possibly formatted) code back to the editor using executeEdits
+        // rather than setValue. This critical distinction:
+        //   - Pushes the formatting onto the undo stack as a single reversible step
+        //     (Ctrl+Z after a save undoes the format, then continues through prior edits)
+        //   - Preserves the full undo/redo history that existed before the save
+        //   - Restores cursor and selection positions instead of jumping to 1:1
         if (saveEditorCode.fulfilled.match(result)) {
-          editorInstance.setValue(result.payload.code);
+          const model = editorInstance.getModel();
+
+          if (!model) {
+            return;
+          }
+
+          const savedSelections = editorInstance.getSelections() ?? [];
+
+          suppressModelChangeRef.current = true;
+          editorInstance.executeEdits(
+            "prettier-format",
+            [{ range: model.getFullModelRange(), text: result.payload.code }],
+            savedSelections
+          );
+          suppressModelChangeRef.current = false;
         }
       }
     };

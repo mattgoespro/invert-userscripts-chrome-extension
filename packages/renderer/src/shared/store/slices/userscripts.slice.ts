@@ -223,7 +223,12 @@ const userscriptsSlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addCase(loadUserscripts.fulfilled, (state, action) => {
-        state.scripts = Object.fromEntries(action.payload.map((script) => [script.id, script]));
+        // Normalize status to "saved" for all scripts on load.
+        // On a fresh page load no in-progress edits exist, so every script should
+        // appear as saved regardless of what was written to storage (which could
+        // be stale "modified" values left by a previous bug).
+        const scripts = action.payload.map((script) => ({ ...script, status: "saved" as const }));
+        state.scripts = Object.fromEntries(scripts.map((script) => [script.id, script]));
       })
       .addCase(createUserscript.fulfilled, (state, action) => {
         state.scripts[action.payload.id] = action.payload;
