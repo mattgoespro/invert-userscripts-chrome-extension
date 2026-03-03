@@ -1,9 +1,18 @@
 {
   "extends": "../../tsconfig.base.json",
-  "include": ["src/**/*.ts", "../renderer/src/sandbox/compiler.ts"],
+  "include": ["**/*.ts"],
   "compilerOptions": {
     "composite": true,
+    "baseUrl": ".",
     "lib": ["dom", "dom.iterable"],
-    "outDir": "dist/packages/shared"
-  }
+    "outDir": "dist/packages/shared",
+    "paths": {
+      "@packages/monaco": ["../monaco/src/index.ts"]
+    }
+  },
+  "references": [
+    {
+      "path": "../monaco"
+    }
+  ]
 }

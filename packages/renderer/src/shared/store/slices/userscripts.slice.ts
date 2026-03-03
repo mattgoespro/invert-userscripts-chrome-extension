@@ -1,8 +1,9 @@
-import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-import { Userscript, UserscriptSourceCode, Userscripts } from "@shared/model";
+import { createSlice, createAsyncThunk, createSelector, PayloadAction } from "@reduxjs/toolkit";
+import { Userscript, UserscriptSourceLanguage, Userscripts } from "@shared/model";
 import { StorageManager } from "@shared/storage";
 import { TypeScriptCompiler, SassCompiler } from "@/sandbox/compiler";
 import type { RootState } from "../store";
+import { uuid } from "@/shared/utils";
 
 export type UserscriptsState = {
   scripts?: Userscripts;
@@ -18,14 +19,35 @@ export const loadUserscripts = createAsyncThunk("userscripts/loadUserscripts", a
   return Object.values(scriptsMap);
 });
 
-export const createUserscript = createAsyncThunk(
-  "userscripts/createUserscript",
-  async (script: Userscript) => {
-    await StorageManager.saveScript(script);
-    console.log("Saved new userscript to storage:", script.id);
-    return script;
-  }
-);
+export const createUserscript = createAsyncThunk("userscripts/createUserscript", async () => {
+  const timestamp = Date.now();
+  const script: Userscript = {
+    id: uuid(),
+    name: "New Script",
+    enabled: false,
+    status: "modified",
+    shared: false,
+    moduleName: "",
+    sharedScripts: [],
+    code: {
+      source: {
+        typescript: "// Your code here",
+        scss: "/* Your styles here */",
+      },
+      compiled: {
+        javascript: "",
+        css: "",
+      },
+    },
+    urlPatterns: [],
+    runAt: "beforePageLoad",
+    createdAt: timestamp,
+    updatedAt: timestamp,
+  };
+  await StorageManager.saveScript(script);
+  console.log("Saved new userscript to storage:", script.id);
+  return script;
+});
 
 export const deleteUserscript = createAsyncThunk(
   "userscripts/deleteUserscript",
@@ -51,7 +73,20 @@ export const toggleUserscript = createAsyncThunk(
       enabled: !script.enabled,
     };
 
-    await StorageManager.saveScript(updatedScript);
+    // Save storage-safe version without compiled code to preserve quota
+    const storageScript: Userscript = {
+      ...updatedScript,
+      code: {
+        source: updatedScript.code.source,
+        compiled: {
+          javascript: "",
+          css: "",
+        },
+      },
+    };
+
+    await StorageManager.saveScript(storageScript);
+    // Return full version with compiled code for Redux state
     return updatedScript;
   }
 );
@@ -59,14 +94,34 @@ export const toggleUserscript = createAsyncThunk(
 export const updateUserscript = createAsyncThunk<Userscript, Userscript, { state: RootState }>(
   "userscripts/updateUserscript",
   async (script: Userscript) => {
-    await StorageManager.updateScript(script.id, script);
+    // Save storage-safe version without compiled code to preserve quota
+    const storageScript: Userscript = {
+      ...script,
+      code: {
+        source: script.code.source,
+        compiled: {
+          javascript: "",
+          css: "",
+        },
+      },
+    };
+    await StorageManager.updateScript(script.id, storageScript);
+    // Return full version with compiled code for Redux state
     return script;
   }
 );
 
 export const updateUserscriptCode = createAsyncThunk(
   "userscripts/updateUserscriptCode",
-  async ({ id, language, code }: { id: string; language: UserscriptSourceCode; code: string }) => {
+  async ({
+    id,
+    language,
+    code,
+  }: {
+    id: string;
+    language: UserscriptSourceLanguage;
+    code: string;
+  }) => {
     console.log("updateUserscriptCode received:", { id, language, code: code.substring(0, 100) });
 
     const scriptsMap = await StorageManager.getAllScripts();
@@ -95,8 +150,22 @@ export const updateUserscriptCode = createAsyncThunk(
     script.status = "saved";
     script.updatedAt = Date.now();
 
-    await StorageManager.updateScript(id, script);
+    // Create a storage-safe version without compiled code to avoid exceeding
+    // chrome.storage.sync 8 KB per-item quota. Compiled code is kept in Redux state.
+    const storageScript: Userscript = {
+      ...script,
+      code: {
+        source: script.code.source,
+        compiled: {
+          javascript: "",
+          css: "",
+        },
+      },
+    };
 
+    await StorageManager.updateScript(id, storageScript);
+
+    // Return the full script with compiled code for Redux state
     return script;
   }
 );
@@ -114,9 +183,14 @@ const userscriptsSlice = createSlice({
     selectUserscriptById(state: UserscriptsState, scriptId: string) {
       return state.scripts[scriptId];
     },
-    selectUnsavedUserscripts(state: UserscriptsState) {
-      return Object.values(state.scripts ?? {}).filter((script) => script.status === "modified");
-    },
+    selectUnsavedUserscripts: createSelector(
+      (state: UserscriptsState) => state.scripts,
+      (scripts) => Object.values(scripts ?? {}).filter((script) => script.status === "modified")
+    ),
+    selectSharedUserscripts: createSelector(
+      (state: UserscriptsState) => state.scripts,
+      (scripts) => Object.values(scripts ?? {}).filter((script) => script.shared)
+    ),
   },
   reducers: {
     setCurrentUserscript: {
@@ -198,6 +272,7 @@ export const {
   selectUserscriptById,
   selectCurrentUserscript,
   selectUnsavedUserscripts,
+  selectSharedUserscripts,
 } = userscriptsSlice.selectors;
 
 export default userscriptsSlice.reducer;

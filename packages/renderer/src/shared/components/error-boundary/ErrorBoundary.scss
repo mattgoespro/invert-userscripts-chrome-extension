@@ -51,7 +51,7 @@
     border: 1px solid var(--error-accent-soft);
     border-radius: 10px;
     text-align: center;
-    line-height: 1.6;
+    line-height: 1.8;
     font-size: 18px;
     box-shadow: 0 0 20px var(--error-glow);
   }
@@ -92,11 +92,10 @@
     display: inline-flex;
     align-self: flex-start;
     font-family: "JetBrains Mono", "SF Mono", "Fira Code", monospace;
-    font-size: 13px;
-    font-weight: 600;
+    font-size: 12px;
     color: var(--error-accent);
     background: var(--error-glow);
-    padding: 8px;
+    padding: 0 6px;
     margin-right: 8px;
     border-radius: 8px;
     border: 1px solid var(--error-accent-soft);
@@ -110,7 +109,7 @@
     padding: 16px;
     border-radius: 10px;
     border: 1px solid var(--error-border);
-    line-height: 1.7;
+    line-height: 2;
     word-break: break-word;
   }
 

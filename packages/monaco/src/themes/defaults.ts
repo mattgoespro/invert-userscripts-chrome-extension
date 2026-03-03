@@ -1,0 +1,39 @@
+/**
+ * Re-exports of a hand-picked subset of dark themes shipped with Shiki (`@shikijs/themes`), appropriate for the app's dark editor themes.
+ */
+export { default as andromeeda } from "@shikijs/themes/andromeeda";
+export { default as auroraX } from "@shikijs/themes/aurora-x";
+export { default as ayuDark } from "@shikijs/themes/ayu-dark";
+export { default as ayuMirage } from "@shikijs/themes/ayu-mirage";
+export { default as darkPlus } from "@shikijs/themes/dark-plus";
+export { default as dracula } from "@shikijs/themes/dracula";
+export { default as draculaSoft } from "@shikijs/themes/dracula-soft";
+export { default as everforestDark } from "@shikijs/themes/everforest-dark";
+export { default as githubDark } from "@shikijs/themes/github-dark";
+export { default as githubDarkDefault } from "@shikijs/themes/github-dark-default";
+export { default as githubDarkDimmed } from "@shikijs/themes/github-dark-dimmed";
+export { default as githubDarkHighContrast } from "@shikijs/themes/github-dark-high-contrast";
+export { default as gruvboxDarkHard } from "@shikijs/themes/gruvbox-dark-hard";
+export { default as gruvboxDarkMedium } from "@shikijs/themes/gruvbox-dark-medium";
+export { default as gruvboxDarkSoft } from "@shikijs/themes/gruvbox-dark-soft";
+export { default as horizon } from "@shikijs/themes/horizon";
+export { default as houston } from "@shikijs/themes/houston";
+export { default as kanagawaDragon } from "@shikijs/themes/kanagawa-dragon";
+export { default as kanagawaWave } from "@shikijs/themes/kanagawa-wave";
+export { default as laserwave } from "@shikijs/themes/laserwave";
+export { default as materialTheme } from "@shikijs/themes/material-theme";
+export { default as materialThemeDarker } from "@shikijs/themes/material-theme-darker";
+export { default as materialThemeOcean } from "@shikijs/themes/material-theme-ocean";
+export { default as materialThemePalenight } from "@shikijs/themes/material-theme-palenight";
+export { default as minDark } from "@shikijs/themes/min-dark";
+export { default as monokai } from "@shikijs/themes/monokai";
+export { default as nord } from "@shikijs/themes/nord";
+export { default as oneDarkPro } from "@shikijs/themes/one-dark-pro";
+export { default as plastic } from "@shikijs/themes/plastic";
+export { default as poimandres } from "@shikijs/themes/poimandres";
+export { default as rosePine } from "@shikijs/themes/rose-pine";
+export { default as slackDark } from "@shikijs/themes/slack-dark";
+export { default as tokyoNight } from "@shikijs/themes/tokyo-night";
+export { default as vesper } from "@shikijs/themes/vesper";
+export { default as vitesseBlack } from "@shikijs/themes/vitesse-black";
+export { default as vitesseDark } from "@shikijs/themes/vitesse-dark";

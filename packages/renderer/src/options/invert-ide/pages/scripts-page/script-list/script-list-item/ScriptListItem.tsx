@@ -1,13 +1,8 @@
-import { IconButton } from "@/shared/components/icon-button/IconButton";
 import { Switch } from "@/shared/components/switch/Switch";
 import { useAppDispatch } from "@/shared/store/hooks";
-import {
-  deleteUserscript,
-  setCurrentUserscript,
-  toggleUserscript,
-} from "@/shared/store/slices/userscripts.slice";
+import { setCurrentUserscript, toggleUserscript } from "@/shared/store/slices/userscripts.slice";
 import { Userscript } from "@shared/model";
-import { EllipsisIcon } from "lucide-react";
+import { PackageIcon } from "lucide-react";
 import "./ScriptListItem.scss";
 
 type ScriptListItemProps = {
@@ -30,38 +25,23 @@ export function ScriptListItem({ script, active }: ScriptListItemProps) {
     dispatch(toggleUserscript(script.id));
   };
 
-  const onDeleteScript = async () => {
-    if (!confirm("Are you sure you want to delete this script?")) {
-      return;
-    }
-
-    dispatch(deleteUserscript(script.id));
-  };
-
   return (
     <div
       className={[
         "script-list-item--item",
         active ? "script-list-item--item-active" : null,
         script.error ? "script-list-item--item-error" : null,
+        script.shared ? "script-list-item--item-shared" : null,
       ]
         .filter(Boolean)
         .join(" ")}
       onClick={() => onSelectScript()}
     >
       {script.status === "modified" && <div className="script-list-item--unsaved-indicator" />}
+      {script.shared && <PackageIcon size={12} className="script-list-item--shared-icon" />}
       <span className="script-list-item--name">{script.name}</span>
       <div className="script-list-item--actions">
         <Switch checked={script.enabled} onChange={() => onToggleScript()} />
-        <IconButton
-          icon={EllipsisIcon}
-          size="sm"
-          onClick={(event) => {
-            event.stopPropagation();
-            onDeleteScript();
-          }}
-          title="More"
-        ></IconButton>
       </div>
     </div>
   );

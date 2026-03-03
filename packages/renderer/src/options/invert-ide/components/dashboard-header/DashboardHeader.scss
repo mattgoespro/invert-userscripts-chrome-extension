@@ -19,17 +19,17 @@
     display: flex;
     align-items: center;
     justify-content: flex-start;
-    padding: 24px 32px;
+    padding: var(--spacing-md) var(--spacing-lg);
   }
 
   .dashboard-header--code-snippet {
     display: flex;
     align-items: center;
     font-family: "JetBrains Mono", monospace;
-    font-size: 18px;
+    font-size: 14px;
     font-weight: 500;
     letter-spacing: -0.01em;
-    padding: 16px 24px;
+    padding: var(--spacing-sm) var(--spacing-md);
     background: var(--surface-overlay);
     border: 1px solid var(--border);
     border-left: 3px solid var(--accent);

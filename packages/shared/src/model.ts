@@ -1,8 +1,10 @@
+import type { EditorThemeName } from "@packages/monaco";
+
 export type UserscriptStatus = "modified" | "saved";
 
-export type UserscriptSourceCode = "typescript" | "scss";
+export type UserscriptSourceLanguage = "typescript" | "scss";
 
-export type UserscriptCompiledCode = "javascript" | "css";
+export type UserscriptCompiledLanguage = "javascript" | "css";
 
 export interface Userscript {
   id: string;
@@ -10,12 +12,15 @@ export interface Userscript {
   enabled: boolean;
   status: UserscriptStatus;
   error?: boolean;
+  shared: boolean;
+  moduleName: string;
+  sharedScripts: string[];
   code: {
     source: {
-      [key in UserscriptSourceCode]: string;
+      [key in UserscriptSourceLanguage]: string;
     };
     compiled: {
-      [key in UserscriptCompiledCode]: string;
+      [key in UserscriptCompiledLanguage]: string;
     };
   };
   urlPatterns: string[];
@@ -36,15 +41,22 @@ export interface GlobalModule {
 }
 
 export interface EditorSettings {
-  theme: string;
-  fontSize: number;
-  tabSize: number;
-  autoFormat: boolean;
-  autoSave: boolean;
+  theme?: EditorThemeName;
+  fontSize?: number;
+  tabSize?: number;
+  autoFormat?: boolean;
+  autoSave?: boolean;
 }
 
-export interface CompileResult {
+export interface UserscriptCompileResult {
   success: boolean;
   code?: string;
   error?: Error;
+}
+
+export interface SharedScriptInfo {
+  id: string;
+  name: string;
+  moduleName: string;
+  sourceCode: string;
 }

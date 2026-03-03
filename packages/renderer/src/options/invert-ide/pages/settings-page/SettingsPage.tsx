@@ -1,17 +1,14 @@
 import { Checkbox } from "@/shared/components/checkbox/Checkbox";
-import { CodeEditorThemeNames } from "@/shared/components/model";
 import { Input } from "@/shared/components/input/Input";
 import { Select } from "@/shared/components/select/Select";
 import { Typography } from "@/shared/components/typography/Typography";
+import { EditorThemeName, getThemeOptions } from "@packages/monaco";
 import { useAppDispatch, useAppSelector } from "@/shared/store/hooks";
 import {
   loadSettings,
   selectEditorSettings,
   selectIsLoading,
-  updateAutoFormat,
-  updateFontSize,
-  updateTabSize,
-  updateTheme,
+  updateSettings,
 } from "@/shared/store/slices/settings.slice";
 import { useEffect } from "react";
 import "./SettingsPage.scss";
@@ -26,24 +23,24 @@ export function Settings() {
     dispatch(loadSettings());
   }, [dispatch]);
 
-  const handleThemeChange = (theme: string) => {
-    dispatch(updateTheme(theme));
+  const handleThemeChange = (theme: EditorThemeName) => {
+    dispatch(updateSettings({ theme }));
   };
 
   const handleFontSizeChange = (fontSize: number) => {
     if (!isNaN(fontSize) && fontSize >= 8 && fontSize <= 32) {
-      dispatch(updateFontSize(fontSize));
+      dispatch(updateSettings({ fontSize }));
     }
   };
 
   const handleTabSizeChange = (tabSize: number) => {
     if (!isNaN(tabSize) && tabSize >= 2 && tabSize <= 8) {
-      dispatch(updateTabSize(tabSize));
+      dispatch(updateSettings({ tabSize }));
     }
   };
 
   const handleAutoFormatChange = (autoFormat: boolean) => {
-    dispatch(updateAutoFormat(autoFormat));
+    dispatch(updateSettings({ autoFormat }));
   };
 
   if (isLoading) {
@@ -72,7 +69,7 @@ export function Settings() {
             label="Theme"
             value={settings.theme}
             onChange={handleThemeChange}
-            options={CodeEditorThemeNames.map((themeName) => ({ value: themeName }))}
+            options={getThemeOptions()}
           />
           <div className="settings--theme-preview-wrapper">
             <ThemePreview theme={settings.theme} />

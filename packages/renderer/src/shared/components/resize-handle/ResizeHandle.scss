@@ -1,57 +1,33 @@
 .resize-handle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  position: relative;
   flex-shrink: 0;
-  transition: background-color 0.15s ease;
+  background: transparent;
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: var(--accent);
+    opacity: 0;
+    transition: opacity 0.2s ease 0.3s;
+  }
+
+  &[data-separator="hover"]::after {
+    opacity: 1;
+  }
+
+  &[data-separator="active"]::after {
+    opacity: 1;
+    transition-delay: 0s;
+  }
 
   &--horizontal {
-    width: 12px;
+    width: 4px;
     cursor: col-resize;
-    flex-direction: column;
-
-    .resize-handle--bar {
-      width: 4px;
-      height: 48px;
-      border-radius: 2px;
-      background-color: var(--border);
-      transition:
-        background-color 0.15s ease,
-        height 0.15s ease;
-    }
-
-    &:hover .resize-handle--bar,
-    &.resize-handle--dragging .resize-handle--bar {
-      background-color: var(--accent);
-      height: 64px;
-    }
   }
 
   &--vertical {
-    height: 12px;
+    height: 4px;
     cursor: row-resize;
-    flex-direction: row;
-
-    .resize-handle--bar {
-      height: 4px;
-      width: 48px;
-      border-radius: 2px;
-      background-color: var(--border);
-      transition:
-        background-color 0.15s ease,
-        width 0.15s ease;
-    }
-
-    &:hover .resize-handle--bar,
-    &.resize-handle--dragging .resize-handle--bar {
-      background-color: var(--accent);
-      width: 64px;
-    }
-  }
-
-  &--dragging {
-    .resize-handle--bar {
-      background-color: var(--accent);
-    }
   }
 }

@@ -1,5 +1,13 @@
 # Outstanding Tasks
 
+## Features
+
+### Editor Experience
+
+- Implement the `runAt` field for userscripts to allow users to specify when their userscript should be injected during a page's lifecycle.
+- Implement shared and global module intellisense for userscripts to allow users to import and use shared and global modules in their userscripts with type safety and autocompletion support.
+-
+
 ## Performance
 
 - Look at reducing redundant redux state action dispatches where not necessary.

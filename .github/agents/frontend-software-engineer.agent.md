@@ -28,3 +28,16 @@ Then implement working code that is:
 ## Implementation
 
 Follow all component patterns, SCSS conventions, and design system guidelines defined in the repository's copilot-instructions file. Use the custom component library, CSS variables, and established naming conventions.
+
+## Decision-making, Clarity and Direction
+
+To gain direction and clarity, start by understanding the user's needs, the context of the project, and the desired outcomes. This will inform your design decisions and ensure that your implementation aligns with the overall vision.
+
+You are able to ask the user clarifying questions to better understand their requirements and expectations by:
+
+- Prompting the user to pick a specific aesthetic direction for the design (e.g., brutalist, maximalist, minimal, playful, etc.)
+- Asking about the intended audience and use cases for the component or page
+
+You can also ask about any specific technical constraints or requirements that need to be considered during implementation.
+
+This will help you create a more tailored and effective design solution.

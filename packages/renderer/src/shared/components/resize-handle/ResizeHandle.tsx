@@ -1,59 +1,17 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Separator } from "react-resizable-panels";
 import "./ResizeHandle.scss";
+import { forwardRef } from "react";
 
 type ResizeHandleProps = {
   direction?: "horizontal" | "vertical";
-  onResize: (delta: number) => void;
-  onResizeEnd?: () => void;
 };
 
-export function ResizeHandle({
-  direction = "horizontal",
-  onResize,
-  onResizeEnd,
-}: ResizeHandleProps) {
-  const [isDragging, setIsDragging] = useState(false);
-  const lastPositionRef = useRef<number>(0);
-
-  const handleMouseDown = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault();
-      setIsDragging(true);
-      lastPositionRef.current = direction === "horizontal" ? e.clientX : e.clientY;
-    },
-    [direction]
-  );
-
-  useEffect(() => {
-    if (!isDragging) return;
-
-    const handleMouseMove = (e: MouseEvent) => {
-      const currentPosition = direction === "horizontal" ? e.clientX : e.clientY;
-      const delta = currentPosition - lastPositionRef.current;
-      lastPositionRef.current = currentPosition;
-      onResize(delta);
-    };
-
-    const handleMouseUp = () => {
-      setIsDragging(false);
-      onResizeEnd?.();
-    };
-
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", handleMouseUp);
-
-    return () => {
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
-    };
-  }, [isDragging, direction, onResize, onResizeEnd]);
-
-  return (
-    <div
-      className={`resize-handle resize-handle--${direction} ${isDragging ? "resize-handle--dragging" : ""}`}
-      onMouseDown={handleMouseDown}
-    >
-      <div className="resize-handle--bar" />
-    </div>
-  );
-}
+/**
+ * Styled wrapper around a {@linkcode Separator} component from `react-resizable-panels` that uses a Visual Studio Code-style invisible
+ * hit area with accent highlight on hover/drag.
+ */
+export const ResizeHandle = forwardRef<HTMLDivElement, ResizeHandleProps>(
+  ({ direction = "horizontal" }, ref) => {
+    return <Separator elementRef={ref} className={`resize-handle resize-handle--${direction}`} />;
+  }
+);

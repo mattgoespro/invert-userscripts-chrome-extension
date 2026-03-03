@@ -1,0 +1,19 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "include": ["src/**/*.ts"],
+  "compilerOptions": {
+    "composite": true,
+    "baseUrl": ".",
+    "lib": ["es2020", "dom", "dom.iterable"],
+    "outDir": "dist/packages/monaco",
+    "paths": {
+      "@shared/*": ["../../packages/shared/src/*"],
+      "monaco-editor-core": ["../../node_modules/monaco-editor"]
+    }
+  },
+  "references": [
+    {
+      "path": "../shared"
+    }
+  ]
+}

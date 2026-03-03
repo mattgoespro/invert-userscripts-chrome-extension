@@ -13,7 +13,7 @@
 .script-list-item--item {
   display: flex;
   align-items: center;
-  padding: 14px 16px;
+  padding: 0.5rem;
   margin-bottom: 6px;
   border-radius: var(--geometry-border-radius);
   background: var(--surface-overlay);
@@ -53,7 +53,7 @@
   }
 
   .script-list-item--name {
-    font-family: "JetBrains Mono", monospace;
+    font-family: var(--typography-code-font-family);
     font-size: 11px;
     font-weight: 500;
     color: var(--syntax-function);
@@ -61,6 +61,19 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  .script-list-item--shared-icon {
+    flex-shrink: 0;
+    margin-right: 8px;
+    color: var(--syntax-keyword);
+    opacity: 0.7;
+  }
+
+  &.script-list-item--item-shared {
+    .script-list-item--name {
+      color: var(--syntax-keyword);
+    }
   }
 
   .script-list-item--actions {

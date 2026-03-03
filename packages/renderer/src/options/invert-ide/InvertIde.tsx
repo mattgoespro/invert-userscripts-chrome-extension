@@ -1,7 +1,7 @@
 import { SassCompiler } from "@/sandbox/compiler";
-import { registerCodeEditorThemes } from "@/shared/components/model";
-import { ThemeSwitcher } from "@/shared/components/theme-switcher/ThemeSwitcher";
+import { DevTools } from "../../shared/components/devtools/DevTools";
 import { useAppDispatch } from "@/shared/store/hooks";
+import { loadSettings } from "@/shared/store/slices/settings.slice";
 import { loadUserscripts } from "@/shared/store/slices/userscripts.slice";
 import { useEffect, useState } from "react";
 import "./InvertIde.scss";
@@ -16,12 +16,11 @@ export function InvertIde() {
   const dispatch = useAppDispatch();
 
   useEffect(() => {
-    registerCodeEditorThemes();
-
     // Initialize the SASS sandbox compiler early so it's ready when needed
     SassCompiler.initialize();
 
     dispatch(loadUserscripts());
+    dispatch(loadSettings());
   }, [dispatch]);
 
   const onNavigate = (button: SidebarButton) => {
@@ -39,7 +38,7 @@ export function InvertIde() {
           {active === "settings" && <Settings />}
         </div>
       </div>
-      <ThemeSwitcher />
+      <DevTools />
     </div>
   );
 }

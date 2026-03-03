@@ -10,12 +10,17 @@
     "outDir": "dist/packages/renderer",
     "paths": {
       "@/*": ["./src/*"],
-      "@shared/*": ["../shared/src/*"]
+      "@shared/*": ["../shared/src/*"],
+      "@packages/monaco": ["../monaco/src/index.ts"],
+      "monaco-editor-core": ["../../node_modules/monaco-editor"]
     }
   },
   "references": [
     {
       "path": "../shared"
+    },
+    {
+      "path": "../monaco"
     }
   ]
 }

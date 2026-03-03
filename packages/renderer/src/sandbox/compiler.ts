@@ -1,22 +1,12 @@
-import { transpileModule, CompilerOptions, ScriptTarget, ModuleKind } from "typescript";
-import { CompileResult } from "../../../shared/src/model";
+import { transpileModule } from "typescript";
+import { TypeScriptCompilerOptions } from "@shared/typescript";
+import { UserscriptCompileResult } from "@shared/model";
 
 export class TypeScriptCompiler {
-  static compile(code: string): CompileResult {
+  static compile(code: string): UserscriptCompileResult {
     try {
-      const compilerOptions: CompilerOptions = {
-        target: ScriptTarget.ES2020,
-        module: ModuleKind.ESNext,
-        strict: true,
-        esModuleInterop: true,
-        allowJs: true,
-        checkJs: true,
-        lib: ["es2020", "dom"],
-        isolatedModules: true,
-      };
-
       const result = transpileModule(code, {
-        compilerOptions,
+        compilerOptions: TypeScriptCompilerOptions,
       });
 
       return {
@@ -56,7 +46,10 @@ export class SassCompiler {
   private static iframe: HTMLIFrameElement | null = null;
   private static isReady = false;
   private static readyPromise: Promise<void> | null = null;
-  private static pendingRequests = new Map<string, { resolve: (result: CompileResult) => void }>();
+  private static pendingRequests = new Map<
+    string,
+    { resolve: (result: UserscriptCompileResult) => void }
+  >();
 
   /**
    * Initialize the sandboxed iframe for SASS compilation.
@@ -111,7 +104,7 @@ export class SassCompiler {
   /**
    * Compile SCSS to CSS using the sandboxed dart-sass compiler.
    */
-  static async compile(scss: string): Promise<CompileResult> {
+  static async compile(scss: string): Promise<UserscriptCompileResult> {
     if (!this.isReady || !this.iframe?.contentWindow) {
       await this.initialize();
     }

@@ -1,4 +1,10 @@
 {
+  "[chatagent]": {
+    "editor.defaultFormatter": "yzhang.markdown-all-in-one"
+  },
+  "[instructions]": {
+    "editor.defaultFormatter": "yzhang.markdown-all-in-one"
+  },
   "[scss]": {
     "editor.defaultFormatter": "sibiraj-s.vscode-scss-formatter",
     "editor.formatOnPaste": true,
@@ -47,6 +53,10 @@
     "**/dist/**": true,
     "**/node_modules/**": true
   },
+  "github.copilot.nextEditSuggestions.enabled": true,
+  "markdown.extension.completion.enabled": true,
+  "markdown.preview.fontSize": 11,
+  "markdown.validate.enabled": true,
   "npm-outdated.majorUpdateProtection": false,
   "prettier.configPath": "prettier.config.mjs",
   "prettier.requireConfig": true,
@@ -62,10 +72,10 @@
   "scssFormatter.printWidth": 100,
   "scssFormatter.trailingComma": "es5",
   "search.exclude": {
+    "**/*.json": true,
+    "**/*.md": true,
     "**/.vscode/**": true,
-    "**/dist/**": true,
-    "*.json": true,
-    "*.{ts,js,mjs}": true
+    "**/dist/**": true
   },
   "terminal.integrated.automationProfile.windows": {
     "args": ["-l"],
