@@ -13,7 +13,7 @@ export function DevToolsItem({ name, icon, panel, panelTitle }: DevToolsItemProp
   const panelRef = useRef<HTMLDivElement>(null);
 
   return (
-    <div className="devtools-item" onBlur={() => setExpanded(false)}>
+    <div className="devtools-item">
       <button
         className="devtools-item--toggle"
         onClick={() => setExpanded((prev) => !prev)}

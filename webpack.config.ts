@@ -187,7 +187,6 @@ export default (_args: unknown, { mode }: { mode: "development" | "production" }
       }),
       mode === "development"
         ? new ChromeExtensionReloaderWebpackPlugin({
-            verbose: true,
             consoleOptions: {
               captureLevels: ["warn", "error"],
             },

@@ -95,8 +95,8 @@ export default class ExtensionReloaderPlugin implements webpack.WebpackPluginIns
       this._log.warn(`
         No extension clients are connected.
         Ensure that:
-          > a browser window is running
           > the browser extension is installed and activated
+          > a browser window is running
       `);
     }
 
