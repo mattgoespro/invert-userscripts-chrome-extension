@@ -8,9 +8,10 @@ import "./ScriptListItem.scss";
 type ScriptListItemProps = {
   script: Userscript;
   active: boolean;
+  onScriptSelected: (scriptId: string) => void;
 };
 
-export function ScriptListItem({ script, active }: ScriptListItemProps) {
+export function ScriptListItem({ script, active, onScriptSelected }: ScriptListItemProps) {
   const dispatch = useAppDispatch();
 
   const onSelectScript = () => {
@@ -19,6 +20,7 @@ export function ScriptListItem({ script, active }: ScriptListItemProps) {
     }
 
     dispatch(setCurrentUserscript(script.id));
+    onScriptSelected(script.id);
   };
 
   const onToggleScript = () => {

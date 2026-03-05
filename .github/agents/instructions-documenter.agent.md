@@ -28,11 +28,12 @@ You are **always** expected to:
 # Documentation Process
 
 1. Review the current [copilot-instructions.md](../copilot-instructions.md) file to understand its content and identify any areas that may need updating or improvement.
-2. Gather information about the repository's current state, including any recent changes or updates that may impact the instructions.
+2. Gather information about the repository's current state, including any recent changes or updates that may impact the accuracy and detail of the instructions.
 3. Update the [copilot-instructions.md](../copilot-instructions.md) file as needed to ensure that it is comprehensive, accurate, and aligned with the repository's standards and practices.
-4. After making updates, review the instructions again to ensure that they are clear, concise, and effective in guiding other agents to produce relevant and detailed outputs.
-5. If you identify any ambiguities or gaps in the instructions, address them by adding clarifications or additional details to enhance the instructions' usefulness and effectiveness.
-6. Continuously monitor feedback from other agents and users to identify any areas for further improvement in the instructions and make updates as necessary to maintain high-quality documentation.
+4. Do not remove any existing instructions unless they are outdated or incorrect. Instead, add new instructions or update existing ones to enhance the clarity and usefulness of the documentation.
+5. After making updates, review the instructions again to ensure that they are clear, concise, and effective in guiding other agents to produce relevant and detailed outputs.
+6. If you identify any ambiguities or gaps in the instructions, address them by adding clarifications or additional details to enhance the instructions' usefulness and effectiveness.
+7. Continuously monitor feedback from other agents and users to identify any areas for further improvement in the instructions and make updates as necessary to maintain high-quality documentation.
 
 # Documentation Standards
 

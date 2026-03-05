@@ -4,6 +4,7 @@ import { Select } from "@/shared/components/select/Select";
 import { Typography } from "@/shared/components/typography/Typography";
 import { EditorThemeName, getThemeOptions } from "@packages/monaco";
 import { useAppDispatch, useAppSelector } from "@/shared/store/hooks";
+import { selectMonacoReady } from "@/shared/store/slices/editor.slice";
 import {
   loadSettings,
   selectEditorSettings,
@@ -18,6 +19,7 @@ export function Settings() {
   const dispatch = useAppDispatch();
   const settings = useAppSelector(selectEditorSettings);
   const isLoading = useAppSelector(selectIsLoading);
+  const monacoReady = useAppSelector(selectMonacoReady);
 
   useEffect(() => {
     dispatch(loadSettings());
@@ -72,7 +74,7 @@ export function Settings() {
             options={getThemeOptions()}
           />
           <div className="settings--theme-preview-wrapper">
-            <ThemePreview theme={settings.theme} />
+            {monacoReady && <ThemePreview theme={settings.theme} />}
           </div>
           <Input
             type="number"

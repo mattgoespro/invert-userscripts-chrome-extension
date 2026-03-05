@@ -1,8 +1,10 @@
+import { SidebarTab } from "@shared/model";
 import { ClipboardPenIcon, PackageIcon, SettingsIcon } from "lucide-react";
 import "./Sidebar.scss";
 import { SidebarNavButton } from "./sidebar-nav-button/SidebarNavButton";
 
-export type SidebarButton = "scripts" | "modules" | "settings";
+/** Alias for {@link SidebarTab} — kept for backwards compatibility with existing consumers. */
+export type SidebarButton = SidebarTab;
 
 interface SidebarProps {
   active: SidebarButton;

@@ -174,7 +174,7 @@ export function CodeEditor(props: CodeEditorProps) {
     return () => disposable.dispose();
   }, [modelId, language, contents, editable]);
 
-  // Register shared script type declarations for TypeScript intellisense
+  // Register shared script type declarations so that module imports are included in the TypeScript intellisense
   useEffect(() => {
     if (language !== "typescript" || !sharedScripts) {
       return;
@@ -221,12 +221,14 @@ export function CodeEditor(props: CodeEditorProps) {
           })
         );
 
-        // Apply (possibly formatted) code back to the editor using executeEdits
-        // rather than setValue. This critical distinction:
-        //   - Pushes the formatting onto the undo stack as a single reversible step
-        //     (Ctrl+Z after a save undoes the format, then continues through prior edits)
-        //   - Preserves the full undo/redo history that existed before the save
-        //   - Restores cursor and selection positions instead of jumping to 1:1
+        /**
+         * Apply (possibly formatted) code back to the editor using executeEdits rather than setValue.
+         * This critical distinction:
+         *   - Pushes the formatting onto the undo stack as a single reversible step
+         *     (Ctrl+Z after a save undoes the format, then continues through prior edits)
+         *   - Preserves the full undo/redo history that existed before the save
+         *   - Restores cursor and selection positions instead of jumping to 1:1
+         */
         if (saveEditorCode.fulfilled.match(result)) {
           const model = editorInstance.getModel();
 

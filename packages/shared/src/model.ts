@@ -60,3 +60,49 @@ export interface SharedScriptInfo {
   moduleName: string;
   sourceCode: string;
 }
+
+export type SidebarTab = "scripts" | "modules" | "settings";
+
+export type OutputDrawerTab = "javascript" | "css";
+
+export interface UIPanelSizes {
+  /**
+   * Width percentage of the script list sidebar panel within the scripts page horizontal split.
+   * Range: 0–100.
+   */
+  scriptListWidth: number;
+  /**
+   * Width percentage of the TypeScript editor within the side-by-side source panels.
+   * Range: 0–100.
+   */
+  tsScssHorizontalSplit: number;
+  /**
+   * Height percentage of the source editors panel within the outer vertical split
+   * (source editors vs. compiled output drawer).
+   * Range: 0–100.
+   */
+  sourceVsDrawerSplit: number;
+}
+
+export interface UIState {
+  /**
+   * The currently active sidebar navigation tab.
+   */
+  activeSidebarTab: SidebarTab;
+  /**
+   * The ID of the most recently selected userscript, used to restore selection on reload.
+   */
+  selectedScriptId: string | null;
+  /**
+   * Whether the compiled output drawer is collapsed.
+   */
+  outputDrawerCollapsed: boolean;
+  /**
+   * The active tab displayed inside the compiled output drawer.
+   */
+  outputDrawerActiveTab: OutputDrawerTab;
+  /**
+   * Persisted pixel-percentage sizes for all resizable panel groups.
+   */
+  panelSizes: UIPanelSizes;
+}

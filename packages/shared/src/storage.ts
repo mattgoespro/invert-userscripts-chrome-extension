@@ -1,4 +1,12 @@
-import { Userscript, GlobalModule, EditorSettings, GlobalModules, Userscripts } from "./model";
+import {
+  Userscript,
+  GlobalModule,
+  EditorSettings,
+  GlobalModules,
+  Userscripts,
+  UIState,
+  UIPanelSizes,
+} from "./model";
 
 export const defaultSettings: EditorSettings = {
   theme: "invert-dark",
@@ -85,5 +93,46 @@ export class StorageManager {
   static async saveEditorSettings(editorSettings: Partial<EditorSettings>): Promise<void> {
     const current = await this.getEditorSettings();
     await chrome.storage.sync.set({ editorSettings: { ...current, ...editorSettings } });
+  }
+}
+
+const UI_STATE_STORAGE_KEY = "uiState";
+
+export const defaultUIState: UIState = {
+  activeSidebarTab: "scripts",
+  selectedScriptId: null,
+  outputDrawerCollapsed: false,
+  outputDrawerActiveTab: "javascript",
+  panelSizes: {
+    scriptListWidth: 30,
+    tsScssHorizontalSplit: 50,
+    sourceVsDrawerSplit: 70,
+  },
+};
+
+export class UIStateManager {
+  /**
+   * Retrieves the persisted UI state from chrome.storage.sync, merging
+   * deeply with defaults so missing keys are always populated.
+   */
+  static async get(): Promise<UIState> {
+    const result = await chrome.storage.sync.get<{ uiState: UIState }>([UI_STATE_STORAGE_KEY]);
+    const stored = result[UI_STATE_STORAGE_KEY];
+
+    return {
+      ...defaultUIState,
+      ...(stored ?? {}),
+      panelSizes: {
+        ...defaultUIState.panelSizes,
+        ...(stored?.panelSizes ?? {}),
+      } satisfies UIPanelSizes,
+    };
+  }
+
+  /**
+   * Overwrites the entire UI state in chrome.storage.sync.
+   */
+  static async save(state: UIState): Promise<void> {
+    await chrome.storage.sync.set({ [UI_STATE_STORAGE_KEY]: state });
   }
 }

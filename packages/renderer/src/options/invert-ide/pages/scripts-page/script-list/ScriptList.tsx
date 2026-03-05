@@ -6,14 +6,23 @@ import {
 import { ScriptListItem } from "./script-list-item/ScriptListItem";
 import "./ScriptList.scss";
 
-export function ScriptList() {
+type ScriptListProps = {
+  onScriptSelected: (scriptId: string) => void;
+};
+
+export function ScriptList({ onScriptSelected }: ScriptListProps) {
   const currentScript = useAppSelector(selectCurrentUserscript);
   const scripts = useAppSelector(selectAllUserscripts);
 
   return (
     <div className="script-list--list">
       {Object.values(scripts ?? []).map((script) => (
-        <ScriptListItem key={script.id} script={script} active={currentScript?.id === script.id} />
+        <ScriptListItem
+          key={script.id}
+          script={script}
+          active={currentScript?.id === script.id}
+          onScriptSelected={onScriptSelected}
+        />
       ))}
     </div>
   );

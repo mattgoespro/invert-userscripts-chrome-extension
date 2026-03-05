@@ -7,6 +7,7 @@ import {
   markUserscriptModified,
   selectCurrentUserscript,
 } from "@/shared/store/slices/userscripts.slice";
+import { useUIState } from "@/shared/ui-state-context";
 import { UserscriptSourceLanguage } from "@shared/model";
 import { useEffect, useRef, useState } from "react";
 import { Group, Panel, PanelImperativeHandle } from "react-resizable-panels";
@@ -18,10 +19,11 @@ export function ScriptEditor() {
   const dispatch = useAppDispatch();
   const script = useAppSelector(selectCurrentUserscript);
   const monacoReady = useAppSelector(selectMonacoReady);
+  const { uiState, updateUIState, updatePanelSizes } = useUIState();
 
   const [liveJs, setLiveJs] = useState("");
   const [liveCss, setLiveCss] = useState("");
-  const [isDrawerCollapsed, setIsDrawerCollapsed] = useState(false);
+  const [isDrawerCollapsed, setIsDrawerCollapsed] = useState(uiState.outputDrawerCollapsed);
 
   const drawerPanelRef = useRef<PanelImperativeHandle | null>(null);
   const scssDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -102,6 +104,16 @@ export function ScriptEditor() {
     }
   };
 
+  const onDrawerResize = () => {
+    if (!drawerPanelRef.current) {
+      return;
+    }
+
+    const collapsed = drawerPanelRef.current.isCollapsed();
+    setIsDrawerCollapsed(collapsed);
+    updateUIState({ outputDrawerCollapsed: collapsed });
+  };
+
   return (
     <div className="script-editor--editor-area">
       <div className="script-editor--editor-header">
@@ -109,14 +121,40 @@ export function ScriptEditor() {
       </div>
       <div className="script-editor--editor-container">
         {monacoReady && (
-          <Group orientation="vertical" id="script-editor-outer-panels">
+          <Group
+            orientation="vertical"
+            id="script-editor-outer-panels"
+            defaultLayout={{
+              "source-panels": uiState.panelSizes.sourceVsDrawerSplit,
+              "output-drawer": 100 - uiState.panelSizes.sourceVsDrawerSplit,
+            }}
+            onLayoutChanged={(layout) => {
+              if (drawerPanelRef.current?.isCollapsed()) {
+                return;
+              }
+              const sourceSize = layout["source-panels"];
+              if (sourceSize != null) {
+                updatePanelSizes({ sourceVsDrawerSplit: sourceSize });
+              }
+            }}
+          >
             <Panel id="source-panels" minSize="20%">
               <Group
                 orientation="horizontal"
                 id="script-editor-source-panels"
                 style={{ height: "100%" }}
+                defaultLayout={{
+                  "typescript-editor": uiState.panelSizes.tsScssHorizontalSplit,
+                  "scss-editor": 100 - uiState.panelSizes.tsScssHorizontalSplit,
+                }}
+                onLayoutChanged={(layout) => {
+                  const tsSize = layout["typescript-editor"];
+                  if (tsSize != null) {
+                    updatePanelSizes({ tsScssHorizontalSplit: tsSize });
+                  }
+                }}
               >
-                <Panel id="typescript-editor" minSize="20%" maxSize="80%" defaultSize="50%">
+                <Panel id="typescript-editor" minSize="20%" maxSize="80%">
                   <div className="script-editor--code-editor">
                     <CodeEditor
                       modelId={script.id}
@@ -128,7 +166,7 @@ export function ScriptEditor() {
                   </div>
                 </Panel>
                 <ResizeHandle direction="horizontal" />
-                <Panel id="scss-editor" minSize="20%" maxSize="80%" defaultSize="50%">
+                <Panel id="scss-editor" minSize="20%" maxSize="80%">
                   <div className="script-editor--code-editor">
                     <CodeEditor
                       modelId={script.id}
@@ -147,14 +185,10 @@ export function ScriptEditor() {
               id="output-drawer"
               minSize="15%"
               maxSize="60%"
-              defaultSize="30%"
+              defaultSize={`${100 - uiState.panelSizes.sourceVsDrawerSplit}%`}
               collapsible
               collapsedSize="36px"
-              onResize={() => {
-                if (drawerPanelRef.current) {
-                  setIsDrawerCollapsed(drawerPanelRef.current.isCollapsed());
-                }
-              }}
+              onResize={onDrawerResize}
             >
               <div className="script-editor--output-drawer">
                 <CompiledOutputDrawer

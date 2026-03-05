@@ -1,7 +1,8 @@
 import { CodeEditor } from "@/options/invert-ide/components/code-editor/CodeEditor";
 import { IconButton } from "@/shared/components/icon-button/IconButton";
+import { useUIState } from "@/shared/ui-state-context";
+import { OutputDrawerTab } from "@shared/model";
 import { ChevronsDown, ChevronsUp } from "lucide-react";
-import { useState } from "react";
 import "./CompiledOutputDrawer.scss";
 
 type CompiledOutputDrawerProps = {
@@ -17,8 +18,6 @@ type CompiledOutputDrawerProps = {
   onToggleCollapse: () => void;
 };
 
-type ActiveTab = "javascript" | "css";
-
 export function CompiledOutputDrawer({
   scriptId,
   javascript,
@@ -26,7 +25,12 @@ export function CompiledOutputDrawer({
   isCollapsed,
   onToggleCollapse,
 }: CompiledOutputDrawerProps) {
-  const [activeTab, setActiveTab] = useState<ActiveTab>("javascript");
+  const { uiState, updateUIState } = useUIState();
+  const activeTab = uiState.outputDrawerActiveTab;
+
+  const onTabChange = (tab: OutputDrawerTab) => {
+    updateUIState({ outputDrawerActiveTab: tab });
+  };
 
   return (
     <div className="compiled-output--wrapper">
@@ -38,7 +42,7 @@ export function CompiledOutputDrawer({
               role="tab"
               aria-selected={activeTab === "javascript"}
               className={`compiled-output--tab${activeTab === "javascript" ? " compiled-output--tab-active" : ""}`}
-              onClick={() => setActiveTab("javascript")}
+              onClick={() => onTabChange("javascript")}
             >
               <span className="compiled-output--tab-badge compiled-output--tab-badge-js">js</span>
               javascript
@@ -47,7 +51,7 @@ export function CompiledOutputDrawer({
               role="tab"
               aria-selected={activeTab === "css"}
               className={`compiled-output--tab${activeTab === "css" ? " compiled-output--tab-active" : ""}`}
-              onClick={() => setActiveTab("css")}
+              onClick={() => onTabChange("css")}
             >
               <span className="compiled-output--tab-badge compiled-output--tab-badge-css">css</span>
               css

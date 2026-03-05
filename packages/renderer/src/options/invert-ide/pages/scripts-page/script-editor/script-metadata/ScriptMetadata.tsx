@@ -6,6 +6,7 @@ import { AppDispatch } from "@/shared/store/store";
 import { deleteUserscript, updateUserscript } from "@/shared/store/slices/userscripts.slice";
 import { SharedScriptsSelector } from "./shared-scripts-selector/SharedScriptsSelector";
 import { ScriptOptionsPanel } from "./script-options-panel/ScriptOptionsPanel";
+import { FileSizeIndicator } from "./file-size-indicator/FileSizeIndicator";
 
 type ScriptMetadataProps = {
   script: Userscript;
@@ -55,6 +56,7 @@ export function ScriptMetadata({ script }: ScriptMetadataProps) {
             onUpdateScriptMeta({ urlPatterns: e.target.value.split(",").map((p) => p.trim()) })
           }
         />
+        <FileSizeIndicator script={script} />
         <ScriptOptionsPanel
           shared={script.shared ?? false}
           scriptName={script.name}

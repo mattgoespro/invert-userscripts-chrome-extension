@@ -1,8 +1,23 @@
 import { EditorThemeName } from "@packages/monaco";
 import { CodeEditor } from "@/options/invert-ide/components/code-editor/CodeEditor";
 import "./ThemePreview.scss";
+import prettier from "prettier/standalone";
+import parserTypescript from "prettier/parser-typescript";
 
-const PREVIEW_CODE = `// Invert IDE — theme preview
+const _PREVIEW_CODE_FORMATTED = prettier.format(
+  `// Invert IDE — theme preview
+  class X {}
+const greet = (name: string): string => {
+  const count = 42;
+  const msg = \`Hello, \${name}!\`;
+  return { msg, count };
+// };`,
+  { parser: "typescript", plugins: [parserTypescript] }
+);
+
+const PREVIEW_CODE = `
+// Invert IDE — theme preview
+
 const greet = (name: string): string => {
   const count = 42;
   const msg = \`Hello, \${name}!\`;

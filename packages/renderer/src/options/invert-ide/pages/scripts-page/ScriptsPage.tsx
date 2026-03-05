@@ -8,6 +8,7 @@ import {
   selectAllUserscripts,
   setCurrentUserscript,
 } from "@/shared/store/slices/userscripts.slice";
+import { useUIState } from "@/shared/ui-state-context";
 import { PlusIcon } from "lucide-react";
 import { useEffect } from "react";
 import { Group, Panel } from "react-resizable-panels";
@@ -19,22 +20,49 @@ export function ScriptsPage() {
   const dispatch = useAppDispatch();
   const scripts = useAppSelector(selectAllUserscripts);
   const selectedScript = useAppSelector((state) => state.userscripts.currentUserscript);
+  const { uiState, updateUIState, updatePanelSizes } = useUIState();
 
   const onCreateScript = async () => {
     dispatch(createUserscript());
   };
 
+  // On first load, restore the previously selected script from UI state.
   useEffect(() => {
-    if (Object.keys(scripts).length === 0 || selectedScript != null) {
+    if (Object.keys(scripts).length === 0) {
       return;
     }
 
-    dispatch(setCurrentUserscript(Object.values(scripts)[0].id));
+    if (selectedScript != null) {
+      return;
+    }
+
+    const restoredId = uiState.selectedScriptId;
+    const target = restoredId && scripts[restoredId] ? restoredId : Object.values(scripts)[0].id;
+    dispatch(setCurrentUserscript(target));
   }, [scripts]);
 
+  const onScriptSelected = (scriptId: string) => {
+    dispatch(setCurrentUserscript(scriptId));
+    updateUIState({ selectedScriptId: scriptId });
+  };
+
   return (
-    <Group orientation="horizontal" id="scripts-page-panels" className="scripts--content">
-      <Panel id="scripts-sidebar" minSize="15%" maxSize="30%" defaultSize="30%">
+    <Group
+      orientation="horizontal"
+      id="scripts-page-panels"
+      className="scripts--content"
+      defaultLayout={{
+        "scripts-sidebar": uiState.panelSizes.scriptListWidth,
+        "scripts-editor": 100 - uiState.panelSizes.scriptListWidth,
+      }}
+      onLayoutChanged={(layout) => {
+        const sidebarWidth = layout["scripts-sidebar"];
+        if (sidebarWidth != null) {
+          updatePanelSizes({ scriptListWidth: sidebarWidth });
+        }
+      }}
+    >
+      <Panel id="scripts-sidebar" minSize="15%" maxSize="30%">
         <div className="scripts--sidebar">
           <div className="scripts--sidebar-header">
             <Typography variant="subtitle">Scripts</Typography>
@@ -45,11 +73,11 @@ export function ScriptsPage() {
               title="Create new script"
             ></IconButton>
           </div>
-          <ScriptList />
+          <ScriptList onScriptSelected={onScriptSelected} />
         </div>
       </Panel>
       <ResizeHandle direction="horizontal" />
-      <Panel id="scripts-editor" minSize="70%" maxSize="85%" defaultSize="70%">
+      <Panel id="scripts-editor" minSize="70%" maxSize="85%">
         {selectedScript ? (
           <ScriptEditor />
         ) : (
