@@ -39,9 +39,8 @@
     .modules--list-item-info {
       flex: 1;
 
-      strong {
+      .modules--list-item-name {
         display: block;
-        font-family: "JetBrains Mono", monospace;
         font-size: 15px;
         color: var(--syntax-type);
         margin-bottom: var(--spacing-sm);

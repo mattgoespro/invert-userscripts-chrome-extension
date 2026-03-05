@@ -1,11 +1,21 @@
 import { JSX, PropsWithChildren } from "react";
 import "./Typography.scss";
 
+type TypographyVariant =
+  | "title"
+  | "subtitle"
+  | "section-title"
+  | "body"
+  | "button"
+  | "caption"
+  | "code";
+
 type TypographyProps = PropsWithChildren<{
-  variant?: "title" | "subtitle" | "body" | "button" | "caption" | "code";
+  variant?: TypographyVariant;
+  className?: string;
 }>;
 
-export function Typography({ variant = "body", children }: TypographyProps) {
+export function Typography({ variant = "body", className, children }: TypographyProps) {
   let Tag: keyof JSX.IntrinsicElements = "p";
 
   switch (variant) {
@@ -14,6 +24,9 @@ export function Typography({ variant = "body", children }: TypographyProps) {
       break;
     case "subtitle":
       Tag = "h2";
+      break;
+    case "section-title":
+      Tag = "h3";
       break;
     case "button":
       Tag = "span";
@@ -30,5 +43,7 @@ export function Typography({ variant = "body", children }: TypographyProps) {
       break;
   }
 
-  return <Tag className={`typography typography--${variant}`}>{children}</Tag>;
+  const classes = [`typography typography--${variant}`, className].filter(Boolean).join(" ");
+
+  return <Tag className={classes}>{children}</Tag>;
 }

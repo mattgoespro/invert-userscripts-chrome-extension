@@ -22,9 +22,10 @@
     align-items: center;
     justify-content: center;
     padding: var(--spacing-2xl);
-    color: var(--text-muted);
-    font-family: "JetBrains Mono", monospace;
-    font-size: 0.875rem;
+
+    .typography--code {
+      color: var(--text-muted);
+    }
   }
 
   .settings--section {
@@ -35,12 +36,6 @@
     margin-bottom: var(--section-gap);
 
     .settings--section-title {
-      font-family: "JetBrains Mono", monospace;
-      font-size: 14px;
-      font-weight: 500;
-      color: var(--syntax-keyword);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
       margin: 0 0 var(--spacing-md) 0;
       padding-bottom: var(--spacing-xs);
       border-bottom: 1px solid var(--border-subtle);

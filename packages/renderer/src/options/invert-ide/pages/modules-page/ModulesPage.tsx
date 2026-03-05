@@ -7,6 +7,7 @@ import { Checkbox } from "@/shared/components/checkbox/Checkbox";
 import { CodeComment } from "@/shared/components/code-comment/CodeComment";
 import { IconButton } from "@/shared/components/icon-button/IconButton";
 import { CodeLine } from "@/shared/components/code-line/CodeLine";
+import { Typography } from "@/shared/components/typography/Typography";
 import { DeleteIcon } from "lucide-react";
 
 export function ModulesPage() {
@@ -58,7 +59,9 @@ export function ModulesPage() {
         {Object.values(modules ?? {}).map((module) => (
           <div key={module.id} className="modules--list-item">
             <div className="modules--list-item-info">
-              <strong>{module.name}</strong>
+              <Typography variant="code" className="modules--list-item-name">
+                {module.name}
+              </Typography>
               <div className="modules--list-item-url">{module.url}</div>
             </div>
             <div className="modules--list-item-actions">

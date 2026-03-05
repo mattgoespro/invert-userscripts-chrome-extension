@@ -1,6 +1,7 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 import { EllipsisVerticalIcon, Share2Icon, Trash2Icon, WandSparklesIcon } from "lucide-react";
 import { Input } from "@/shared/components/input/Input";
+import { Typography } from "@/shared/components/typography/Typography";
 import "./ScriptOptionsPanel.scss";
 
 /**
@@ -78,12 +79,14 @@ export function ScriptOptionsPanel({
           <div className="script-options--section">
             <div className="script-options--section-header">
               <Share2Icon size={12} className="script-options--section-icon" />
-              <span className="script-options--section-title">script options</span>
+              <Typography variant="section-title" className="script-options--section-title">
+                script options
+              </Typography>
             </div>
             <div className="script-options--section-body">
-              <span className="script-options--hint">
+              <Typography variant="caption" className="script-options--hint">
                 Set a module name to share this script with other scripts.
-              </span>
+              </Typography>
               <div className="script-options--module-input-wrapper">
                 <Input
                   ref={moduleInputRef}

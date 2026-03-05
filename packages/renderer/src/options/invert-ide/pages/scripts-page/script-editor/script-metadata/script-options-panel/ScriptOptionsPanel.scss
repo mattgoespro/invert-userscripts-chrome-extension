@@ -83,12 +83,8 @@
   }
 
   .script-options--section-title {
-    font-family: "JetBrains Mono", monospace;
     font-size: 0.6875rem;
-    font-weight: 500;
     color: var(--accent);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
   }
 
   .script-options--section-body {
@@ -99,10 +95,7 @@
   }
 
   .script-options--hint {
-    font-family: var(--typography-caption-font-family);
-    font-size: var(--typography-caption-font-size);
     color: var(--text-muted);
-    line-height: 1.4;
   }
 
   .script-options--module-input-wrapper {

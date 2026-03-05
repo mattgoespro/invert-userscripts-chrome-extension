@@ -52,7 +52,9 @@ export function Settings() {
           <span className="settings--header-prefix">config.</span>
           <Typography variant="subtitle">Settings</Typography>
         </div>
-        <div className="settings--loading">Loading settings...</div>
+        <div className="settings--loading">
+          <Typography variant="code">Loading settings...</Typography>
+        </div>
       </div>
     );
   }
@@ -63,9 +65,10 @@ export function Settings() {
         <span className="settings--header-prefix">config.</span>
         <Typography variant="subtitle">Settings</Typography>
       </div>
-
       <div className="settings--section">
-        <h3 className="settings--section-title">Editor Appearance</h3>
+        <Typography variant="section-title" className="settings--section-title">
+          Editor Appearance
+        </Typography>
         <div className="settings--section-fields">
           <Select
             label="Theme"
@@ -86,9 +89,10 @@ export function Settings() {
           />
         </div>
       </div>
-
       <div className="settings--section">
-        <h3 className="settings--section-title">Formatting</h3>
+        <Typography variant="section-title" className="settings--section-title">
+          Formatting
+        </Typography>
         <div className="settings--section-fields">
           <Input
             type="number"

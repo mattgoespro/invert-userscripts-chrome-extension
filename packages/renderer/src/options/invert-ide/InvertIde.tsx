@@ -33,9 +33,10 @@ function InvertIdeContent() {
     // Initialize the SASS sandbox compiler early so it's ready when needed
     SassCompiler.initialize();
 
-    // Initialize Monaco (registers Shiki tokenizer + defines all custom themes)
-    // unconditionally here so themes are available regardless of which page
-    // is active on load — e.g. restoring directly to the settings page.
+    /**
+     * Initialize Monaco (registers Shiki tokenizer + defines all custom themes) unconditionally here so themes
+     * are available regardless of which page is active on load.
+     */
     dispatch(initializeMonaco());
 
     dispatch(loadUserscripts());

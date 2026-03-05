@@ -87,6 +87,15 @@ $font-mono: "JetBrains Mono", monospace;
   --typography-label-color: var(--label-foreground);
 
   // ===========================================================================
+  // Section Title
+  // ===========================================================================
+  --typography-section-title-font-family: var(--font-mono);
+  --typography-section-title-font-size: 0.875rem;
+  --typography-section-title-font-weight: 500;
+  --typography-section-title-line-height: 1.4;
+  --typography-section-title-color: var(--syntax-keyword);
+
+  // ===========================================================================
   // Code
   // ===========================================================================
   --typography-code-font-family: var(--font-mono);

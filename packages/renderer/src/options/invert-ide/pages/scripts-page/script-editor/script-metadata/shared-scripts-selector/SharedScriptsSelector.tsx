@@ -1,5 +1,6 @@
 import "./SharedScriptsSelector.scss";
 import { Checkbox } from "@/shared/components/checkbox/Checkbox";
+import { Typography } from "@/shared/components/typography/Typography";
 import { Userscript } from "@shared/model";
 import { useAppSelector } from "@/shared/store/hooks";
 import { selectSharedUserscripts } from "@/shared/store/slices/userscripts.slice";
@@ -24,7 +25,9 @@ export function SharedScriptsSelector({
       <div className="shared-scripts-selector--wrapper shared-scripts-selector--empty">
         <div className="shared-scripts-selector--empty-state">
           <PackageIcon size={14} className="shared-scripts-selector--empty-icon" />
-          <span className="shared-scripts-selector--empty-text">No shared scripts available</span>
+          <Typography variant="caption" className="shared-scripts-selector--empty-text">
+            No shared scripts available
+          </Typography>
         </div>
       </div>
     );

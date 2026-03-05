@@ -35,6 +35,17 @@
     line-height: 1.4;
   }
 
+  &--section-title {
+    font-family: var(--typography-section-title-font-family);
+    font-size: var(--typography-section-title-font-size);
+    font-weight: var(--typography-section-title-font-weight);
+    color: var(--typography-section-title-color);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 0;
+    line-height: 1.4;
+  }
+
   &--code {
     font-family: var(--font-mono);
     font-size: 0.875rem;

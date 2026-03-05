@@ -82,7 +82,7 @@
   }
 
   .shared-scripts-selector--empty-text {
-    font-family: "JetBrains Mono", monospace;
+    font-family: var(--font-mono);
     font-size: 11px;
     color: var(--text-muted);
     font-style: italic;
