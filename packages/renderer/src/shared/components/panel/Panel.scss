@@ -1,0 +1,84 @@
+.panel {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  background: var(--surface-overlay);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--geometry-border-radius);
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(0, 0, 0, 0.2);
+
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  line-height: 1.4;
+
+  animation: panel-enter 0.15s ease forwards;
+}
+
+// =========================================================================
+// Header
+// =========================================================================
+.panel--header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--accent-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.panel--header-icon {
+  display: flex;
+  align-items: center;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.panel--header-title {
+  font-family: var(--typography-section-title-font-family);
+  font-size: var(--typography-section-title-font-size);
+  font-weight: var(--typography-section-title-font-weight);
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  line-height: 1.4;
+}
+
+// =========================================================================
+// Section
+// =========================================================================
+.panel--section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  padding: 0.75rem;
+}
+
+// =========================================================================
+// Divider
+// =========================================================================
+.panel--divider {
+  height: 1px;
+  background: var(--border);
+  margin: 0;
+}
+
+// =========================================================================
+// Animation
+// =========================================================================
+@keyframes panel-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

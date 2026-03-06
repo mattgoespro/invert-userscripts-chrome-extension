@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-import { EditorSettings } from "@shared/model";
+import { AppThemeName, EditorSettings } from "@shared/model";
 import { defaultSettings, StorageManager } from "@shared/storage";
 import type { EditorThemeName } from "@packages/monaco";
 
@@ -53,6 +53,9 @@ const settingsSlice = createSlice({
     setAutoSave: (state, action: PayloadAction<boolean>) => {
       state.editorSettings.autoSave = action.payload;
     },
+    setAppTheme: (state, action: PayloadAction<AppThemeName>) => {
+      state.editorSettings.appTheme = action.payload;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -72,7 +75,7 @@ const settingsSlice = createSlice({
   },
 });
 
-export const { setTheme, setFontSize, setTabSize, setAutoFormat, setAutoSave } =
+export const { setTheme, setFontSize, setTabSize, setAutoFormat, setAutoSave, setAppTheme } =
   settingsSlice.actions;
 
 export const { selectEditorSettings, selectIsLoading } = settingsSlice.selectors;

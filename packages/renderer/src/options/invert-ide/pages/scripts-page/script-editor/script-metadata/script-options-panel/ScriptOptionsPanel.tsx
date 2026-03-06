@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 import { EllipsisVerticalIcon, Share2Icon, Trash2Icon, WandSparklesIcon } from "lucide-react";
 import { Input } from "@/shared/components/input/Input";
-import { Typography } from "@/shared/components/typography/Typography";
+import { Panel, PanelHeader, PanelSection, PanelDivider } from "@/shared/components/panel/Panel";
 import "./ScriptOptionsPanel.scss";
 
 /**
@@ -75,47 +75,38 @@ export function ScriptOptionsPanel({
         <EllipsisVerticalIcon size={16} />
       </button>
       {open && (
-        <div className="script-options--panel">
-          <div className="script-options--section">
-            <div className="script-options--section-header">
-              <Share2Icon size={12} className="script-options--section-icon" />
-              <Typography variant="section-title" className="script-options--section-title">
-                script options
-              </Typography>
-            </div>
-            <div className="script-options--section-body">
-              <Typography variant="caption" className="script-options--hint">
-                Set a module name to share this script with other scripts.
-              </Typography>
-              <div className="script-options--module-input-wrapper">
-                <Input
-                  ref={moduleInputRef}
-                  className="script-options--module-input"
-                  defaultValue={moduleName}
-                  placeholder="module-name"
-                  onChange={(e) => onModuleNameChange(e.target.value)}
-                />
-                <button
-                  type="button"
-                  className="script-options--autofill-btn"
-                  onClick={handleAutoFillModuleName}
-                  title="Auto-fill from script name"
-                >
-                  <WandSparklesIcon size={13} />
-                </button>
-              </div>
-            </div>
-          </div>
-          <div className="script-options--divider" />
-          <div className="script-options--section">
-            <div className="script-options--section-body">
-              <button type="button" className="script-options--delete-btn" onClick={handleDelete}>
-                <Trash2Icon size={13} />
-                Delete script
+        <Panel className="script-options--panel" minWidth="18rem">
+          <PanelHeader icon={<Share2Icon size={12} />}>script options</PanelHeader>
+          <PanelSection>
+            <span className="script-options--hint">
+              Set a module name to share this script with other scripts.
+            </span>
+            <div className="script-options--module-input-wrapper">
+              <Input
+                ref={moduleInputRef}
+                className="script-options--module-input"
+                defaultValue={moduleName}
+                placeholder="module-name"
+                onChange={(e) => onModuleNameChange(e.target.value)}
+              />
+              <button
+                type="button"
+                className="script-options--autofill-btn"
+                onClick={handleAutoFillModuleName}
+                title="Auto-fill from script name"
+              >
+                <WandSparklesIcon size={13} />
               </button>
             </div>
-          </div>
-        </div>
+          </PanelSection>
+          <PanelDivider />
+          <PanelSection>
+            <button type="button" className="script-options--delete-btn" onClick={handleDelete}>
+              <Trash2Icon size={13} />
+              Delete script
+            </button>
+          </PanelSection>
+        </Panel>
       )}
     </div>
   );

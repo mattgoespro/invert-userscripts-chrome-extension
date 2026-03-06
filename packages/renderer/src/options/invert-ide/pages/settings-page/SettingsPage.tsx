@@ -3,6 +3,7 @@ import { Input } from "@/shared/components/input/Input";
 import { Select } from "@/shared/components/select/Select";
 import { Typography } from "@/shared/components/typography/Typography";
 import { EditorThemeName, getThemeOptions } from "@packages/monaco";
+import { AppThemeName } from "@shared/model";
 import { useAppDispatch, useAppSelector } from "@/shared/store/hooks";
 import { selectMonacoReady } from "@/shared/store/slices/editor.slice";
 import {
@@ -14,6 +15,17 @@ import {
 import { useEffect } from "react";
 import "./SettingsPage.scss";
 import { ThemePreview } from "./theme-preview/ThemePreview";
+
+const APP_THEME_OPTIONS = [
+  { value: "graphite", label: "Graphite" },
+  { value: "graphite-warm", label: "Graphite Warm" },
+  { value: "graphite-dusk", label: "Graphite Dusk" },
+  { value: "graphite-ember", label: "Graphite Ember" },
+  { value: "obsidian", label: "Obsidian" },
+  { value: "obsidian-deep", label: "Obsidian Deep" },
+  { value: "obsidian-ember", label: "Obsidian Ember" },
+  { value: "obsidian-frost", label: "Obsidian Frost" },
+];
 
 export function Settings() {
   const dispatch = useAppDispatch();
@@ -27,6 +39,10 @@ export function Settings() {
 
   const handleThemeChange = (theme: EditorThemeName) => {
     dispatch(updateSettings({ theme }));
+  };
+
+  const handleAppThemeChange = (appTheme: AppThemeName) => {
+    dispatch(updateSettings({ appTheme }));
   };
 
   const handleFontSizeChange = (fontSize: number) => {
@@ -64,6 +80,19 @@ export function Settings() {
       <div className="settings--header">
         <span className="settings--header-prefix">config.</span>
         <Typography variant="subtitle">Settings</Typography>
+      </div>
+      <div className="settings--section">
+        <Typography variant="section-title" className="settings--section-title">
+          Application Theme
+        </Typography>
+        <div className="settings--section-fields">
+          <Select
+            label="Theme"
+            value={settings.appTheme ?? "graphite"}
+            onChange={handleAppThemeChange}
+            options={APP_THEME_OPTIONS}
+          />
+        </div>
       </div>
       <div className="settings--section">
         <Typography variant="section-title" className="settings--section-title">

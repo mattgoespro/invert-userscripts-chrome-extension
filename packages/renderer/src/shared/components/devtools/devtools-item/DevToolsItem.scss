@@ -11,21 +11,24 @@
   align-items: center;
   gap: 8px;
   width: 100%;
-  padding: 8px 14px;
-  background: var(--surface-raised);
-  border: 1px solid var(--border);
-  border-radius: var(--geometry-border-radius);
-  color: var(--text-muted-strong);
+  padding: 8px 10px;
+  background: transparent;
+  border: none;
+  border-radius: 3px;
+  color: var(--text-muted);
   cursor: pointer;
   font-family: "JetBrains Mono", monospace;
   font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.02em;
-  transition: border-color 150ms ease;
+  text-align: left;
+  transition:
+    background-color 100ms ease,
+    color 100ms ease;
   user-select: none;
 
   &:hover {
-    border-color: var(--accent-border);
+    background: var(--hover-overlay);
     color: var(--foreground);
   }
 }
@@ -53,8 +56,8 @@
 // ---------------------------------------------------------------------------
 .devtools-item--panel {
   position: absolute;
-  bottom: calc(100% + 8px);
-  left: 0;
+  bottom: 0;
+  left: calc(100% + 8px);
   min-width: 220px;
   max-width: 520px;
   max-height: 480px;

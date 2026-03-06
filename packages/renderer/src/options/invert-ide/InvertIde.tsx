@@ -1,8 +1,8 @@
 import { SassCompiler } from "@/sandbox/compiler";
 import { DevTools } from "../../shared/components/devtools/DevTools";
-import { useAppDispatch } from "@/shared/store/hooks";
+import { useAppDispatch, useAppSelector } from "@/shared/store/hooks";
 import { initializeMonaco } from "@/shared/store/slices/editor.slice";
-import { loadSettings } from "@/shared/store/slices/settings.slice";
+import { loadSettings, selectEditorSettings } from "@/shared/store/slices/settings.slice";
 import { loadUserscripts } from "@/shared/store/slices/userscripts.slice";
 import { UIStateProvider, useUIState } from "@/shared/ui-state-context";
 import { useEffect } from "react";
@@ -12,6 +12,16 @@ import { Sidebar, SidebarButton } from "./components/sidebar/Sidebar";
 import { ModulesPage } from "./pages/modules-page/ModulesPage";
 import { ScriptsPage } from "./pages/scripts-page/ScriptsPage";
 import { Settings } from "./pages/settings-page/SettingsPage";
+
+function applyAppTheme(themeId: string) {
+  const root = document.documentElement;
+
+  if (themeId === "graphite") {
+    root.removeAttribute("data-theme");
+  } else {
+    root.setAttribute("data-theme", themeId);
+  }
+}
 
 /**
  * Root IDE shell. Mounts the {@link UIStateProvider} so that all child components
@@ -28,6 +38,7 @@ export function InvertIde() {
 function InvertIdeContent() {
   const { uiState, updateUIState } = useUIState();
   const dispatch = useAppDispatch();
+  const settings = useAppSelector(selectEditorSettings);
 
   useEffect(() => {
     // Initialize the SASS sandbox compiler early so it's ready when needed
@@ -42,6 +53,13 @@ function InvertIdeContent() {
     dispatch(loadUserscripts());
     dispatch(loadSettings());
   }, [dispatch]);
+
+  /** Apply the persisted application UI theme to the document root whenever it changes. */
+  useEffect(() => {
+    if (settings.appTheme) {
+      applyAppTheme(settings.appTheme);
+    }
+  }, [settings.appTheme]);
 
   const onNavigate = (button: SidebarButton) => {
     updateUIState({ activeSidebarTab: button });

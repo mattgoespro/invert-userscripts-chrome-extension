@@ -1,5 +1,15 @@
 import type { EditorThemeName } from "@packages/monaco";
 
+export type AppThemeName =
+  | "graphite"
+  | "graphite-warm"
+  | "graphite-dusk"
+  | "graphite-ember"
+  | "obsidian"
+  | "obsidian-deep"
+  | "obsidian-ember"
+  | "obsidian-frost";
+
 export type UserscriptStatus = "modified" | "saved";
 
 export type UserscriptSourceLanguage = "typescript" | "scss";
@@ -42,6 +52,7 @@ export interface GlobalModule {
 
 export interface EditorSettings {
   theme?: EditorThemeName;
+  appTheme?: AppThemeName;
   fontSize?: number;
   tabSize?: number;
   autoFormat?: boolean;
@@ -52,6 +63,14 @@ export interface UserscriptCompileResult {
   success: boolean;
   code?: string;
   error?: Error;
+}
+
+/**
+ * Compiled code stored separately in Chrome local storage.
+ */
+export interface CompiledCodeEntry {
+  javascript: string;
+  css: string;
 }
 
 export interface SharedScriptInfo {

@@ -2,6 +2,7 @@ import { InfoIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Userscript } from "@shared/model";
 import { SassCompiler, TypeScriptCompiler } from "@/sandbox/compiler";
+import { Panel, PanelHeader, PanelSection, PanelDivider } from "@/shared/components/panel/Panel";
 import "./FileSizeIndicator.scss";
 
 type FileSizeIndicatorProps = {
@@ -65,9 +66,9 @@ export function FileSizeIndicator({ script }: FileSizeIndicatorProps) {
         {exceedsSyncQuota && <div className="file-size-indicator--badge">!</div>}
       </div>
       {showTooltip && (
-        <div className="file-size-indicator--tooltip">
-          <div className="file-size-indicator--section">
-            <div className="file-size-indicator--label">// Source Code</div>
+        <Panel className="file-size-indicator--tooltip" minWidth="22rem">
+          <PanelHeader>source code</PanelHeader>
+          <PanelSection>
             <div className="file-size-indicator--item">
               <span className="file-size-indicator--file">typescript:</span>
               <span className="file-size-indicator--value">{formatBytes(tsSize)}</span>
@@ -80,10 +81,12 @@ export function FileSizeIndicator({ script }: FileSizeIndicatorProps) {
               <span>Total Source:</span>
               <span>{formatBytes(totalSourceSize)}</span>
             </div>
-          </div>
+          </PanelSection>
 
-          <div className="file-size-indicator--section">
-            <div className="file-size-indicator--label">// Compiled Code</div>
+          <PanelDivider />
+
+          <PanelHeader>compiled code</PanelHeader>
+          <PanelSection>
             <div className="file-size-indicator--item">
               <span className="file-size-indicator--file">javascript:</span>
               <span className="file-size-indicator--value">{formatBytes(jsSize)}</span>
@@ -96,9 +99,11 @@ export function FileSizeIndicator({ script }: FileSizeIndicatorProps) {
               <span>Total Compiled:</span>
               <span>{formatBytes(totalCompiledSize)}</span>
             </div>
-          </div>
+          </PanelSection>
 
-          <div className="file-size-indicator--section file-size-indicator--totals">
+          <PanelDivider />
+
+          <PanelSection className="file-size-indicator--totals">
             <div className="file-size-indicator--grand-total">
               <span className="file-size-indicator--label">Total Size:</span>
               <span className="file-size-indicator--value">{formatBytes(totalSize)}</span>
@@ -116,14 +121,18 @@ export function FileSizeIndicator({ script }: FileSizeIndicatorProps) {
                 <div className="file-size-indicator--warning">⚠️ Exceeds sync quota limit!</div>
               )}
             </div>
-          </div>
+          </PanelSection>
 
-          <div className="file-size-indicator--note">
-            <strong>Note:</strong> Chrome storage limits: sync = {formatBytes(syncQuotaPerItem)}{" "}
-            per-item / {formatBytes(syncQuotaTotal)} total, local = {formatBytes(localQuotaTotal)}{" "}
-            total
-          </div>
-        </div>
+          <PanelDivider />
+
+          <PanelSection className="file-size-indicator--note-section">
+            <div className="file-size-indicator--note">
+              <strong>Note:</strong> Chrome storage limits: sync = {formatBytes(syncQuotaPerItem)}{" "}
+              per-item / {formatBytes(syncQuotaTotal)} total, local = {formatBytes(localQuotaTotal)}{" "}
+              total
+            </div>
+          </PanelSection>
+        </Panel>
       )}
     </div>
   );

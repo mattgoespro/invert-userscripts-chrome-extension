@@ -10,6 +10,7 @@ import {
 
 export const defaultSettings: EditorSettings = {
   theme: "invert-dark",
+  appTheme: "graphite",
   fontSize: 14,
   tabSize: 2,
   autoFormat: true,
@@ -41,17 +42,11 @@ export class StorageManager {
     const script = allScripts[id];
 
     if (!script) {
-      throw new Error(`Userscript not found: ${id}`);
+      throw new Error(`Userscript with ID '${id}' not found.`);
     }
 
     const updatedScript = { ...script, ...updates };
     allScripts[id] = updatedScript;
-
-    console.log("StorageManager: Saving updated script:", {
-      id,
-      typescript: updatedScript.code?.source?.typescript?.substring(0, 100),
-      scss: updatedScript.code?.source?.scss?.substring(0, 100),
-    });
 
     await chrome.storage.sync.set({ userscripts: allScripts });
   }
