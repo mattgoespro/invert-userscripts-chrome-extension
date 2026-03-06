@@ -67,11 +67,7 @@ export function DevTools() {
   }, [open]);
 
   return (
-    <div
-      ref={rootRef}
-      className="app-dev-tools"
-      style={{ left: position.x, bottom: position.y }}
-    >
+    <div ref={rootRef} className="app-dev-tools" style={{ left: position.x, bottom: position.y }}>
       <button
         className={"app-dev-tools--trigger" + (open ? " app-dev-tools--trigger-active" : "")}
         onPointerDown={handlePointerDown}
