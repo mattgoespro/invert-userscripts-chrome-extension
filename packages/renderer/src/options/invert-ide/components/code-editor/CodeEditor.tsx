@@ -38,7 +38,9 @@ type CodeEditorProps = {
   contents: string;
   language: FormatterLanguage;
   editable?: boolean;
-  /** Override the editor settings. */
+  /**
+   * Options to override the app's saved editor settings.
+   */
   settingsOverride?: Partial<EditorSettings>;
   onCodeModified?: (value: string) => void;
 };
@@ -55,14 +57,16 @@ export function CodeEditor(props: CodeEditorProps) {
   } = props;
 
   const dispatch = useAppDispatch();
-  const reduxSettings = useAppSelector(selectEditorSettings);
-  const settings = settingsOverride ? { ...reduxSettings, ...settingsOverride } : reduxSettings;
+  const appEditorSettings = useAppSelector(selectEditorSettings);
+  const settings = settingsOverride
+    ? { ...appEditorSettings, ...settingsOverride }
+    : appEditorSettings;
 
   const sharedScripts = useAppSelector(
     useMemo(() => selectSharedScriptsForUserscript(scriptId), [scriptId])
   );
 
-  const editorRef = useRef<HTMLDivElement>(null);
+  const editorRootRef = useRef<HTMLDivElement>(null);
   const editorInstanceRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
   const onCodeModifiedRef = useRef(onCodeModified);
   // When true, the model content change listener is muted. Used to prevent
@@ -72,13 +76,13 @@ export function CodeEditor(props: CodeEditorProps) {
 
   // Initialize editor once on mount
   useEffect(() => {
-    if (!editorRef.current) {
+    if (!editorRootRef.current) {
       return;
     }
 
-    const editorInstance = monaco.editor.create(editorRef.current, {
+    const editorInstance = monaco.editor.create(editorRootRef.current, {
       automaticLayout: true,
-      overflowWidgetsDomNode: editorRef.current,
+      overflowWidgetsDomNode: editorRootRef.current,
       cursorBlinking: editable ? "blink" : "solid",
       cursorStyle: editable ? "line" : "underline-thin",
       cursorWidth: editable ? undefined : 0,
@@ -130,7 +134,7 @@ export function CodeEditor(props: CodeEditorProps) {
     editorInstanceRef.current?.updateOptions({ fontSize: settings.fontSize });
   }, [settings.fontSize]);
 
-  // Swap model when modelId/language changes, or sync value for read-only editors when contents changes
+  // Swap model when modelId/language changes and configure TS defaults + content listener
   useEffect(() => {
     const editorInstance = editorInstanceRef.current;
 
@@ -144,10 +148,6 @@ export function CodeEditor(props: CodeEditorProps) {
 
     if (currentModel !== model) {
       editorInstance.setModel(model);
-    } else if (!editable && model.getValue() !== contents) {
-      // For read-only editors (e.g. compiled output viewers), sync external content changes
-      // into the existing model without calling setModel (which would reset scroll position).
-      model.setValue(contents);
     }
 
     /**
@@ -160,11 +160,11 @@ export function CodeEditor(props: CodeEditorProps) {
       dispatch(configureTypescriptDefaults());
     }
 
-    // Listen to content changes on this model
     if (!onCodeModifiedRef.current) {
       return;
     }
 
+    // Listen to content changes on this model
     const disposable = model.onDidChangeContent(() => {
       if (!suppressModelChangeRef.current) {
         onCodeModifiedRef.current?.(model.getValue());
@@ -172,7 +172,21 @@ export function CodeEditor(props: CodeEditorProps) {
     });
 
     return () => disposable.dispose();
-  }, [modelId, language, contents, editable]);
+  }, [modelId, language, editable]);
+
+  // Sync value for read-only editors when contents changes externally
+  useEffect(() => {
+    if (editable) {
+      return;
+    }
+
+    const editorInstance = editorInstanceRef.current;
+    const model = editorInstance?.getModel();
+
+    if (model && model.getValue() !== contents) {
+      model.setValue(contents);
+    }
+  }, [contents, editable]);
 
   // Register shared script type declarations so that module imports are included in the TypeScript intellisense
   useEffect(() => {
@@ -189,13 +203,7 @@ export function CodeEditor(props: CodeEditorProps) {
 
   // Handle Ctrl+S on the container — formats (optional) and saves via Redux thunk
   useEffect(() => {
-    if (!editable || !scriptId) {
-      return;
-    }
-
-    const container = editorRef.current;
-
-    if (!container) {
+    if (!editable || !scriptId || !editorRootRef.current) {
       return;
     }
 
@@ -222,12 +230,9 @@ export function CodeEditor(props: CodeEditorProps) {
         );
 
         /**
-         * Apply (possibly formatted) code back to the editor using executeEdits rather than setValue.
-         * This critical distinction:
-         *   - Pushes the formatting onto the undo stack as a single reversible step
-         *     (Ctrl+Z after a save undoes the format, then continues through prior edits)
-         *   - Preserves the full undo/redo history that existed before the save
-         *   - Restores cursor and selection positions instead of jumping to 1:1
+         * Apply code back to the editor as a set of edits that replace the entire content. This ensures that:
+         *   - Full undo/redo history is preserved
+         *   - Cursor and selection positions are restored
          */
         if (saveEditorCode.fulfilled.match(result)) {
           const model = editorInstance.getModel();
@@ -249,13 +254,13 @@ export function CodeEditor(props: CodeEditorProps) {
       }
     };
 
-    container.addEventListener("keydown", handleKeyDown);
-    return () => container.removeEventListener("keydown", handleKeyDown);
+    editorRootRef.current.addEventListener("keydown", handleKeyDown);
+    return () => editorRootRef.current?.removeEventListener("keydown", handleKeyDown);
   }, [editable, scriptId, settings?.autoFormat, language, dispatch]);
 
   return (
     <div
-      ref={editorRef}
+      ref={editorRootRef}
       style={{
         width: "100%",
         height: "100%",

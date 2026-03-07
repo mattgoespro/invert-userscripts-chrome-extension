@@ -45,7 +45,6 @@ export const createUserscript = createAsyncThunk("userscripts/createUserscript",
     updatedAt: timestamp,
   };
   await StorageManager.saveScript(script);
-  console.log("Saved new userscript to storage:", script.id);
   return script;
 });
 
@@ -53,7 +52,6 @@ export const deleteUserscript = createAsyncThunk(
   "userscripts/deleteUserscript",
   async (scriptId: string) => {
     await StorageManager.deleteScript(scriptId);
-    console.log("Deleted userscript from storage:", scriptId);
     return scriptId;
   }
 );
@@ -106,7 +104,6 @@ export const updateUserscript = createAsyncThunk<Userscript, Userscript, { state
       },
     };
     await StorageManager.updateScript(script.id, storageScript);
-    // Return full version with compiled code for Redux state
     return script;
   }
 );
@@ -122,8 +119,6 @@ export const updateUserscriptCode = createAsyncThunk(
     language: UserscriptSourceLanguage;
     code: string;
   }) => {
-    console.log("updateUserscriptCode received:", { id, language, code: code.substring(0, 100) });
-
     const scriptsMap = await StorageManager.getAllScripts();
     const script = scriptsMap[id];
 
@@ -150,9 +145,7 @@ export const updateUserscriptCode = createAsyncThunk(
     script.status = "saved";
     script.updatedAt = Date.now();
 
-    // Create a storage-safe version without compiled code to avoid exceeding
-    // chrome.storage.sync 8 KB per-item quota. Compiled code is kept in Redux state.
-    const storageScript: Userscript = {
+    await StorageManager.updateScript(id, {
       ...script,
       code: {
         source: script.code.source,
@@ -161,11 +154,8 @@ export const updateUserscriptCode = createAsyncThunk(
           css: "",
         },
       },
-    };
+    });
 
-    await StorageManager.updateScript(id, storageScript);
-
-    // Return the full script with compiled code for Redux state
     return script;
   }
 );
@@ -223,10 +213,6 @@ const userscriptsSlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addCase(loadUserscripts.fulfilled, (state, action) => {
-        // Normalize status to "saved" for all scripts on load.
-        // On a fresh page load no in-progress edits exist, so every script should
-        // appear as saved regardless of what was written to storage (which could
-        // be stale "modified" values left by a previous bug).
         const scripts = action.payload.map((script) => ({ ...script, status: "saved" as const }));
         state.scripts = Object.fromEntries(scripts.map((script) => [script.id, script]));
       })

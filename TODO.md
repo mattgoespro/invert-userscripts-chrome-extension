@@ -5,8 +5,12 @@
 ### Editor Experience
 
 - Implement the `runAt` field for userscripts to allow users to specify when their userscript should be injected during a page's lifecycle.
-- Implement shared and global module intellisense for userscripts to allow users to import and use shared and global modules in their userscripts with type safety and autocompletion support.
--
+
+#### Intellisense
+
+- Implement shared userscript intellisense to allow users to import and use shared userscripts with type safety and autocompletion support.
+- Implement intellisense for user-imported global modules, allowing users to import and use external libraries with type safety and autocompletion support.
+  - Type-definitions for user-imported global modules could be sourced from DefinitelyTyped or generated automatically based on the imported module's API.
 
 ## Performance
 

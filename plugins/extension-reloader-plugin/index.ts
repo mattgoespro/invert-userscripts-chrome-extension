@@ -70,21 +70,21 @@ export default class ExtensionReloaderPlugin implements webpack.WebpackPluginIns
       this._log.verbose("Extension client connected from the browser.");
       this._log.verbose("Sending connection message to the client...");
 
-      this.sendMessageToClient(ws, {
+      this.sendBrowserClientMessage(ws, {
         type: "log",
         data: this._log.createMessage("INFO", "Connected to Extension Reloader Plugin."),
       });
 
       this._log.verbose("Sending initial configuration to the client...");
 
-      this.sendMessageToClient(ws, {
+      this.sendBrowserClientMessage(ws, {
         type: "configure",
         data: {
           config: { consoleOptions: this._options.consoleOptions },
         },
       });
 
-      ws.onmessage = this.onReceiveClientMessage.bind(this);
+      ws.onmessage = this.onReceiveBrowserClientMessage.bind(this);
     });
 
     this._log.verbose(`Listening on port: ${this._options.port}`);
@@ -106,7 +106,7 @@ export default class ExtensionReloaderPlugin implements webpack.WebpackPluginIns
           throw new Error("An existing client is not ready to receive messages. Skipping...");
         }
 
-        this.sendMessageToClient(client, message);
+        this.sendBrowserClientMessage(client, message);
       }
     };
 
@@ -129,11 +129,11 @@ export default class ExtensionReloaderPlugin implements webpack.WebpackPluginIns
     }
   }
 
-  private sendMessageToClient(client: WebSocket, message: BroadcastMessage) {
+  private sendBrowserClientMessage(client: WebSocket, message: BroadcastMessage) {
     client.send(JSON.stringify(message));
   }
 
-  private onReceiveClientMessage(message: MessageEvent) {
+  private onReceiveBrowserClientMessage(message: MessageEvent) {
     try {
       const { type, data } = JSON.parse(message.data.toString());
 
@@ -165,13 +165,14 @@ export default class ExtensionReloaderPlugin implements webpack.WebpackPluginIns
     compilation: webpack.Compilation,
     assets: Record<string, webpack.sources.Source>
   ) {
-    // Emit the extension reloader client as an asset so that it can be linked as a script in the HTML templates.
+    // Emit the extension reloader client as an asset so that it can be linked as a script in HTML assets.
     compilation.emitAsset(
       this.ChromeExtensionReloaderClientScriptName,
       new webpack.sources.RawSource(this._clientReloaderScriptContent)
     );
 
     for (const name of Object.keys(assets)) {
+      // Only inject into HTML assets that aren't explicitly excluded.
       if (!name.endsWith(".html") || this._options.excludeAssets.includes(name)) {
         continue;
       }
