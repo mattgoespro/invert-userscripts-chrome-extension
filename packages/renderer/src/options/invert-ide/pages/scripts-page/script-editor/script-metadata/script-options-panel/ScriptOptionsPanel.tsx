@@ -1,7 +1,17 @@
 import { useRef, useState, useEffect, useCallback } from "react";
-import { EllipsisVerticalIcon, Share2Icon, Trash2Icon, WandSparklesIcon } from "lucide-react";
+import {
+  EllipsisVerticalIcon,
+  Share2Icon,
+  Trash2Icon,
+  WandSparklesIcon,
+} from "lucide-react";
 import { Input } from "@/shared/components/input/Input";
-import { Panel, PanelHeader, PanelSection, PanelDivider } from "@/shared/components/panel/Panel";
+import {
+  Panel,
+  PanelHeader,
+  PanelSection,
+  PanelDivider,
+} from "@/shared/components/panel/Panel";
 import "./ScriptOptionsPanel.scss";
 
 /**
@@ -37,7 +47,10 @@ export function ScriptOptionsPanel({
 
   const handleClickOutside = useCallback(
     (event: MouseEvent) => {
-      if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
+      if (
+        wrapperRef.current &&
+        !wrapperRef.current.contains(event.target as Node)
+      ) {
         setOpen(false);
       }
     },
@@ -76,7 +89,9 @@ export function ScriptOptionsPanel({
       </button>
       {open && (
         <Panel className="script-options--panel" minWidth="18rem">
-          <PanelHeader icon={<Share2Icon size={12} />}>script options</PanelHeader>
+          <PanelHeader icon={<Share2Icon size={12} />}>
+            script options
+          </PanelHeader>
           <PanelSection>
             <span className="script-options--hint">
               Set a module name to share this script with other scripts.
@@ -101,7 +116,11 @@ export function ScriptOptionsPanel({
           </PanelSection>
           <PanelDivider />
           <PanelSection>
-            <button type="button" className="script-options--delete-btn" onClick={handleDelete}>
+            <button
+              type="button"
+              className="script-options--delete-btn"
+              onClick={handleDelete}
+            >
               <Trash2Icon size={13} />
               Delete script
             </button>

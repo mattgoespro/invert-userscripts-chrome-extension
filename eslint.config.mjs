@@ -33,7 +33,10 @@ const common = defineConfig(
   tseslint.configs.recommended
 );
 
-const config = defineConfig(...common, configureTsEslintConfig(import.meta.dirname, ["**/*.ts"]));
+const config = defineConfig(
+  ...common,
+  configureTsEslintConfig(import.meta.dirname, ["**/*.ts"])
+);
 
 export const base = {
   common,

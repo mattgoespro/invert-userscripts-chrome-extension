@@ -32,13 +32,19 @@ export const monokaiPro: ThemeRegistration = {
       scope: ["string.escape", "constant.character.escape"],
       settings: { foreground: "#ab9df2" },
     },
-    { scope: "comment", settings: { foreground: "#727072", fontStyle: "italic" } },
+    {
+      scope: "comment",
+      settings: { foreground: "#727072", fontStyle: "italic" },
+    },
     {
       scope: ["function", "entity.name.function", "support.function"],
       settings: { foreground: "#a9dc76" },
     },
     { scope: "variable", settings: { foreground: "#fcfcfa" } },
-    { scope: "variable.parameter", settings: { foreground: "#fc9867", fontStyle: "italic" } },
+    {
+      scope: "variable.parameter",
+      settings: { foreground: "#fc9867", fontStyle: "italic" },
+    },
     {
       scope: ["number", "constant.numeric"],
       settings: { foreground: "#ab9df2" },

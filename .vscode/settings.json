@@ -20,41 +20,78 @@
     "editor.formatOnPaste": true,
     "editor.formatOnSave": true
   },
+  "chat.agent.maxRequests": 100,
+  "chat.planAgent.defaultModel": "Claude Opus 4.6 (fast mode) (Preview) (claude-code)",
   "chat.tools.terminal.autoApprove": {
     "/.*/": true
   },
   "chat.tools.terminal.autoReplyToPrompts": true,
   "chat.tools.terminal.ignoreDefaultAutoApproveRules": true,
-  "debug.toolBarLocation": "commandCenter",
+  "chat.tools.urls.autoApprove": {
+    "https://*.github.com": true,
+    "https://*.npmjs.com": true,
+    "https://github.com": true,
+    "https://raw.githubusercontent.com": true,
+    "https://shiki.style": true,
+    "https://www.npmjs.com": true
+  },
+  "chat.viewSessions.orientation": "stacked",
   "editor.codeActionsOnSave": {
     "source.addMissingImports.ts": "always",
     "source.fixAll.eslint": "always",
     "source.removeUnusedImports": "never"
   },
   "editor.defaultFormatter": "esbenp.prettier-vscode",
-  "editor.fontFamily": "Fira Code, Ubuntu Mono, monospace",
-  "editor.fontSize": 11,
-  "editor.letterSpacing": -0.3,
-  "editor.tabSize": 2,
   "eslint.enable": true,
   "eslint.format.enable": false,
   "eslint.probe": ["typescript", "typescriptreact", "html"],
   "eslint.useFlatConfig": true,
   "eslint.validate": ["typescript", "typescriptreact", "html"],
   "explorer.confirmDragAndDrop": false,
+  "files.associations": {
+    ".eslintignore": "ignore"
+  },
+  "files.eol": "\n",
   "files.exclude": {
     "**/.buildcache/**": true,
     "**/.git/**": true,
     "**/node_modules/**": true
   },
+  "files.trimTrailingWhitespace": true,
   "files.watcherExclude": {
     "**/.buildcache/**": true,
     "**/.git/**": true,
     "**/dist/**": true,
     "**/node_modules/**": true
   },
+  "github.copilot.chat.agent.autoFix": true,
+  "github.copilot.chat.completionsFetcher": "electron-fetch",
+  "github.copilot.chat.copilotMemory.enabled": true,
+  "github.copilot.chat.githubMcpServer.enabled": true,
+  "github.copilot.chat.implementAgent.model": "Claude Opus 4.6",
+  "github.copilot.chat.languageContext.fix.typescript.enabled": true,
+  "github.copilot.chat.languageContext.inline.typescript.enabled": true,
+  "github.copilot.chat.languageContext.typescript.enabled": true,
+  "github.copilot.chat.languageContext.typescript.includeDocumentation": true,
+  "github.copilot.chat.responsesApiReasoningEffort": "high",
+  "github.copilot.chat.switchAgent.enabled": true,
+  "github.copilot.enable": {
+    "markdown": true,
+    "plaintext": true,
+    "scminput": true
+  },
   "github.copilot.nextEditSuggestions.enabled": true,
+  "inlineChat.enableV2": true,
+  "js/ts.format.enabled": false,
+  "js/ts.preferences.importModuleSpecifier": "shortest",
+  "js/ts.tsc.autoDetect": "off",
+  "js/ts.tsdk.path": "node_modules\\typescript\\lib",
+  "js/ts.updateImportsOnFileMove.enabled": "always",
+  "json.schemaDownload.trustedDomains": {
+    "*": true
+  },
   "markdown.extension.completion.enabled": true,
+  "markdown.extension.italic.indicator": "_",
   "markdown.preview.fontSize": 11,
   "markdown.validate.enabled": true,
   "npm-outdated.majorUpdateProtection": false,
@@ -102,11 +139,8 @@
       "path": "C:\\Program Files\\Git\\bin\\bash.exe"
     }
   },
-  // "terminal.integrated.shellIntegration.enabled": true,
-  "typescript.format.enable": false,
-  "typescript.preferences.importModuleSpecifier": "shortest",
-  "typescript.tsc.autoDetect": "off",
-  "typescript.tsdk": "node_modules\\typescript\\lib",
-  "typescript.updateImportsOnFileMove.enabled": "always",
+  "terminal.integrated.shellIntegration.enabled": true,
+  "vsicons.dontShowNewVersionMessage": true,
+  "workbench.browser.enableChatTools": true,
   "workbench.iconTheme": "vscode-icons"
 }

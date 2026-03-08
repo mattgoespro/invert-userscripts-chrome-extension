@@ -6,14 +6,22 @@ import parserEstree from "prettier/plugins/estree";
 export type FormatterLanguage = "typescript" | "scss";
 
 export class PrettierFormatter {
-  private static readonly languageToParser: Record<FormatterLanguage, string> = {
-    typescript: "typescript",
-    scss: "scss",
-  };
+  private static readonly languageToParser: Record<FormatterLanguage, string> =
+    {
+      typescript: "typescript",
+      scss: "scss",
+    };
 
-  private static readonly plugins = [parserTypeScript, parserPostCSS, parserEstree];
+  private static readonly plugins = [
+    parserTypeScript,
+    parserPostCSS,
+    parserEstree,
+  ];
 
-  static async format(code: string, language: FormatterLanguage): Promise<string> {
+  static async format(
+    code: string,
+    language: FormatterLanguage
+  ): Promise<string> {
     try {
       const parser = this.languageToParser[language];
       return await prettier.format(code, {

@@ -27,16 +27,23 @@ export class StorageManager {
   }
 
   static async getAllScripts(): Promise<Userscripts> {
-    const result = await chrome.storage.sync.get<{ userscripts: Userscripts }>(["userscripts"]);
+    const result = await chrome.storage.sync.get<{ userscripts: Userscripts }>([
+      "userscripts",
+    ]);
     return result.userscripts ?? {};
   }
 
   static async saveScript(script: Userscript): Promise<void> {
     const allScripts = await this.getAllScripts();
-    await chrome.storage.sync.set({ userscripts: { ...allScripts, [script.id]: script } });
+    await chrome.storage.sync.set({
+      userscripts: { ...allScripts, [script.id]: script },
+    });
   }
 
-  static async updateScript(id: string, updates: Partial<Omit<Userscript, "id">>): Promise<void> {
+  static async updateScript(
+    id: string,
+    updates: Partial<Omit<Userscript, "id">>
+  ): Promise<void> {
     const allScripts = await this.getAllScripts();
 
     const script = allScripts[id];
@@ -58,9 +65,9 @@ export class StorageManager {
   }
 
   static async getAllModules(): Promise<GlobalModules> {
-    const result = await chrome.storage.sync.get<{ globalModules: GlobalModules }>([
-      "globalModules",
-    ]);
+    const result = await chrome.storage.sync.get<{
+      globalModules: GlobalModules;
+    }>(["globalModules"]);
     return result.globalModules ?? {};
   }
 
@@ -79,15 +86,19 @@ export class StorageManager {
   }
 
   static async getEditorSettings(): Promise<EditorSettings> {
-    const result = await chrome.storage.sync.get<{ editorSettings: EditorSettings }>([
-      "editorSettings",
-    ]);
+    const result = await chrome.storage.sync.get<{
+      editorSettings: EditorSettings;
+    }>(["editorSettings"]);
     return { ...defaultSettings, ...result.editorSettings };
   }
 
-  static async saveEditorSettings(editorSettings: Partial<EditorSettings>): Promise<void> {
+  static async saveEditorSettings(
+    editorSettings: Partial<EditorSettings>
+  ): Promise<void> {
     const current = await this.getEditorSettings();
-    await chrome.storage.sync.set({ editorSettings: { ...current, ...editorSettings } });
+    await chrome.storage.sync.set({
+      editorSettings: { ...current, ...editorSettings },
+    });
   }
 }
 
@@ -111,7 +122,9 @@ export class UIStateManager {
    * deeply with defaults so missing keys are always populated.
    */
   static async get(): Promise<UIState> {
-    const result = await chrome.storage.sync.get<{ uiState: UIState }>([UI_STATE_STORAGE_KEY]);
+    const result = await chrome.storage.sync.get<{ uiState: UIState }>([
+      UI_STATE_STORAGE_KEY,
+    ]);
     const stored = result[UI_STATE_STORAGE_KEY];
 
     return {

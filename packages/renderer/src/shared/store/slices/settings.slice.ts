@@ -13,10 +13,13 @@ const initialState: SettingsState = {
   isLoading: true,
 };
 
-export const loadSettings = createAsyncThunk("settings/loadSettings", async () => {
-  const settings = await StorageManager.getEditorSettings();
-  return settings;
-});
+export const loadSettings = createAsyncThunk(
+  "settings/loadSettings",
+  async () => {
+    const settings = await StorageManager.getEditorSettings();
+    return settings;
+  }
+);
 
 export const updateSettings = createAsyncThunk(
   "settings/updateSettings",
@@ -75,9 +78,16 @@ const settingsSlice = createSlice({
   },
 });
 
-export const { setTheme, setFontSize, setTabSize, setAutoFormat, setAutoSave, setAppTheme } =
-  settingsSlice.actions;
+export const {
+  setTheme,
+  setFontSize,
+  setTabSize,
+  setAutoFormat,
+  setAutoSave,
+  setAppTheme,
+} = settingsSlice.actions;
 
-export const { selectEditorSettings, selectIsLoading } = settingsSlice.selectors;
+export const { selectEditorSettings, selectIsLoading } =
+  settingsSlice.selectors;
 
 export default settingsSlice.reducer;

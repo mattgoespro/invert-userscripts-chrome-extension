@@ -10,7 +10,10 @@ import packageJson from "./package.json" with { type: "json" };
 
 const __dirname = import.meta.dirname;
 
-export default (_args: unknown, { mode }: { mode: "development" | "production" }) =>
+export default (
+  _args: unknown,
+  { mode }: { mode: "development" | "production" }
+) =>
   ({
     mode,
     devtool: mode === "production" ? false : "cheap-module-source-map",
@@ -19,8 +22,14 @@ export default (_args: unknown, { mode }: { mode: "development" | "production" }
         import: "./packages/runtime/src/background.ts",
         filename: "background.js",
       },
-      popup: { import: "./packages/renderer/src/popup/index.tsx", filename: "popup.js" },
-      options: { import: "./packages/renderer/src/options/index.tsx", filename: "options.js" },
+      popup: {
+        import: "./packages/renderer/src/popup/index.tsx",
+        filename: "popup.js",
+      },
+      options: {
+        import: "./packages/renderer/src/options/index.tsx",
+        filename: "options.js",
+      },
       "sass-sandbox": {
         import: "./packages/renderer/src/sandbox/sass-sandbox.ts",
         filename: "sass-sandbox.js",
@@ -42,7 +51,12 @@ export default (_args: unknown, { mode }: { mode: "development" | "production" }
           use: {
             loader: "esbuild-loader",
             options: {
-              tsconfig: path.join(__dirname, "packages", "shared", "tsconfig.json"),
+              tsconfig: path.join(
+                __dirname,
+                "packages",
+                "shared",
+                "tsconfig.json"
+              ),
             },
           },
           include: /packages\/shared\/src/,
@@ -53,7 +67,12 @@ export default (_args: unknown, { mode }: { mode: "development" | "production" }
           use: {
             loader: "esbuild-loader",
             options: {
-              tsconfig: path.join(__dirname, "packages", "monaco", "tsconfig.json"),
+              tsconfig: path.join(
+                __dirname,
+                "packages",
+                "monaco",
+                "tsconfig.json"
+              ),
             },
           },
           include: /packages\/monaco\/src/,
@@ -64,7 +83,12 @@ export default (_args: unknown, { mode }: { mode: "development" | "production" }
           use: {
             loader: "esbuild-loader",
             options: {
-              tsconfig: path.join(__dirname, "packages", "runtime", "tsconfig.json"),
+              tsconfig: path.join(
+                __dirname,
+                "packages",
+                "runtime",
+                "tsconfig.json"
+              ),
             },
           },
           include: /packages/,
@@ -76,7 +100,12 @@ export default (_args: unknown, { mode }: { mode: "development" | "production" }
             loader: "esbuild-loader",
             options: {
               loader: "tsx",
-              tsconfig: path.join(__dirname, "packages", "renderer", "tsconfig.json"),
+              tsconfig: path.join(
+                __dirname,
+                "packages",
+                "renderer",
+                "tsconfig.json"
+              ),
               jsx: "automatic",
             },
           },
@@ -147,7 +176,11 @@ export default (_args: unknown, { mode }: { mode: "development" | "production" }
         languages: ["typescript", "scss", "javascript", "css"],
         filename: "monaco-editor/workers/[name].worker.js",
         globalAPI: true,
-        monacoEditorPath: path.resolve(__dirname, "node_modules", "monaco-editor"),
+        monacoEditorPath: path.resolve(
+          __dirname,
+          "node_modules",
+          "monaco-editor"
+        ),
       }),
       new CopyWebpackPlugin({
         patterns: [
@@ -155,7 +188,9 @@ export default (_args: unknown, { mode }: { mode: "development" | "production" }
             from: path.join(__dirname, "public", "manifest.json"),
             to: path.join(__dirname, "dist"),
             transform: (content) => {
-              const manifest: chrome.runtime.ManifestV3 = JSON.parse(content.toString());
+              const manifest: chrome.runtime.ManifestV3 = JSON.parse(
+                content.toString()
+              );
 
               delete manifest.$schema;
               manifest.description = packageJson.description;
@@ -164,7 +199,14 @@ export default (_args: unknown, { mode }: { mode: "development" | "production" }
             },
           },
           {
-            from: path.join(__dirname, "packages", "renderer", "src", "assets", "images"),
+            from: path.join(
+              __dirname,
+              "packages",
+              "renderer",
+              "src",
+              "assets",
+              "images"
+            ),
             to: path.join(__dirname, "dist", "assets", "images"),
           },
         ],

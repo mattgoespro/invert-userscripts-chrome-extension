@@ -9,7 +9,10 @@ export function StoragePreview() {
       const data = await chrome.storage.sync.get(null);
       setStorageData(data);
     } catch (error) {
-      console.error("StoragePreview: Failed to read chrome.storage.sync", error);
+      console.error(
+        "StoragePreview: Failed to read chrome.storage.sync",
+        error
+      );
     }
   }, []);
 
@@ -41,5 +44,9 @@ export function StoragePreview() {
     };
   }, [fetchStorage]);
 
-  return <pre className="storage-preview--json">{JSON.stringify(storageData, null, 2)}</pre>;
+  return (
+    <pre className="storage-preview--json">
+      {JSON.stringify(storageData, null, 2)}
+    </pre>
+  );
 }

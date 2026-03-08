@@ -1,6 +1,9 @@
 import { Switch } from "@/shared/components/switch/Switch";
 import { useAppDispatch } from "@/shared/store/hooks";
-import { setCurrentUserscript, toggleUserscript } from "@/shared/store/slices/userscripts.slice";
+import {
+  setCurrentUserscript,
+  toggleUserscript,
+} from "@/shared/store/slices/userscripts.slice";
 import { Userscript } from "@shared/model";
 import { PackageIcon } from "lucide-react";
 import "./ScriptListItem.scss";
@@ -11,7 +14,11 @@ type ScriptListItemProps = {
   onScriptSelected: (scriptId: string) => void;
 };
 
-export function ScriptListItem({ script, active, onScriptSelected }: ScriptListItemProps) {
+export function ScriptListItem({
+  script,
+  active,
+  onScriptSelected,
+}: ScriptListItemProps) {
   const dispatch = useAppDispatch();
 
   const onSelectScript = () => {
@@ -39,8 +46,12 @@ export function ScriptListItem({ script, active, onScriptSelected }: ScriptListI
         .join(" ")}
       onClick={() => onSelectScript()}
     >
-      {script.status === "modified" && <div className="script-list-item--unsaved-indicator" />}
-      {script.shared && <PackageIcon size={12} className="script-list-item--shared-icon" />}
+      {script.status === "modified" && (
+        <div className="script-list-item--unsaved-indicator" />
+      )}
+      {script.shared && (
+        <PackageIcon size={12} className="script-list-item--shared-icon" />
+      )}
       <span className="script-list-item--name">{script.name}</span>
       <div className="script-list-item--actions">
         <Switch checked={script.enabled} onChange={() => onToggleScript()} />

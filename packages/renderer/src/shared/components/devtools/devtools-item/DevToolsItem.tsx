@@ -8,7 +8,12 @@ type DevToolsItemProps = {
   panelTitle?: string;
 };
 
-export function DevToolsItem({ name, icon, panel, panelTitle }: DevToolsItemProps) {
+export function DevToolsItem({
+  name,
+  icon,
+  panel,
+  panelTitle,
+}: DevToolsItemProps) {
   const [expanded, setExpanded] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -21,7 +26,9 @@ export function DevToolsItem({ name, icon, panel, panelTitle }: DevToolsItemProp
       >
         {icon && <span className="devtools-item--toggle-icon">{icon}</span>}
         <span className="devtools-item--toggle-label">{name}</span>
-        <span className="devtools-item--toggle-chevron">{expanded ? "▾" : "▸"}</span>
+        <span className="devtools-item--toggle-chevron">
+          {expanded ? "▾" : "▸"}
+        </span>
       </button>
 
       {expanded && (

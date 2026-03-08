@@ -91,7 +91,9 @@ export function useActiveTheme() {
 }
 
 export function ThemeSwitcherIcon({ accent }: { accent: string }) {
-  return <span className="theme-switcher--swatch" style={{ background: accent }} />;
+  return (
+    <span className="theme-switcher--swatch" style={{ background: accent }} />
+  );
 }
 
 export function ThemeSwitcher() {
@@ -107,13 +109,17 @@ export function ThemeSwitcher() {
           <div key={theme.id}>
             {showSeparator && (
               <div className="theme-switcher--group-separator">
-                <span className="theme-switcher--group-label">{theme.group}</span>
+                <span className="theme-switcher--group-label">
+                  {theme.group}
+                </span>
               </div>
             )}
             <button
               className={
                 "theme-switcher--option" +
-                (theme.id === activeTheme ? " theme-switcher--option-active" : "")
+                (theme.id === activeTheme
+                  ? " theme-switcher--option-active"
+                  : "")
               }
               onClick={() => handleSelect(theme.id)}
             >
@@ -127,7 +133,9 @@ export function ThemeSwitcher() {
                   style={{ background: theme.accent }}
                 />
               </span>
-              <span className="theme-switcher--option-label">{theme.label}</span>
+              <span className="theme-switcher--option-label">
+                {theme.label}
+              </span>
               {theme.id === activeTheme && (
                 <span className="theme-switcher--option-check">&#10003;</span>
               )}

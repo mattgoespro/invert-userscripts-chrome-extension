@@ -2,7 +2,10 @@ import { CodeEditor } from "@/options/invert-ide/components/code-editor/CodeEdit
 import { SassCompiler, TypeScriptCompiler } from "@/sandbox/compiler";
 import { ResizeHandle } from "@/shared/components/resize-handle/ResizeHandle";
 import { useAppDispatch, useAppSelector } from "@/shared/store/hooks";
-import { initializeMonaco, selectMonacoReady } from "@/shared/store/slices/editor.slice";
+import {
+  initializeMonaco,
+  selectMonacoReady,
+} from "@/shared/store/slices/editor.slice";
 import {
   markUserscriptModified,
   selectCurrentUserscript,
@@ -23,7 +26,9 @@ export function ScriptEditor() {
 
   const [liveJs, setLiveJs] = useState("");
   const [liveCss, setLiveCss] = useState("");
-  const [isDrawerCollapsed, setIsDrawerCollapsed] = useState(uiState.outputDrawerCollapsed);
+  const [isDrawerCollapsed, setIsDrawerCollapsed] = useState(
+    uiState.outputDrawerCollapsed
+  );
 
   const drawerPanelRef = useRef<PanelImperativeHandle | null>(null);
   const scssDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -161,7 +166,9 @@ export function ScriptEditor() {
                       scriptId={script.id}
                       language="typescript"
                       contents={script.code.source.typescript}
-                      onCodeModified={(code) => onCodeModified("typescript", code)}
+                      onCodeModified={(code) =>
+                        onCodeModified("typescript", code)
+                      }
                     />
                   </div>
                 </Panel>

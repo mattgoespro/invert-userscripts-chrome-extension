@@ -26,7 +26,11 @@ function getOrCreateModel(
     return existing;
   }
 
-  const model = monaco.editor.createModel(contents, language, monaco.Uri.parse(uri));
+  const model = monaco.editor.createModel(
+    contents,
+    language,
+    monaco.Uri.parse(uri)
+  );
   modelCache.set(uri, model);
   return model;
 }
@@ -82,7 +86,9 @@ export function CodeEditor(props: CodeEditorProps) {
   );
 
   const editorRootRef = useRef<HTMLDivElement>(null);
-  const editorInstanceRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
+  const editorInstanceRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(
+    null
+  );
   const onCodeModifiedRef = useRef(onCodeModified);
   // When true, the model content change listener is muted. Used to prevent
   // programmatic setValue calls (e.g. post-save formatter apply) from being
@@ -277,7 +283,8 @@ export function CodeEditor(props: CodeEditorProps) {
 
     editorRootRef.current.addEventListener("keydown", handleKeyDown);
 
-    return () => editorRootRef.current?.removeEventListener("keydown", handleKeyDown);
+    return () =>
+      editorRootRef.current?.removeEventListener("keydown", handleKeyDown);
   }, [editable, scriptId, settings?.autoFormat, language, dispatch]);
 
   return (

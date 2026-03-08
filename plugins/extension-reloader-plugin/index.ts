@@ -1,12 +1,18 @@
 import webpack from "webpack";
 import { WebSocket, WebSocketServer } from "ws";
 import { parseClientFileContents } from "./client/load.ts";
-import type { BroadcastMessage, ChromeExtensionReloaderPluginOptions } from "./model.ts";
+import type {
+  BroadcastMessage,
+  ChromeExtensionReloaderPluginOptions,
+} from "./model.ts";
 import { type Logger, createLogger } from "./utils/logger.ts";
 
-export default class ExtensionReloaderPlugin implements webpack.WebpackPluginInstance {
+export default class ExtensionReloaderPlugin
+  implements webpack.WebpackPluginInstance
+{
   private readonly name = "ChromeExtensionReloaderWebpackPlugin";
-  private readonly ChromeExtensionReloaderClientScriptName = "chrome-extension-reloader-client.js";
+  private readonly ChromeExtensionReloaderClientScriptName =
+    "chrome-extension-reloader-client.js";
 
   private _options: ChromeExtensionReloaderPluginOptions;
 
@@ -54,7 +60,9 @@ export default class ExtensionReloaderPlugin implements webpack.WebpackPluginIns
         return;
       }
 
-      this._log.verbose("Build done. Broadcasting reload message to clients...");
+      this._log.verbose(
+        "Build done. Broadcasting reload message to clients..."
+      );
       this.broadcastMessageToClients({ type: "reload" });
     });
 
@@ -72,7 +80,10 @@ export default class ExtensionReloaderPlugin implements webpack.WebpackPluginIns
 
       this.sendBrowserClientMessage(ws, {
         type: "log",
-        data: this._log.createMessage("INFO", "Connected to Extension Reloader Plugin."),
+        data: this._log.createMessage(
+          "INFO",
+          "Connected to Extension Reloader Plugin."
+        ),
       });
 
       this._log.verbose("Sending initial configuration to the client...");
@@ -103,7 +114,9 @@ export default class ExtensionReloaderPlugin implements webpack.WebpackPluginIns
     const broadcastMessage = (message: BroadcastMessage) => {
       for (const client of this._wss.clients) {
         if (client.readyState !== WebSocket.OPEN) {
-          throw new Error("An existing client is not ready to receive messages. Skipping...");
+          throw new Error(
+            "An existing client is not ready to receive messages. Skipping..."
+          );
         }
 
         this.sendBrowserClientMessage(client, message);
@@ -129,7 +142,10 @@ export default class ExtensionReloaderPlugin implements webpack.WebpackPluginIns
     }
   }
 
-  private sendBrowserClientMessage(client: WebSocket, message: BroadcastMessage) {
+  private sendBrowserClientMessage(
+    client: WebSocket,
+    message: BroadcastMessage
+  ) {
     client.send(JSON.stringify(message));
   }
 
@@ -173,7 +189,10 @@ export default class ExtensionReloaderPlugin implements webpack.WebpackPluginIns
 
     for (const name of Object.keys(assets)) {
       // Only inject into HTML assets that aren't explicitly excluded.
-      if (!name.endsWith(".html") || this._options.excludeAssets.includes(name)) {
+      if (
+        !name.endsWith(".html") ||
+        this._options.excludeAssets.includes(name)
+      ) {
         continue;
       }
 

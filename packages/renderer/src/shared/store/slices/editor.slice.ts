@@ -1,4 +1,8 @@
-import { createSlice, createAsyncThunk, createSelector } from "@reduxjs/toolkit";
+import {
+  createSlice,
+  createAsyncThunk,
+  createSelector,
+} from "@reduxjs/toolkit";
 import { SharedScriptInfo, UserscriptSourceLanguage } from "@shared/model";
 import {
   ensureTypescriptDefaults,
@@ -25,9 +29,12 @@ const initialState: EditorState = {
 
 // ── Async Thunks ──────────────────────────────────────────────────────────────
 
-export const initializeMonaco = createAsyncThunk("editor/initializeMonaco", async () => {
-  await registerMonaco();
-});
+export const initializeMonaco = createAsyncThunk(
+  "editor/initializeMonaco",
+  async () => {
+    await registerMonaco();
+  }
+);
 
 // ── Shared Script Extra Lib Management ────────────────────────────────────────
 
@@ -49,39 +56,64 @@ export const configureTypescriptDefaults = () => (dispatch: AppDispatch) => {
  * ambient module declarations for each provided shared script so Monaco's
  * TypeScript language service can resolve `import { … } from "shared/…"`.
  */
-export const syncSharedScriptLibs = (sharedScripts: SharedScriptInfo[]) => () => {
-  console.warn("[Invert IDE] syncSharedScriptLibs called with", sharedScripts.length, "scripts");
+export const syncSharedScriptLibs =
+  (sharedScripts: SharedScriptInfo[]) => () => {
+    console.warn(
+      "[Invert IDE] syncSharedScriptLibs called with",
+      sharedScripts.length,
+      "scripts"
+    );
 
-  // Dispose previous registrations
-  for (const [key, disposable] of sharedLibDisposables) {
-    disposable.dispose();
-    sharedLibDisposables.delete(key);
-  }
-
-  // Register extra libs for each shared script
-  for (const shared of sharedScripts) {
-    if (!shared.moduleName) {
-      continue;
+    // Dispose previous registrations
+    for (const [key, disposable] of sharedLibDisposables) {
+      disposable.dispose();
+      sharedLibDisposables.delete(key);
     }
 
-    const declaration = generateSharedScriptDeclaration(shared.moduleName, shared.sourceCode);
-    console.warn("[Invert IDE] Declaration for", shared.moduleName, ":", declaration);
+    // Register extra libs for each shared script
+    for (const shared of sharedScripts) {
+      if (!shared.moduleName) {
+        continue;
+      }
 
-    const disposable = addSharedScriptExtraLib(declaration, shared.moduleName);
-    console.warn("[Invert IDE] addSharedScriptExtraLib returned:", typeof disposable);
+      const declaration = generateSharedScriptDeclaration(
+        shared.moduleName,
+        shared.sourceCode
+      );
+      console.warn(
+        "[Invert IDE] Declaration for",
+        shared.moduleName,
+        ":",
+        declaration
+      );
 
-    sharedLibDisposables.set(shared.id, disposable);
-  }
+      const disposable = addSharedScriptExtraLib(
+        declaration,
+        shared.moduleName
+      );
+      console.warn(
+        "[Invert IDE] addSharedScriptExtraLib returned:",
+        typeof disposable
+      );
 
-  // Diagnostic: verify what's actually registered
-  const tsDefaults = getTypescriptDefaults();
-  console.warn("[Invert IDE] tsDefaults:", tsDefaults ? "available" : "NULL");
-  if (tsDefaults) {
-    console.warn("[Invert IDE] Extra libs:", Object.keys(tsDefaults.getExtraLibs()));
-    console.warn("[Invert IDE] Compiler options:", tsDefaults.getCompilerOptions());
-  }
-  console.warn("[Invert IDE] syncSharedScriptLibs complete");
-};
+      sharedLibDisposables.set(shared.id, disposable);
+    }
+
+    // Diagnostic: verify what's actually registered
+    const tsDefaults = getTypescriptDefaults();
+    console.warn("[Invert IDE] tsDefaults:", tsDefaults ? "available" : "NULL");
+    if (tsDefaults) {
+      console.warn(
+        "[Invert IDE] Extra libs:",
+        Object.keys(tsDefaults.getExtraLibs())
+      );
+      console.warn(
+        "[Invert IDE] Compiler options:",
+        tsDefaults.getCompilerOptions()
+      );
+    }
+    console.warn("[Invert IDE] syncSharedScriptLibs complete");
+  };
 
 /**
  * Disposes all shared-script extra lib registrations.
@@ -102,7 +134,12 @@ export const saveEditorCode = createAsyncThunk(
       language,
       code,
       autoFormat,
-    }: { scriptId: string; language: UserscriptSourceLanguage; code: string; autoFormat: boolean },
+    }: {
+      scriptId: string;
+      language: UserscriptSourceLanguage;
+      code: string;
+      autoFormat: boolean;
+    },
     { dispatch }
   ) => {
     let formattedCode = code;
@@ -111,7 +148,9 @@ export const saveEditorCode = createAsyncThunk(
       formattedCode = await PrettierFormatter.format(code, language);
     }
 
-    await dispatch(updateUserscriptCode({ id: scriptId, language, code: formattedCode })).unwrap();
+    await dispatch(
+      updateUserscriptCode({ id: scriptId, language, code: formattedCode })
+    ).unwrap();
 
     return { code: formattedCode };
   }
@@ -174,7 +213,9 @@ export const { selectMonacoReady, selectTsDefaultsConfigured, selectIsSaving } =
  * Returns SharedScriptInfo[] for the given script ID's shared script dependencies.
  * Resolves the script's `sharedScripts` ID array against all scripts in the store.
  */
-export const selectSharedScriptsForUserscript = (scriptId: string | undefined) =>
+export const selectSharedScriptsForUserscript = (
+  scriptId: string | undefined
+) =>
   createSelector(
     (state: RootState) => state.userscripts.scripts,
     (scripts): SharedScriptInfo[] | undefined => {

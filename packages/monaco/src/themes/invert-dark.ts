@@ -32,7 +32,10 @@ export const invertDark: ThemeRegistration = {
       scope: ["string.escape", "constant.character.escape"],
       settings: { foreground: "#ffba00" },
     },
-    { scope: "comment", settings: { foreground: "#808080", fontStyle: "italic" } },
+    {
+      scope: "comment",
+      settings: { foreground: "#808080", fontStyle: "italic" },
+    },
     {
       scope: ["function", "entity.name.function", "support.function"],
       settings: { foreground: "#dcdcaa" },

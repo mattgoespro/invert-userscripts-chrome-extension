@@ -10,12 +10,13 @@
  * type B = CamelToKebabCase<'example123Number'>;
  * // 'example-123-number'
  */
-export type CamelToKebabCase<S extends string> = S extends `${infer T}${infer U}`
-  ? U extends `${number}${string}`
-    ? T extends `${number}`
-      ? `${T}${CamelToKebabCase<U>}`
-      : `${Uncapitalize<T>}-${CamelToKebabCase<U>}`
-    : U extends Uncapitalize<U>
-      ? `${Uncapitalize<T>}${CamelToKebabCase<U>}`
-      : `${Uncapitalize<T>}-${CamelToKebabCase<U>}`
-  : "";
+export type CamelToKebabCase<S extends string> =
+  S extends `${infer T}${infer U}`
+    ? U extends `${number}${string}`
+      ? T extends `${number}`
+        ? `${T}${CamelToKebabCase<U>}`
+        : `${Uncapitalize<T>}-${CamelToKebabCase<U>}`
+      : U extends Uncapitalize<U>
+        ? `${Uncapitalize<T>}${CamelToKebabCase<U>}`
+        : `${Uncapitalize<T>}-${CamelToKebabCase<U>}`
+    : "";

@@ -1,4 +1,9 @@
-import { ButtonHTMLAttributes, createElement, forwardRef, PropsWithChildren } from "react";
+import {
+  ButtonHTMLAttributes,
+  createElement,
+  forwardRef,
+  PropsWithChildren,
+} from "react";
 import "./IconButton.scss";
 import { LucideIcon } from "lucide-react";
 
@@ -11,7 +16,10 @@ type IconButtonProps = PropsWithChildren<
 >;
 
 export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
-  ({ children, variant = "primary", icon, size = "md", className, ...rest }, ref) => {
+  (
+    { children, variant = "primary", icon, size = "md", className, ...rest },
+    ref
+  ) => {
     const getIconStyle = () => {
       switch (size) {
         case "sm":
@@ -28,7 +36,9 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
         style={getIconStyle()}
         ref={ref}
         {...rest}
-        className={[`icon-btn--${variant}`, className].filter(Boolean).join(" ")}
+        className={[`icon-btn--${variant}`, className]
+          .filter(Boolean)
+          .join(" ")}
       >
         {icon &&
           createElement(icon as React.ElementType, {

@@ -1,5 +1,8 @@
 import { onWebNavigationCompleted } from "./handlers/extension-handlers/navigation.handler";
-import { onInstalled, onMessage } from "./handlers/extension-handlers/runtime.handler";
+import {
+  onInstalled,
+  onMessage,
+} from "./handlers/extension-handlers/runtime.handler";
 
 /**
  * Runtime listeners

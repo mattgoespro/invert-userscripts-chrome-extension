@@ -44,7 +44,9 @@ export function CompiledOutputDrawer({
               className={`compiled-output--tab${activeTab === "javascript" ? " compiled-output--tab-active" : ""}`}
               onClick={() => onTabChange("javascript")}
             >
-              <span className="compiled-output--tab-badge compiled-output--tab-badge-js">js</span>
+              <span className="compiled-output--tab-badge compiled-output--tab-badge-js">
+                js
+              </span>
               javascript
             </button>
             <button
@@ -53,7 +55,9 @@ export function CompiledOutputDrawer({
               className={`compiled-output--tab${activeTab === "css" ? " compiled-output--tab-active" : ""}`}
               onClick={() => onTabChange("css")}
             >
-              <span className="compiled-output--tab-badge compiled-output--tab-badge-css">css</span>
+              <span className="compiled-output--tab-badge compiled-output--tab-badge-css">
+                css
+              </span>
               css
             </button>
           </div>

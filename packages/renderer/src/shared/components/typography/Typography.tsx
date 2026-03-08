@@ -15,7 +15,11 @@ type TypographyProps = PropsWithChildren<{
   className?: string;
 }>;
 
-export function Typography({ variant = "body", className, children }: TypographyProps) {
+export function Typography({
+  variant = "body",
+  className,
+  children,
+}: TypographyProps) {
   let Tag: keyof JSX.IntrinsicElements = "p";
 
   switch (variant) {
@@ -43,7 +47,9 @@ export function Typography({ variant = "body", className, children }: Typography
       break;
   }
 
-  const classes = [`typography typography--${variant}`, className].filter(Boolean).join(" ");
+  const classes = [`typography typography--${variant}`, className]
+    .filter(Boolean)
+    .join(" ");
 
   return <Tag className={classes}>{children}</Tag>;
 }

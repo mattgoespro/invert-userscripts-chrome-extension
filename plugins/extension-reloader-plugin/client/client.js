@@ -47,8 +47,14 @@ function connect() {
 
         if (config.consoleOptions != null) {
           configureConsole({
-            captureLevels: config.consoleOptions?.captureLevels ?? ["log", "info", "warn", "error"],
-            ignoreMessage: config.consoleOptions?.ignoreMessage ?? (() => false),
+            captureLevels: config.consoleOptions?.captureLevels ?? [
+              "log",
+              "info",
+              "warn",
+              "error",
+            ],
+            ignoreMessage:
+              config.consoleOptions?.ignoreMessage ?? (() => false),
           });
         }
 

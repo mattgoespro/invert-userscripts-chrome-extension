@@ -8,10 +8,17 @@ type SidebarNavButtonProps = {
   active?: boolean;
 };
 
-export function SidebarNavButton({ icon, onClick, active = false }: SidebarNavButtonProps) {
+export function SidebarNavButton({
+  icon,
+  onClick,
+  active = false,
+}: SidebarNavButtonProps) {
   return (
     <IconButton
-      className={[active ? "sidebar-nav-button--button-active" : null, "sidebar-nav-button--button"]
+      className={[
+        active ? "sidebar-nav-button--button-active" : null,
+        "sidebar-nav-button--button",
+      ]
         .filter(Boolean)
         .join(" ")}
       icon={icon}

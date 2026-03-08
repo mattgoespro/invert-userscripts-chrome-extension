@@ -27,7 +27,10 @@ export function resolveChromeExecutablePath(): string | undefined {
   return undefined;
 }
 
-export function launchBrowser(options: { extensionPath: string; page?: string }): ChildProcess {
+export function launchBrowser(options: {
+  extensionPath: string;
+  page?: string;
+}): ChildProcess {
   const chromePath = resolveChromeExecutablePath();
 
   if (!chromePath) {

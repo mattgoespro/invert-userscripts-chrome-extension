@@ -18,16 +18,23 @@ export function Select<T>({ label, options, value, onChange }: SelectProps<T>) {
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   const selectedLabel =
-    options.find((o) => o.value === (typeof value === "string" ? value : JSON.stringify(value)))
-      ?.label ??
-    options.find((o) => o.value === (typeof value === "string" ? value : JSON.stringify(value)))
-      ?.value ??
+    options.find(
+      (o) =>
+        o.value === (typeof value === "string" ? value : JSON.stringify(value))
+    )?.label ??
+    options.find(
+      (o) =>
+        o.value === (typeof value === "string" ? value : JSON.stringify(value))
+    )?.value ??
     String(value);
 
   /** Close when clicking outside */
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
+      if (
+        wrapperRef.current &&
+        !wrapperRef.current.contains(event.target as Node)
+      ) {
         setExpanded(false);
       }
     }
@@ -87,7 +94,9 @@ export function Select<T>({ label, options, value, onChange }: SelectProps<T>) {
         onKeyDown={handleToggleKeyDown}
       >
         <span className="select--toggle-value">{selectedLabel}</span>
-        <span className={`select--toggle-chevron ${expanded ? "select--toggle-chevron-open" : ""}`}>
+        <span
+          className={`select--toggle-chevron ${expanded ? "select--toggle-chevron-open" : ""}`}
+        >
           ▸
         </span>
       </button>

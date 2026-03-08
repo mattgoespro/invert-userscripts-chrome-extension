@@ -36,7 +36,11 @@ export function DevTools() {
     if (!dragging.current) return;
     hasMoved.current = true;
 
-    const newX = clamp(event.clientX - dragOffset.current.x, 0, window.innerWidth - 40);
+    const newX = clamp(
+      event.clientX - dragOffset.current.x,
+      0,
+      window.innerWidth - 40
+    );
     const newY = clamp(
       window.innerHeight - (event.clientY - dragOffset.current.y),
       0,
@@ -67,9 +71,16 @@ export function DevTools() {
   }, [open]);
 
   return (
-    <div ref={rootRef} className="app-dev-tools" style={{ left: position.x, bottom: position.y }}>
+    <div
+      ref={rootRef}
+      className="app-dev-tools"
+      style={{ left: position.x, bottom: position.y }}
+    >
       <button
-        className={"app-dev-tools--trigger" + (open ? " app-dev-tools--trigger-active" : "")}
+        className={
+          "app-dev-tools--trigger" +
+          (open ? " app-dev-tools--trigger-active" : "")
+        }
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}

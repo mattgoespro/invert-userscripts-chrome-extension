@@ -35,7 +35,9 @@ export class ErrorBoundary extends Component<FallbackProps> {
     if (error instanceof Error && error.stack) {
       // Remove the first line (error name + message) from stack if present
       const stackLines = error.stack.split("\n");
-      const filteredStack = stackLines.filter((line) => line.trim().startsWith("at ")).join("\n");
+      const filteredStack = stackLines
+        .filter((line) => line.trim().startsWith("at "))
+        .join("\n");
       return filteredStack || error.stack;
     }
 

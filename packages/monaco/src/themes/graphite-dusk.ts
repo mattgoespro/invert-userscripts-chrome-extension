@@ -32,7 +32,10 @@ export const graphiteDusk: ThemeRegistration = {
       scope: ["string.escape", "constant.character.escape"],
       settings: { foreground: "#d7ba7d" },
     },
-    { scope: "comment", settings: { foreground: "#626068", fontStyle: "italic" } },
+    {
+      scope: "comment",
+      settings: { foreground: "#626068", fontStyle: "italic" },
+    },
     {
       scope: ["function", "entity.name.function", "support.function"],
       settings: { foreground: "#dcdcaa" },

@@ -12,6 +12,11 @@ type ResizeHandleProps = {
  */
 export const ResizeHandle = forwardRef<HTMLDivElement, ResizeHandleProps>(
   ({ direction = "horizontal" }, ref) => {
-    return <Separator elementRef={ref} className={`resize-handle resize-handle--${direction}`} />;
+    return (
+      <Separator
+        elementRef={ref}
+        className={`resize-handle resize-handle--${direction}`}
+      />
+    );
   }
 );

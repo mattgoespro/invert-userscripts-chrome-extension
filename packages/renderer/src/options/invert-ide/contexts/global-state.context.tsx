@@ -1,6 +1,13 @@
 import { UIState, UIPanelSizes } from "@shared/model";
 import { defaultUIState, UIStateManager } from "@shared/storage";
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 /** How long to wait after the last UI state change before flushing to chrome.storage.sync. */
 const SAVE_DEBOUNCE_MS = 500;
@@ -54,7 +61,10 @@ export function UIStateProvider({ children }: { children: React.ReactNode }) {
   const updatePanelSizes = useCallback(
     (partial: Partial<UIPanelSizes>) => {
       setUIState((prev) => {
-        const next = { ...prev, panelSizes: { ...prev.panelSizes, ...partial } };
+        const next = {
+          ...prev,
+          panelSizes: { ...prev.panelSizes, ...partial },
+        };
         scheduleSave(next);
         return next;
       });
@@ -67,7 +77,9 @@ export function UIStateProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <UIStateContext.Provider value={{ uiState, updateUIState, updatePanelSizes }}>
+    <UIStateContext.Provider
+      value={{ uiState, updateUIState, updatePanelSizes }}
+    >
       {children}
     </UIStateContext.Provider>
   );

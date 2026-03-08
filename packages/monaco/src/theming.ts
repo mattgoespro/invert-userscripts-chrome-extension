@@ -85,7 +85,9 @@ export async function applyHighlighter(): Promise<void> {
       import("@shikijs/langs/css"),
       import("@shikijs/langs/scss"),
     ],
-    engine: await createOnigurumaEngine(import("@shikijs/engine-oniguruma/wasm-inlined")),
+    engine: await createOnigurumaEngine(
+      import("@shikijs/engine-oniguruma/wasm-inlined")
+    ),
   });
 
   /**
@@ -93,7 +95,9 @@ export async function applyHighlighter(): Promise<void> {
    * successfully created so that if Shiki initialization fails, Monaco's built-in Monarch
    * tokenizers remain active as a fallback.
    */
-  const _setMonarch = monaco.languages.setMonarchTokensProvider.bind(monaco.languages);
+  const _setMonarch = monaco.languages.setMonarchTokensProvider.bind(
+    monaco.languages
+  );
 
   monaco.languages.setMonarchTokensProvider = (languageId, languageDef) => {
     if (shikiLanguageSet.has(languageId)) {

@@ -1,5 +1,9 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-import { Userscript, UserscriptSourceLanguage, Userscripts } from "@shared/model";
+import {
+  Userscript,
+  UserscriptSourceLanguage,
+  Userscripts,
+} from "@shared/model";
 import { StorageManager } from "@shared/storage";
 import { TypeScriptCompiler, SassCompiler } from "@/sandbox/compiler";
 import type { RootState } from "../store";
@@ -14,39 +18,45 @@ const initialState: UserscriptsState = {
   scripts: {},
 };
 
-export const loadUserscripts = createAsyncThunk("userscripts/loadUserscripts", async () => {
-  const scriptsMap = await StorageManager.getAllScripts();
-  return Object.values(scriptsMap);
-});
+export const loadUserscripts = createAsyncThunk(
+  "userscripts/loadUserscripts",
+  async () => {
+    const scriptsMap = await StorageManager.getAllScripts();
+    return Object.values(scriptsMap);
+  }
+);
 
-export const createUserscript = createAsyncThunk("userscripts/createUserscript", async () => {
-  const timestamp = Date.now();
-  const script: Userscript = {
-    id: uuid(),
-    name: "New Script",
-    enabled: false,
-    status: "modified",
-    shared: false,
-    moduleName: "",
-    sharedScripts: [],
-    code: {
-      source: {
-        typescript: "// Your code here",
-        scss: "/* Your styles here */",
+export const createUserscript = createAsyncThunk(
+  "userscripts/createUserscript",
+  async () => {
+    const timestamp = Date.now();
+    const script: Userscript = {
+      id: uuid(),
+      name: "New Script",
+      enabled: false,
+      status: "modified",
+      shared: false,
+      moduleName: "",
+      sharedScripts: [],
+      code: {
+        source: {
+          typescript: "// Your code here",
+          scss: "/* Your styles here */",
+        },
+        compiled: {
+          javascript: "",
+          css: "",
+        },
       },
-      compiled: {
-        javascript: "",
-        css: "",
-      },
-    },
-    urlPatterns: [],
-    runAt: "beforePageLoad",
-    createdAt: timestamp,
-    updatedAt: timestamp,
-  };
-  await StorageManager.saveScript(script);
-  return script;
-});
+      urlPatterns: [],
+      runAt: "beforePageLoad",
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    };
+    await StorageManager.saveScript(script);
+    return script;
+  }
+);
 
 export const deleteUserscript = createAsyncThunk(
   "userscripts/deleteUserscript",
@@ -89,24 +99,25 @@ export const toggleUserscript = createAsyncThunk(
   }
 );
 
-export const updateUserscript = createAsyncThunk<Userscript, Userscript, { state: RootState }>(
-  "userscripts/updateUserscript",
-  async (script: Userscript) => {
-    // Save storage-safe version without compiled code to preserve quota
-    const storageScript: Userscript = {
-      ...script,
-      code: {
-        source: script.code.source,
-        compiled: {
-          javascript: "",
-          css: "",
-        },
+export const updateUserscript = createAsyncThunk<
+  Userscript,
+  Userscript,
+  { state: RootState }
+>("userscripts/updateUserscript", async (script: Userscript) => {
+  // Save storage-safe version without compiled code to preserve quota
+  const storageScript: Userscript = {
+    ...script,
+    code: {
+      source: script.code.source,
+      compiled: {
+        javascript: "",
+        css: "",
       },
-    };
-    await StorageManager.updateScript(script.id, storageScript);
-    return script;
-  }
-);
+    },
+  };
+  await StorageManager.updateScript(script.id, storageScript);
+  return script;
+});
 
 export const updateUserscriptCode = createAsyncThunk(
   "userscripts/updateUserscriptCode",
@@ -126,7 +137,9 @@ export const updateUserscriptCode = createAsyncThunk(
       const compiled = TypeScriptCompiler.compile(code);
 
       if (!compiled.success) {
-        throw new Error(`TypeScript compilation error: ${compiled.error?.message}`);
+        throw new Error(
+          `TypeScript compilation error: ${compiled.error?.message}`
+        );
       }
 
       script.code.source.typescript = code;
@@ -165,10 +178,14 @@ const userscriptsSlice = createSlice({
       return state.scripts[scriptId];
     },
     selectUnsavedUserscripts(state: UserscriptsState) {
-      return Object.values(state.scripts ?? {}).filter((script) => script.status === "modified");
+      return Object.values(state.scripts ?? {}).filter(
+        (script) => script.status === "modified"
+      );
     },
     selectSharedUserscripts(state: UserscriptsState) {
-      return Object.values(state.scripts ?? {}).filter((script) => script.shared);
+      return Object.values(state.scripts ?? {}).filter(
+        (script) => script.shared
+      );
     },
   },
   reducers: {
@@ -202,7 +219,9 @@ const userscriptsSlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addCase(loadUserscripts.fulfilled, (state, action) => {
-        state.scripts = Object.fromEntries(action.payload.map((script) => [script.id, script]));
+        state.scripts = Object.fromEntries(
+          action.payload.map((script) => [script.id, script])
+        );
       })
       .addCase(createUserscript.fulfilled, (state, action) => {
         state.scripts[action.payload.id] = action.payload;
@@ -244,7 +263,8 @@ const userscriptsSlice = createSlice({
   },
 });
 
-export const { setCurrentUserscript, markUserscriptModified } = userscriptsSlice.actions;
+export const { setCurrentUserscript, markUserscriptModified } =
+  userscriptsSlice.actions;
 
 export const {
   selectAllUserscripts,

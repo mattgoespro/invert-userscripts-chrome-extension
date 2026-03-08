@@ -32,7 +32,10 @@ export const beardedVividBlack: ThemeRegistration = {
       scope: ["string.escape", "constant.character.escape"],
       settings: { foreground: "#ffb86c" },
     },
-    { scope: "comment", settings: { foreground: "#6272a4", fontStyle: "italic" } },
+    {
+      scope: "comment",
+      settings: { foreground: "#6272a4", fontStyle: "italic" },
+    },
     {
       scope: ["function", "entity.name.function", "support.function"],
       settings: { foreground: "#50fa7b" },

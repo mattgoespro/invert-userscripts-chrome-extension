@@ -5,15 +5,21 @@ import { Userscript } from "../../../shared/src/model";
  * Wraps a shared script's compiled JavaScript so its exports are registered
  * on `window.__INVERT_SHARED__["scriptName"]` for consumption by other scripts.
  */
-function wrapSharedScriptForInjection(moduleName: string, compiledJs: string): string {
+function wrapSharedScriptForInjection(
+  moduleName: string,
+  compiledJs: string
+): string {
   let code = compiledJs;
   const exportedNames: string[] = [];
 
   // export const/let/var name = ...
-  code = code.replace(/^export\s+(const|let|var)\s+(\w+)/gm, (_match, decl, varName) => {
-    exportedNames.push(varName);
-    return `${decl} ${varName}`;
-  });
+  code = code.replace(
+    /^export\s+(const|let|var)\s+(\w+)/gm,
+    (_match, decl, varName) => {
+      exportedNames.push(varName);
+      return `${decl} ${varName}`;
+    }
+  );
 
   // export function name(...)
   code = code.replace(/^export\s+function\s+(\w+)/gm, (_match, fnName) => {
@@ -48,7 +54,9 @@ function wrapSharedScriptForInjection(moduleName: string, compiledJs: string): s
 
   const assignments = exportedNames
     .map((n) =>
-      n === "default" ? `__ns__["default"]=__default__` : `__ns__[${JSON.stringify(n)}]=${n}`
+      n === "default"
+        ? `__ns__["default"]=__default__`
+        : `__ns__[${JSON.stringify(n)}]=${n}`
     )
     .join(";");
 
@@ -96,7 +104,10 @@ function resolveSharedImports(compiledJs: string): string {
   return code;
 }
 
-export async function injectMatchingScripts(tabId: number, url: string): Promise<void> {
+export async function injectMatchingScripts(
+  tabId: number,
+  url: string
+): Promise<void> {
   try {
     const scriptsMap = await StorageManager.getAllScripts();
     const allScripts: Userscript[] = Object.values(scriptsMap);
@@ -109,7 +120,9 @@ export async function injectMatchingScripts(tabId: number, url: string): Promise
         if (script.sharedScripts?.length > 0) {
           for (const sharedId of script.sharedScripts) {
             if (!injectedShared.has(sharedId)) {
-              const shared = allScripts.find((s) => s.id === sharedId && s.shared);
+              const shared = allScripts.find(
+                (s) => s.id === sharedId && s.shared
+              );
               if (shared?.moduleName && shared?.code?.compiled?.javascript) {
                 await injectSharedScript(tabId, shared);
                 injectedShared.add(sharedId);
@@ -143,7 +156,10 @@ export function matchesUrlPattern(url: string, patterns: string[]): boolean {
   });
 }
 
-export async function injectScript(tabId: number, script: Userscript): Promise<void> {
+export async function injectScript(
+  tabId: number,
+  script: Userscript
+): Promise<void> {
   try {
     let jsCode = script.code?.compiled?.javascript ?? "";
 
@@ -173,7 +189,10 @@ export async function injectScript(tabId: number, script: Userscript): Promise<v
   }
 }
 
-async function injectSharedScript(tabId: number, script: Userscript): Promise<void> {
+async function injectSharedScript(
+  tabId: number,
+  script: Userscript
+): Promise<void> {
   try {
     const wrappedCode = wrapSharedScriptForInjection(
       script.moduleName,

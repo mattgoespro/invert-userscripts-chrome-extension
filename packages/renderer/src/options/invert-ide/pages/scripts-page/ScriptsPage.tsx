@@ -19,7 +19,9 @@ import "./ScriptsPage.scss";
 export function ScriptsPage() {
   const dispatch = useAppDispatch();
   const scripts = useAppSelector(selectAllUserscripts);
-  const selectedScript = useAppSelector((state) => state.userscripts.currentUserscript);
+  const selectedScript = useAppSelector(
+    (state) => state.userscripts.currentUserscript
+  );
   const { uiState, updateUIState, updatePanelSizes } = useUIState();
 
   const onCreateScript = async () => {
@@ -37,7 +39,10 @@ export function ScriptsPage() {
     }
 
     const restoredId = uiState.selectedScriptId;
-    const target = restoredId && scripts[restoredId] ? restoredId : Object.values(scripts)[0].id;
+    const target =
+      restoredId && scripts[restoredId]
+        ? restoredId
+        : Object.values(scripts)[0].id;
     dispatch(setCurrentUserscript(target));
   }, [scripts]);
 

@@ -1,7 +1,10 @@
 import fs from "fs-extra";
 import path from "node:path";
 
-const ServiceWorkerClientScriptPath = path.join(import.meta.dirname, "client.js");
+const ServiceWorkerClientScriptPath = path.join(
+  import.meta.dirname,
+  "client.js"
+);
 
 export function parseClientFileContents(variables: string[][]): string {
   let script = fs.readFileSync(ServiceWorkerClientScriptPath, "utf-8");

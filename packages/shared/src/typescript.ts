@@ -1,4 +1,9 @@
-import { CompilerOptions, ModuleKind, ModuleResolutionKind, ScriptTarget } from "typescript";
+import {
+  CompilerOptions,
+  ModuleKind,
+  ModuleResolutionKind,
+  ScriptTarget,
+} from "typescript";
 
 export const TypeScriptCompilerOptions: CompilerOptions = {
   target: ScriptTarget.ES2020,

@@ -148,10 +148,10 @@ All persistence is handled via `chrome.storage.sync`, abstracted by two manager 
 
 **`UIStateManager` API** (all static methods):
 
-| Method          | Description                                             |
-| --------------- | ------------------------------------------------------- |
-| `get()`         | Returns `UIState`, deep-merged with defaults            |
-| `save(state)`   | Persists full `UIState` to `chrome.storage.sync`        |
+| Method        | Description                                      |
+| ------------- | ------------------------------------------------ |
+| `get()`       | Returns `UIState`, deep-merged with defaults     |
+| `save(state)` | Persists full `UIState` to `chrome.storage.sync` |
 
 **Exported defaults**:
 
@@ -160,13 +160,13 @@ All persistence is handled via `chrome.storage.sync`, abstracted by two manager 
 
 ### State Architecture Overview
 
-| State Type                    | Pattern                                                               |
-| ----------------------------- | --------------------------------------------------------------------- |
-| **Userscripts** (complex)     | Redux Toolkit slice + `createAsyncThunk` for async storage            |
-| **Editor Settings** (complex) | Redux Toolkit slice + `createAsyncThunk` for async storage            |
-| **Editor State** (complex)    | Redux Toolkit slice for Monaco init, saving, and TS defaults          |
-| **UI Layout State**           | React Context (`UIStateProvider`) + `UIStateManager` for persistence  |
-| **Global Modules** (simple)   | Direct `StorageManager` access with `useState` and manual `loadData`  |
+| State Type                    | Pattern                                                              |
+| ----------------------------- | -------------------------------------------------------------------- |
+| **Userscripts** (complex)     | Redux Toolkit slice + `createAsyncThunk` for async storage           |
+| **Editor Settings** (complex) | Redux Toolkit slice + `createAsyncThunk` for async storage           |
+| **Editor State** (complex)    | Redux Toolkit slice for Monaco init, saving, and TS defaults         |
+| **UI Layout State**           | React Context (`UIStateProvider`) + `UIStateManager` for persistence |
+| **Global Modules** (simple)   | Direct `StorageManager` access with `useState` and manual `loadData` |
 
 ### Redux Store Configuration
 
@@ -182,7 +182,11 @@ The store is configured in `packages/renderer/src/shared/store/store.ts`:
 Always use the typed hooks from `packages/renderer/src/shared/store/hooks.ts`:
 
 ```tsx
-import { useAppDispatch, useAppSelector, useAppStore } from "@/shared/store/hooks";
+import {
+  useAppDispatch,
+  useAppSelector,
+  useAppStore,
+} from "@/shared/store/hooks";
 ```
 
 ### Redux Flow for Userscripts
@@ -257,20 +261,20 @@ const { uiState, updateUIState, updatePanelSizes } = useUIState();
 
 Use the custom component library in `packages/renderer/src/shared/components`:
 
-| Component       | Purpose                                       | Import Path                                        |
-| --------------- | --------------------------------------------- | -------------------------------------------------- |
-| `Button`        | Standard buttons                              | `@/shared/components/button/Button`                |
-| `IconButton`    | Icon-only buttons (Lucide icons)              | `@/shared/components/icon-button/IconButton`       |
-| `Input`         | Text inputs                                   | `@/shared/components/input/Input`                  |
-| `Select`        | Custom dropdown select (not native `<select>`)| `@/shared/components/select/Select`                |
-| `Checkbox`      | Checkboxes                                    | `@/shared/components/checkbox/Checkbox`            |
-| `Switch`        | Toggle switches                               | `@/shared/components/switch/Switch`                |
-| `Typography`    | Text elements with variant styling            | `@/shared/components/typography/Typography`        |
-| `CodeComment`   | Code-styled `//` comment display              | `@/shared/components/code-comment/CodeComment`     |
-| `CodeLine`      | Inline TypeScript syntax highlighter          | `@/shared/components/code-line/CodeLine`           |
-| `ResizeHandle`  | Panel resize separator (react-resizable-panels)| `@/shared/components/resize-handle/ResizeHandle`  |
-| `ErrorBoundary` | Error boundary fallback UI                    | `@/shared/components/error-boundary/ErrorBoundary` |
-| `DevTools`      | Development toolbar (theme switcher, storage) | `@/shared/components/devtools/DevTools`            |
+| Component       | Purpose                                         | Import Path                                        |
+| --------------- | ----------------------------------------------- | -------------------------------------------------- |
+| `Button`        | Standard buttons                                | `@/shared/components/button/Button`                |
+| `IconButton`    | Icon-only buttons (Lucide icons)                | `@/shared/components/icon-button/IconButton`       |
+| `Input`         | Text inputs                                     | `@/shared/components/input/Input`                  |
+| `Select`        | Custom dropdown select (not native `<select>`)  | `@/shared/components/select/Select`                |
+| `Checkbox`      | Checkboxes                                      | `@/shared/components/checkbox/Checkbox`            |
+| `Switch`        | Toggle switches                                 | `@/shared/components/switch/Switch`                |
+| `Typography`    | Text elements with variant styling              | `@/shared/components/typography/Typography`        |
+| `CodeComment`   | Code-styled `//` comment display                | `@/shared/components/code-comment/CodeComment`     |
+| `CodeLine`      | Inline TypeScript syntax highlighter            | `@/shared/components/code-line/CodeLine`           |
+| `ResizeHandle`  | Panel resize separator (react-resizable-panels) | `@/shared/components/resize-handle/ResizeHandle`   |
+| `ErrorBoundary` | Error boundary fallback UI                      | `@/shared/components/error-boundary/ErrorBoundary` |
+| `DevTools`      | Development toolbar (theme switcher, storage)   | `@/shared/components/devtools/DevTools`            |
 
 **Do NOT use raw HTML elements** (e.g., `<button>`, `<input>`) when a custom component exists.
 
@@ -338,7 +342,10 @@ type ComponentNameProps = {
   // ... other props
 } & React.HTMLAttributes<HTMLDivElement>; // Extend native attributes when applicable
 
-export function ComponentName({ variant = "primary", ...rest }: ComponentNameProps) {
+export function ComponentName({
+  variant = "primary",
+  ...rest
+}: ComponentNameProps) {
   return (
     <div className={`component-name component-name--${variant}`} {...rest}>
       {/* content */}
@@ -380,18 +387,18 @@ Import order in `_index.scss`: `primitives → themes → semantic → component
 
 Raw design values. All prefixed with `--base-*`. **Never reference these directly in components.**
 
-| Category            | Examples                                                                      |
-| ------------------- | ----------------------------------------------------------------------------- |
-| Core palette        | `--base-black`, `--base-white`, `--base-grey`, `--base-blue`, `--base-gold`, `--base-red`, `--base-green` |
-| Surfaces            | `--base-surface-base`, `--base-surface-raised`, `--base-surface-overlay`, `--base-surface-input` |
-| Borders             | `--base-border`, `--base-border-subtle`, `--base-border-focus`                |
-| Text                | `--base-text`, `--base-text-muted`, `--base-text-muted-faint`, `--base-text-muted-strong` |
-| Accent              | `--base-accent`, `--base-accent-hover`, `--base-accent-muted`, `--base-accent-subtle`, `--base-accent-border` |
-| Interactive overlays| `--base-hover-overlay`, `--base-active-overlay` (micro white wash)             |
-| Danger              | `--base-danger`, `--base-danger-soft`                                         |
-| Error states        | `--base-error-accent`, `--base-error-surface`, `--base-error-text`, etc.      |
-| Syntax highlighting | `--base-syntax-keyword`, `--base-syntax-function`, etc.                       |
-| Component-specific  | Button, switch, select, icon button, input primitives                         |
+| Category             | Examples                                                                                                      |
+| -------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Core palette         | `--base-black`, `--base-white`, `--base-grey`, `--base-blue`, `--base-gold`, `--base-red`, `--base-green`     |
+| Surfaces             | `--base-surface-base`, `--base-surface-raised`, `--base-surface-overlay`, `--base-surface-input`              |
+| Borders              | `--base-border`, `--base-border-subtle`, `--base-border-focus`                                                |
+| Text                 | `--base-text`, `--base-text-muted`, `--base-text-muted-faint`, `--base-text-muted-strong`                     |
+| Accent               | `--base-accent`, `--base-accent-hover`, `--base-accent-muted`, `--base-accent-subtle`, `--base-accent-border` |
+| Interactive overlays | `--base-hover-overlay`, `--base-active-overlay` (micro white wash)                                            |
+| Danger               | `--base-danger`, `--base-danger-soft`                                                                         |
+| Error states         | `--base-error-accent`, `--base-error-surface`, `--base-error-text`, etc.                                      |
+| Syntax highlighting  | `--base-syntax-keyword`, `--base-syntax-function`, etc.                                                       |
+| Component-specific   | Button, switch, select, icon button, input primitives                                                         |
 
 Also defines SCSS variables (`$black`, `$white`, `$blue`, `$gold`, etc.) used for `color.scale()` transformations within the same file.
 
@@ -415,18 +422,18 @@ Themes are switched at runtime by setting the `data-theme` attribute on a root e
 
 Intent-driven aliases referencing `--base-*` primitives. **These are the primary tokens for component styling.**
 
-| Category    | Variables                                                                         |
-| ----------- | --------------------------------------------------------------------------------- |
-| Core        | `--primary`, `--primary-hover`, `--accent`, `--accent-hover`, `--accent-muted`, `--accent-subtle`, `--accent-border`, `--danger`, `--success` |
-| Layout      | `--background`, `--foreground`, `--border`, `--border-subtle`, `--border-focus`   |
-| Surfaces    | `--surface-base`, `--surface-raised`, `--surface-overlay`, `--surface-input`      |
-| Text        | `--text-muted`, `--text-muted-faint`, `--text-muted-strong`                       |
-| Interactive | `--hover-overlay`, `--active-overlay`                                             |
-| Danger      | `--danger-soft`, `--danger-strong`                                                |
-| Error       | `--error-accent`, `--error-accent-soft`, `--error-glow`, `--error-surface`, `--error-surface-dark`, `--error-text`, `--error-text-muted`, `--error-border` |
-| Syntax      | `--syntax-keyword`, `--syntax-member`, `--syntax-function`, `--syntax-param`, `--syntax-type`, `--syntax-punctuation`, `--syntax-comment` |
-| Status      | `--info`, `--warning`, `--error`                                                  |
-| Geometry    | `--geometry-border-radius: 4px`                                                   |
+| Category    | Variables                                                                                                                                                      |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Core        | `--primary`, `--primary-hover`, `--accent`, `--accent-hover`, `--accent-muted`, `--accent-subtle`, `--accent-border`, `--danger`, `--success`                  |
+| Layout      | `--background`, `--foreground`, `--border`, `--border-subtle`, `--border-focus`                                                                                |
+| Surfaces    | `--surface-base`, `--surface-raised`, `--surface-overlay`, `--surface-input`                                                                                   |
+| Text        | `--text-muted`, `--text-muted-faint`, `--text-muted-strong`                                                                                                    |
+| Interactive | `--hover-overlay`, `--active-overlay`                                                                                                                          |
+| Danger      | `--danger-soft`, `--danger-strong`                                                                                                                             |
+| Error       | `--error-accent`, `--error-accent-soft`, `--error-glow`, `--error-surface`, `--error-surface-dark`, `--error-text`, `--error-text-muted`, `--error-border`     |
+| Syntax      | `--syntax-keyword`, `--syntax-member`, `--syntax-function`, `--syntax-param`, `--syntax-type`, `--syntax-punctuation`, `--syntax-comment`                      |
+| Status      | `--info`, `--warning`, `--error`                                                                                                                               |
+| Geometry    | `--geometry-border-radius: 4px`                                                                                                                                |
 | Spacing     | `--spacing-2xs` (2px), `--spacing-xs` (4px), `--spacing-sm` (8px), `--spacing-md` (12px), `--spacing-lg` (16px), `--spacing-xl` (20px), `--spacing-2xl` (24px) |
 
 ### Tier 3: Component Tokens (`_components.scss`)
@@ -472,10 +479,10 @@ Access via: `var(--typography-{variant}-font-size)`, `var(--typography-{variant}
 
 ### Global Mixins (`_mixins.scss`)
 
-| Mixin         | Purpose                                                                             |
-| ------------- | ----------------------------------------------------------------------------------- |
+| Mixin         | Purpose                                                                                |
+| ------------- | -------------------------------------------------------------------------------------- |
 | `focus-ring`  | Applies `:focus-visible` with `outline: none` and `border-color: var(--accent-border)` |
-| `label-style` | Applies full typography-label token set + `text-transform: uppercase`                |
+| `label-style` | Applies full typography-label token set + `text-transform: uppercase`                  |
 
 ---
 
@@ -767,11 +774,11 @@ All messaging is type-safe via definitions in `packages/shared/src/messages.ts`:
 
 Located in `packages/runtime/src/handlers/`:
 
-| Handler                 | Listens To                         | Action                                     |
-| ----------------------- | ---------------------------------- | ------------------------------------------ |
-| `runtime.handler.ts`    | `chrome.runtime.onInstalled`       | Logs installation                          |
-| `runtime.handler.ts`    | `chrome.runtime.onMessage`         | Handles `"refreshTabs"` → injects scripts  |
-| `navigation.handler.ts` | `chrome.webNavigation.onCompleted` | Main-frame only → injects matching scripts |
+| Handler                 | Listens To                         | Action                                                           |
+| ----------------------- | ---------------------------------- | ---------------------------------------------------------------- |
+| `runtime.handler.ts`    | `chrome.runtime.onInstalled`       | Logs installation                                                |
+| `runtime.handler.ts`    | `chrome.runtime.onMessage`         | Handles `"refreshTabs"` → injects scripts                        |
+| `navigation.handler.ts` | `chrome.webNavigation.onCompleted` | Main-frame only → injects matching scripts                       |
 | `tab.handler.ts`        | `chrome.tabs.onUpdated`            | Tab loading → injects matching scripts (self-registers listener) |
 
 ### Script Injection
@@ -808,15 +815,15 @@ Background script (`packages/runtime/src/background.ts`) registers Chrome event 
 
 ### Module Processing
 
-| Scope                         | Loader                                    | Config              |
-| ----------------------------- | ----------------------------------------- | ------------------- |
-| `packages/shared/src/*.ts`    | `esbuild-loader`                          | Shared tsconfig     |
-| `packages/monaco/src/*.ts`    | `esbuild-loader`                          | Monaco tsconfig     |
-| `packages/runtime/**/*.ts`    | `esbuild-loader`                          | Runtime tsconfig    |
+| Scope                         | Loader                                                 | Config              |
+| ----------------------------- | ------------------------------------------------------ | ------------------- |
+| `packages/shared/src/*.ts`    | `esbuild-loader`                                       | Shared tsconfig     |
+| `packages/monaco/src/*.ts`    | `esbuild-loader`                                       | Monaco tsconfig     |
+| `packages/runtime/**/*.ts`    | `esbuild-loader`                                       | Runtime tsconfig    |
 | `packages/renderer/**/*.tsx?` | `esbuild-loader` (`loader: "tsx"`, `jsx: "automatic"`) | Renderer tsconfig   |
-| `.scss`                       | `style-loader → css-loader → sass-loader` |                     |
-| `.css`                        | `style-loader → css-loader`               |                     |
-| `.ttf`                        | `asset/resource`                          | Monaco editor fonts |
+| `.scss`                       | `style-loader → css-loader → sass-loader`              |                     |
+| `.css`                        | `style-loader → css-loader`                            |                     |
+| `.ttf`                        | `asset/resource`                                       | Monaco editor fonts |
 
 **`noParse`**: `typescript.js` and `sass.dart.js` are excluded from parsing to improve build performance.
 
@@ -876,25 +883,25 @@ Monaco editor and Sass are isolated into separate chunks to optimize loading.
 
 A custom WebSocket-based hot-reload system in `plugins/`:
 
-| File                                                | Purpose                                                                          |
-| --------------------------------------------------- | -------------------------------------------------------------------------------- |
-| `plugins/index.ts`                                  | Barrel: re-exports `ChromeExtensionReloaderWebpackPlugin`                        |
-| `plugins/extension-reloader-plugin/index.ts`        | Webpack plugin: starts WS server, injects client, broadcasts messages on build   |
-| `plugins/extension-reloader-plugin/model.ts`        | Plugin options interface (`ChromeExtensionReloaderPluginOptions`) + `BroadcastMessage` type |
-| `plugins/extension-reloader-plugin/client/client.js` | Client IIFE: listens for `"reload"`, saves/restores page state, refreshes       |
-| `plugins/extension-reloader-plugin/client/load.ts`  | Client script loader with template variable substitution                         |
-| `plugins/extension-reloader-plugin/utils/logger.ts` | Colored console logger with verbose mode                                         |
-| `plugins/extension-reloader-plugin/utils/browser.ts` | Chrome path resolver for auto-launch                                            |
+| File                                                 | Purpose                                                                                     |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `plugins/index.ts`                                   | Barrel: re-exports `ChromeExtensionReloaderWebpackPlugin`                                   |
+| `plugins/extension-reloader-plugin/index.ts`         | Webpack plugin: starts WS server, injects client, broadcasts messages on build              |
+| `plugins/extension-reloader-plugin/model.ts`         | Plugin options interface (`ChromeExtensionReloaderPluginOptions`) + `BroadcastMessage` type |
+| `plugins/extension-reloader-plugin/client/client.js` | Client IIFE: listens for `"reload"`, saves/restores page state, refreshes                   |
+| `plugins/extension-reloader-plugin/client/load.ts`   | Client script loader with template variable substitution                                    |
+| `plugins/extension-reloader-plugin/utils/logger.ts`  | Colored console logger with verbose mode                                                    |
+| `plugins/extension-reloader-plugin/utils/browser.ts` | Chrome path resolver for auto-launch                                                        |
 
 **Plugin Options** (`ChromeExtensionReloaderPluginOptions`):
 
-| Option             | Default   | Description                                                    |
-| ------------------ | --------- | -------------------------------------------------------------- |
-| `port`             | `8081`    | WebSocket server port                                          |
-| `verbose`          | `false`   | Enable verbose logging                                         |
-| `autoLaunchBrowser`| `false`   | Auto-launch Chrome with extension loaded on startup            |
-| `consoleOptions`   | —         | Config for capturing/forwarding console output (`captureLevels`, `ignoreMessage`) |
-| `excludeAssets`    | `[]`      | HTML asset names to exclude from client script injection       |
+| Option              | Default | Description                                                                       |
+| ------------------- | ------- | --------------------------------------------------------------------------------- |
+| `port`              | `8081`  | WebSocket server port                                                             |
+| `verbose`           | `false` | Enable verbose logging                                                            |
+| `autoLaunchBrowser` | `false` | Auto-launch Chrome with extension loaded on startup                               |
+| `consoleOptions`    | —       | Config for capturing/forwarding console output (`captureLevels`, `ignoreMessage`) |
+| `excludeAssets`     | `[]`    | HTML asset names to exclude from client script injection                          |
 
 **Broadcast Message Types**: `"configure"` (initial setup), `"reload"` (trigger refresh), `"log"` (forwarded console output).
 
@@ -1035,6 +1042,7 @@ static compile(code: string): UserscriptCompileResult {
   });
 }
 ```
+
 - When prompted to write JSDoc comments for types and properties, always use multiline JSDoc comments in the format:
 
 ```typescript

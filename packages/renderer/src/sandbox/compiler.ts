@@ -16,7 +16,10 @@ export class TypeScriptCompiler {
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error : new Error("Unknown compilation error"),
+        error:
+          error instanceof Error
+            ? error
+            : new Error("Unknown compilation error"),
       };
     }
   }
@@ -87,7 +90,9 @@ export class SassCompiler {
             } else {
               pending.resolve({
                 success: false,
-                error: new Error(event.data.error ?? "Unknown SCSS compilation error"),
+                error: new Error(
+                  event.data.error ?? "Unknown SCSS compilation error"
+                ),
               });
             }
           }

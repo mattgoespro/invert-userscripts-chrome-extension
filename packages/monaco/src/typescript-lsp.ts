@@ -56,13 +56,17 @@ export function ensureTypescriptDefaults(): void {
  * Extracts exported members so Monaco can provide intellisense for
  * `import { ... } from "shared/moduleName"`.
  */
-export function generateSharedScriptDeclaration(moduleName: string, sourceCode: string): string {
+export function generateSharedScriptDeclaration(
+  moduleName: string,
+  sourceCode: string
+): string {
   const lines: string[] = [];
 
   let match: RegExpExecArray;
 
   // Match exported const/let/var declarations
-  const varRegex = /^export\s+(?:const|let|var)\s+(\w+)\s*(?::\s*([^=;]+?))?\s*[=;]/gm;
+  const varRegex =
+    /^export\s+(?:const|let|var)\s+(\w+)\s*(?::\s*([^=;]+?))?\s*[=;]/gm;
 
   while ((match = varRegex.exec(sourceCode)) !== null) {
     const name = match[1];
@@ -71,7 +75,8 @@ export function generateSharedScriptDeclaration(moduleName: string, sourceCode: 
   }
 
   // Match exported function declarations
-  const fnRegex = /^export\s+function\s+(\w+)\s*(\([^)]*\))\s*(?::\s*([^{]+?))?\s*\{/gm;
+  const fnRegex =
+    /^export\s+function\s+(\w+)\s*(\([^)]*\))\s*(?::\s*([^{]+?))?\s*\{/gm;
 
   while ((match = fnRegex.exec(sourceCode)) !== null) {
     const name = match[1];
@@ -149,19 +154,26 @@ export async function debugTypescriptWorkerState(): Promise<void> {
 
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const getWorker = await (monaco.languages.typescript as any).getTypeScriptWorker();
+    const getWorker = await (
+      monaco.languages.typescript as any
+    ).getTypeScriptWorker();
     const models = monaco.editor.getModels();
     const tsModel = models.find((m) => m.getLanguageId() === "typescript");
 
     console.log(
       "All models:",
-      models.map((m) => ({ uri: m.uri.toString(), language: m.getLanguageId() }))
+      models.map((m) => ({
+        uri: m.uri.toString(),
+        language: m.getLanguageId(),
+      }))
     );
 
     if (tsModel) {
       const worker = await getWorker(tsModel.uri);
       const scriptFileNames = await worker.getScriptFileNames();
-      const sharedFiles = scriptFileNames.filter((name: string) => name.includes("shared/"));
+      const sharedFiles = scriptFileNames.filter((name: string) =>
+        name.includes("shared/")
+      );
 
       console.log("Worker script file names (total):", scriptFileNames.length);
       console.log("Worker script file names (shared):", sharedFiles);

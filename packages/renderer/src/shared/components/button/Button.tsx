@@ -15,7 +15,12 @@ export function Button({
   ...rest
 }: ButtonProps) {
   return (
-    <button {...rest} className={`btn btn-${variant}`} onClick={onClick} disabled={disabled}>
+    <button
+      {...rest}
+      className={`btn btn-${variant}`}
+      onClick={onClick}
+      disabled={disabled}
+    >
       {children}
     </button>
   );

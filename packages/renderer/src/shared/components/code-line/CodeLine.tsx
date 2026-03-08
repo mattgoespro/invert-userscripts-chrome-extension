@@ -67,7 +67,11 @@ function tokenize(code: string): Token[] {
   while ((match = regex.exec(code)) !== null) {
     const value = match[0];
 
-    if (value.startsWith("'") || value.startsWith('"') || value.startsWith("`")) {
+    if (
+      value.startsWith("'") ||
+      value.startsWith('"') ||
+      value.startsWith("`")
+    ) {
       tokens.push({ type: "string", value });
     } else if (value.startsWith("//")) {
       tokens.push({ type: "comment", value });

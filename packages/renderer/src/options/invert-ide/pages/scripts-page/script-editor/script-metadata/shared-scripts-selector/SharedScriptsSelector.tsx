@@ -18,14 +18,22 @@ export function SharedScriptsSelector({
   const sharedScripts = useAppSelector(selectSharedUserscripts);
 
   // Filter out the current script from the list (a script can't import itself)
-  const availableSharedScripts = sharedScripts.filter((s) => s.id !== script.id);
+  const availableSharedScripts = sharedScripts.filter(
+    (s) => s.id !== script.id
+  );
 
   if (availableSharedScripts.length === 0) {
     return (
       <div className="shared-scripts-selector--wrapper shared-scripts-selector--empty">
         <div className="shared-scripts-selector--empty-state">
-          <PackageIcon size={14} className="shared-scripts-selector--empty-icon" />
-          <Typography variant="caption" className="shared-scripts-selector--empty-text">
+          <PackageIcon
+            size={14}
+            className="shared-scripts-selector--empty-icon"
+          />
+          <Typography
+            variant="caption"
+            className="shared-scripts-selector--empty-text"
+          >
             No shared scripts available
           </Typography>
         </div>
@@ -38,7 +46,10 @@ export function SharedScriptsSelector({
   return (
     <div className="shared-scripts-selector--wrapper">
       <div className="shared-scripts-selector--header">
-        <PackageIcon size={13} className="shared-scripts-selector--header-icon" />
+        <PackageIcon
+          size={13}
+          className="shared-scripts-selector--header-icon"
+        />
         <span className="shared-scripts-selector--header-label">imports</span>
       </div>
       <div className="shared-scripts-selector--list">

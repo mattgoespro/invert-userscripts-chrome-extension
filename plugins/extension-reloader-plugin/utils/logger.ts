@@ -27,7 +27,9 @@ export const createLogger = (name: string, options: { verbose?: boolean }) => {
     Colors.bold(getLevelColor(level)(level.padEnd(levelIndent)));
 
   const stringifyMessage = (level: LogLevel, message: string) =>
-    level === "VERB" ? Colors.italic(getLevelColor(level)(message)) : getLevelColor(level)(message);
+    level === "VERB"
+      ? Colors.italic(getLevelColor(level)(message))
+      : getLevelColor(level)(message);
 
   const createMessage = (level: LogLevel, message: string) =>
     `${loggerName} ${stringifyLevel(level)} ${stringifyMessage(level, message)}`;
@@ -71,7 +73,10 @@ export const createLogger = (name: string, options: { verbose?: boolean }) => {
         return;
       }
 
-      if (typeof message === "object" || Object.getPrototypeOf(message) === Object.prototype) {
+      if (
+        typeof message === "object" ||
+        Object.getPrototypeOf(message) === Object.prototype
+      ) {
         printMessage("VERB", JSON.stringify(message, null, 2));
         return;
       }

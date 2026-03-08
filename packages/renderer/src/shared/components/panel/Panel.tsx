@@ -7,11 +7,21 @@ type PanelProps = PropsWithChildren<{
 }> &
   React.HTMLAttributes<HTMLDivElement>;
 
-export function Panel({ className, minWidth, children, style, ...rest }: PanelProps) {
+export function Panel({
+  className,
+  minWidth,
+  children,
+  style,
+  ...rest
+}: PanelProps) {
   const mergedStyle = minWidth ? { ...style, minWidth } : style;
 
   return (
-    <div className={`panel ${className ?? ""}`.trim()} style={mergedStyle} {...rest}>
+    <div
+      className={`panel ${className ?? ""}`.trim()}
+      style={mergedStyle}
+      {...rest}
+    >
       {children}
     </div>
   );
@@ -36,7 +46,9 @@ type PanelSectionProps = PropsWithChildren<{
 }>;
 
 export function PanelSection({ className, children }: PanelSectionProps) {
-  return <div className={`panel--section ${className ?? ""}`.trim()}>{children}</div>;
+  return (
+    <div className={`panel--section ${className ?? ""}`.trim()}>{children}</div>
+  );
 }
 
 export function PanelDivider() {
