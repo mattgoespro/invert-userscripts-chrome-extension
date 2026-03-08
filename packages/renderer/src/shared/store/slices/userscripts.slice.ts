@@ -1,4 +1,9 @@
-import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
+import {
+  createSlice,
+  createAsyncThunk,
+  PayloadAction,
+  createSelector,
+} from "@reduxjs/toolkit";
 import {
   Userscript,
   UserscriptSourceLanguage,
@@ -164,6 +169,11 @@ export const updateUserscriptCode = createAsyncThunk(
   }
 );
 
+const selectSharedUserscriptsMemo = createSelector(
+  (state: UserscriptsState) => state.scripts,
+  (scripts) => Object.values(scripts ?? {}).filter((script) => script.shared)
+);
+
 const userscriptsSlice = createSlice({
   name: "userscripts",
   initialState,
@@ -183,9 +193,7 @@ const userscriptsSlice = createSlice({
       );
     },
     selectSharedUserscripts(state: UserscriptsState) {
-      return Object.values(state.scripts ?? {}).filter(
-        (script) => script.shared
-      );
+      return selectSharedUserscriptsMemo(state);
     },
   },
   reducers: {

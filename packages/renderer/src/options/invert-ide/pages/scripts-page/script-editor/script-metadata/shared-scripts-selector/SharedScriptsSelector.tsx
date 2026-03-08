@@ -3,8 +3,8 @@ import { Checkbox } from "@/shared/components/checkbox/Checkbox";
 import { Typography } from "@/shared/components/typography/Typography";
 import { Userscript } from "@shared/model";
 import { useAppSelector } from "@/shared/store/hooks";
-import { selectSharedUserscripts } from "@/shared/store/slices/userscripts.slice";
 import { PackageIcon } from "lucide-react";
+import { selectSharedUserscripts } from "@/shared/store/slices/userscripts.slice";
 
 type SharedScriptsSelectorProps = {
   script: Userscript;

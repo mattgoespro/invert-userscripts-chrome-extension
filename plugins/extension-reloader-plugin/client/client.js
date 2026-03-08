@@ -1,10 +1,19 @@
 const serverWebsocketUrl = `ws://localhost:{{port}}`;
 
+const consoleFns = {
+  log: console.log,
+  info: console.info,
+  warn: console.warn,
+  error: console.error,
+};
 let websocket;
 
 function configureConsole(consoleOptions) {
   for (const level of consoleOptions.captureLevels) {
     console[level] = (...args) => {
+      // Call the original console function as if we weren't intercepting it, so that messages still appear in the console as normal
+      consoleFns[level](...args);
+
       if (consoleOptions.ignoreMessage(...args)) {
         return;
       }
@@ -68,7 +77,7 @@ function connect() {
         break;
       }
       case "log": {
-        console.log(message.data);
+        consoleFns.log(message.data);
         break;
       }
     }
