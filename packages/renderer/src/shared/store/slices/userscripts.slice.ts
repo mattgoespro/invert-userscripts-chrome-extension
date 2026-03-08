@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk, createSelector, PayloadAction } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { Userscript, UserscriptSourceLanguage, Userscripts } from "@shared/model";
 import { StorageManager } from "@shared/storage";
 import { TypeScriptCompiler, SassCompiler } from "@/sandbox/compiler";
@@ -145,16 +145,7 @@ export const updateUserscriptCode = createAsyncThunk(
     script.status = "saved";
     script.updatedAt = Date.now();
 
-    await StorageManager.updateScript(id, {
-      ...script,
-      code: {
-        source: script.code.source,
-        compiled: {
-          javascript: "",
-          css: "",
-        },
-      },
-    });
+    await StorageManager.updateScript(id, script);
 
     return script;
   }
@@ -173,14 +164,12 @@ const userscriptsSlice = createSlice({
     selectUserscriptById(state: UserscriptsState, scriptId: string) {
       return state.scripts[scriptId];
     },
-    selectUnsavedUserscripts: createSelector(
-      (state: UserscriptsState) => state.scripts,
-      (scripts) => Object.values(scripts ?? {}).filter((script) => script.status === "modified")
-    ),
-    selectSharedUserscripts: createSelector(
-      (state: UserscriptsState) => state.scripts,
-      (scripts) => Object.values(scripts ?? {}).filter((script) => script.shared)
-    ),
+    selectUnsavedUserscripts(state: UserscriptsState) {
+      return Object.values(state.scripts ?? {}).filter((script) => script.status === "modified");
+    },
+    selectSharedUserscripts(state: UserscriptsState) {
+      return Object.values(state.scripts ?? {}).filter((script) => script.shared);
+    },
   },
   reducers: {
     setCurrentUserscript: {
@@ -213,8 +202,7 @@ const userscriptsSlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addCase(loadUserscripts.fulfilled, (state, action) => {
-        const scripts = action.payload.map((script) => ({ ...script, status: "saved" as const }));
-        state.scripts = Object.fromEntries(scripts.map((script) => [script.id, script]));
+        state.scripts = Object.fromEntries(action.payload.map((script) => [script.id, script]));
       })
       .addCase(createUserscript.fulfilled, (state, action) => {
         state.scripts[action.payload.id] = action.payload;

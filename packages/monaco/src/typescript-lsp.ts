@@ -32,17 +32,21 @@ export function ensureTypescriptDefaults(): void {
 
   tsDefaultsConfigured = true;
 
-  // Enum values sourced from monaco.contribution.js:
-  //   ScriptTarget.ES2020 = 7, ModuleKind.ESNext = 99, ModuleResolutionKind.NodeJs = 2
   tsDefaults.setCompilerOptions({
     ...TypeScriptCompilerOptions,
     module: TypeScriptCompilerOptions.module.valueOf(),
     target: TypeScriptCompilerOptions.target.valueOf(),
-    moduleResolution: TypeScriptCompilerOptions.moduleResolution.valueOf(),
+    moduleResolution:
+      TypeScriptCompilerOptions.moduleResolution.valueOf() as typescript.ModuleResolutionKind,
+    allowNonTsExtensions: true,
+    baseUrl: "file:///",
+    paths: {
+      "shared/*": ["node_modules/shared/*/index.d.ts"],
+    },
   });
 
   tsDefaults.setDiagnosticsOptions({
-    // noSemanticValidation: false,
+    noSemanticValidation: false,
     noSyntaxValidation: false,
   });
 }
@@ -54,7 +58,6 @@ export function ensureTypescriptDefaults(): void {
  */
 export function generateSharedScriptDeclaration(moduleName: string, sourceCode: string): string {
   const lines: string[] = [];
-  lines.push(`declare module "shared/${moduleName}" {`);
 
   let match: RegExpExecArray;
 
@@ -64,7 +67,7 @@ export function generateSharedScriptDeclaration(moduleName: string, sourceCode: 
   while ((match = varRegex.exec(sourceCode)) !== null) {
     const name = match[1];
     const type = match[2]?.trim() || "any";
-    lines.push(`  export const ${name}: ${type};`);
+    lines.push(`export declare const ${name}: ${type};`);
   }
 
   // Match exported function declarations
@@ -74,7 +77,7 @@ export function generateSharedScriptDeclaration(moduleName: string, sourceCode: 
     const name = match[1];
     const params = match[2];
     const returnType = match[3]?.trim() || "any";
-    lines.push(`  export function ${name}${params}: ${returnType};`);
+    lines.push(`export declare function ${name}${params}: ${returnType};`);
   }
 
   // Match exported class declarations
@@ -82,7 +85,7 @@ export function generateSharedScriptDeclaration(moduleName: string, sourceCode: 
 
   while ((match = classRegex.exec(sourceCode)) !== null) {
     const name = match[1];
-    lines.push(`  export class ${name} {}`);
+    lines.push(`export declare class ${name} {}`);
   }
 
   // Match exported type/interface declarations
@@ -90,26 +93,85 @@ export function generateSharedScriptDeclaration(moduleName: string, sourceCode: 
 
   while ((match = typeRegex.exec(sourceCode)) !== null) {
     const name = match[1];
-    lines.push(`  export type ${name} = any;`);
+    lines.push(`export type ${name} = any;`);
   }
-
-  lines.push("}");
 
   return lines.join("\n");
 }
 
 /**
- * Register an ambient module declaration as an extra lib in Monaco's TypeScript
- * language service. Returns a disposable that removes it.
+ * Registers a shared script declaration as an extra lib on the TypeScript
+ * language service so the worker's module resolution can discover it at the
+ * conventional `node_modules/shared/<moduleName>/index.d.ts` path.
+ *
+ * Extra libs — unlike standalone editor models — are explicitly pushed to the
+ * TypeScript web worker.  Models created via `monaco.editor.createModel()` are
+ * only mirrored to the worker when diagnostics are requested for them, so they
+ * cannot be found by the worker's `fileExists()` during module resolution.
  */
-const noopDisposable: monaco.IDisposable = { dispose: () => {} };
-
-export function addSharedScriptExtraLib(declaration: string, filePath: string): monaco.IDisposable {
+export function addSharedScriptExtraLib(
+  declaration: string,
+  moduleName: string
+): monaco.IDisposable {
   const tsDefaults = getTypescriptDefaults();
 
   if (!tsDefaults) {
-    return noopDisposable;
+    console.warn(
+      `[Invert IDE] addSharedScriptExtraLib: typescriptDefaults not available for shared/${moduleName}. monaco.languages.typescript may not be loaded yet.`
+    );
+    return { dispose: () => {} };
   }
 
+  const filePath = `file:///node_modules/shared/${moduleName}/index.d.ts`;
   return tsDefaults.addExtraLib(declaration, filePath);
+}
+
+/**
+ * Logs a snapshot of the TypeScript worker state for debugging module resolution.
+ * Inspects: compiler options, extra libs registered on defaults, and the file
+ * names the worker reports (including extra libs pushed to it).
+ */
+export async function debugTypescriptWorkerState(): Promise<void> {
+  const tsDefaults = getTypescriptDefaults();
+
+  if (!tsDefaults) {
+    console.warn("[Invert IDE] TypeScript defaults not available");
+    return;
+  }
+
+  const extraLibs = tsDefaults.getExtraLibs();
+  const compilerOptions = tsDefaults.getCompilerOptions();
+
+  console.group("[Invert IDE] TypeScript Worker Diagnostic");
+  console.log("Compiler options:", compilerOptions);
+  console.log("Extra libs (main thread):", extraLibs);
+  console.log("Extra lib keys:", Object.keys(extraLibs));
+
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const getWorker = await (monaco.languages.typescript as any).getTypeScriptWorker();
+    const models = monaco.editor.getModels();
+    const tsModel = models.find((m) => m.getLanguageId() === "typescript");
+
+    console.log(
+      "All models:",
+      models.map((m) => ({ uri: m.uri.toString(), language: m.getLanguageId() }))
+    );
+
+    if (tsModel) {
+      const worker = await getWorker(tsModel.uri);
+      const scriptFileNames = await worker.getScriptFileNames();
+      const sharedFiles = scriptFileNames.filter((name: string) => name.includes("shared/"));
+
+      console.log("Worker script file names (total):", scriptFileNames.length);
+      console.log("Worker script file names (shared):", sharedFiles);
+      console.log("All worker script file names:", scriptFileNames);
+    } else {
+      console.warn("No TypeScript model found");
+    }
+  } catch (error) {
+    console.error("Worker inspection failed:", error);
+  }
+
+  console.groupEnd();
 }

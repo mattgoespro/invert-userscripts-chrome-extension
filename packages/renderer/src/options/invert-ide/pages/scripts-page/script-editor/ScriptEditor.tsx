@@ -7,7 +7,7 @@ import {
   markUserscriptModified,
   selectCurrentUserscript,
 } from "@/shared/store/slices/userscripts.slice";
-import { useUIState } from "@/shared/ui-state-context";
+import { useUIState } from "@/options/invert-ide/contexts/global-state.context";
 import { UserscriptSourceLanguage } from "@shared/model";
 import { useEffect, useRef, useState } from "react";
 import { Group, Panel, PanelImperativeHandle } from "react-resizable-panels";

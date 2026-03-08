@@ -1,6 +1,6 @@
 import { CodeEditor } from "@/options/invert-ide/components/code-editor/CodeEditor";
+import { useUIState } from "@/options/invert-ide/contexts/global-state.context";
 import { IconButton } from "@/shared/components/icon-button/IconButton";
-import { useUIState } from "@/shared/ui-state-context";
 import { OutputDrawerTab } from "@shared/model";
 import { ChevronsDown, ChevronsUp } from "lucide-react";
 import "./CompiledOutputDrawer.scss";

@@ -1,9 +1,10 @@
 import { createSlice, createAsyncThunk, createSelector } from "@reduxjs/toolkit";
 import { SharedScriptInfo, UserscriptSourceLanguage } from "@shared/model";
 import {
-  addSharedScriptExtraLib,
   ensureTypescriptDefaults,
   generateSharedScriptDeclaration,
+  addSharedScriptExtraLib,
+  getTypescriptDefaults,
   registerMonaco,
 } from "@packages/monaco";
 import { PrettierFormatter } from "@/sandbox/formatter";
@@ -49,23 +50,37 @@ export const configureTypescriptDefaults = () => (dispatch: AppDispatch) => {
  * TypeScript language service can resolve `import { … } from "shared/…"`.
  */
 export const syncSharedScriptLibs = (sharedScripts: SharedScriptInfo[]) => () => {
+  console.warn("[Invert IDE] syncSharedScriptLibs called with", sharedScripts.length, "scripts");
+
   // Dispose previous registrations
   for (const [key, disposable] of sharedLibDisposables) {
     disposable.dispose();
     sharedLibDisposables.delete(key);
   }
 
-  // Register ambient module declarations for each shared script
+  // Register extra libs for each shared script
   for (const shared of sharedScripts) {
     if (!shared.moduleName) {
       continue;
     }
 
     const declaration = generateSharedScriptDeclaration(shared.moduleName, shared.sourceCode);
-    const filePath = `file:///node_modules/@types/shared/${shared.moduleName}/index.d.ts`;
-    const disposable = addSharedScriptExtraLib(declaration, filePath);
+    console.warn("[Invert IDE] Declaration for", shared.moduleName, ":", declaration);
+
+    const disposable = addSharedScriptExtraLib(declaration, shared.moduleName);
+    console.warn("[Invert IDE] addSharedScriptExtraLib returned:", typeof disposable);
+
     sharedLibDisposables.set(shared.id, disposable);
   }
+
+  // Diagnostic: verify what's actually registered
+  const tsDefaults = getTypescriptDefaults();
+  console.warn("[Invert IDE] tsDefaults:", tsDefaults ? "available" : "NULL");
+  if (tsDefaults) {
+    console.warn("[Invert IDE] Extra libs:", Object.keys(tsDefaults.getExtraLibs()));
+    console.warn("[Invert IDE] Compiler options:", tsDefaults.getCompilerOptions());
+  }
+  console.warn("[Invert IDE] syncSharedScriptLibs complete");
 };
 
 /**

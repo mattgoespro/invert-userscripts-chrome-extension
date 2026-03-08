@@ -8,7 +8,7 @@ import {
   selectAllUserscripts,
   setCurrentUserscript,
 } from "@/shared/store/slices/userscripts.slice";
-import { useUIState } from "@/shared/ui-state-context";
+import { useUIState } from "@/options/invert-ide/contexts/global-state.context";
 import { PlusIcon } from "lucide-react";
 import { useEffect } from "react";
 import { Group, Panel } from "react-resizable-panels";

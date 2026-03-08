@@ -4,7 +4,7 @@ import { useAppDispatch, useAppSelector } from "@/shared/store/hooks";
 import { initializeMonaco } from "@/shared/store/slices/editor.slice";
 import { loadSettings, selectEditorSettings } from "@/shared/store/slices/settings.slice";
 import { loadUserscripts } from "@/shared/store/slices/userscripts.slice";
-import { UIStateProvider, useUIState } from "@/shared/ui-state-context";
+import { UIStateProvider, useUIState } from "@/options/invert-ide/contexts/global-state.context";
 import { useEffect } from "react";
 import "./InvertIde.scss";
 import { DashboardHeader } from "./components/dashboard-header/DashboardHeader";

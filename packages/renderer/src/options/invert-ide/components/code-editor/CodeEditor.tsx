@@ -5,6 +5,7 @@ import {
   disposeSharedScriptLibs,
   saveEditorCode,
   selectSharedScriptsForUserscript,
+  selectTsDefaultsConfigured,
   syncSharedScriptLibs,
 } from "@/shared/store/slices/editor.slice";
 import { selectEditorSettings } from "@/shared/store/slices/settings.slice";
@@ -31,12 +32,25 @@ function getOrCreateModel(
 }
 
 type CodeEditorProps = {
-  /** Unique identifier for this editor's content */
+  /**
+   * Unique identifier for this editor's content
+   */
   modelId: string;
-  /** Script ID for Redux selectors and save thunk (omit for read-only previews) */
+  /**
+   * Script ID (omit for read-only previews)
+   */
   scriptId?: string;
+  /**
+   * Initial contents of the editor
+   */
   contents: string;
+  /**
+   * Language of the editor (for intellisense, highlighting and formatting)
+   */
   language: FormatterLanguage;
+  /**
+   * Whether the editor is editable
+   */
   editable?: boolean;
   /**
    * Options to override the app's saved editor settings.
@@ -58,6 +72,7 @@ export function CodeEditor(props: CodeEditorProps) {
 
   const dispatch = useAppDispatch();
   const appEditorSettings = useAppSelector(selectEditorSettings);
+  const tsDefaultsReady = useAppSelector(selectTsDefaultsConfigured);
   const settings = settingsOverride
     ? { ...appEditorSettings, ...settingsOverride }
     : appEditorSettings;
@@ -164,7 +179,6 @@ export function CodeEditor(props: CodeEditorProps) {
       return;
     }
 
-    // Listen to content changes on this model
     const disposable = model.onDidChangeContent(() => {
       if (!suppressModelChangeRef.current) {
         onCodeModifiedRef.current?.(model.getValue());
@@ -190,7 +204,14 @@ export function CodeEditor(props: CodeEditorProps) {
 
   // Register shared script type declarations so that module imports are included in the TypeScript intellisense
   useEffect(() => {
-    if (language !== "typescript" || !sharedScripts) {
+    console.warn("[Invert IDE] Shared scripts useEffect:", {
+      language,
+      sharedScripts,
+      tsDefaultsReady,
+      scriptId,
+    });
+
+    if (language !== "typescript" || !sharedScripts || !tsDefaultsReady) {
       return;
     }
 
@@ -199,9 +220,9 @@ export function CodeEditor(props: CodeEditorProps) {
     return () => {
       dispatch(disposeSharedScriptLibs());
     };
-  }, [language, sharedScripts, dispatch]);
+  }, [language, sharedScripts, tsDefaultsReady, dispatch]);
 
-  // Handle Ctrl+S on the container — formats (optional) and saves via Redux thunk
+  // Handle code-saving and auto-formatting
   useEffect(() => {
     if (!editable || !scriptId || !editorRootRef.current) {
       return;
@@ -255,6 +276,7 @@ export function CodeEditor(props: CodeEditorProps) {
     };
 
     editorRootRef.current.addEventListener("keydown", handleKeyDown);
+
     return () => editorRootRef.current?.removeEventListener("keydown", handleKeyDown);
   }, [editable, scriptId, settings?.autoFormat, language, dispatch]);
 

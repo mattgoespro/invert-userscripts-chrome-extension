@@ -146,6 +146,7 @@ export default (_args: unknown, { mode }: { mode: "development" | "production" }
       new MonacoEditorWebpackPlugin({
         languages: ["typescript", "scss", "javascript", "css"],
         filename: "monaco-editor/workers/[name].worker.js",
+        globalAPI: true,
         monacoEditorPath: path.resolve(__dirname, "node_modules", "monaco-editor"),
       }),
       new CopyWebpackPlugin({
