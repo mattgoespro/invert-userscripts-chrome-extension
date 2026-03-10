@@ -1,33 +1,9 @@
-import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-import { AppThemeName, EditorSettings } from "@shared/model";
-import { defaultSettings, StorageManager } from "@shared/storage";
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { AppThemeName } from "@shared/model";
+import { defaultSettings } from "@shared/storage";
 import type { EditorThemeName } from "@packages/monaco";
-
-export type SettingsState = {
-  editorSettings: EditorSettings;
-  isLoading: boolean;
-};
-
-const initialState: SettingsState = {
-  editorSettings: defaultSettings,
-  isLoading: true,
-};
-
-export const loadSettings = createAsyncThunk(
-  "settings/loadSettings",
-  async () => {
-    const settings = await StorageManager.getEditorSettings();
-    return settings;
-  }
-);
-
-export const updateSettings = createAsyncThunk(
-  "settings/updateSettings",
-  async (updates: Partial<EditorSettings>) => {
-    await StorageManager.saveEditorSettings(updates);
-    return updates;
-  }
-);
+import { loadSettings, updateSettings } from "./thunks.settings";
+import { initialState, SettingsState } from "./state.settings";
 
 const settingsSlice = createSlice({
   name: "settings",

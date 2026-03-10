@@ -1,12 +1,10 @@
 import { Switch } from "@/shared/components/switch/Switch";
 import { useAppDispatch } from "@/shared/store/hooks";
-import {
-  setCurrentUserscript,
-  toggleUserscript,
-} from "@/shared/store/slices/userscripts.slice";
+import { setCurrentUserscript } from "@/shared/store/slices/userscripts";
 import { Userscript } from "@shared/model";
 import { PackageIcon } from "lucide-react";
 import "./ScriptListItem.scss";
+import { toggleUserscript } from "@/shared/store/slices/userscripts/thunks.userscripts";
 
 type ScriptListItemProps = {
   script: Userscript;

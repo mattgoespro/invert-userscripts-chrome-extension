@@ -3,13 +3,13 @@ import { Userscript } from "@shared/model";
 import "./ScriptMetadata.scss";
 import { useAppDispatch } from "@/shared/store/hooks";
 import { AppDispatch } from "@/shared/store/store";
-import {
-  deleteUserscript,
-  updateUserscript,
-} from "@/shared/store/slices/userscripts.slice";
 import { SharedScriptsSelector } from "./shared-scripts-selector/SharedScriptsSelector";
 import { ScriptOptionsPanel } from "./script-options-panel/ScriptOptionsPanel";
 import { FileSizeIndicator } from "./file-size-indicator/FileSizeIndicator";
+import {
+  deleteUserscript,
+  updateUserscript,
+} from "@/shared/store/slices/userscripts/thunks.userscripts";
 
 type ScriptMetadataProps = {
   script: Userscript;

@@ -1,5 +1,5 @@
-import { StorageManager } from "@shared/storage";
 import { Userscript } from "../../../shared/src/model";
+import { ChromeSyncStorage } from "@shared/storage";
 
 /**
  * Wraps a shared script's compiled JavaScript so its exports are registered
@@ -109,7 +109,7 @@ export async function injectMatchingScripts(
   url: string
 ): Promise<void> {
   try {
-    const scriptsMap = await StorageManager.getAllScripts();
+    const scriptsMap = await ChromeSyncStorage.getAllScripts();
     const allScripts: Userscript[] = Object.values(scriptsMap);
     const enabledScripts = allScripts.filter((script) => script.enabled);
     const injectedShared = new Set<string>();

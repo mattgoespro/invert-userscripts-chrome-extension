@@ -2,7 +2,7 @@ import { useAppSelector } from "@/shared/store/hooks";
 import {
   selectAllUserscripts,
   selectCurrentUserscript,
-} from "@/shared/store/slices/userscripts.slice";
+} from "@/shared/store/slices/userscripts";
 import { ScriptListItem } from "./script-list-item/ScriptListItem";
 import "./ScriptList.scss";
 

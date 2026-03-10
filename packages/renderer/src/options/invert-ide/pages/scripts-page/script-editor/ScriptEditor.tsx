@@ -2,14 +2,11 @@ import { CodeEditor } from "@/options/invert-ide/components/code-editor/CodeEdit
 import { SassCompiler, TypeScriptCompiler } from "@/sandbox/compiler";
 import { ResizeHandle } from "@/shared/components/resize-handle/ResizeHandle";
 import { useAppDispatch, useAppSelector } from "@/shared/store/hooks";
-import {
-  initializeMonaco,
-  selectMonacoReady,
-} from "@/shared/store/slices/editor.slice";
+import { selectMonacoReady } from "@/shared/store/slices/monaco-editor";
 import {
   markUserscriptModified,
   selectCurrentUserscript,
-} from "@/shared/store/slices/userscripts.slice";
+} from "@/shared/store/slices/userscripts";
 import { useUIState } from "@/options/invert-ide/contexts/global-state.context";
 import { UserscriptSourceLanguage } from "@shared/model";
 import { useEffect, useRef, useState } from "react";
@@ -32,10 +29,6 @@ export function ScriptEditor() {
 
   const drawerPanelRef = useRef<PanelImperativeHandle | null>(null);
   const scssDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    dispatch(initializeMonaco());
-  }, [dispatch]);
 
   // Auto-compile source code on mount and on script switch to pre-populate the output drawer.
   useEffect(() => {

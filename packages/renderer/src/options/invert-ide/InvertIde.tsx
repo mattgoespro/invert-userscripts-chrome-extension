@@ -1,12 +1,7 @@
 import { SassCompiler } from "@/sandbox/compiler";
 import { DevTools } from "../../shared/components/devtools/DevTools";
 import { useAppDispatch, useAppSelector } from "@/shared/store/hooks";
-import { initializeMonaco } from "@/shared/store/slices/editor.slice";
-import {
-  loadSettings,
-  selectEditorSettings,
-} from "@/shared/store/slices/settings.slice";
-import { loadUserscripts } from "@/shared/store/slices/userscripts.slice";
+import { selectEditorSettings } from "@/shared/store/slices/settings";
 import {
   UIStateProvider,
   useUIState,
@@ -18,6 +13,9 @@ import { Sidebar, SidebarButton } from "./components/sidebar/Sidebar";
 import { ModulesPage } from "./pages/modules-page/ModulesPage";
 import { ScriptsPage } from "./pages/scripts-page/ScriptsPage";
 import { Settings } from "./pages/settings-page/SettingsPage";
+import { loadUserscripts } from "@/shared/store/slices/userscripts/thunks.userscripts";
+import { loadSettings } from "@/shared/store/slices/settings/thunks.settings";
+import { initializeMonaco } from "@/shared/store/slices/monaco-editor/thunks.monaco-editor";
 
 function applyAppTheme(themeId: string) {
   const root = document.documentElement;

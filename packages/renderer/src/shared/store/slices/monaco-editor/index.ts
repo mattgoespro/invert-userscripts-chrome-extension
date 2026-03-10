@@ -1,19 +1,12 @@
 import {
-  createSlice,
-  createAsyncThunk,
-  createSelector,
-} from "@reduxjs/toolkit";
-import { SharedScriptInfo, UserscriptSourceLanguage } from "@shared/model";
-import {
+  addSharedScriptExtraLib,
   ensureTypescriptDefaults,
   generateSharedScriptDeclaration,
-  addSharedScriptExtraLib,
-  getTypescriptDefaults,
-  registerMonaco,
 } from "@packages/monaco";
-import { PrettierFormatter } from "@/sandbox/formatter";
-import { updateUserscriptCode } from "./userscripts.slice";
-import type { AppDispatch, RootState } from "../store";
+import { createSelector, createSlice } from "@reduxjs/toolkit";
+import { SharedScriptInfo } from "@shared/model";
+import type { AppDispatch, RootState } from "../../store";
+import { initializeMonaco, saveEditorCode } from "./thunks.monaco-editor";
 
 export type EditorState = {
   monacoReady: boolean;
@@ -27,19 +20,14 @@ const initialState: EditorState = {
   isSaving: false,
 };
 
-// ── Async Thunks ──────────────────────────────────────────────────────────────
-
-export const initializeMonaco = createAsyncThunk(
-  "editor/initializeMonaco",
-  async () => {
-    await registerMonaco();
-  }
-);
-
 // ── Shared Script Extra Lib Management ────────────────────────────────────────
 
 // Module-level disposable tracking — non-serializable, kept outside Redux state.
-const sharedLibDisposables = new Map<string, { dispose(): void }>();
+interface SharedLibEntry {
+  disposable: { dispose(): void };
+  sourceHash: string;
+}
+const sharedLibEntries = new Map<string, SharedLibEntry>();
 
 /**
  * Configures the TypeScript language service compiler and diagnostics options.
@@ -52,109 +40,57 @@ export const configureTypescriptDefaults = () => (dispatch: AppDispatch) => {
 };
 
 /**
- * Disposes all current shared-script extra lib registrations, then registers
- * ambient module declarations for each provided shared script so Monaco's
- * TypeScript language service can resolve `import { … } from "shared/…"`.
+ * Syncs shared-script extra lib registrations with the provided list. Disposes
+ * any libs whose source has changed or are no longer present, then registers
+ * new/updated declarations so Monaco's TypeScript language service can resolve
+ * `import { … } from "shared/…"`.
  */
 export const syncSharedScriptLibs =
   (sharedScripts: SharedScriptInfo[]) => () => {
-    console.warn(
-      "[Invert IDE] syncSharedScriptLibs called with",
-      sharedScripts.length,
-      "scripts"
-    );
+    const currentIds = new Set(sharedScripts.map((s) => s.id));
 
-    // Dispose previous registrations
-    for (const [key, disposable] of sharedLibDisposables) {
-      disposable.dispose();
-      sharedLibDisposables.delete(key);
+    // Dispose libs for scripts that are no longer in the dependency list
+    for (const [id, entry] of sharedLibEntries) {
+      if (!currentIds.has(id)) {
+        entry.disposable.dispose();
+        sharedLibEntries.delete(id);
+      }
     }
 
-    // Register extra libs for each shared script
+    // Register or update extra libs for each shared script
     for (const shared of sharedScripts) {
       if (!shared.moduleName) {
         continue;
+      }
+
+      const existing = sharedLibEntries.get(shared.id);
+
+      // Skip if the source code hasn't changed
+      if (existing && existing.sourceHash === shared.sourceCode) {
+        continue;
+      }
+
+      // Dispose the previous registration if updating
+      if (existing) {
+        existing.disposable.dispose();
       }
 
       const declaration = generateSharedScriptDeclaration(
         shared.moduleName,
         shared.sourceCode
       );
-      console.warn(
-        "[Invert IDE] Declaration for",
-        shared.moduleName,
-        ":",
-        declaration
-      );
 
       const disposable = addSharedScriptExtraLib(
         declaration,
         shared.moduleName
       );
-      console.warn(
-        "[Invert IDE] addSharedScriptExtraLib returned:",
-        typeof disposable
-      );
 
-      sharedLibDisposables.set(shared.id, disposable);
+      sharedLibEntries.set(shared.id, {
+        disposable,
+        sourceHash: shared.sourceCode,
+      });
     }
-
-    // Diagnostic: verify what's actually registered
-    const tsDefaults = getTypescriptDefaults();
-    console.warn("[Invert IDE] tsDefaults:", tsDefaults ? "available" : "NULL");
-    if (tsDefaults) {
-      console.warn(
-        "[Invert IDE] Extra libs:",
-        Object.keys(tsDefaults.getExtraLibs())
-      );
-      console.warn(
-        "[Invert IDE] Compiler options:",
-        tsDefaults.getCompilerOptions()
-      );
-    }
-    console.warn("[Invert IDE] syncSharedScriptLibs complete");
   };
-
-/**
- * Disposes all shared-script extra lib registrations.
- * Call on component unmount or when shared scripts are no longer needed.
- */
-export const disposeSharedScriptLibs = () => () => {
-  for (const [key, disposable] of sharedLibDisposables) {
-    disposable.dispose();
-    sharedLibDisposables.delete(key);
-  }
-};
-
-export const saveEditorCode = createAsyncThunk(
-  "editor/saveEditorCode",
-  async (
-    {
-      scriptId,
-      language,
-      code,
-      autoFormat,
-    }: {
-      scriptId: string;
-      language: UserscriptSourceLanguage;
-      code: string;
-      autoFormat: boolean;
-    },
-    { dispatch }
-  ) => {
-    let formattedCode = code;
-
-    if (autoFormat) {
-      formattedCode = await PrettierFormatter.format(code, language);
-    }
-
-    await dispatch(
-      updateUserscriptCode({ id: scriptId, language, code: formattedCode })
-    ).unwrap();
-
-    return { code: formattedCode };
-  }
-);
 
 // ── Slice ─────────────────────────────────────────────────────────────────────
 

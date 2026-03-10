@@ -1,6 +1,6 @@
 import { GlobalModule, GlobalModules } from "@shared/model";
 import "./ModulesPage.scss";
-import { StorageManager } from "@shared/storage";
+import { ChromeSyncStorage } from "@shared/storage";
 import { useState } from "react";
 import { Button } from "@/shared/components/button/Button";
 import { Checkbox } from "@/shared/components/checkbox/Checkbox";
@@ -14,7 +14,7 @@ export function ModulesPage() {
   const [modules, setModules] = useState<GlobalModules>({});
 
   const loadData = async () => {
-    const loadedModules = await StorageManager.getAllModules();
+    const loadedModules = await ChromeSyncStorage.getAllModules();
     setModules(loadedModules);
   };
 
@@ -32,20 +32,20 @@ export function ModulesPage() {
       enabled: true,
     };
 
-    await StorageManager.saveModule(newModule);
+    await ChromeSyncStorage.saveModule(newModule);
     await loadData();
   };
 
   const handleDeleteModule = async (moduleId: string) => {
     if (confirm("Delete this module?")) {
-      await StorageManager.deleteModule(moduleId);
+      await ChromeSyncStorage.deleteModule(moduleId);
       await loadData();
     }
   };
 
   const handleToggleModule = async (module: GlobalModule) => {
     const updated = { ...module, enabled: !module.enabled };
-    await StorageManager.saveModule(updated);
+    await ChromeSyncStorage.saveModule(updated);
     await loadData();
   };
 

@@ -4,10 +4,9 @@ import { ResizeHandle } from "@/shared/components/resize-handle/ResizeHandle";
 import { Typography } from "@/shared/components/typography/Typography";
 import { useAppDispatch, useAppSelector } from "@/shared/store/hooks";
 import {
-  createUserscript,
   selectAllUserscripts,
   setCurrentUserscript,
-} from "@/shared/store/slices/userscripts.slice";
+} from "@/shared/store/slices/userscripts";
 import { useUIState } from "@/options/invert-ide/contexts/global-state.context";
 import { PlusIcon } from "lucide-react";
 import { useEffect } from "react";
@@ -15,6 +14,7 @@ import { Group, Panel } from "react-resizable-panels";
 import { ScriptEditor } from "./script-editor/ScriptEditor";
 import { ScriptList } from "./script-list/ScriptList";
 import "./ScriptsPage.scss";
+import { createUserscript } from "@/shared/store/slices/userscripts/thunks.userscripts";
 
 export function ScriptsPage() {
   const dispatch = useAppDispatch();

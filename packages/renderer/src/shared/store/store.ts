@@ -1,8 +1,8 @@
 import { configureStore } from "@reduxjs/toolkit";
 import { createLogger } from "redux-logger";
-import editorReducer from "./slices/editor.slice";
-import settingsReducer from "./slices/settings.slice";
-import userscriptsReducer from "./slices/userscripts.slice";
+import editorReducer from "./slices/monaco-editor";
+import settingsReducer from "./slices/settings";
+import userscriptsReducer from "./slices/userscripts";
 
 const logger = createLogger({
   collapsed: true,

@@ -1,3 +1,4 @@
 export * from "./monaco";
 export * from "./theming";
-export * from "./typescript-lsp";
+export * from "./typescript-defaults";
+export * from "./typescript-declarations";

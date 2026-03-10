@@ -4,7 +4,7 @@ import { Typography } from "@/shared/components/typography/Typography";
 import { Userscript } from "@shared/model";
 import { useAppSelector } from "@/shared/store/hooks";
 import { PackageIcon } from "lucide-react";
-import { selectSharedUserscripts } from "@/shared/store/slices/userscripts.slice";
+import { selectSharedUserscripts } from "@/shared/store/slices/userscripts";
 
 type SharedScriptsSelectorProps = {
   script: Userscript;

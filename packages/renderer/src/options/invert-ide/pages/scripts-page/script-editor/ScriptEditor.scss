@@ -26,7 +26,6 @@
       height: 100%;
       border-radius: var(--geometry-border-radius);
       overflow: hidden;
-      contain: strict;
       border: 1px solid var(--border);
       background: var(--surface-base);
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02);
@@ -35,7 +34,6 @@
     .script-editor--output-drawer {
       height: 100%;
       overflow: hidden;
-      contain: strict;
       border-radius: var(--geometry-border-radius);
       border: 1px solid var(--border);
       background: var(--surface-base);

@@ -2,16 +2,18 @@ import { Checkbox } from "@/shared/components/checkbox/Checkbox";
 import { Input } from "@/shared/components/input/Input";
 import { Select } from "@/shared/components/select/Select";
 import { Typography } from "@/shared/components/typography/Typography";
-import { EditorThemeName, getThemeOptions } from "@packages/monaco";
-import { AppThemeName } from "@shared/model";
 import { useAppDispatch, useAppSelector } from "@/shared/store/hooks";
-import { selectMonacoReady } from "@/shared/store/slices/editor.slice";
+import { selectMonacoReady } from "@/shared/store/slices/monaco-editor";
 import {
-  loadSettings,
   selectEditorSettings,
   selectIsLoading,
+} from "@/shared/store/slices/settings";
+import {
+  loadSettings,
   updateSettings,
-} from "@/shared/store/slices/settings.slice";
+} from "@/shared/store/slices/settings/thunks.settings";
+import { EditorThemeName, getThemeOptions } from "@packages/monaco";
+import { AppThemeName } from "@shared/model";
 import { useEffect } from "react";
 import "./SettingsPage.scss";
 import { ThemePreview } from "./theme-preview/ThemePreview";

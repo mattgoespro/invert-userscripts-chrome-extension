@@ -2,19 +2,58 @@ import { FormatterLanguage } from "@/sandbox/formatter";
 import { useAppDispatch, useAppSelector } from "@/shared/store/hooks";
 import {
   configureTypescriptDefaults,
-  disposeSharedScriptLibs,
-  saveEditorCode,
   selectSharedScriptsForUserscript,
   selectTsDefaultsConfigured,
   syncSharedScriptLibs,
-} from "@/shared/store/slices/editor.slice";
-import { selectEditorSettings } from "@/shared/store/slices/settings.slice";
+} from "@/shared/store/slices/monaco-editor";
+import { saveEditorCode } from "@/shared/store/slices/monaco-editor/thunks.monaco-editor";
+import { selectEditorSettings } from "@/shared/store/slices/settings";
 import { EditorSettings, UserscriptSourceLanguage } from "@shared/model";
 import * as monaco from "monaco-editor";
 import { useEffect, useMemo, useRef } from "react";
 
-// Cache models by URI to preserve undo history and cursor position
+/**
+ * Map source language identifiers to file extensions recognised by
+ * the Monaco TypeScript worker's module resolution.
+ */
+const LANGUAGE_EXTENSIONS: Record<FormatterLanguage, string> = {
+  typescript: "ts",
+  scss: "scss",
+};
+
+// Cache models by URI to preserve undo history and cursor position.
 const modelCache = new Map<string, monaco.editor.ITextModel>();
+
+/**
+ * Dispose and remove a cached model by its URI key.
+ * Safe to call even if the model was already disposed.
+ */
+export function disposeModel(uri: string): void {
+  const model = modelCache.get(uri);
+
+  if (model && !model.isDisposed()) {
+    model.dispose();
+  }
+
+  modelCache.delete(uri);
+}
+
+/**
+ * Dispose all cached models whose URI key starts with the given prefix.
+ * Used to clean up all models for a deleted script.
+ */
+export function disposeModelsForScript(scriptId: string): void {
+  for (const [uri] of modelCache) {
+    if (uri.includes(scriptId)) {
+      disposeModel(uri);
+    }
+  }
+}
+
+function buildModelUri(modelId: string, language: FormatterLanguage): string {
+  const ext = LANGUAGE_EXTENSIONS[language] ?? language;
+  return `file:///${modelId}.${ext}`;
+}
 
 function getOrCreateModel(
   uri: string,
@@ -103,7 +142,6 @@ export function CodeEditor(props: CodeEditorProps) {
 
     const editorInstance = monaco.editor.create(editorRootRef.current, {
       automaticLayout: true,
-      overflowWidgetsDomNode: editorRootRef.current,
       cursorBlinking: editable ? "blink" : "solid",
       cursorStyle: editable ? "line" : "underline-thin",
       cursorWidth: editable ? undefined : 0,
@@ -135,6 +173,16 @@ export function CodeEditor(props: CodeEditorProps) {
     editorInstanceRef.current = editorInstance;
 
     return () => {
+      // Dispose the editor's model for read-only previews (compiled output, theme preview)
+      // to prevent unbounded model accumulation. Editable models are kept alive in the cache
+      // so undo history and cursor positions survive tab switches.
+      if (!editable) {
+        const model = editorInstance.getModel();
+        if (model) {
+          disposeModel(model.uri.toString());
+        }
+      }
+
       editorInstance.dispose();
       editorInstanceRef.current = null;
     };
@@ -163,7 +211,7 @@ export function CodeEditor(props: CodeEditorProps) {
       return;
     }
 
-    const uri = `file:///${modelId}.${language}`;
+    const uri = buildModelUri(modelId, language);
     const model = getOrCreateModel(uri, language, contents);
     const currentModel = editorInstance.getModel();
 
@@ -208,24 +256,13 @@ export function CodeEditor(props: CodeEditorProps) {
     }
   }, [contents, editable]);
 
-  // Register shared script type declarations so that module imports are included in the TypeScript intellisense
+  // Register shared script type declarations so that module imports resolve in TypeScript intellisense
   useEffect(() => {
-    console.warn("[Invert IDE] Shared scripts useEffect:", {
-      language,
-      sharedScripts,
-      tsDefaultsReady,
-      scriptId,
-    });
-
     if (language !== "typescript" || !sharedScripts || !tsDefaultsReady) {
       return;
     }
 
     dispatch(syncSharedScriptLibs(sharedScripts));
-
-    return () => {
-      dispatch(disposeSharedScriptLibs());
-    };
   }, [language, sharedScripts, tsDefaultsReady, dispatch]);
 
   // Handle code-saving and auto-formatting

@@ -17,7 +17,7 @@ export const defaultSettings: EditorSettings = {
   autoSave: true,
 };
 
-export class StorageManager {
+export class ChromeSyncStorage {
   static async getAll(): Promise<{
     userscripts: Userscripts;
     globalModules: GlobalModules;
