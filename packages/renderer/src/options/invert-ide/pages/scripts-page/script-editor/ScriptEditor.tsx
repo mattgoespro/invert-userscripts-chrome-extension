@@ -1,4 +1,5 @@
 import { CodeEditor } from "@/options/invert-ide/components/code-editor/CodeEditor";
+import { TypeScriptCodeEditor } from "@/options/invert-ide/components/code-editor/TypeScriptCodeEditor";
 import { SassCompiler, TypeScriptCompiler } from "@/sandbox/compiler";
 import { ResizeHandle } from "@/shared/components/resize-handle/ResizeHandle";
 import { useAppDispatch, useAppSelector } from "@/shared/store/hooks";
@@ -154,10 +155,9 @@ export function ScriptEditor() {
               >
                 <Panel id="typescript-editor" minSize="20%" maxSize="80%">
                   <div className="script-editor--code-editor">
-                    <CodeEditor
+                    <TypeScriptCodeEditor
                       modelId={script.id}
                       scriptId={script.id}
-                      language="typescript"
                       contents={script.code.source.typescript}
                       onCodeModified={(code) =>
                         onCodeModified("typescript", code)

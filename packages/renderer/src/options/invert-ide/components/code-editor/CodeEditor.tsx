@@ -1,80 +1,13 @@
 import { FormatterLanguage } from "@/sandbox/formatter";
 import { useAppDispatch, useAppSelector } from "@/shared/store/hooks";
-import {
-  configureTypescriptDefaults,
-  selectSharedScriptsForUserscript,
-  selectTsDefaultsConfigured,
-  syncSharedScriptLibs,
-} from "@/shared/store/slices/monaco-editor";
 import { saveEditorCode } from "@/shared/store/slices/monaco-editor/thunks.monaco-editor";
 import { selectEditorSettings } from "@/shared/store/slices/settings";
-import { EditorSettings, UserscriptSourceLanguage } from "@shared/model";
+import { EditorSettings } from "@shared/model";
 import * as monaco from "monaco-editor";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useRef } from "react";
+import { buildModelUri, disposeModel, getOrCreateModel } from "./model-cache";
 
-/**
- * Map source language identifiers to file extensions recognised by
- * the Monaco TypeScript worker's module resolution.
- */
-const LANGUAGE_EXTENSIONS: Record<FormatterLanguage, string> = {
-  typescript: "ts",
-  scss: "scss",
-};
-
-// Cache models by URI to preserve undo history and cursor position.
-const modelCache = new Map<string, monaco.editor.ITextModel>();
-
-/**
- * Dispose and remove a cached model by its URI key.
- * Safe to call even if the model was already disposed.
- */
-export function disposeModel(uri: string): void {
-  const model = modelCache.get(uri);
-
-  if (model && !model.isDisposed()) {
-    model.dispose();
-  }
-
-  modelCache.delete(uri);
-}
-
-/**
- * Dispose all cached models whose URI key starts with the given prefix.
- * Used to clean up all models for a deleted script.
- */
-export function disposeModelsForScript(scriptId: string): void {
-  for (const [uri] of modelCache) {
-    if (uri.includes(scriptId)) {
-      disposeModel(uri);
-    }
-  }
-}
-
-function buildModelUri(modelId: string, language: FormatterLanguage): string {
-  const ext = LANGUAGE_EXTENSIONS[language] ?? language;
-  return `file:///${modelId}.${ext}`;
-}
-
-function getOrCreateModel(
-  uri: string,
-  language: UserscriptSourceLanguage,
-  contents: string
-): monaco.editor.ITextModel {
-  const existing = modelCache.get(uri);
-  if (existing && !existing.isDisposed()) {
-    return existing;
-  }
-
-  const model = monaco.editor.createModel(
-    contents,
-    language,
-    monaco.Uri.parse(uri)
-  );
-  modelCache.set(uri, model);
-  return model;
-}
-
-type CodeEditorProps = {
+export type CodeEditorProps = {
   /**
    * Unique identifier for this editor's content
    */
@@ -115,14 +48,9 @@ export function CodeEditor(props: CodeEditorProps) {
 
   const dispatch = useAppDispatch();
   const appEditorSettings = useAppSelector(selectEditorSettings);
-  const tsDefaultsReady = useAppSelector(selectTsDefaultsConfigured);
   const settings = settingsOverride
     ? { ...appEditorSettings, ...settingsOverride }
     : appEditorSettings;
-
-  const sharedScripts = useAppSelector(
-    useMemo(() => selectSharedScriptsForUserscript(scriptId), [scriptId])
-  );
 
   const editorRootRef = useRef<HTMLDivElement>(null);
   const editorInstanceRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(
@@ -173,9 +101,8 @@ export function CodeEditor(props: CodeEditorProps) {
     editorInstanceRef.current = editorInstance;
 
     return () => {
-      // Dispose the editor's model for read-only previews (compiled output, theme preview)
-      // to prevent unbounded model accumulation. Editable models are kept alive in the cache
-      // so undo history and cursor positions survive tab switches.
+      // Dispose the editor's model for read-only previews to prevent unbounded model accumulation.
+      // Editable models are kept alive in the cache so undo history and cursor positions survive tab switches.
       if (!editable) {
         const model = editorInstance.getModel();
         if (model) {
@@ -203,7 +130,7 @@ export function CodeEditor(props: CodeEditorProps) {
     editorInstanceRef.current?.updateOptions({ fontSize: settings.fontSize });
   }, [settings.fontSize]);
 
-  // Swap model when modelId/language changes and configure TS defaults + content listener
+  // Swap model when modelId/language changes and attach content change listener
   useEffect(() => {
     const editorInstance = editorInstanceRef.current;
 
@@ -217,16 +144,6 @@ export function CodeEditor(props: CodeEditorProps) {
 
     if (currentModel !== model) {
       editorInstance.setModel(model);
-    }
-
-    /**
-     * Setting a TypeScript model for the Monaco Editor instance triggers the TypeScript contribution module to load.
-     *
-     * We need to ensure the TypeScript language service defaults are configured after this happens so that our custom
-     * compiler options are applied, then Monaco can provide accurate intellisense and diagnostics for userscript code.
-     */
-    if (language === "typescript") {
-      dispatch(configureTypescriptDefaults());
     }
 
     if (!onCodeModifiedRef.current) {
@@ -255,15 +172,6 @@ export function CodeEditor(props: CodeEditorProps) {
       model.setValue(contents);
     }
   }, [contents, editable]);
-
-  // Register shared script type declarations so that module imports resolve in TypeScript intellisense
-  useEffect(() => {
-    if (language !== "typescript" || !sharedScripts || !tsDefaultsReady) {
-      return;
-    }
-
-    dispatch(syncSharedScriptLibs(sharedScripts));
-  }, [language, sharedScripts, tsDefaultsReady, dispatch]);
 
   // Handle code-saving and auto-formatting
   useEffect(() => {

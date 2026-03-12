@@ -153,6 +153,16 @@ export default (
           "editor",
           "editor.api.js"
         ),
+        "monaco-editor-ts-contribution": path.resolve(
+          __dirname,
+          "node_modules",
+          "monaco-editor",
+          "esm",
+          "vs",
+          "language",
+          "typescript",
+          "monaco.contribution.js"
+        ),
         "monaco-editor": "monaco-editor/esm/vs/editor/editor.api.js",
       },
     },

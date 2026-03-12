@@ -11,7 +11,10 @@ let websocket;
 function configureConsole(consoleOptions) {
   for (const level of consoleOptions.captureLevels) {
     console[level] = (...args) => {
-      // Call the original console function as if we weren't intercepting it, so that messages still appear in the console as normal
+      /**
+       * Call the original console function for this level as if we weren't intercepting it, so that messages
+       * still appear in the console as normal.
+       */
       consoleFns[level](...args);
 
       if (consoleOptions.ignoreMessage(...args)) {

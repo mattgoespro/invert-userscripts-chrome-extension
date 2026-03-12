@@ -1,62 +1,49 @@
 import { TypeScriptCompilerOptions } from "@shared/typescript";
-import monaco, { type typescript } from "monaco-editor";
+import monaco from "monaco-editor";
 
-/**
- * Returns the TypeScript language service defaults, or `null` if the TypeScript
- * contribution module has not yet been loaded by Monaco. That module loads
- * lazily when the first TypeScript model is created.
- */
-function getTypescriptDefaults(): typescript.LanguageServiceDefaults | null {
-  const ts = monaco.typescript;
+// The webpack alias resolves the bare "monaco-editor" specifier to the slim
+// editor.api entry, which does not bundle or register the TypeScript language
+// contribution. The "monaco-editor-ts-contribution" alias maps directly to the
+// contribution module so typescriptDefaults, ModuleResolutionKind, and other
+// TS-specific exports are available at module-load time.
+//
+// The contribution module has no usable type declarations — a type assertion
+// via `typeof typescript` is needed.
+import type { typescript } from "monaco-editor";
+import * as _tsContribution from "monaco-editor-ts-contribution";
+const tsContribution = _tsContribution as unknown as typeof typescript;
 
-  if (!ts?.typescriptDefaults) {
-    return null;
-  }
+// ── TypeScript Defaults Configuration ─────────────────────────────────────────
 
-  return ts.typescriptDefaults;
-}
-
-/**
- * Lazily configures the TypeScript language service compiler and diagnostics options.
- * Must be called after a TypeScript editor model has been created, which triggers the
- * MonacoEditorWebpackPlugin's contribution module to load and populate
- * `monaco.languages.typescript`. Safe to call multiple times — only runs once.
- */
 let configured = false;
 
-export function ensureTypescriptDefaults(): void {
-  if (configured) {
-    return;
-  }
-
-  const tsDefaults = getTypescriptDefaults();
-
-  if (!tsDefaults) {
+/**
+ * Configures the TypeScript language service compiler options once. Because the
+ * contribution module is imported directly above, its exports are available
+ * immediately — no lazy-load polling is required.
+ *
+ * @param signal - An AbortSignal to skip configuration (e.g. on component unmount).
+ */
+export async function ensureTypescriptDefaults(
+  signal?: AbortSignal
+): Promise<void> {
+  if (configured || signal?.aborted) {
     return;
   }
 
   configured = true;
 
-  tsDefaults.setCompilerOptions({
+  tsContribution.typescriptDefaults.setCompilerOptions({
     ...TypeScriptCompilerOptions,
     module: TypeScriptCompilerOptions.module.valueOf(),
     target: TypeScriptCompilerOptions.target.valueOf(),
-    moduleResolution:
-      TypeScriptCompilerOptions.moduleResolution.valueOf() as typescript.ModuleResolutionKind,
-    allowNonTsExtensions: true,
-    baseUrl: "file:///",
-    paths: {
-      "shared/*": ["node_modules/shared/*/index.d.ts"],
-    },
+    moduleResolution: tsContribution.ModuleResolutionKind.NodeJs,
   });
 
-  tsDefaults.setDiagnosticsOptions({
-    noSemanticValidation: false,
-    noSyntaxValidation: false,
-  });
-
-  tsDefaults.setEagerModelSync(true);
+  tsContribution.typescriptDefaults.setEagerModelSync(true);
 }
+
+// ── Shared Script Extra Lib Registration ──────────────────────────────────────
 
 /**
  * Registers a shared script declaration as an extra lib on the TypeScript
@@ -73,8 +60,5 @@ export function addSharedScriptExtraLib(
   moduleName: string
 ): monaco.IDisposable {
   const filePath = `file:///node_modules/shared/${moduleName}/index.d.ts`;
-  return monaco.typescript.typescriptDefaults.addExtraLib(
-    declaration,
-    filePath
-  );
+  return tsContribution.typescriptDefaults.addExtraLib(declaration, filePath);
 }
