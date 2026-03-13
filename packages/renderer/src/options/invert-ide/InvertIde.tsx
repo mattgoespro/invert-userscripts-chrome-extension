@@ -1,5 +1,4 @@
 import { SassCompiler } from "@/sandbox/compiler";
-import { DevTools } from "../../shared/components/devtools/DevTools";
 import { useAppDispatch, useAppSelector } from "@/shared/store/hooks";
 import { selectEditorSettings } from "@/shared/store/slices/settings";
 import {
@@ -80,7 +79,6 @@ function InvertIdeContent() {
           {uiState.activeSidebarTab === "settings" && <Settings />}
         </div>
       </div>
-      <DevTools />
     </div>
   );
 }

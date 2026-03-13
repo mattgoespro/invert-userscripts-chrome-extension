@@ -11,6 +11,11 @@ function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
 }
 
+/**
+ * A floating devtools menu with developer utilities for debugging the extension.
+ *
+ * Include in the application when needed.
+ */
 export function DevTools() {
   const [open, setOpen] = useState(false);
   const [position, setPosition] = useState({ x: 16, y: 16 });
