@@ -21,6 +21,7 @@
     "editor.formatOnSave": true
   },
   "chat.agent.maxRequests": 100,
+  "chat.autopilot.enabled": true,
   "chat.planAgent.defaultModel": "Claude Opus 4.6 (fast mode) (Preview) (claude-code)",
   "chat.tools.terminal.autoApprove": {
     "/.*/": true

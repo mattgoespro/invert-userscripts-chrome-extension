@@ -13,6 +13,5 @@ export const TypeScriptCompilerOptions: CompilerOptions = {
   allowJs: true,
   checkJs: true,
   strict: false,
-  lib: ["es2020", "dom"],
   isolatedModules: true,
 };
