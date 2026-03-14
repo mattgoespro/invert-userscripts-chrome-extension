@@ -9,7 +9,7 @@
     inset: 0;
     background: var(--accent);
     opacity: 0;
-    transition: opacity 0.2s ease 0.3s;
+    transition: opacity 0.1s ease-out 0.1s;
   }
 
   &[data-separator="hover"]::after {

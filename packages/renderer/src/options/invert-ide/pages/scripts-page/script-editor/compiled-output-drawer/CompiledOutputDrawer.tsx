@@ -1,5 +1,5 @@
 import { CodeEditor } from "@/options/invert-ide/components/code-editor/CodeEditor";
-import { useUIState } from "@/options/invert-ide/contexts/global-state.context";
+import { useGlobalState } from "@/options/invert-ide/contexts/global-state.context";
 import { IconButton } from "@/shared/components/icon-button/IconButton";
 import { OutputDrawerTab } from "@shared/model";
 import { ChevronsDown, ChevronsUp } from "lucide-react";
@@ -25,7 +25,7 @@ export function CompiledOutputDrawer({
   isCollapsed,
   onToggleCollapse,
 }: CompiledOutputDrawerProps) {
-  const { uiState, updateUIState } = useUIState();
+  const { uiState, updateUIState } = useGlobalState();
   const activeTab = uiState.outputDrawerActiveTab;
 
   const onTabChange = (tab: OutputDrawerTab) => {

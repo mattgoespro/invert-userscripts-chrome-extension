@@ -1,23 +1,21 @@
 import {
+  Userscripts,
+  GlobalModules,
+  EditorSettings,
   Userscript,
   GlobalModule,
-  EditorSettings,
-  GlobalModules,
-  Userscripts,
-  UIState,
-  UIPanelSizes,
-} from "./model";
-
-export const defaultSettings: EditorSettings = {
-  theme: "invert-dark",
-  appTheme: "graphite",
-  fontSize: 14,
-  tabSize: 2,
-  autoFormat: true,
-  autoSave: true,
-};
+} from "../model";
 
 export class ChromeSyncStorage {
+  public static readonly defaultSettings: EditorSettings = {
+    theme: "invert-dark",
+    appTheme: "graphite",
+    fontSize: 11,
+    tabSize: 2,
+    autoFormat: true,
+    autoSave: true,
+  };
+
   static async getAll(): Promise<{
     userscripts: Userscripts;
     globalModules: GlobalModules;
@@ -89,7 +87,7 @@ export class ChromeSyncStorage {
     const result = await chrome.storage.sync.get<{
       editorSettings: EditorSettings;
     }>(["editorSettings"]);
-    return { ...defaultSettings, ...result.editorSettings };
+    return { ...this.defaultSettings, ...result.editorSettings };
   }
 
   static async saveEditorSettings(
@@ -99,48 +97,5 @@ export class ChromeSyncStorage {
     await chrome.storage.sync.set({
       editorSettings: { ...current, ...editorSettings },
     });
-  }
-}
-
-const UI_STATE_STORAGE_KEY = "uiState";
-
-export const defaultUIState: UIState = {
-  activeSidebarTab: "scripts",
-  selectedScriptId: null,
-  outputDrawerCollapsed: false,
-  outputDrawerActiveTab: "javascript",
-  panelSizes: {
-    scriptListWidth: 30,
-    tsScssHorizontalSplit: 50,
-    sourceVsDrawerSplit: 70,
-  },
-};
-
-export class UIStateManager {
-  /**
-   * Retrieves the persisted UI state from chrome.storage.sync, merging
-   * deeply with defaults so missing keys are always populated.
-   */
-  static async get(): Promise<UIState> {
-    const result = await chrome.storage.sync.get<{ uiState: UIState }>([
-      UI_STATE_STORAGE_KEY,
-    ]);
-    const stored = result[UI_STATE_STORAGE_KEY];
-
-    return {
-      ...defaultUIState,
-      ...(stored ?? {}),
-      panelSizes: {
-        ...defaultUIState.panelSizes,
-        ...(stored?.panelSizes ?? {}),
-      } satisfies UIPanelSizes,
-    };
-  }
-
-  /**
-   * Overwrites the entire UI state in chrome.storage.sync.
-   */
-  static async save(state: UIState): Promise<void> {
-    await chrome.storage.sync.set({ [UI_STATE_STORAGE_KEY]: state });
   }
 }

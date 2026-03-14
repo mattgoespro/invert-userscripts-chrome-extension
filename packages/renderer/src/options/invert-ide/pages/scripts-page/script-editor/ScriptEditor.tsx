@@ -8,7 +8,7 @@ import {
   markUserscriptModified,
   selectCurrentUserscript,
 } from "@/shared/store/slices/userscripts";
-import { useUIState } from "@/options/invert-ide/contexts/global-state.context";
+import { useGlobalState } from "@/options/invert-ide/contexts/global-state.context";
 import { UserscriptSourceLanguage } from "@shared/model";
 import { useEffect, useRef, useState } from "react";
 import { Group, Panel, PanelImperativeHandle } from "react-resizable-panels";
@@ -20,7 +20,7 @@ export function ScriptEditor() {
   const dispatch = useAppDispatch();
   const script = useAppSelector(selectCurrentUserscript);
   const monacoReady = useAppSelector(selectMonacoReady);
-  const { uiState, updateUIState, updatePanelSizes } = useUIState();
+  const { uiState, updateUIState, updatePanelSizes } = useGlobalState();
 
   const [liveJs, setLiveJs] = useState("");
   const [liveCss, setLiveCss] = useState("");
@@ -124,8 +124,10 @@ export function ScriptEditor() {
             orientation="vertical"
             id="script-editor-outer-panels"
             defaultLayout={{
-              "source-panels": uiState.panelSizes.sourceVsDrawerSplit,
-              "output-drawer": 100 - uiState.panelSizes.sourceVsDrawerSplit,
+              "source-panels":
+                uiState.panelSizes.scriptCompiledOutputDrawerSplit,
+              "output-drawer":
+                100 - uiState.panelSizes.scriptCompiledOutputDrawerSplit,
             }}
             onLayoutChanged={(layout) => {
               if (drawerPanelRef.current?.isCollapsed()) {
@@ -133,7 +135,9 @@ export function ScriptEditor() {
               }
               const sourceSize = layout["source-panels"];
               if (sourceSize != null) {
-                updatePanelSizes({ sourceVsDrawerSplit: sourceSize });
+                updatePanelSizes({
+                  scriptCompiledOutputDrawerSplit: sourceSize,
+                });
               }
             }}
           >
@@ -143,13 +147,17 @@ export function ScriptEditor() {
                 id="script-editor-source-panels"
                 style={{ height: "100%" }}
                 defaultLayout={{
-                  "typescript-editor": uiState.panelSizes.tsScssHorizontalSplit,
-                  "scss-editor": 100 - uiState.panelSizes.tsScssHorizontalSplit,
+                  "typescript-editor":
+                    uiState.panelSizes.scriptCodeEditorHorizontalSplit,
+                  "scss-editor":
+                    100 - uiState.panelSizes.scriptCodeEditorHorizontalSplit,
                 }}
                 onLayoutChanged={(layout) => {
                   const tsSize = layout["typescript-editor"];
                   if (tsSize != null) {
-                    updatePanelSizes({ tsScssHorizontalSplit: tsSize });
+                    updatePanelSizes({
+                      scriptCodeEditorHorizontalSplit: tsSize,
+                    });
                   }
                 }}
               >
@@ -185,7 +193,7 @@ export function ScriptEditor() {
               id="output-drawer"
               minSize="15%"
               maxSize="60%"
-              defaultSize={`${100 - uiState.panelSizes.sourceVsDrawerSplit}%`}
+              defaultSize={`${100 - uiState.panelSizes.scriptCompiledOutputDrawerSplit}%`}
               collapsible
               collapsedSize="36px"
               onResize={onDrawerResize}

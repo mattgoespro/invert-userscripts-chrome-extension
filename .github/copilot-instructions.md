@@ -26,6 +26,24 @@ packages/runtime  ──→ packages/shared
 packages/monaco   ──→ packages/shared
 ```
 
+### `packages/renderer`
+
+The renderer package contains the React-based UI for both the **Options page** (the main IDE) and the extension **Popup**. These are two separate Webpack entry points (`options/index.tsx` and `popup/index.tsx`) that share a common set of UI components, hooks, store slices, and utilities via `packages/renderer/src/shared/`.
+
+Code inside `packages/renderer/src/shared/` is **renderer-internal** — it is UI-related functionality shared between the Options and Popup entry points. It is not consumed by `runtime` or `monaco`. When functionality is only needed by one of the two entry points, it belongs in that entry point's directory (e.g., `options/` or `popup/`), not in `shared/`.
+
+### `packages/runtime`
+
+The runtime package contains the Chrome extension's background service worker and content scripts. It handles extension lifecycle events (`onInstalled`, `onMessage`), web navigation listeners, tab update listeners, and programmatic script injection via `chrome.scripting.executeScript`. It depends on `packages/shared` for data models and storage access.
+
+### `packages/shared`
+
+The shared package provides cross-package functionality — common types, storage wrappers, message definitions, and TypeScript compiler options — that is required by **2 or more** other packages in the monorepo. Code should only be placed here when at least two other packages depend on it (e.g., data models used by both `renderer` and `runtime`, storage wrappers used by both `renderer` and `runtime`). If only a single package needs a piece of functionality, that functionality belongs inside that package — not in `packages/shared/`.
+
+### `packages/monaco`
+
+The monaco package encapsulates all Monaco editor integration: Shiki tokenizer registration, editor theme definitions, TypeScript compiler defaults configuration, and shared script declaration generation. It depends on `packages/shared` for data models and TypeScript compiler options.
+
 ---
 
 ## Key Developer Workflows
@@ -129,16 +147,16 @@ interface UIState {
 
 ### Storage Strategy
 
-All persistence is handled via `chrome.storage.sync`, abstracted by two manager classes in `packages/shared/src/storage.ts`.
+All persistence is handled via `chrome.storage.sync`, abstracted by two manager classes in `packages/shared/src/storage/`.
 
-**`StorageManager` API** (all static methods):
+**`ChromeSyncStorage` API** (all static methods, in `sync.storage.ts`):
 
 | Method                         | Description                                |
 | ------------------------------ | ------------------------------------------ |
 | `getAll()`                     | Returns all stored data                    |
 | `getAllScripts()`              | Returns `Userscripts` record               |
 | `saveScript(script)`           | Merges script into storage                 |
-| `updateScript(id, updates)`    | Partial update with debug logging          |
+| `updateScript(id, updates)`    | Partial update                             |
 | `deleteScript(scriptId)`       | Removes a script                           |
 | `getAllModules()`              | Returns `GlobalModules` record             |
 | `saveModule(module)`           | Upserts a module                           |
@@ -146,27 +164,27 @@ All persistence is handled via `chrome.storage.sync`, abstracted by two manager 
 | `getEditorSettings()`          | Returns settings (with hardcoded defaults) |
 | `saveEditorSettings(settings)` | Merges partial settings                    |
 
-**`UIStateManager` API** (all static methods):
+**`GlobalStateManager` API** (all static methods, in `global-state.storage.ts`):
 
-| Method        | Description                                      |
-| ------------- | ------------------------------------------------ |
-| `get()`       | Returns `UIState`, deep-merged with defaults     |
-| `save(state)` | Persists full `UIState` to `chrome.storage.sync` |
+| Method        | Description                                            |
+| ------------- | ------------------------------------------------------ |
+| `get()`       | Returns `GlobalState`, deep-merged with defaults       |
+| `save(state)` | Persists full `GlobalState` to `chrome.storage.sync`   |
 
 **Exported defaults**:
 
-- `defaultSettings` — `EditorSettings` with theme `"invert-dark"`, fontSize 14, tabSize 2, autoFormat true, autoSave true.
-- `defaultUIState` — `UIState` with scripts tab active, null selection, drawer open, 30/50/70 panel splits.
+- `ChromeSyncStorage.defaultSettings` — `EditorSettings` with theme `"invert-dark"`, appTheme `"graphite"`, fontSize 11, tabSize 2, autoFormat true, autoSave true.
+- `GlobalStateManager.defaultState` — `GlobalState` with scripts tab active, null selection, drawer open, 30/50/70 panel splits.
 
 ### State Architecture Overview
 
-| State Type                    | Pattern                                                              |
-| ----------------------------- | -------------------------------------------------------------------- |
-| **Userscripts** (complex)     | Redux Toolkit slice + `createAsyncThunk` for async storage           |
-| **Editor Settings** (complex) | Redux Toolkit slice + `createAsyncThunk` for async storage           |
-| **Editor State** (complex)    | Redux Toolkit slice for Monaco init, saving, and TS defaults         |
-| **UI Layout State**           | React Context (`UIStateProvider`) + `UIStateManager` for persistence |
-| **Global Modules** (simple)   | Direct `StorageManager` access with `useState` and manual `loadData` |
+| State Type                    | Pattern                                                                |
+| ----------------------------- | ---------------------------------------------------------------------- |
+| **Userscripts** (complex)     | Redux Toolkit slice + `createAsyncThunk` for async storage             |
+| **Editor Settings** (complex) | Redux Toolkit slice + `createAsyncThunk` for async storage             |
+| **Editor State** (complex)    | Redux Toolkit slice for Monaco init, saving, and TS defaults           |
+| **UI Layout State**           | React Context (`GlobalStateProvider`) + `GlobalStateManager` for persistence |
+| **Global Modules** (simple)   | Direct `ChromeSyncStorage` access with `useState` and manual `loadData`|
 
 ### Redux Store Configuration
 
@@ -204,7 +222,7 @@ The `userscripts.slice.ts` defines:
 Flow:
 
 1. Component dispatches an async thunk (e.g., `updateUserscriptCode`)
-2. Thunk performs async work (compilation, storage persistence via `StorageManager`)
+2. Thunk performs async work (compilation, storage persistence via `ChromeSyncStorage`)
 3. `extraReducers` handles `pending`/`fulfilled`/`rejected` states
 4. Selectors provide derived access to state
 
@@ -240,16 +258,16 @@ The `editor.slice.ts` defines:
 
 ### UI State Context
 
-The `UIStateProvider` and `useUIState()` hook in `packages/renderer/src/shared/ui-state-context.tsx` manage persistent UI layout state outside Redux:
+The `GlobalStateProvider` and `useGlobalState()` hook in `packages/renderer/src/options/invert-ide/contexts/global-state.context.tsx` manage persistent UI layout state outside Redux:
 
 ```tsx
-import { useUIState } from "@/shared/ui-state-context";
+import { useGlobalState } from "@/options/invert-ide/contexts/global-state.context";
 
-const { uiState, updateUIState, updatePanelSizes } = useUIState();
+const { uiState, updateUIState, updatePanelSizes } = useGlobalState();
 ```
 
 - React Context + Provider pattern (not Redux)
-- Debounced persistence (500ms) to `chrome.storage.sync` via `UIStateManager`
+- Debounced persistence (500ms) to `chrome.storage.sync` via `GlobalStateManager`
 - Returns `null` (no children rendered) until initial state is loaded, preventing layout flicker
 - Two update methods: `updateUIState` (shallow merge at top level) and `updatePanelSizes` (shallow merge into `panelSizes`)
 
@@ -311,7 +329,6 @@ import { CodeLine } from "@/shared/components/code-line/CodeLine";
 ### Additional Shared Exports
 
 - `utils.ts` — Re-exports `uuid` from the `uuid` package: `export { v4 as uuid } from "uuid"`.
-- `ui-state-context.tsx` — `UIStateProvider` and `useUIState()` hook (see State Management section).
 
 ---
 
@@ -1060,6 +1077,23 @@ export interface Test {
 - Inline comments requiring multiple lines should be block comments.
 - Use inline comments sparingly and only when they add value to the code's readability for complex logic or non-obvious decisions.
 
+### Type-Only Re-exports in Barrel Files
+
+The build uses `esbuild-loader` for TypeScript transpilation, which performs **isolated file transpilation** without cross-file type awareness. This means `esbuild` erases interfaces and type aliases at compile time — they don't exist as runtime values. When a barrel `index.ts` re-exports a type using a value-style export, webpack cannot resolve it and emits a warning.
+
+**Always use `export type` for re-exporting interfaces and type aliases from barrel files:**
+
+```typescript
+// ✅ CORRECT — separate value and type re-exports
+export { GlobalStateManager } from "./global-state.storage";
+export type { GlobalState, GlobalStateSizes } from "./global-state.storage";
+
+// ❌ WRONG — mixed value and type re-exports in a single statement
+export { GlobalStateManager, GlobalState, GlobalStateSizes } from "./global-state.storage";
+```
+
+This applies to all `index.ts` barrel files across every package.
+
 ### Additional Rules
 
 For additional code quality, refer to the ESLint rules defined in `eslint.config.mjs`, especially those related to TypeScript and React.
@@ -1111,7 +1145,7 @@ packages/renderer/src/
 │           │           ├── file-size-indicator/  # Storage quota display
 │           │           ├── script-options-panel/ # Script settings (runAt, shared, etc.)
 │           │           └── shared-scripts-selector/ # Shared dependency picker
-│           ├── modules-page/         # Global module management (direct StorageManager)
+│           ├── modules-page/         # Global module management (direct ChromeSyncStorage)
 │           └── settings-page/        # Editor settings (Redux-backed)
 │               └── theme-preview/    # Editor theme preview component
 ├── popup/                            # Extension popup
@@ -1125,7 +1159,6 @@ packages/renderer/src/
 │   └── sass-sandbox.html            # Sandboxed page with relaxed CSP
 └── shared/                           # Shared components and state
     ├── utils.ts                      # Re-exports uuid
-    ├── ui-state-context.tsx          # UIStateProvider + useUIState() hook
     ├── components/
     │   ├── button/
     │   ├── checkbox/
@@ -1194,7 +1227,10 @@ packages/shared/src/
 ├── index.ts             # Barrel: re-exports model and storage
 ├── model.ts             # All data types (Userscript, GlobalModule, EditorSettings, etc.)
 ├── messages.ts          # Type-safe messaging (RuntimePortMessageEvent, sources, payloads)
-├── storage.ts           # StorageManager + UIStateManager (chrome.storage.sync wrappers)
+├── storage/
+│   ├── index.ts             # Barrel: re-exports ChromeSyncStorage, GlobalStateManager, types
+│   ├── sync.storage.ts      # ChromeSyncStorage (chrome.storage.sync wrapper for scripts, modules, settings)
+│   └── global-state.storage.ts  # GlobalStateManager + GlobalState/GlobalStateSizes types
 └── typescript.ts        # Shared TypeScriptCompilerOptions constant
 ```
 

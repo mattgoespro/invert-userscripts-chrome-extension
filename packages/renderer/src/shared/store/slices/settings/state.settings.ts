@@ -1,5 +1,5 @@
 import { EditorSettings } from "@shared/model";
-import { defaultSettings } from "@shared/storage";
+import { ChromeSyncStorage } from "@shared/storage";
 
 export type SettingsState = {
   editorSettings: EditorSettings;
@@ -7,6 +7,6 @@ export type SettingsState = {
 };
 
 export const initialState: SettingsState = {
-  editorSettings: defaultSettings,
+  editorSettings: ChromeSyncStorage.defaultSettings,
   isLoading: true,
 };

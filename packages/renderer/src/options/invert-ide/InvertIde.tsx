@@ -2,8 +2,8 @@ import { SassCompiler } from "@/sandbox/compiler";
 import { useAppDispatch, useAppSelector } from "@/shared/store/hooks";
 import { selectEditorSettings } from "@/shared/store/slices/settings";
 import {
-  UIStateProvider,
-  useUIState,
+  GlobalStateProvider,
+  useGlobalState,
 } from "@/options/invert-ide/contexts/global-state.context";
 import { useEffect } from "react";
 import "./InvertIde.scss";
@@ -27,19 +27,19 @@ function applyAppTheme(themeId: string) {
 }
 
 /**
- * Root IDE shell. Mounts the {@link UIStateProvider} so that all child components
+ * Root IDE shell. Mounts the {@link GlobalStateProvider} so that all child components
  * have access to persisted UI state before they first render.
  */
 export function InvertIde() {
   return (
-    <UIStateProvider>
+    <GlobalStateProvider>
       <InvertIdeContent />
-    </UIStateProvider>
+    </GlobalStateProvider>
   );
 }
 
 function InvertIdeContent() {
-  const { uiState, updateUIState } = useUIState();
+  const { uiState, updateUIState } = useGlobalState();
   const dispatch = useAppDispatch();
   const settings = useAppSelector(selectEditorSettings);
 

@@ -1,5 +1,8 @@
-import { UIState, UIPanelSizes } from "@shared/model";
-import { defaultUIState, UIStateManager } from "@shared/storage";
+import {
+  GlobalState,
+  GlobalStateManager,
+  GlobalStateSizes,
+} from "@shared/storage";
 import {
   createContext,
   useCallback,
@@ -12,43 +15,49 @@ import {
 /** How long to wait after the last UI state change before flushing to chrome.storage.sync. */
 const SAVE_DEBOUNCE_MS = 500;
 
-type UIStateContextValue = {
-  uiState: UIState;
-  updateUIState: (partial: Partial<UIState>) => void;
-  updatePanelSizes: (partial: Partial<UIPanelSizes>) => void;
+type GlobalStateContextValue = {
+  uiState: GlobalState;
+  updateUIState: (partial: Partial<GlobalState>) => void;
+  updatePanelSizes: (partial: Partial<GlobalStateSizes>) => void;
 };
 
-const UIStateContext = createContext<UIStateContextValue | null>(null);
+const GlobalStateContext = createContext<GlobalStateContextValue | null>(null);
 
 /**
  * Provides persisted UI state (sidebar tab, selected script, panel sizes, drawer state)
  * to the entire options page. Loads from chrome.storage.sync before rendering children,
  * ensuring all defaultSize props see the correct values on first mount.
  */
-export function UIStateProvider({ children }: { children: React.ReactNode }) {
-  const [uiState, setUIState] = useState<UIState>(defaultUIState);
+export function GlobalStateProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const [uiState, setUIState] = useState<GlobalState>(
+    GlobalStateManager.defaultState
+  );
   const [isLoaded, setIsLoaded] = useState(false);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    UIStateManager.get().then((state) => {
+    GlobalStateManager.get().then((state) => {
       setUIState(state);
       setIsLoaded(true);
     });
   }, []);
 
-  const scheduleSave = useCallback((state: UIState) => {
+  const scheduleSave = useCallback((state: GlobalState) => {
     if (saveTimerRef.current) {
       clearTimeout(saveTimerRef.current);
     }
 
     saveTimerRef.current = setTimeout(() => {
-      UIStateManager.save(state);
+      GlobalStateManager.save(state);
     }, SAVE_DEBOUNCE_MS);
   }, []);
 
-  const updateUIState = useCallback(
-    (partial: Partial<UIState>) => {
+  const updateGlobalState = useCallback(
+    (partial: Partial<GlobalState>) => {
       setUIState((prev) => {
         const next = { ...prev, ...partial };
         scheduleSave(next);
@@ -59,7 +68,7 @@ export function UIStateProvider({ children }: { children: React.ReactNode }) {
   );
 
   const updatePanelSizes = useCallback(
-    (partial: Partial<UIPanelSizes>) => {
+    (partial: Partial<GlobalStateSizes>) => {
       setUIState((prev) => {
         const next = {
           ...prev,
@@ -77,22 +86,24 @@ export function UIStateProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <UIStateContext.Provider
-      value={{ uiState, updateUIState, updatePanelSizes }}
+    <GlobalStateContext.Provider
+      value={{ uiState, updateUIState: updateGlobalState, updatePanelSizes }}
     >
       {children}
-    </UIStateContext.Provider>
+    </GlobalStateContext.Provider>
   );
 }
 
 /**
- * Consumes the UI state context. Must be used within a {@link UIStateProvider}.
+ * Consumes the UI state context. Must be used within a {@link GlobalStateProvider}.
  */
-export function useUIState(): UIStateContextValue {
-  const context = useContext(UIStateContext);
+export function useGlobalState(): GlobalStateContextValue {
+  const context = useContext(GlobalStateContext);
 
   if (!context) {
-    throw new Error("useUIState must be used within a UIStateProvider");
+    throw new Error(
+      "The `useGlobalState` hook can only be used in a component tree wrapped by `<GlobalStateProvider>`."
+    );
   }
 
   return context;

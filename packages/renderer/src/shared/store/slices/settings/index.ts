@@ -1,9 +1,9 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { AppThemeName } from "@shared/model";
-import { defaultSettings } from "@shared/storage";
 import type { EditorThemeName } from "@packages/monaco";
 import { loadSettings, updateSettings } from "./thunks.settings";
 import { initialState, SettingsState } from "./state.settings";
+import { ChromeSyncStorage } from "@shared/storage";
 
 const settingsSlice = createSlice({
   name: "settings",
@@ -42,7 +42,10 @@ const settingsSlice = createSlice({
         state.isLoading = true;
       })
       .addCase(loadSettings.fulfilled, (state, action) => {
-        state.editorSettings = { ...defaultSettings, ...action.payload };
+        state.editorSettings = {
+          ...ChromeSyncStorage.defaultSettings,
+          ...action.payload,
+        };
         state.isLoading = false;
       })
       .addCase(loadSettings.rejected, (state) => {

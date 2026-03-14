@@ -7,7 +7,7 @@ import {
   selectAllUserscripts,
   setCurrentUserscript,
 } from "@/shared/store/slices/userscripts";
-import { useUIState } from "@/options/invert-ide/contexts/global-state.context";
+import { useGlobalState } from "@/options/invert-ide/contexts/global-state.context";
 import { PlusIcon } from "lucide-react";
 import { useEffect } from "react";
 import { Group, Panel } from "react-resizable-panels";
@@ -22,7 +22,7 @@ export function ScriptsPage() {
   const selectedScript = useAppSelector(
     (state) => state.userscripts.currentUserscript
   );
-  const { uiState, updateUIState, updatePanelSizes } = useUIState();
+  const { uiState, updateUIState, updatePanelSizes } = useGlobalState();
 
   const onCreateScript = async () => {
     dispatch(createUserscript());
@@ -57,13 +57,13 @@ export function ScriptsPage() {
       id="scripts-page-panels"
       className="scripts--content"
       defaultLayout={{
-        "scripts-sidebar": uiState.panelSizes.scriptListWidth,
-        "scripts-editor": 100 - uiState.panelSizes.scriptListWidth,
+        "scripts-sidebar": uiState.panelSizes.scriptListSidebarWidth,
+        "scripts-editor": 100 - uiState.panelSizes.scriptListSidebarWidth,
       }}
       onLayoutChanged={(layout) => {
         const sidebarWidth = layout["scripts-sidebar"];
         if (sidebarWidth != null) {
-          updatePanelSizes({ scriptListWidth: sidebarWidth });
+          updatePanelSizes({ scriptListSidebarWidth: sidebarWidth });
         }
       }}
     >
