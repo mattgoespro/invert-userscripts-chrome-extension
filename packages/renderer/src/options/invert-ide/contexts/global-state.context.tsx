@@ -12,19 +12,19 @@ import {
   useState,
 } from "react";
 
-/** How long to wait after the last UI state change before flushing to chrome.storage.sync. */
+/** How long to wait after the last global state change before flushing to chrome.storage.sync. */
 const SAVE_DEBOUNCE_MS = 500;
 
 type GlobalStateContextValue = {
-  uiState: GlobalState;
-  updateUIState: (partial: Partial<GlobalState>) => void;
+  globalState: GlobalState;
+  updateGlobalState: (partial: Partial<GlobalState>) => void;
   updatePanelSizes: (partial: Partial<GlobalStateSizes>) => void;
 };
 
 const GlobalStateContext = createContext<GlobalStateContextValue | null>(null);
 
 /**
- * Provides persisted UI state (sidebar tab, selected script, panel sizes, drawer state)
+ * Provides persisted global state (sidebar tab, selected script, panel sizes, drawer state)
  * to the entire options page. Loads from chrome.storage.sync before rendering children,
  * ensuring all defaultSize props see the correct values on first mount.
  */
@@ -33,7 +33,7 @@ export function GlobalStateProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const [uiState, setUIState] = useState<GlobalState>(
+  const [globalState, setGlobalState] = useState<GlobalState>(
     GlobalStateManager.defaultState
   );
   const [isLoaded, setIsLoaded] = useState(false);
@@ -41,7 +41,7 @@ export function GlobalStateProvider({
 
   useEffect(() => {
     GlobalStateManager.get().then((state) => {
-      setUIState(state);
+      setGlobalState(state);
       setIsLoaded(true);
     });
   }, []);
@@ -58,7 +58,7 @@ export function GlobalStateProvider({
 
   const updateGlobalState = useCallback(
     (partial: Partial<GlobalState>) => {
-      setUIState((prev) => {
+      setGlobalState((prev) => {
         const next = { ...prev, ...partial };
         scheduleSave(next);
         return next;
@@ -69,7 +69,7 @@ export function GlobalStateProvider({
 
   const updatePanelSizes = useCallback(
     (partial: Partial<GlobalStateSizes>) => {
-      setUIState((prev) => {
+      setGlobalState((prev) => {
         const next = {
           ...prev,
           panelSizes: { ...prev.panelSizes, ...partial },
@@ -87,7 +87,11 @@ export function GlobalStateProvider({
 
   return (
     <GlobalStateContext.Provider
-      value={{ uiState, updateUIState: updateGlobalState, updatePanelSizes }}
+      value={{
+        globalState: globalState,
+        updateGlobalState,
+        updatePanelSizes,
+      }}
     >
       {children}
     </GlobalStateContext.Provider>
@@ -95,7 +99,7 @@ export function GlobalStateProvider({
 }
 
 /**
- * Consumes the UI state context. Must be used within a {@link GlobalStateProvider}.
+ * Consumes the global state context.
  */
 export function useGlobalState(): GlobalStateContextValue {
   const context = useContext(GlobalStateContext);

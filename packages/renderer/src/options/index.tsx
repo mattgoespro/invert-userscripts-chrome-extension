@@ -1,4 +1,5 @@
 import { ErrorBoundary } from "@/shared/components/error-boundary/ErrorBoundary";
+import { ToastProvider } from "@/shared/components/toast/ToastProvider";
 import { store } from "@/shared/store/store";
 import { createRoot } from "react-dom/client";
 import { ErrorBoundary as ReactErrorBoundary } from "react-error-boundary";
@@ -9,7 +10,9 @@ import { InvertIde } from "./invert-ide/InvertIde";
 createRoot(document.getElementById("root")).render(
   <ReactErrorBoundary FallbackComponent={ErrorBoundary}>
     <Provider store={store}>
-      <InvertIde />
+      <ToastProvider>
+        <InvertIde />
+      </ToastProvider>
     </Provider>
   </ReactErrorBoundary>
 );

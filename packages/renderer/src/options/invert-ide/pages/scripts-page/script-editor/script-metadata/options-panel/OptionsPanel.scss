@@ -1,8 +1,8 @@
-.script-options--wrapper {
+.options-panel--wrapper {
   position: relative;
   flex-shrink: 0;
 
-  .script-options--trigger {
+  .options-panel--trigger {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -39,7 +39,7 @@
   // =========================================================================
   // Hint
   // =========================================================================
-  .script-options--hint {
+  .options-panel--hint {
     font-family: var(--font-body);
     font-size: 0.75rem;
     color: var(--text-muted);
@@ -49,12 +49,12 @@
   // =========================================================================
   // Module Input
   // =========================================================================
-  .script-options--module-input-wrapper {
+  .options-panel--module-input-wrapper {
     position: relative;
     width: 100%;
   }
 
-  .script-options--module-input {
+  .options-panel--module-input {
     width: 100%;
 
     input {
@@ -65,7 +65,7 @@
     }
   }
 
-  .script-options--autofill-btn {
+  .options-panel--autofill-btn {
     position: absolute;
     right: 0.375rem;
     top: 50%;
@@ -99,7 +99,7 @@
   // =========================================================================
   // Delete
   // =========================================================================
-  .script-options--delete-btn {
+  .options-panel--delete-btn {
     width: 100%;
     justify-content: center;
     font-size: 0.75rem;

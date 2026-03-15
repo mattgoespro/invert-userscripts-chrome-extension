@@ -1,6 +1,6 @@
-type SidebarTab = "scripts" | "modules" | "settings";
+export type AppSidebarTab = "scripts" | "modules" | "settings";
 
-type OutputDrawerTab = "javascript" | "css";
+export type ScriptEditorDrawerTab = "javascript" | "css";
 
 export interface GlobalStateSizes {
   /**
@@ -25,7 +25,7 @@ export interface GlobalState {
   /**
    * The currently active sidebar navigation tab.
    */
-  activeSidebarTab?: SidebarTab;
+  activeSidebarTab?: AppSidebarTab;
   /**
    * The ID of the most recently selected userscript, used to restore selection on reload.
    */
@@ -37,7 +37,7 @@ export interface GlobalState {
   /**
    * The active tab displayed inside the compiled output drawer.
    */
-  outputDrawerActiveTab?: OutputDrawerTab;
+  outputDrawerActiveTab?: ScriptEditorDrawerTab;
   /**
    * Persisted pixel-percentage sizes for all resizable panel groups.
    */

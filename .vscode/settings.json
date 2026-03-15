@@ -20,7 +20,7 @@
     "editor.formatOnPaste": true,
     "editor.formatOnSave": true
   },
-  "chat.agent.maxRequests": 100,
+  "chat.agent.maxRequests": 1000,
   "chat.autopilot.enabled": true,
   "chat.planAgent.defaultModel": "Claude Opus 4.6 (fast mode) (Preview) (claude-code)",
   "chat.tools.terminal.autoApprove": {
@@ -43,6 +43,7 @@
     "source.removeUnusedImports": "never"
   },
   "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.rename.enablePreview": true,
   "eslint.enable": true,
   "eslint.format.enable": false,
   "eslint.probe": ["typescript", "typescriptreact", "html"],

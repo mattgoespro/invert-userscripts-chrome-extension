@@ -12,7 +12,7 @@ import { useGlobalState } from "@/options/invert-ide/contexts/global-state.conte
 import { UserscriptSourceLanguage } from "@shared/model";
 import { useEffect, useRef, useState } from "react";
 import { Group, Panel, PanelImperativeHandle } from "react-resizable-panels";
-import { CompiledOutputDrawer } from "./compiled-output-drawer/CompiledOutputDrawer";
+import { ScriptEditorDrawer } from "./script-editor-drawer/ScriptEditorDrawer";
 import { ScriptMetadata } from "./script-metadata/ScriptMetadata";
 import "./ScriptEditor.scss";
 
@@ -20,12 +20,12 @@ export function ScriptEditor() {
   const dispatch = useAppDispatch();
   const script = useAppSelector(selectCurrentUserscript);
   const monacoReady = useAppSelector(selectMonacoReady);
-  const { uiState, updateUIState, updatePanelSizes } = useGlobalState();
+  const { globalState, updateGlobalState, updatePanelSizes } = useGlobalState();
 
   const [liveJs, setLiveJs] = useState("");
   const [liveCss, setLiveCss] = useState("");
   const [isDrawerCollapsed, setIsDrawerCollapsed] = useState(
-    uiState.outputDrawerCollapsed
+    globalState.outputDrawerCollapsed
   );
 
   const drawerPanelRef = useRef<PanelImperativeHandle | null>(null);
@@ -110,7 +110,7 @@ export function ScriptEditor() {
 
     const collapsed = drawerPanelRef.current.isCollapsed();
     setIsDrawerCollapsed(collapsed);
-    updateUIState({ outputDrawerCollapsed: collapsed });
+    updateGlobalState({ outputDrawerCollapsed: collapsed });
   };
 
   return (
@@ -125,9 +125,9 @@ export function ScriptEditor() {
             id="script-editor-outer-panels"
             defaultLayout={{
               "source-panels":
-                uiState.panelSizes.scriptCompiledOutputDrawerSplit,
+                globalState.panelSizes.scriptCompiledOutputDrawerSplit,
               "output-drawer":
-                100 - uiState.panelSizes.scriptCompiledOutputDrawerSplit,
+                100 - globalState.panelSizes.scriptCompiledOutputDrawerSplit,
             }}
             onLayoutChanged={(layout) => {
               if (drawerPanelRef.current?.isCollapsed()) {
@@ -148,9 +148,10 @@ export function ScriptEditor() {
                 style={{ height: "100%" }}
                 defaultLayout={{
                   "typescript-editor":
-                    uiState.panelSizes.scriptCodeEditorHorizontalSplit,
+                    globalState.panelSizes.scriptCodeEditorHorizontalSplit,
                   "scss-editor":
-                    100 - uiState.panelSizes.scriptCodeEditorHorizontalSplit,
+                    100 -
+                    globalState.panelSizes.scriptCodeEditorHorizontalSplit,
                 }}
                 onLayoutChanged={(layout) => {
                   const tsSize = layout["typescript-editor"];
@@ -193,14 +194,14 @@ export function ScriptEditor() {
               id="output-drawer"
               minSize="15%"
               maxSize="60%"
-              defaultSize={`${100 - uiState.panelSizes.scriptCompiledOutputDrawerSplit}%`}
+              defaultSize={`${100 - globalState.panelSizes.scriptCompiledOutputDrawerSplit}%`}
               collapsible
               collapsedSize="36px"
               onResize={onDrawerResize}
             >
               <div className="script-editor--output-drawer">
-                <CompiledOutputDrawer
-                  scriptId={script.id}
+                <ScriptEditorDrawer
+                  script={script}
                   javascript={liveJs}
                   css={liveCss}
                   isCollapsed={isDrawerCollapsed}

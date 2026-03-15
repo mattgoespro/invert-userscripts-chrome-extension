@@ -22,7 +22,7 @@ export function ScriptsPage() {
   const selectedScript = useAppSelector(
     (state) => state.userscripts.currentUserscript
   );
-  const { uiState, updateUIState, updatePanelSizes } = useGlobalState();
+  const { globalState, updateGlobalState, updatePanelSizes } = useGlobalState();
 
   const onCreateScript = async () => {
     dispatch(createUserscript());
@@ -38,7 +38,7 @@ export function ScriptsPage() {
       return;
     }
 
-    const restoredId = uiState.selectedScriptId;
+    const restoredId = globalState.selectedScriptId;
     const target =
       restoredId && scripts[restoredId]
         ? restoredId
@@ -48,7 +48,7 @@ export function ScriptsPage() {
 
   const onScriptSelected = (scriptId: string) => {
     dispatch(setCurrentUserscript(scriptId));
-    updateUIState({ selectedScriptId: scriptId });
+    updateGlobalState({ selectedScriptId: scriptId });
   };
 
   return (
@@ -57,8 +57,8 @@ export function ScriptsPage() {
       id="scripts-page-panels"
       className="scripts--content"
       defaultLayout={{
-        "scripts-sidebar": uiState.panelSizes.scriptListSidebarWidth,
-        "scripts-editor": 100 - uiState.panelSizes.scriptListSidebarWidth,
+        "scripts-sidebar": globalState.panelSizes.scriptListSidebarWidth,
+        "scripts-editor": 100 - globalState.panelSizes.scriptListSidebarWidth,
       }}
       onLayoutChanged={(layout) => {
         const sidebarWidth = layout["scripts-sidebar"];

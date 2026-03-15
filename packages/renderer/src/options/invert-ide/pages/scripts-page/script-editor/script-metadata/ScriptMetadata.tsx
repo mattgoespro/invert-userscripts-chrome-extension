@@ -3,13 +3,12 @@ import { Userscript } from "@shared/model";
 import "./ScriptMetadata.scss";
 import { useAppDispatch } from "@/shared/store/hooks";
 import { AppDispatch } from "@/shared/store/store";
-import { SharedScriptsSelector } from "./shared-scripts-selector/SharedScriptsSelector";
-import { ScriptOptionsPanel } from "./script-options-panel/ScriptOptionsPanel";
-import { FileSizeIndicator } from "./file-size-indicator/FileSizeIndicator";
+import { ModuleImportsSelector } from "./module-imports-selector/ModuleImportsSelector";
 import {
   deleteUserscript,
   updateUserscript,
 } from "@/shared/store/slices/userscripts/thunks.userscripts";
+import { OptionsPanel } from "./options-panel/OptionsPanel";
 
 type ScriptMetadataProps = {
   script: Userscript;
@@ -47,22 +46,22 @@ export function ScriptMetadata({ script }: ScriptMetadataProps) {
       <div className="script-metadata--top-row">
         <Input
           className="script-metadata--name"
+          required
           defaultValue={script.name}
           placeholder="Script name..."
-          onChange={(e) => onUpdateScriptMeta({ name: e.target.value })}
+          onChange={(event) => onUpdateScriptMeta({ name: event.target.value })}
         />
         <Input
           className="script-metadata--url-patterns"
           defaultValue={script.urlPatterns?.join(", ")}
           placeholder="URL Patterns (comma separated)..."
-          onChange={(e) =>
+          onChange={(event) =>
             onUpdateScriptMeta({
-              urlPatterns: e.target.value.split(",").map((p) => p.trim()),
+              urlPatterns: event.target.value.split(",").map((p) => p.trim()),
             })
           }
         />
-        <FileSizeIndicator script={script} />
-        <ScriptOptionsPanel
+        <OptionsPanel
           shared={script.shared ?? false}
           scriptName={script.name}
           moduleName={script.moduleName ?? ""}
@@ -71,7 +70,7 @@ export function ScriptMetadata({ script }: ScriptMetadataProps) {
         />
       </div>
       <div className="script-metadata--imports-row">
-        <SharedScriptsSelector
+        <ModuleImportsSelector
           script={script}
           onToggleSharedScript={onToggleSharedScript}
         />

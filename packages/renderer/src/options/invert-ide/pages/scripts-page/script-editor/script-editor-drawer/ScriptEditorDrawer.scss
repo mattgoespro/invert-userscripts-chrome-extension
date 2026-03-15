@@ -1,0 +1,39 @@
+.compiled-output--wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+
+  .tab-list--bar {
+    flex-shrink: 0;
+    height: 36px;
+    padding: 0 var(--spacing-xs) 0 var(--spacing-md);
+    background: var(--surface-raised);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .compiled-output--collapse-btn {
+    margin-left: auto;
+  }
+
+  .compiled-output--tab-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+
+    &.compiled-output--tab-badge-js {
+      color: #f0db4f;
+      background: rgba(240, 219, 79, 0.12);
+    }
+
+    &.compiled-output--tab-badge-css {
+      color: #6fa8ff;
+      background: rgba(111, 168, 255, 0.12);
+    }
+  }
+}

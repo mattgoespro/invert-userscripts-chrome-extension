@@ -6,17 +6,19 @@ import {
 } from "@/shared/store/slices/monaco-editor";
 import { useEffect, useMemo } from "react";
 import { CodeEditor, CodeEditorProps } from "./CodeEditor";
+import { useToast } from "@/shared/components/toast/ToastProvider";
 
 /**
- * TypeScript-specific wrapper around CodeEditor that configures the Monaco
- * TypeScript language service defaults and syncs shared script type
+ * TypeScript-specific wrapper around {@link CodeEditor} that configures Monaco's
+ * TypeScript language service defaults, and synchronizes shared script type
  * declarations for module import resolution (intellisense).
  */
-export function TypeScriptCodeEditor(props: CodeEditorProps) {
+export function TypeScriptCodeEditor(props: Omit<CodeEditorProps, "language">) {
   const { scriptId, ...rest } = props;
   const sharedScripts = useAppSelector(
     useMemo(() => selectSharedScriptsForUserscript(scriptId), [scriptId])
   );
+  const toast = useToast();
 
   // Wait for the TypeScript contribution module to load (triggered by the child
   // CodeEditor creating a TS model), configure the language service defaults,
@@ -25,20 +27,18 @@ export function TypeScriptCodeEditor(props: CodeEditorProps) {
     const controller = new AbortController();
 
     (async () => {
-      console.log("Ensuring TS defaults...");
       await ensureTypescriptDefaults(controller.signal);
 
       if (controller.signal.aborted) {
-        console.log("Aborted TS defaults setup.");
+        toast.toast({
+          variant: "warning",
+          message: "Aborted TS defaults setup.",
+        });
         return;
       }
 
-      console.log("TS defaults configured.");
-
       if (sharedScripts) {
         syncSharedScriptLibs(sharedScripts);
-      } else {
-        console.log("No shared scripts to sync.");
       }
     })();
 

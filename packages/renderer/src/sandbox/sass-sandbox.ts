@@ -29,30 +29,35 @@ window.addEventListener(
 
     const { id, scss } = event.data;
 
-    try {
-      const result = compileString(scss);
+    // Defer compilation to a separate task to avoid blocking the message handler.
+    // dart-sass compileString() is synchronous and can take hundreds of milliseconds,
+    // which triggers Chrome's "[Violation] 'message' handler took Xms" warning.
+    setTimeout(() => {
+      try {
+        const result = compileString(scss);
 
-      const response: SassCompileResponse = {
-        type: "compile-result",
-        id,
-        success: true,
-        css: result.css,
-      };
+        const response: SassCompileResponse = {
+          type: "compile-result",
+          id,
+          success: true,
+          css: result.css,
+        };
 
-      window.parent.postMessage(response, "*");
-    } catch (error) {
-      const response: SassCompileResponse = {
-        type: "compile-result",
-        id,
-        success: false,
-        error:
-          error instanceof Error
-            ? error.message
-            : "Unknown SCSS compilation error",
-      };
+        window.parent.postMessage(response, "*");
+      } catch (error) {
+        const response: SassCompileResponse = {
+          type: "compile-result",
+          id,
+          success: false,
+          error:
+            error instanceof Error
+              ? error.message
+              : "Unknown SCSS compilation error",
+        };
 
-      window.parent.postMessage(response, "*");
-    }
+        window.parent.postMessage(response, "*");
+      }
+    }, 0);
   }
 );
 

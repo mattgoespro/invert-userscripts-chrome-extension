@@ -39,7 +39,7 @@ export function InvertIde() {
 }
 
 function InvertIdeContent() {
-  const { uiState, updateUIState } = useGlobalState();
+  const { globalState, updateGlobalState } = useGlobalState();
   const dispatch = useAppDispatch();
   const settings = useAppSelector(selectEditorSettings);
 
@@ -65,18 +65,21 @@ function InvertIdeContent() {
   }, [settings.appTheme]);
 
   const onNavigate = (button: SidebarButton) => {
-    updateUIState({ activeSidebarTab: button });
+    updateGlobalState({ activeSidebarTab: button });
   };
 
   return (
     <div className="invert-ide--dashboard">
       <DashboardHeader />
       <div className="invert-ide--dashboard-page">
-        <Sidebar active={uiState.activeSidebarTab} onNavigate={onNavigate} />
+        <Sidebar
+          active={globalState.activeSidebarTab}
+          onNavigate={onNavigate}
+        />
         <div className="invert-ide--dashboard-page-content">
-          {uiState.activeSidebarTab === "scripts" && <ScriptsPage />}
-          {uiState.activeSidebarTab === "modules" && <ModulesPage />}
-          {uiState.activeSidebarTab === "settings" && <Settings />}
+          {globalState.activeSidebarTab === "scripts" && <ScriptsPage />}
+          {globalState.activeSidebarTab === "modules" && <ModulesPage />}
+          {globalState.activeSidebarTab === "settings" && <Settings />}
         </div>
       </div>
     </div>

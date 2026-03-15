@@ -114,7 +114,9 @@ export function Settings() {
             type="number"
             label="Font Size"
             value={settings.fontSize}
-            onChange={(e) => handleFontSizeChange(parseInt(e.target.value))}
+            onChange={(event) =>
+              handleFontSizeChange(parseInt(event.target.value))
+            }
             min="8"
             max="32"
           />
@@ -129,7 +131,7 @@ export function Settings() {
             type="number"
             label="Tab Size"
             value={settings.tabSize}
-            onChange={(e) => handleTabSizeChange(parseInt(e.target.value))}
+            onChange={(event) => handleTabSizeChange(parseInt(event.target.value))}
             min="2"
             max="8"
           />

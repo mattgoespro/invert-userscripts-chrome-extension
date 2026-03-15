@@ -1,18 +1,18 @@
-import { useRef, useState, useEffect, useCallback } from "react";
+import { Input } from "@/shared/components/input/Input";
+import {
+  Panel,
+  PanelDivider,
+  PanelHeader,
+  PanelSection,
+} from "@/shared/components/panel/Panel";
 import {
   EllipsisVerticalIcon,
   Share2Icon,
   Trash2Icon,
   WandSparklesIcon,
 } from "lucide-react";
-import { Input } from "@/shared/components/input/Input";
-import {
-  Panel,
-  PanelHeader,
-  PanelSection,
-  PanelDivider,
-} from "@/shared/components/panel/Panel";
-import "./ScriptOptionsPanel.scss";
+import { useCallback, useEffect, useRef, useState } from "react";
+import "./OptionsPanel.scss";
 
 /**
  * Sanitizes a script name into a valid kebab-case module name.
@@ -27,7 +27,7 @@ function sanitizeModuleName(name: string): string {
     .replace(/^-|-$/g, "");
 }
 
-type ScriptOptionsPanelProps = {
+type OptionsPanelProps = {
   shared: boolean;
   scriptName: string;
   moduleName: string;
@@ -35,12 +35,12 @@ type ScriptOptionsPanelProps = {
   onDelete: () => void;
 };
 
-export function ScriptOptionsPanel({
+export function OptionsPanel({
   scriptName,
   moduleName,
   onModuleNameChange,
   onDelete,
-}: ScriptOptionsPanelProps) {
+}: OptionsPanelProps) {
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const moduleInputRef = useRef<HTMLInputElement>(null);
@@ -78,35 +78,35 @@ export function ScriptOptionsPanel({
   };
 
   return (
-    <div className="script-options--wrapper" ref={wrapperRef}>
+    <div className="options-panel--wrapper" ref={wrapperRef}>
       <button
         type="button"
-        className={`script-options--trigger ${open ? "active" : ""}`}
+        className={`options-panel--trigger ${open ? "active" : ""}`}
         onClick={() => setOpen(!open)}
         title="Script options"
       >
         <EllipsisVerticalIcon size={16} />
       </button>
       {open && (
-        <Panel className="script-options--panel" minWidth="18rem">
+        <Panel className="options-panel--panel" minWidth="18rem">
           <PanelHeader icon={<Share2Icon size={12} />}>
             script options
           </PanelHeader>
           <PanelSection>
-            <span className="script-options--hint">
+            <span className="options-panel--hint">
               Set a module name to share this script with other scripts.
             </span>
-            <div className="script-options--module-input-wrapper">
+            <div className="options-panel--module-input-wrapper">
               <Input
                 ref={moduleInputRef}
-                className="script-options--module-input"
+                className="options-panel--module-input"
                 defaultValue={moduleName}
                 placeholder="module-name"
-                onChange={(e) => onModuleNameChange(e.target.value)}
+                onChange={(event) => onModuleNameChange(event.target.value)}
               />
               <button
                 type="button"
-                className="script-options--autofill-btn"
+                className="options-panel--autofill-btn"
                 onClick={handleAutoFillModuleName}
                 title="Auto-fill from script name"
               >
@@ -118,7 +118,7 @@ export function ScriptOptionsPanel({
           <PanelSection>
             <button
               type="button"
-              className="script-options--delete-btn"
+              className="options-panel--delete-btn"
               onClick={handleDelete}
             >
               <Trash2Icon size={13} />

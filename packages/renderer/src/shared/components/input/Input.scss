@@ -45,4 +45,12 @@
       outline: none;
     }
   }
+
+  .input--field--invalid {
+    border-color: var(--base-danger);
+
+    &::placeholder {
+      color: var(--base-danger);
+    }
+  }
 }
