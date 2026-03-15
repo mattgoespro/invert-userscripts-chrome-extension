@@ -17,7 +17,6 @@ export function generateSharedScriptDeclaration(
     true,
     ts.ScriptKind.TS
   );
-  console.log("Generated shared script source file: ", sourceFile);
 
   const lines: string[] = [];
   const printer = ts.createPrinter({ removeComments: true });
