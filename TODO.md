@@ -15,7 +15,11 @@
 ## Performance
 
 - Identify and reduce redundant dispatches of _Redux_ state actions.
-- Investigate and optimize the performance of the code editor, especially when handling large userscripts or multiple shared scripts.
+- Investigate and optimize the performance of the code editor, especially in regards to:
+  - Syntax highlighting
+  - Handling large userscripts
+  - Managing multiple imported shared scripts
+  - Shared module declarations briefly highlighting as errors until the type-checking process completes
 
 ## Bundling
 
