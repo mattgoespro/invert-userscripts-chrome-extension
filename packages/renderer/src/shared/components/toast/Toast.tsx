@@ -1,5 +1,3 @@
-import "./Toast.scss";
-
 import { useCallback, useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
 import type { ToastItem, ToastVariant } from "./model";

@@ -1,5 +1,5 @@
 import { forwardRef } from "react";
-import "./CodeComment.scss";
+import clsx from "clsx";
 
 type CodeCommentProps = {
   children: string;
@@ -8,9 +8,17 @@ type CodeCommentProps = {
 export const CodeComment = forwardRef<HTMLElement, CodeCommentProps>(
   ({ children, className = "", ...rest }, ref) => {
     return (
-      <code ref={ref} className={`code-comment ${className}`.trim()} {...rest}>
-        <span className="code-comment--prefix">//</span>
-        <span className="code-comment--text">{children}</span>
+      <code
+        ref={ref}
+        className={clsx(
+          "inline-flex items-center gap-2 font-mono text-sm font-normal",
+          "leading-[1.6] tracking-[-0.01em] opacity-60 italic select-none",
+          className
+        )}
+        {...rest}
+      >
+        <span className="text-syntax-comment not-italic">//</span>
+        <span className="text-syntax-comment">{children}</span>
       </code>
     );
   }

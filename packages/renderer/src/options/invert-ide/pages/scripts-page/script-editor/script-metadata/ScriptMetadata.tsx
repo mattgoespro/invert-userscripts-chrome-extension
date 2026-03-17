@@ -1,6 +1,5 @@
 import { Input } from "@/shared/components/input/Input";
 import { Userscript } from "@shared/model";
-import "./ScriptMetadata.scss";
 import { useAppDispatch } from "@/shared/store/hooks";
 import { AppDispatch } from "@/shared/store/store";
 import { ModuleImportsSelector } from "./module-imports-selector/ModuleImportsSelector";
@@ -42,17 +41,17 @@ export function ScriptMetadata({ script }: ScriptMetadataProps) {
   };
 
   return (
-    <div className="script-metadata--wrapper">
-      <div className="script-metadata--top-row">
+    <div className="flex flex-col gap-sm w-full">
+      <div className="script-metadata--top-row flex gap-sm items-center w-full">
         <Input
-          className="script-metadata--name"
+          className="basis-1/4"
           required
           defaultValue={script.name}
           placeholder="Script name..."
           onChange={(event) => onUpdateScriptMeta({ name: event.target.value })}
         />
         <Input
-          className="script-metadata--url-patterns"
+          className="script-metadata--url-patterns flex-1 relative"
           defaultValue={script.urlPatterns?.join(", ")}
           placeholder="URL Patterns (comma separated)..."
           onChange={(event) =>
@@ -69,7 +68,7 @@ export function ScriptMetadata({ script }: ScriptMetadataProps) {
           onDelete={onDeleteScript}
         />
       </div>
-      <div className="script-metadata--imports-row">
+      <div className="flex items-center w-full">
         <ModuleImportsSelector
           script={script}
           onToggleSharedScript={onToggleSharedScript}

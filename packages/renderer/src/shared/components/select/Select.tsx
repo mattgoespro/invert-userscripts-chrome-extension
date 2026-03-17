@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import "./Select.scss";
+import clsx from "clsx";
 
 type SelectOption = {
   value: string;
@@ -85,17 +85,37 @@ export function Select<T>({ label, options, value, onChange }: SelectProps<T>) {
   const stringValue = typeof value === "string" ? value : JSON.stringify(value);
 
   return (
-    <div className="select--wrapper" ref={wrapperRef}>
-      {label && <label className="select--label">{label}</label>}
+    <div className="relative flex flex-col gap-2 font-mono" ref={wrapperRef}>
+      {label && (
+        <label className="font-mono text-xs font-normal leading-none text-label-fg uppercase">
+          {label}
+        </label>
+      )}
       <button
-        className={`select--toggle ${expanded ? "select--toggle-expanded" : ""}`}
+        className={clsx(
+          "flex items-center gap-2 w-full py-2 px-3.5 h-(--input-height)",
+          "bg-select-bg border border-select-border rounded-default",
+          "text-text-muted-strong cursor-pointer font-mono text-[11px] font-medium",
+          "tracking-[0.02em] select-none",
+          "transition-all duration-200",
+          "hover:border-accent-border hover:bg-surface-raised hover:text-foreground",
+          "focus-visible:outline-none focus-visible:border-accent-border focus-visible:shadow-[0_0_0_2px_var(--accent-muted)]",
+          expanded &&
+            "border-accent-border bg-surface-raised text-foreground shadow-[0_0_0_2px_var(--accent-muted),0_4px_16px_rgba(0,0,0,0.25)]"
+        )}
         type="button"
         onClick={() => setExpanded((prev) => !prev)}
         onKeyDown={handleToggleKeyDown}
       >
-        <span className="select--toggle-value">{selectedLabel}</span>
+        <span className="flex-1 text-left whitespace-nowrap overflow-hidden text-ellipsis">
+          {selectedLabel}
+        </span>
         <span
-          className={`select--toggle-chevron ${expanded ? "select--toggle-chevron-open" : ""}`}
+          className={clsx(
+            "inline-flex text-[10px] text-text-muted-faint shrink-0",
+            "transition-transform duration-250 ease-in-out",
+            expanded && "rotate-90 text-accent"
+          )}
         >
           ▸
         </span>
@@ -108,7 +128,17 @@ export function Select<T>({ label, options, value, onChange }: SelectProps<T>) {
               <button
                 key={option.value}
                 type="button"
-                className={`select--option ${option.value === stringValue ? "select--option-active" : ""}`}
+                className={clsx(
+                  "flex items-center gap-2 w-full py-1.75 px-2.5",
+                  "bg-transparent border-none rounded-[calc(var(--geometry-border-radius)-2px)]",
+                  "text-text-muted-strong cursor-pointer font-mono text-[11px] font-medium",
+                  "tracking-[0.02em] text-left whitespace-nowrap overflow-hidden text-ellipsis",
+                  "transition-colors duration-120",
+                  "hover:bg-hover-overlay hover:text-foreground",
+                  "active:bg-active-overlay",
+                  option.value === stringValue &&
+                    "text-accent bg-accent-subtle hover:bg-accent-muted"
+                )}
                 onClick={() => handleSelect(option.value)}
               >
                 {option.label ?? option.value}

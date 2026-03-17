@@ -1,6 +1,5 @@
 import { LucideIcon } from "lucide-react";
 import { IconButton } from "@/shared/components/icon-button/IconButton";
-import "./SidebarNavButton.scss";
 
 type SidebarNavButtonProps = {
   icon: LucideIcon;

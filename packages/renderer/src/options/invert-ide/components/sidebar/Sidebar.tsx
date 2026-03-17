@@ -1,6 +1,5 @@
 import { SidebarTab } from "@shared/model";
 import { ClipboardPenIcon, PackageIcon, SettingsIcon } from "lucide-react";
-import "./Sidebar.scss";
 import { SidebarNavButton } from "./sidebar-nav-button/SidebarNavButton";
 
 /** Alias for {@link SidebarTab} — kept for backwards compatibility with existing consumers. */
@@ -13,7 +12,7 @@ interface SidebarProps {
 
 export function Sidebar({ active, onNavigate }: SidebarProps) {
   return (
-    <div className="sidebar--wrapper">
+    <div className="flex flex-col items-center gap-1 py-sm bg-surface-raised border-r border-border relative">
       <SidebarNavButton
         icon={ClipboardPenIcon}
         active={active === "scripts"}

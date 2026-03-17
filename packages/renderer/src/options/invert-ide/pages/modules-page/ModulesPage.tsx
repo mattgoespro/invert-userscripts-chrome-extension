@@ -1,5 +1,4 @@
 import { GlobalModule, GlobalModules } from "@shared/model";
-import "./ModulesPage.scss";
 import { ChromeSyncStorage } from "@shared/storage";
 import { useState } from "react";
 import { Button } from "@/shared/components/button/Button";
@@ -50,21 +49,29 @@ export function ModulesPage() {
   };
 
   return (
-    <div className="modules--content">
-      <div className="modules--header">
+    <div className="flex-1 p-(--page-padding)">
+      <div className="flex justify-between items-center mb-lg pb-sm border-b border-border">
         <CodeLine code="import { Modules } from 'cdn'" />
         <Button onClick={handleCreateModule}>+ Add Module</Button>
       </div>
-      <div className="modules--list">
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-4 h-[calc(100%-4rem)]">
         {Object.values(modules ?? {}).map((module) => (
-          <div key={module.id} className="modules--list-item">
-            <div className="modules--list-item-info">
-              <Typography variant="code" className="modules--list-item-name">
+          <div
+            key={module.id}
+            className="bg-surface-raised border border-border rounded-default p-md flex flex-col gap-md transition-colors duration-150 hover:border-accent-muted"
+          >
+            <div className="flex-1">
+              <Typography
+                variant="code"
+                className="block text-[15px] text-syntax-type mb-sm"
+              >
                 {module.name}
               </Typography>
-              <div className="modules--list-item-url">{module.url}</div>
+              <div className="font-mono text-xs text-text-muted break-all p-sm px-md bg-surface-overlay rounded-default border border-border-subtle">
+                {module.url}
+              </div>
             </div>
-            <div className="modules--list-item-actions">
+            <div className="flex justify-between items-center pt-sm border-t border-border-subtle">
               <Checkbox
                 label="Enabled"
                 checked={module.enabled}
@@ -72,7 +79,7 @@ export function ModulesPage() {
               />
               <IconButton
                 icon={DeleteIcon}
-                className="btn-delete"
+                variant="danger"
                 onClick={() => handleDeleteModule(module.id)}
               >
                 <DeleteIcon />
@@ -81,7 +88,7 @@ export function ModulesPage() {
           </div>
         ))}
         {Object.values(modules ?? {}).length === 0 && (
-          <div className="modules--list-items-empty">
+          <div className="col-span-full flex flex-col items-center justify-center text-center">
             <CodeComment>No modules imported yet.</CodeComment>
           </div>
         )}

@@ -15,7 +15,6 @@ import {
 import { EditorThemeName, getThemeOptions } from "@packages/monaco";
 import { AppThemeName } from "@shared/model";
 import { useEffect } from "react";
-import "./SettingsPage.scss";
 import { ThemePreview } from "./theme-preview/ThemePreview";
 
 const APP_THEME_OPTIONS = [
@@ -65,29 +64,35 @@ export function Settings() {
 
   if (isLoading) {
     return (
-      <div className="settings--content">
-        <div className="settings--header">
-          <span className="settings--header-prefix">config.</span>
+      <div className="flex-1 p-(--page-padding)">
+        <div className="flex items-center gap-1 mb-lg pb-sm border-b border-border">
+          <span className="font-mono text-[1.25rem] text-syntax-param">
+            config.
+          </span>
           <Typography variant="subtitle">Settings</Typography>
         </div>
-        <div className="settings--loading">
-          <Typography variant="code">Loading settings...</Typography>
+        <div className="flex items-center justify-center p-2xl">
+          <Typography variant="code" className="text-text-muted">
+            Loading settings...
+          </Typography>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="settings--content">
-      <div className="settings--header">
-        <span className="settings--header-prefix">config.</span>
+    <div className="flex-1 p-(--page-padding)">
+      <div className="flex items-center gap-1 mb-lg pb-sm border-b border-border">
+        <span className="font-mono text-[1.25rem] text-syntax-param">
+          config.
+        </span>
         <Typography variant="subtitle">Settings</Typography>
       </div>
-      <div className="settings--section">
+      <div className="bg-surface-raised border border-border rounded-default p-(--section-padding) mb-(--section-gap)">
         <Typography variant="section-title" className="settings--section-title">
           Application Theme
         </Typography>
-        <div className="settings--section-fields">
+        <div className="flex flex-col gap-(--field-gap)">
           <Select
             label="Theme"
             value={settings.appTheme ?? "graphite"}
@@ -96,18 +101,18 @@ export function Settings() {
           />
         </div>
       </div>
-      <div className="settings--section">
+      <div className="bg-surface-raised border border-border rounded-default p-(--section-padding) mb-(--section-gap)">
         <Typography variant="section-title" className="settings--section-title">
           Editor Appearance
         </Typography>
-        <div className="settings--section-fields">
+        <div className="flex flex-col gap-(--field-gap)">
           <Select
             label="Theme"
             value={settings.theme}
             onChange={handleThemeChange}
             options={getThemeOptions()}
           />
-          <div className="settings--theme-preview-wrapper">
+          <div className="pt-1">
             {monacoReady && <ThemePreview theme={settings.theme} />}
           </div>
           <Input
@@ -122,16 +127,18 @@ export function Settings() {
           />
         </div>
       </div>
-      <div className="settings--section">
+      <div className="bg-surface-raised border border-border rounded-default p-(--section-padding) mb-(--section-gap)">
         <Typography variant="section-title" className="settings--section-title">
           Formatting
         </Typography>
-        <div className="settings--section-fields">
+        <div className="flex flex-col gap-(--field-gap)">
           <Input
             type="number"
             label="Tab Size"
             value={settings.tabSize}
-            onChange={(event) => handleTabSizeChange(parseInt(event.target.value))}
+            onChange={(event) =>
+              handleTabSizeChange(parseInt(event.target.value))
+            }
             min="2"
             max="8"
           />

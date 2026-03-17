@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from "react";
-import "./StoragePreview.scss";
 
 export function StoragePreview() {
   const [storageData, setStorageData] = useState<Record<string, unknown>>({});
@@ -45,7 +44,7 @@ export function StoragePreview() {
   }, [fetchStorage]);
 
   return (
-    <pre className="storage-preview--json">
+    <pre className="m-0 py-3 px-3.5 font-mono text-[11px] leading-[1.6] text-text-muted whitespace-pre">
       {JSON.stringify(storageData, null, 2)}
     </pre>
   );

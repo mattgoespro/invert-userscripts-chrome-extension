@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import "./ThemeSwitcher.scss";
+import clsx from "clsx";
 
 type ThemeOption = {
   id: string;
@@ -92,7 +92,10 @@ export function useActiveTheme() {
 
 export function ThemeSwitcherIcon({ accent }: { accent: string }) {
   return (
-    <span className="theme-switcher--swatch" style={{ background: accent }} />
+    <span
+      className="w-2.5 h-2.5 rounded-full shrink-0 border border-white/10"
+      style={{ background: accent }}
+    />
   );
 }
 
@@ -115,29 +118,29 @@ export function ThemeSwitcher() {
               </div>
             )}
             <button
-              className={
-                "theme-switcher--option" +
-                (theme.id === activeTheme
-                  ? " theme-switcher--option-active"
-                  : "")
-              }
+              className={clsx(
+                "flex items-center gap-2.5 py-2 px-2.5 rounded-[3px] border-none",
+                "bg-transparent text-text-muted cursor-pointer font-mono text-[11px] text-left",
+                "transition-colors duration-100",
+                "hover:bg-hover-overlay hover:text-foreground",
+                theme.id === activeTheme &&
+                  "text-accent bg-accent-subtle hover:bg-accent-muted hover:text-accent"
+              )}
               onClick={() => handleSelect(theme.id)}
             >
-              <span className="theme-switcher--option-swatches">
+              <span className="flex gap-0.75 shrink-0">
                 <span
-                  className="theme-switcher--option-swatch"
+                  className="w-3 h-3 rounded-[3px] border border-white/8"
                   style={{ background: theme.surface }}
                 />
                 <span
-                  className="theme-switcher--option-swatch"
+                  className="w-3 h-3 rounded-[3px] border border-white/8"
                   style={{ background: theme.accent }}
                 />
               </span>
-              <span className="theme-switcher--option-label">
-                {theme.label}
-              </span>
+              <span className="flex-1">{theme.label}</span>
               {theme.id === activeTheme && (
-                <span className="theme-switcher--option-check">&#10003;</span>
+                <span className="text-xs text-accent shrink-0">&#10003;</span>
               )}
             </button>
           </div>

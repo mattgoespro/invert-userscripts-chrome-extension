@@ -4,7 +4,6 @@ import { useAppSelector } from "@/shared/store/hooks";
 import { selectSharedUserscripts } from "@/shared/store/slices/userscripts";
 import { Userscript } from "@shared/model";
 import { PackageIcon } from "lucide-react";
-import "./ModuleImportsSelector.scss";
 
 type SharedScriptsSelectorProps = {
   script: Userscript;
@@ -24,15 +23,12 @@ export function ModuleImportsSelector({
 
   if (availableSharedScripts.length === 0) {
     return (
-      <div className="module-imports-selector--wrapper module-imports-selector--empty">
-        <div className="module-imports-selector--empty-state">
-          <PackageIcon
-            size={14}
-            className="module-imports-selector--empty-icon"
-          />
+      <div className="relative flex items-center gap-3 px-4 bg-surface-overlay border border-dashed border-border rounded-default opacity-60">
+        <div className="flex items-center gap-1.5">
+          <PackageIcon size={14} className="text-text-muted" />
           <Typography
             variant="caption"
-            className="module-imports-selector--empty-text"
+            className="font-mono text-[11px] text-text-muted italic"
           >
             No shared scripts available
           </Typography>
@@ -44,17 +40,16 @@ export function ModuleImportsSelector({
   const selectedIds = new Set(script.sharedScripts ?? []);
 
   return (
-    <div className="module-imports-selector--wrapper">
-      <div className="module-imports-selector--header">
-        <PackageIcon
-          size={13}
-          className="module-imports-selector--header-icon"
-        />
-        <span className="module-imports-selector--header-label">imports</span>
+    <div className="relative flex items-center gap-3 px-4 bg-surface-overlay border border-border rounded-default">
+      <div className="flex items-center gap-1.5 shrink-0">
+        <PackageIcon size={13} className="text-syntax-keyword opacity-75" />
+        <span className="font-mono text-[10px] text-syntax-keyword tracking-[0.01em] select-none">
+          imports
+        </span>
       </div>
-      <div className="module-imports-selector--list">
+      <div className="flex items-center gap-sm flex-wrap">
         {availableSharedScripts.map((shared) => (
-          <div key={shared.id} className="module-imports-selector--item">
+          <div key={shared.id} className="flex items-center">
             <Checkbox
               checked={selectedIds.has(shared.id)}
               onChange={(checked) => onToggleSharedScript(shared.id, checked)}

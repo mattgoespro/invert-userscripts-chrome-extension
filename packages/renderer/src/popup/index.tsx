@@ -1,5 +1,5 @@
 import { createRoot } from "react-dom/client";
 import { InvertIdePopup } from "./invert-ide-popup/InvertIdePopup";
-import "../assets/styles/_index.scss";
+import "../assets/styles/tailwind.css";
 
 createRoot(document.getElementById("root")).render(<InvertIdePopup />);

@@ -1,5 +1,4 @@
 import { Separator } from "react-resizable-panels";
-import "./ResizeHandle.scss";
 import { forwardRef } from "react";
 
 type ResizeHandleProps = {

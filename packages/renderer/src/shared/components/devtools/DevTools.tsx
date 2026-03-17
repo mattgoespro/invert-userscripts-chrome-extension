@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Wrench } from "lucide-react";
 import { DevToolsItem } from "./devtools-item/DevToolsItem";
 import { StoragePreview } from "./storage-preview/StoragePreview";
-import "./DevTools.scss";
+import clsx from "clsx";
 
 /**
  * Clamp a value between min and max.
@@ -78,14 +78,18 @@ export function DevTools() {
   return (
     <div
       ref={rootRef}
-      className="app-dev-tools"
+      className="fixed z-9999 font-mono"
       style={{ left: position.x, bottom: position.y }}
     >
       <button
-        className={
-          "app-dev-tools--trigger" +
-          (open ? " app-dev-tools--trigger-active" : "")
-        }
+        className={clsx(
+          "flex items-center justify-center w-8 h-8 p-0",
+          "border border-border rounded-default bg-surface-raised text-text-muted",
+          "cursor-grab touch-none select-none transition-colors duration-150",
+          "hover:border-accent-border hover:text-foreground",
+          "active:cursor-grabbing",
+          open && "border-accent-border text-accent bg-accent-subtle"
+        )}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
@@ -95,12 +99,18 @@ export function DevTools() {
       </button>
 
       {open && (
-        <div className="app-dev-tools--menu">
-          <div className="app-dev-tools--menu-header">
-            <span className="app-dev-tools--menu-prefix">{"// "}</span>
+        <div
+          className={clsx(
+            "absolute bottom-[calc(100%+8px)] left-0 min-w-60",
+            "flex flex-col bg-surface-raised border border-border rounded-default",
+            "overflow-hidden animate-devtools-reveal"
+          )}
+        >
+          <div className="px-3.5 py-2.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-text-muted-strong border-b border-border-subtle">
+            <span className="text-text-muted-faint font-normal">{"// "}</span>
             devtools
           </div>
-          <div className="app-dev-tools--menu-items">
+          <div className="flex flex-col p-1.5 gap-0.5">
             <DevToolsItem
               name="chrome.storage.sync"
               panel={<StoragePreview />}

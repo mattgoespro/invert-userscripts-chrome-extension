@@ -13,7 +13,6 @@ import { useEffect } from "react";
 import { Group, Panel } from "react-resizable-panels";
 import { ScriptEditor } from "./script-editor/ScriptEditor";
 import { ScriptList } from "./script-list/ScriptList";
-import "./ScriptsPage.scss";
 import { createUserscript } from "@/shared/store/slices/userscripts/thunks.userscripts";
 
 export function ScriptsPage() {
@@ -55,7 +54,7 @@ export function ScriptsPage() {
     <Group
       orientation="horizontal"
       id="scripts-page-panels"
-      className="scripts--content"
+      className="flex-1 h-full min-w-0 overflow-hidden"
       defaultLayout={{
         "scripts-sidebar": globalState.panelSizes.scriptListSidebarWidth,
         "scripts-editor": 100 - globalState.panelSizes.scriptListSidebarWidth,
@@ -68,8 +67,8 @@ export function ScriptsPage() {
       }}
     >
       <Panel id="scripts-sidebar" minSize="15%" maxSize="30%">
-        <div className="scripts--sidebar">
-          <div className="scripts--sidebar-header">
+        <div className="h-full bg-surface-raised border-r border-border flex flex-col">
+          <div className="scripts--sidebar-header flex justify-between items-center p-md border-b border-border">
             <Typography variant="subtitle">Scripts</Typography>
             <IconButton
               icon={PlusIcon}
@@ -86,7 +85,7 @@ export function ScriptsPage() {
         {selectedScript ? (
           <ScriptEditor />
         ) : (
-          <CodeComment className="scripts--empty-editor">
+          <CodeComment className="m-auto">
             Select a script to start editing.
           </CodeComment>
         )}

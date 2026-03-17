@@ -113,12 +113,8 @@ export default (
           exclude: /node_modules/,
         },
         {
-          test: /\.scss$/,
-          use: ["style-loader", "css-loader", "sass-loader"],
-        },
-        {
           test: /\.css$/,
-          use: ["style-loader", "css-loader"],
+          use: ["style-loader", "css-loader", "postcss-loader"],
         },
         {
           // Fonts bundled with monaco-editor
@@ -129,21 +125,14 @@ export default (
           },
         },
       ],
-      noParse: [
-        /node_modules[\\/]typescript[\\/]lib[\\/]typescript\.js/,
-        /node_modules[\\/]sass[\\/]sass\.dart\.js/,
-      ],
+      noParse: [/node_modules[\\/]typescript[\\/]lib[\\/]typescript\.js/],
     },
     resolve: {
-      extensions: [".tsx", ".ts", ".js", ".scss", ".css"],
+      extensions: [".tsx", ".ts", ".js", ".css"],
       alias: {
         "@": path.resolve(__dirname, "packages/renderer/src/"),
         "@shared": path.resolve(__dirname, "packages/shared/src/"),
         "@packages/monaco": path.resolve(__dirname, "packages/monaco/src/"),
-        "@assets/styles/invert-ide": path.resolve(
-          __dirname,
-          "packages/renderer/src/assets/styles/_index.scss"
-        ),
         "monaco-editor-core": path.resolve(
           __dirname,
           "node_modules",
@@ -266,12 +255,6 @@ export default (
                   name: "monaco-editor",
                   filename: "monaco-editor/[chunkhash].js",
                   chunks: "all",
-                },
-                sass: {
-                  test: /[\\/]node_modules[\\/]sass[\\/]/,
-                  name: "sass",
-                  filename: "sass/[chunkhash].js",
-                  chunks: (chunk) => chunk.name === "sass-sandbox",
                 },
               },
             }

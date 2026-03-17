@@ -2,7 +2,6 @@ import { Component } from "react";
 import { FallbackProps } from "react-error-boundary";
 import { Typography } from "../typography/Typography";
 import { Button } from "../button/Button";
-import "./ErrorBoundary.scss";
 
 export class ErrorBoundary extends Component<FallbackProps> {
   private getErrorName(): string {

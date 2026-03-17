@@ -6,7 +6,6 @@ import {
   useGlobalState,
 } from "@/options/invert-ide/contexts/global-state.context";
 import { useEffect } from "react";
-import "./InvertIde.scss";
 import { DashboardHeader } from "./components/dashboard-header/DashboardHeader";
 import { Sidebar, SidebarButton } from "./components/sidebar/Sidebar";
 import { ModulesPage } from "./pages/modules-page/ModulesPage";
@@ -69,14 +68,14 @@ function InvertIdeContent() {
   };
 
   return (
-    <div className="invert-ide--dashboard">
+    <div className="flex flex-col h-full bg-surface-base relative overflow-hidden">
       <DashboardHeader />
-      <div className="invert-ide--dashboard-page">
+      <div className="flex flex-1 relative">
         <Sidebar
           active={globalState.activeSidebarTab}
           onNavigate={onNavigate}
         />
-        <div className="invert-ide--dashboard-page-content">
+        <div className="flex-1 flex relative *:animate-page-reveal">
           {globalState.activeSidebarTab === "scripts" && <ScriptsPage />}
           {globalState.activeSidebarTab === "modules" && <ModulesPage />}
           {globalState.activeSidebarTab === "settings" && <Settings />}

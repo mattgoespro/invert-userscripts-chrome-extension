@@ -1,5 +1,3 @@
-import "./Switch.scss";
-
 type SwitchProps = {
   checked: boolean;
   onChange: (checked: boolean) => void;
@@ -8,7 +6,7 @@ type SwitchProps = {
 
 export function Switch({ checked, onChange, label }: SwitchProps) {
   return (
-    <label className={[`switch--wrapper`].join(" ")}>
+    <label className="switch--wrapper">
       <input
         className="switch--input"
         type="checkbox"
@@ -16,7 +14,11 @@ export function Switch({ checked, onChange, label }: SwitchProps) {
         onChange={(event) => onChange(event.target.checked)}
       />
       <span className="switch--slider"></span>
-      {label && <span className="switch--label">{label}</span>}
+      {label && (
+        <span className="flex items-center gap-2.5 cursor-pointer font-mono text-[13px] text-text-muted-strong">
+          {label}
+        </span>
+      )}
     </label>
   );
 }

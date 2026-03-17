@@ -23,6 +23,7 @@
     "sibiraj-s.vscode-scss-formatter",
     "yzhang.markdown-all-in-one",
     "davidanson.vscode-markdownlint",
-    "eamodio.gitlens"
+    "eamodio.gitlens",
+    "bradlc.vscode-tailwindcss"
   ]
 }

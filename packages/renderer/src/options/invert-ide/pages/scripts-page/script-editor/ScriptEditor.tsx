@@ -14,7 +14,6 @@ import { useEffect, useRef, useState } from "react";
 import { Group, Panel, PanelImperativeHandle } from "react-resizable-panels";
 import { ScriptEditorDrawer } from "./script-editor-drawer/ScriptEditorDrawer";
 import { ScriptMetadata } from "./script-metadata/ScriptMetadata";
-import "./ScriptEditor.scss";
 
 export function ScriptEditor() {
   const dispatch = useAppDispatch();
@@ -114,11 +113,11 @@ export function ScriptEditor() {
   };
 
   return (
-    <div className="script-editor--editor-area">
-      <div className="script-editor--editor-header">
+    <div className="flex flex-col h-full min-w-0 gap-sm overflow-hidden">
+      <div className="bg-surface-raised border border-border rounded-default p-sm px-md flex items-center gap-sm">
         <ScriptMetadata key={script.id} script={script} />
       </div>
-      <div className="script-editor--editor-container">
+      <div className="flex-1 min-h-0 min-w-0 overflow-hidden">
         {monacoReady && (
           <Group
             orientation="vertical"
@@ -163,7 +162,7 @@ export function ScriptEditor() {
                 }}
               >
                 <Panel id="typescript-editor" minSize="20%" maxSize="80%">
-                  <div className="script-editor--code-editor">
+                  <div className="h-full rounded-default overflow-hidden border border-border bg-surface-base shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]">
                     <TypeScriptCodeEditor
                       modelId={script.id}
                       scriptId={script.id}
@@ -176,7 +175,7 @@ export function ScriptEditor() {
                 </Panel>
                 <ResizeHandle direction="horizontal" />
                 <Panel id="scss-editor" minSize="20%" maxSize="80%">
-                  <div className="script-editor--code-editor">
+                  <div className="h-full rounded-default overflow-hidden border border-border bg-surface-base shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]">
                     <CodeEditor
                       modelId={script.id}
                       scriptId={script.id}
@@ -199,7 +198,7 @@ export function ScriptEditor() {
               collapsedSize="36px"
               onResize={onDrawerResize}
             >
-              <div className="script-editor--output-drawer">
+              <div className="h-full overflow-hidden rounded-default border border-border bg-surface-base shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]">
                 <ScriptEditorDrawer
                   script={script}
                   javascript={liveJs}

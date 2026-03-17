@@ -7,7 +7,6 @@ import { TabList } from "@/shared/components/tab-list/TabList";
 import { TabListTitle } from "@/shared/components/tab-list/TabListTitle";
 import { ScriptEditorDrawerTab } from "@shared/storage";
 import { ChevronsDown, ChevronsUp } from "lucide-react";
-import "./ScriptEditorDrawer.scss";
 import { Typography } from "@/shared/components/typography/Typography";
 import { Userscript } from "@shared/model";
 
@@ -42,7 +41,7 @@ export function ScriptEditorDrawer({
       >
         <Typography
           variant="caption"
-          className="compiled-output--tab-badge compiled-output--tab-badge-js"
+          className="inline-flex items-center py-px px-1.25 rounded-[3px] text-[9px] font-bold tracking-[0.05em] uppercase text-[#f0db4f] bg-[rgba(240,219,79,0.12)]"
         >
           js
         </Typography>
@@ -60,7 +59,7 @@ export function ScriptEditorDrawer({
         )}
       </Tab>
       <Tab active={activeTab === "css"} onClick={() => onTabChange("css")}>
-        <span className="compiled-output--tab-badge compiled-output--tab-badge-css">
+        <span className="inline-flex items-center py-px px-1.25 rounded-[3px] text-[9px] font-bold tracking-[0.05em] uppercase text-[#6fa8ff] bg-[rgba(111,168,255,0.12)]">
           css
         </span>
         css

@@ -12,7 +12,7 @@ import {
   WandSparklesIcon,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import "./OptionsPanel.scss";
+import clsx from "clsx";
 
 /**
  * Sanitizes a script name into a valid kebab-case module name.
@@ -78,35 +78,40 @@ export function OptionsPanel({
   };
 
   return (
-    <div className="options-panel--wrapper" ref={wrapperRef}>
+    <div className="relative shrink-0" ref={wrapperRef}>
       <button
         type="button"
-        className={`options-panel--trigger ${open ? "active" : ""}`}
+        className={clsx(
+          "flex items-center justify-center w-(--input-height) h-(--input-height) bg-surface-input border border-border rounded-default cursor-pointer text-text-muted transition-colors duration-150",
+          "hover:border-text-muted hover:text-text-muted-strong hover:bg-hover-overlay",
+          "focus-visible:outline-none focus-visible:border-accent-border",
+          open && "border-accent-border text-accent bg-accent-subtle"
+        )}
         onClick={() => setOpen(!open)}
         title="Script options"
       >
         <EllipsisVerticalIcon size={16} />
       </button>
       {open && (
-        <Panel className="options-panel--panel" minWidth="18rem">
+        <Panel minWidth="18rem">
           <PanelHeader icon={<Share2Icon size={12} />}>
             script options
           </PanelHeader>
           <PanelSection>
-            <span className="options-panel--hint">
+            <span className="font-body text-xs text-text-muted leading-[1.4]">
               Set a module name to share this script with other scripts.
             </span>
-            <div className="options-panel--module-input-wrapper">
+            <div className="relative w-full">
               <Input
                 ref={moduleInputRef}
-                className="options-panel--module-input"
+                className="w-full"
                 defaultValue={moduleName}
                 placeholder="module-name"
                 onChange={(event) => onModuleNameChange(event.target.value)}
               />
               <button
                 type="button"
-                className="options-panel--autofill-btn"
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center justify-center w-6.5 h-6.5 bg-transparent border border-transparent rounded-default cursor-pointer text-text-muted-faint transition-colors duration-150 hover:text-accent hover:bg-accent-subtle hover:border-accent-border active:-translate-y-1/2 active:scale-[0.92]"
                 onClick={handleAutoFillModuleName}
                 title="Auto-fill from script name"
               >
@@ -118,7 +123,7 @@ export function OptionsPanel({
           <PanelSection>
             <button
               type="button"
-              className="options-panel--delete-btn"
+              className="w-full justify-center text-xs py-2 px-3 gap-2 bg-error-surface text-error-accent border border-error-border rounded-default cursor-pointer font-mono font-medium flex items-center transition-colors duration-150 hover:bg-danger hover:border-danger hover:text-foreground active:scale-[0.98]"
               onClick={handleDelete}
             >
               <Trash2Icon size={13} />

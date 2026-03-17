@@ -1,12 +1,9 @@
 import { CodeLine } from "@/shared/components/code-line/CodeLine";
-import "./DashboardHeader.scss";
 
 export function DashboardHeader() {
   return (
-    <header className="dashboard-header">
-      <div className="dashboard-header--glow" aria-hidden="true" />
-      <div className="dashboard-header--grid-pattern" aria-hidden="true" />
-      <div className="dashboard-header--content">
+    <header className="relative bg-surface-raised border-b border-border p-0">
+      <div className="relative flex items-center justify-start py-md px-lg">
         <CodeLine code="export function InvertUserscripts (doc: Document): void {" />
       </div>
     </header>

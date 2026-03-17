@@ -1,4 +1,4 @@
-import "./CodeLine.scss";
+import clsx from "clsx";
 
 type TokenType =
   | "keyword"
@@ -94,6 +94,17 @@ function tokenize(code: string): Token[] {
   return tokens;
 }
 
+const TOKEN_CLASSES: Record<TokenType, string> = {
+  keyword: "text-syntax-keyword",
+  type: "text-syntax-type",
+  "function-name": "text-syntax-function",
+  string: "text-text-muted",
+  punctuation: "text-syntax-punctuation",
+  identifier: "text-syntax-param",
+  comment: "text-text-muted-faint italic",
+  whitespace: "whitespace-pre",
+};
+
 type CodeLineProps = {
   code: string;
 } & React.HTMLAttributes<HTMLElement>;
@@ -102,9 +113,15 @@ export function CodeLine({ code, className, ...rest }: CodeLineProps) {
   const tokens = tokenize(code);
 
   return (
-    <code className={`code-line${className ? ` ${className}` : ""}`} {...rest}>
+    <code
+      className={clsx(
+        "font-mono text-sm leading-[1.6] whitespace-pre",
+        className
+      )}
+      {...rest}
+    >
       {tokens.map((token, index) => (
-        <span key={index} className={`code-line--${token.type}`}>
+        <span key={index} className={TOKEN_CLASSES[token.type]}>
           {token.value}
         </span>
       ))}
