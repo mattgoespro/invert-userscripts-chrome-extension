@@ -5,9 +5,15 @@ import clsx from "clsx";
 
 type TabListProps = {
   children: ReactNode;
+  barClassName?: string;
 } & React.HTMLAttributes<HTMLDivElement>;
 
-export function TabList({ children, className, ...rest }: TabListProps) {
+export function TabList({
+  children,
+  className,
+  barClassName,
+  ...rest
+}: TabListProps) {
   let activeContent: ReactNode = null;
 
   Children.forEach(children, (child) => {
@@ -26,7 +32,10 @@ export function TabList({ children, className, ...rest }: TabListProps) {
 
   return (
     <div className={clsx(className)} {...rest}>
-      <div className="flex items-center gap-md" role="tablist">
+      <div
+        className={clsx("flex items-center gap-md", barClassName)}
+        role="tablist"
+      >
         {children}
       </div>
       {activeContent}

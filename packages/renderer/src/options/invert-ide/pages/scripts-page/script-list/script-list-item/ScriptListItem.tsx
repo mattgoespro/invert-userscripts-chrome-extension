@@ -35,11 +35,11 @@ export function ScriptListItem({
   return (
     <div
       className={clsx(
-        "flex items-center p-2 mb-1.5 rounded-default bg-surface-overlay border border-transparent cursor-pointer transition-colors duration-150",
-        "hover:bg-hover-overlay hover:border-border",
+        "group flex items-center p-2 mb-1.5 rounded-default cursor-pointer transition-colors duration-150",
+        active
+          ? "bg-accent-subtle border border-accent-muted border-l-[3px] border-l-accent"
+          : "bg-surface-overlay border border-transparent hover:bg-hover-overlay hover:border-border",
         "focus:outline-none focus:border-accent-border",
-        active &&
-          "bg-accent-subtle border-accent-muted border-l-3 border-l-accent",
         script.error && "border-error"
       )}
       onClick={() => onSelectScript()}

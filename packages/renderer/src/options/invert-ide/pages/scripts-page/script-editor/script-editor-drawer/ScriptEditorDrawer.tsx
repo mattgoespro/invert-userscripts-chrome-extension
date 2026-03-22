@@ -33,7 +33,10 @@ export function ScriptEditorDrawer({
   };
 
   return (
-    <TabList className="compiled-output--wrapper">
+    <TabList
+      className="flex flex-col h-full overflow-hidden"
+      barClassName="shrink-0 h-9 pl-md pr-xs bg-surface-raised border-b border-border"
+    >
       <TabListTitle>{"// output"}</TabListTitle>
       <Tab
         active={activeTab === "javascript"}
@@ -76,7 +79,7 @@ export function ScriptEditorDrawer({
         )}
       </Tab>
       <IconButton
-        className="compiled-output--collapse-btn"
+        className="ml-auto"
         icon={isCollapsed ? ChevronsUp : ChevronsDown}
         variant="secondary"
         size="sm"

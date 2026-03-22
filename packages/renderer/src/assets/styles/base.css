@@ -1,0 +1,685 @@
+/* =============================================================================
+   Layer: Base — CSS Custom Properties (Primitives + Semantic + Components + Typography)
+   ============================================================================= */
+
+@layer base {
+  /* =========================================================================
+     Primitive Tokens — Graphite Theme (Default)
+     ========================================================================= */
+  :root {
+    /* Core Palette */
+    --base-black: #1e1e1e;
+    --base-white: #d4d4d4;
+    --base-grey: #858585;
+    --base-blue: #4fc1ff;
+    --base-blue-light: #72d9ff;
+    --base-gold: #569cd6;
+    --base-red: #f44747;
+    --base-green: #6a9955;
+
+    /* Surfaces */
+    --base-surface-base: #1e1e1e;
+    --base-surface-raised: #252526;
+    --base-surface-overlay: #2d2d30;
+    --base-surface-input: #1b1b1c;
+
+    /* Borders */
+    --base-border: #3e3e42;
+    --base-border-subtle: #333336;
+    --base-border-focus: #569cd650;
+
+    /* Text */
+    --base-text: #d4d4d4;
+    --base-text-muted: #a0a0a0;
+    --base-text-muted-faint: #5a5a5e;
+    --base-text-muted-strong: #858585;
+
+    /* Accent */
+    --base-accent: #569cd6;
+    --base-accent-hover: #71abda;
+    --base-accent-muted: #569cd625;
+    --base-accent-subtle: #569cd612;
+    --base-accent-border: #569cd650;
+
+    /* Danger */
+    --base-danger: #f44747;
+    --base-danger-soft: #f4474730;
+    --base-danger-strong: #f44747cc;
+
+    /* Interactive Overlays */
+    --base-hover-overlay: rgba(255, 255, 255, 0.04);
+    --base-active-overlay: rgba(255, 255, 255, 0.07);
+
+    /* Error States */
+    --base-error-accent: #f48771;
+    --base-error-accent-soft: rgba(244, 135, 113, 0.2);
+    --base-error-glow: rgba(244, 71, 71, 0.12);
+    --base-error-surface: #2d2020;
+    --base-error-surface-dark: #1e1616;
+    --base-error-text: #d4d4d4;
+    --base-error-text-muted: #858585;
+    --base-error-border: #5a3030;
+
+    /* Syntax Highlighting */
+    --base-syntax-keyword: #c586c0;
+    --base-syntax-member: #9cdcfe;
+    --base-syntax-function: #dcdcaa;
+    --base-syntax-param: #9cdcfe;
+    --base-syntax-type: #4ec9b0;
+    --base-syntax-punctuation: #d4d4d499;
+    --base-syntax-comment: #6a9955;
+
+    /* Component Primitives: Input */
+    --base-input-bg: var(--base-surface-input);
+    --base-input-border: var(--base-border);
+    --base-input-placeholder: var(--base-text-muted-faint);
+
+    /* Component Primitives: Button */
+    --base-button-bg: transparent;
+    --base-button-hover-bg: #569cd618;
+    --base-button-active-bg: #569cd625;
+    --base-button-disabled-fg: #5a5a5e;
+    --base-button-disabled-bg: #232324;
+
+    /* Component Primitives: Icon Button */
+    --base-icon-button-border: var(--base-border);
+    --base-icon-button-hover-bg: var(--base-hover-overlay);
+    --base-icon-button-focus-bg: var(--base-active-overlay);
+
+    /* Component Primitives: Switch */
+    --base-switch-fg: #858585;
+    --base-switch-bg: #333336;
+    --base-switch-checked-fg: #1e1e1e;
+    --base-switch-checked-bg: #569cd6;
+    --base-switch-border: var(--base-border);
+
+    /* Component Primitives: Select */
+    --base-select-bg: var(--base-surface-input);
+    --base-select-border: var(--base-border);
+    --base-select-placeholder: var(--base-text-muted-faint);
+
+    /* =====================================================================
+       Semantic Tokens
+       ===================================================================== */
+    --primary: var(--base-blue);
+    --primary-hover: var(--base-blue-light);
+    --accent: var(--base-accent);
+    --accent-hover: var(--base-accent-hover);
+    --accent-muted: var(--base-accent-muted);
+    --accent-subtle: var(--base-accent-subtle);
+    --accent-border: var(--base-accent-border);
+    --danger: var(--base-danger);
+    --success: var(--base-green);
+
+    --background: var(--base-black);
+    --foreground: var(--base-white);
+    --border: var(--base-border);
+    --border-subtle: var(--base-border-subtle);
+    --border-focus: var(--base-border-focus);
+
+    --surface-base: var(--base-surface-base);
+    --surface-raised: var(--base-surface-raised);
+    --surface-overlay: var(--base-surface-overlay);
+    --surface-input: var(--base-surface-input);
+
+    --text-muted: var(--base-text-muted);
+    --text-muted-faint: var(--base-text-muted-faint);
+    --text-muted-strong: var(--base-text-muted-strong);
+
+    --hover-overlay: var(--base-hover-overlay);
+    --active-overlay: var(--base-active-overlay);
+
+    --danger-soft: var(--base-danger-soft);
+    --danger-strong: var(--base-danger-strong);
+
+    --error-accent: var(--base-error-accent);
+    --error-accent-soft: var(--base-error-accent-soft);
+    --error-glow: var(--base-error-glow);
+    --error-surface: var(--base-error-surface);
+    --error-surface-dark: var(--base-error-surface-dark);
+    --error-text: var(--base-error-text);
+    --error-text-muted: var(--base-error-text-muted);
+    --error-border: var(--base-error-border);
+
+    --syntax-keyword: var(--base-syntax-keyword);
+    --syntax-member: var(--base-syntax-member);
+    --syntax-function: var(--base-syntax-function);
+    --syntax-param: var(--base-syntax-param);
+    --syntax-type: var(--base-syntax-type);
+    --syntax-punctuation: var(--base-syntax-punctuation);
+    --syntax-comment: var(--base-syntax-comment);
+
+    --info: var(--base-blue);
+    --warning: var(--base-accent);
+    --error: var(--base-red);
+
+    --geometry-border-radius: 4px;
+
+    --spacing-2xs: 2px;
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 12px;
+    --spacing-lg: 16px;
+    --spacing-xl: 20px;
+    --spacing-2xl: 24px;
+
+    /* =====================================================================
+       Component Tokens
+       ===================================================================== */
+    --input-foreground: var(--base-white);
+    --input-background: var(--base-input-bg);
+    --input-border: var(--base-input-border);
+    --input-placeholder: var(--base-input-placeholder);
+
+    --label-foreground: var(--base-grey);
+
+    --button-foreground: var(--base-accent);
+    --button-background: var(--base-button-bg);
+    --button-hover-background: var(--base-button-hover-bg);
+    --button-active-background: var(--base-button-active-bg);
+    --button-disabled-foreground: var(--base-button-disabled-fg);
+    --button-disabled-background: var(--base-button-disabled-bg);
+
+    --icon-button-foreground: var(--base-text-muted-strong);
+    --icon-button-background: transparent;
+    --icon-button-border: var(--base-icon-button-border);
+    --icon-button-hover-background: var(--base-icon-button-hover-bg);
+    --icon-button-focus-background: var(--base-icon-button-focus-bg);
+
+    --switch-foreground: var(--base-switch-fg);
+    --switch-background: var(--base-switch-bg);
+    --switch-checked-foreground: var(--base-switch-checked-fg);
+    --switch-checked-background: var(--base-switch-checked-bg);
+    --switch-border: var(--base-switch-border);
+
+    --select-foreground: var(--base-white);
+    --select-background: var(--base-select-bg);
+    --select-border: var(--base-select-border);
+    --select-placeholder: var(--base-select-placeholder);
+
+    --checkbox-foreground: var(--base-white);
+    --checkbox-background: var(--base-input-bg);
+    --checkbox-border: var(--base-border);
+    --checkbox-checked-background: var(--accent);
+    --checkbox-checked-foreground: var(--base-black);
+
+    --title-foreground: var(--base-white);
+    --subtitle-foreground: var(--base-text-muted);
+
+    --toast-foreground: var(--base-white);
+    --toast-background: var(--base-surface-overlay);
+    --toast-border: var(--base-border);
+    --toast-shadow: 0 4px 24px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(0, 0, 0, 0.2);
+
+    --toast-info-accent: var(--info);
+    --toast-info-surface: rgba(79, 193, 255, 0.06);
+    --toast-info-border: rgba(79, 193, 255, 0.18);
+
+    --toast-warning-accent: var(--base-gold);
+    --toast-warning-surface: rgba(206, 145, 52, 0.06);
+    --toast-warning-border: rgba(206, 145, 52, 0.18);
+
+    --toast-error-accent: var(--error-accent);
+    --toast-error-surface: var(--error-surface);
+    --toast-error-border: var(--error-border);
+
+    --input-height: 1.75rem;
+    --button-padding-y: 0.375rem;
+    --button-padding-x: 0.875rem;
+    --page-padding: var(--spacing-lg);
+    --section-padding: var(--spacing-lg);
+    --section-gap: var(--spacing-md);
+    --field-gap: var(--spacing-sm);
+
+    /* =====================================================================
+       Typography Tokens
+       ===================================================================== */
+    --font-heading: "Outfit", "Open Sans", sans-serif;
+    --font-body: "Open Sans", sans-serif;
+    --font-mono: "JetBrains Mono", monospace;
+
+    --typography-title-font-family: var(--font-heading);
+    --typography-title-font-size: 1.5rem;
+    --typography-title-font-weight: 600;
+    --typography-title-line-height: 1.2;
+    --typography-title-color: var(--title-foreground);
+
+    --typography-subtitle-font-family: var(--font-heading);
+    --typography-subtitle-font-size: 1.25rem;
+    --typography-subtitle-font-weight: 500;
+    --typography-subtitle-line-height: 1.3;
+    --typography-subtitle-color: var(--subtitle-foreground);
+
+    --typography-body-font-family: var(--font-body);
+    --typography-body-font-size: 0.875rem;
+    --typography-body-font-weight: 400;
+    --typography-body-line-height: 1.5;
+    --typography-body-color: var(--foreground);
+
+    --typography-caption-font-family: var(--font-body);
+    --typography-caption-font-size: 0.75rem;
+    --typography-caption-font-weight: 400;
+    --typography-caption-line-height: 1.4;
+    --typography-caption-color: var(--text-muted-strong);
+
+    --typography-button-font-family: var(--font-mono);
+    --typography-button-font-size: 0.875rem;
+    --typography-button-font-weight: 500;
+    --typography-button-line-height: 1.5;
+    --typography-button-color: var(--button-foreground);
+
+    --typography-input-font-family: var(--font-mono);
+    --typography-input-font-size: 0.875rem;
+    --typography-input-font-weight: 400;
+    --typography-input-line-height: 1.5;
+    --typography-input-color: var(--input-foreground);
+
+    --typography-label-font-family: var(--font-mono);
+    --typography-label-font-size: 12px;
+    --typography-label-font-weight: 400;
+    --typography-label-line-height: 1;
+    --typography-label-color: var(--label-foreground);
+
+    --typography-section-title-font-family: var(--font-mono);
+    --typography-section-title-font-size: 0.875rem;
+    --typography-section-title-font-weight: 500;
+    --typography-section-title-line-height: 1.4;
+    --typography-section-title-color: var(--syntax-keyword);
+
+    --typography-code-font-family: var(--font-mono);
+    --typography-code-font-size: 0.875rem;
+    --typography-code-font-weight: 400;
+    --typography-code-line-height: 1.6;
+    --typography-code-letter-spacing: -0.01em;
+    --typography-code-color: var(--foreground);
+  }
+
+  /* =========================================================================
+     Theme Overrides
+     ========================================================================= */
+
+  [data-theme="graphite-warm"] {
+    --base-gold: #d4a054;
+    --base-red: #d46050;
+    --base-green: #7ab06a;
+    --base-border-focus: #d4a05450;
+    --base-accent: #d4a054;
+    --base-accent-hover: #deb06a;
+    --base-accent-muted: #d4a05425;
+    --base-accent-subtle: #d4a05412;
+    --base-accent-border: #d4a05450;
+    --base-danger: #d46050;
+    --base-danger-soft: #d4605030;
+    --base-danger-strong: #d46050cc;
+    --base-syntax-keyword: #c586c0;
+    --base-syntax-member: #9cdcfe;
+    --base-syntax-function: #d4a054;
+    --base-syntax-param: #9cdcfe;
+    --base-syntax-type: #4ec9b0;
+    --base-syntax-comment: #6a9955;
+    --base-button-hover-bg: #d4a05418;
+    --base-button-active-bg: #d4a05425;
+    --base-switch-checked-bg: #d4a054;
+  }
+
+  [data-theme="graphite-dusk"] {
+    --base-black: #1e1d20;
+    --base-white: #d2d0d6;
+    --base-grey: #82808a;
+    --base-blue: #a4a0e0;
+    --base-blue-light: #b8b4ea;
+    --base-gold: #a088c8;
+    --base-red: #d06878;
+    --base-green: #6a9955;
+    --base-surface-base: #1e1d20;
+    --base-surface-raised: #252428;
+    --base-surface-overlay: #2d2c32;
+    --base-surface-input: #1a1a1d;
+    --base-border: #3c3a42;
+    --base-border-subtle: #323036;
+    --base-border-focus: #a088c850;
+    --base-text: #d2d0d6;
+    --base-text-muted: #9e9aa4;
+    --base-text-muted-faint: #58545e;
+    --base-text-muted-strong: #82808a;
+    --base-accent: #a088c8;
+    --base-accent-hover: #b09ad4;
+    --base-accent-muted: #a088c825;
+    --base-accent-subtle: #a088c812;
+    --base-accent-border: #a088c850;
+    --base-danger: #d06878;
+    --base-danger-soft: #d0687830;
+    --base-danger-strong: #d06878cc;
+    --base-hover-overlay: rgba(255, 255, 255, 0.04);
+    --base-active-overlay: rgba(255, 255, 255, 0.07);
+    --base-error-accent: #e08080;
+    --base-error-accent-soft: rgba(224, 128, 128, 0.2);
+    --base-error-glow: rgba(208, 104, 120, 0.12);
+    --base-error-surface: #2a2024;
+    --base-error-surface-dark: #1e1618;
+    --base-error-text: #d2d0d6;
+    --base-error-text-muted: #82808a;
+    --base-error-border: #503040;
+    --base-syntax-keyword: #c586c0;
+    --base-syntax-member: #a4a0e0;
+    --base-syntax-function: #dcdcaa;
+    --base-syntax-param: #b8b4ea;
+    --base-syntax-type: #4ec9b0;
+    --base-syntax-punctuation: #d2d0d699;
+    --base-syntax-comment: #626068;
+    --base-input-bg: var(--base-surface-input);
+    --base-input-border: var(--base-border);
+    --base-input-placeholder: var(--base-text-muted-faint);
+    --base-button-bg: transparent;
+    --base-button-hover-bg: #a088c818;
+    --base-button-active-bg: #a088c825;
+    --base-button-disabled-fg: #58545e;
+    --base-button-disabled-bg: #222124;
+    --base-icon-button-border: var(--base-border);
+    --base-icon-button-hover-bg: var(--base-hover-overlay);
+    --base-icon-button-focus-bg: var(--base-active-overlay);
+    --base-switch-fg: #82808a;
+    --base-switch-bg: #323036;
+    --base-switch-checked-fg: #1e1d20;
+    --base-switch-checked-bg: #a088c8;
+    --base-switch-border: var(--base-border);
+    --base-select-bg: var(--base-surface-input);
+    --base-select-border: var(--base-border);
+    --base-select-placeholder: var(--base-text-muted-faint);
+  }
+
+  [data-theme="graphite-ember"] {
+    --base-gold: #d4785a;
+    --base-red: #d46050;
+    --base-green: #6a9955;
+    --base-border-focus: #d4785a50;
+    --base-accent: #d4785a;
+    --base-accent-hover: #de8c70;
+    --base-accent-muted: #d4785a25;
+    --base-accent-subtle: #d4785a12;
+    --base-accent-border: #d4785a50;
+    --base-danger: #d46050;
+    --base-danger-soft: #d4605030;
+    --base-danger-strong: #d46050cc;
+    --base-syntax-keyword: #c586c0;
+    --base-syntax-member: #9cdcfe;
+    --base-syntax-function: #d4785a;
+    --base-syntax-param: #9cdcfe;
+    --base-syntax-type: #4ec9b0;
+    --base-syntax-comment: #6a9955;
+    --base-button-hover-bg: #d4785a18;
+    --base-button-active-bg: #d4785a25;
+    --base-switch-checked-bg: #d4785a;
+  }
+
+  [data-theme="obsidian"] {
+    --base-black: #161616;
+    --base-white: #c8c8c8;
+    --base-grey: #6e6e6e;
+    --base-blue: #82aaff;
+    --base-blue-light: #a0bbff;
+    --base-gold: #e2a555;
+    --base-red: #d16969;
+    --base-green: #73c991;
+    --base-surface-base: #161616;
+    --base-surface-raised: #1e1e1e;
+    --base-surface-overlay: #262626;
+    --base-surface-input: #131313;
+    --base-border: #333333;
+    --base-border-subtle: #282828;
+    --base-border-focus: #e2a55550;
+    --base-text: #c8c8c8;
+    --base-text-muted: #999999;
+    --base-text-muted-faint: #444444;
+    --base-text-muted-strong: #6e6e6e;
+    --base-accent: #e2a555;
+    --base-accent-hover: #eab56e;
+    --base-accent-muted: #e2a55525;
+    --base-accent-subtle: #e2a55512;
+    --base-accent-border: #e2a55550;
+    --base-danger: #d16969;
+    --base-danger-soft: #d1696930;
+    --base-danger-strong: #d16969cc;
+    --base-hover-overlay: rgba(255, 255, 255, 0.03);
+    --base-active-overlay: rgba(255, 255, 255, 0.06);
+    --base-error-accent: #e07070;
+    --base-error-accent-soft: rgba(224, 112, 112, 0.2);
+    --base-error-glow: rgba(209, 105, 105, 0.12);
+    --base-error-surface: #221c1c;
+    --base-error-surface-dark: #181414;
+    --base-error-text: #c8c8c8;
+    --base-error-text-muted: #6e6e6e;
+    --base-error-border: #442e2e;
+    --base-syntax-keyword: #c792ea;
+    --base-syntax-member: #82aaff;
+    --base-syntax-function: #e2a555;
+    --base-syntax-param: #89ddff;
+    --base-syntax-type: #73c991;
+    --base-syntax-punctuation: #c8c8c899;
+    --base-syntax-comment: #555555;
+    --base-input-bg: var(--base-surface-input);
+    --base-input-border: var(--base-border);
+    --base-input-placeholder: var(--base-text-muted-faint);
+    --base-button-bg: transparent;
+    --base-button-hover-bg: #e2a55518;
+    --base-button-active-bg: #e2a55525;
+    --base-button-disabled-fg: #444444;
+    --base-button-disabled-bg: #1a1a1a;
+    --base-icon-button-border: var(--base-border);
+    --base-icon-button-hover-bg: var(--base-hover-overlay);
+    --base-icon-button-focus-bg: var(--base-active-overlay);
+    --base-switch-fg: #6e6e6e;
+    --base-switch-bg: #282828;
+    --base-switch-checked-fg: #161616;
+    --base-switch-checked-bg: #e2a555;
+    --base-switch-border: var(--base-border);
+    --base-select-bg: var(--base-surface-input);
+    --base-select-border: var(--base-border);
+    --base-select-placeholder: var(--base-text-muted-faint);
+  }
+
+  [data-theme="obsidian-deep"] {
+    --base-black: #101010;
+    --base-white: #b8b8b8;
+    --base-grey: #606060;
+    --base-blue: #7a9ee0;
+    --base-blue-light: #94b2ea;
+    --base-gold: #cc9650;
+    --base-red: #c06060;
+    --base-green: #68b580;
+    --base-surface-base: #101010;
+    --base-surface-raised: #171717;
+    --base-surface-overlay: #1e1e1e;
+    --base-surface-input: #0d0d0d;
+    --base-border: #2a2a2a;
+    --base-border-subtle: #212121;
+    --base-border-focus: #cc965050;
+    --base-text: #b8b8b8;
+    --base-text-muted: #888888;
+    --base-text-muted-faint: #3a3a3a;
+    --base-text-muted-strong: #606060;
+    --base-accent: #cc9650;
+    --base-accent-hover: #d8a866;
+    --base-accent-muted: #cc965025;
+    --base-accent-subtle: #cc965012;
+    --base-accent-border: #cc965050;
+    --base-danger: #c06060;
+    --base-danger-soft: #c0606030;
+    --base-danger-strong: #c06060cc;
+    --base-hover-overlay: rgba(255, 255, 255, 0.025);
+    --base-active-overlay: rgba(255, 255, 255, 0.05);
+    --base-error-accent: #d46868;
+    --base-error-accent-soft: rgba(212, 104, 104, 0.2);
+    --base-error-glow: rgba(192, 96, 96, 0.12);
+    --base-error-surface: #1c1616;
+    --base-error-surface-dark: #141010;
+    --base-error-text: #b8b8b8;
+    --base-error-text-muted: #606060;
+    --base-error-border: #3e2828;
+    --base-syntax-keyword: #b888d8;
+    --base-syntax-member: #7a9ee0;
+    --base-syntax-function: #cc9650;
+    --base-syntax-param: #80c8e8;
+    --base-syntax-type: #68b580;
+    --base-syntax-punctuation: #b8b8b899;
+    --base-syntax-comment: #484848;
+    --base-input-bg: var(--base-surface-input);
+    --base-input-border: var(--base-border);
+    --base-input-placeholder: var(--base-text-muted-faint);
+    --base-button-bg: transparent;
+    --base-button-hover-bg: #cc965018;
+    --base-button-active-bg: #cc965025;
+    --base-button-disabled-fg: #3a3a3a;
+    --base-button-disabled-bg: #141414;
+    --base-icon-button-border: var(--base-border);
+    --base-icon-button-hover-bg: var(--base-hover-overlay);
+    --base-icon-button-focus-bg: var(--base-active-overlay);
+    --base-switch-fg: #606060;
+    --base-switch-bg: #212121;
+    --base-switch-checked-fg: #101010;
+    --base-switch-checked-bg: #cc9650;
+    --base-switch-border: var(--base-border);
+    --base-select-bg: var(--base-surface-input);
+    --base-select-border: var(--base-border);
+    --base-select-placeholder: var(--base-text-muted-faint);
+  }
+
+  [data-theme="obsidian-ember"] {
+    --base-black: #181414;
+    --base-white: #ccc4be;
+    --base-grey: #756860;
+    --base-blue: #82aaff;
+    --base-blue-light: #a0bbff;
+    --base-gold: #d4785a;
+    --base-red: #d46050;
+    --base-green: #73c991;
+    --base-surface-base: #181414;
+    --base-surface-raised: #201c1a;
+    --base-surface-overlay: #282420;
+    --base-surface-input: #141110;
+    --base-border: #382e2a;
+    --base-border-subtle: #2c2522;
+    --base-border-focus: #d4785a50;
+    --base-text: #ccc4be;
+    --base-text-muted: #a09488;
+    --base-text-muted-faint: #4a403a;
+    --base-text-muted-strong: #756860;
+    --base-accent: #d4785a;
+    --base-accent-hover: #de8c70;
+    --base-accent-muted: #d4785a25;
+    --base-accent-subtle: #d4785a12;
+    --base-accent-border: #d4785a50;
+    --base-danger: #d46050;
+    --base-danger-soft: #d4605030;
+    --base-danger-strong: #d46050cc;
+    --base-hover-overlay: rgba(255, 248, 240, 0.03);
+    --base-active-overlay: rgba(255, 248, 240, 0.06);
+    --base-error-accent: #e07060;
+    --base-error-accent-soft: rgba(224, 112, 96, 0.2);
+    --base-error-glow: rgba(212, 96, 80, 0.12);
+    --base-error-surface: #241c18;
+    --base-error-surface-dark: #1a1412;
+    --base-error-text: #ccc4be;
+    --base-error-text-muted: #756860;
+    --base-error-border: #4a3028;
+    --base-syntax-keyword: #c792ea;
+    --base-syntax-member: #82aaff;
+    --base-syntax-function: #d4785a;
+    --base-syntax-param: #89ddff;
+    --base-syntax-type: #73c991;
+    --base-syntax-punctuation: #ccc4be99;
+    --base-syntax-comment: #584e48;
+    --base-input-bg: var(--base-surface-input);
+    --base-input-border: var(--base-border);
+    --base-input-placeholder: var(--base-text-muted-faint);
+    --base-button-bg: transparent;
+    --base-button-hover-bg: #d4785a18;
+    --base-button-active-bg: #d4785a25;
+    --base-button-disabled-fg: #4a403a;
+    --base-button-disabled-bg: #1a1816;
+    --base-icon-button-border: var(--base-border);
+    --base-icon-button-hover-bg: var(--base-hover-overlay);
+    --base-icon-button-focus-bg: var(--base-active-overlay);
+    --base-switch-fg: #756860;
+    --base-switch-bg: #2c2522;
+    --base-switch-checked-fg: #181414;
+    --base-switch-checked-bg: #d4785a;
+    --base-switch-border: var(--base-border);
+    --base-select-bg: var(--base-surface-input);
+    --base-select-border: var(--base-border);
+    --base-select-placeholder: var(--base-text-muted-faint);
+  }
+
+  [data-theme="obsidian-frost"] {
+    --base-black: #141618;
+    --base-white: #c4c8cc;
+    --base-grey: #687078;
+    --base-blue: #8aacc8;
+    --base-blue-light: #a2c0d8;
+    --base-gold: #8aacc8;
+    --base-red: #c86868;
+    --base-green: #70b890;
+    --base-surface-base: #141618;
+    --base-surface-raised: #1b1e22;
+    --base-surface-overlay: #24272c;
+    --base-surface-input: #111315;
+    --base-border: #2e3238;
+    --base-border-subtle: #252830;
+    --base-border-focus: #8aacc850;
+    --base-text: #c4c8cc;
+    --base-text-muted: #909498;
+    --base-text-muted-faint: #3e4248;
+    --base-text-muted-strong: #687078;
+    --base-accent: #8aacc8;
+    --base-accent-hover: #9ebcd4;
+    --base-accent-muted: #8aacc825;
+    --base-accent-subtle: #8aacc812;
+    --base-accent-border: #8aacc850;
+    --base-danger: #c86868;
+    --base-danger-soft: #c8686830;
+    --base-danger-strong: #c86868cc;
+    --base-hover-overlay: rgba(240, 248, 255, 0.03);
+    --base-active-overlay: rgba(240, 248, 255, 0.06);
+    --base-error-accent: #d87070;
+    --base-error-accent-soft: rgba(216, 112, 112, 0.2);
+    --base-error-glow: rgba(200, 104, 104, 0.12);
+    --base-error-surface: #1e1c20;
+    --base-error-surface-dark: #161418;
+    --base-error-text: #c4c8cc;
+    --base-error-text-muted: #687078;
+    --base-error-border: #402e2e;
+    --base-syntax-keyword: #b898d8;
+    --base-syntax-member: #8aacc8;
+    --base-syntax-function: #8aacc8;
+    --base-syntax-param: #a0d4e8;
+    --base-syntax-type: #70b890;
+    --base-syntax-punctuation: #c4c8cc99;
+    --base-syntax-comment: #4a4e54;
+    --base-input-bg: var(--base-surface-input);
+    --base-input-border: var(--base-border);
+    --base-input-placeholder: var(--base-text-muted-faint);
+    --base-button-bg: transparent;
+    --base-button-hover-bg: #8aacc818;
+    --base-button-active-bg: #8aacc825;
+    --base-button-disabled-fg: #3e4248;
+    --base-button-disabled-bg: #181a1c;
+    --base-icon-button-border: var(--base-border);
+    --base-icon-button-hover-bg: var(--base-hover-overlay);
+    --base-icon-button-focus-bg: var(--base-active-overlay);
+    --base-switch-fg: #687078;
+    --base-switch-bg: #252830;
+    --base-switch-checked-fg: #141618;
+    --base-switch-checked-bg: #8aacc8;
+    --base-switch-border: var(--base-border);
+    --base-select-bg: var(--base-surface-input);
+    --base-select-border: var(--base-border);
+    --base-select-placeholder: var(--base-text-muted-faint);
+  }
+
+  /* Global reset */
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+}

@@ -49,28 +49,34 @@ export class ErrorBoundary extends Component<FallbackProps> {
     const errorStack = this.getErrorStack();
 
     return (
-      <div className="error-boundary">
-        <div className="error-boundary__content">
-          <div className="error-boundary__header">
-            <span className="error-boundary__icon">⚠️</span>
+      <div className="absolute w-full h-full bg-linear-to-b from-error-surface-dark via-error-surface to-error-surface-dark flex flex-col justify-center items-center p-8 box-border overflow-auto">
+        <div className="max-w-150 w-full flex flex-col bg-error-surface border border-error-border rounded-2xl overflow-hidden">
+          <div className="flex items-center gap-3.5 py-6 px-7 bg-[linear-gradient(135deg,var(--error-glow)_0%,transparent_60%)] border-b border-error-border">
+            <span className="w-10 h-10 bg-error-glow border border-error-accent-soft rounded-[10px] text-center leading-[1.8] text-lg shadow-[0_0_20px_var(--error-glow)]">
+              ⚠️
+            </span>
             <Typography variant="title">Something went wrong</Typography>
           </div>
-          <div className="error-boundary__details">
-            <div className="error-boundary__section">
+          <div className="flex flex-col py-6 px-7">
+            <div className="flex flex-col gap-2 py-4 border-b border-error-border first:pt-0 last:border-b-0 last:pb-0">
               <Typography variant="caption">Error</Typography>
-              <div className="error-boundary__message">
-                <div className="error-boundary__name">{errorName}</div>
+              <div className="font-mono text-[13px] text-error-text-muted bg-error-surface-dark p-4 rounded-[10px] border border-error-border leading-8 wrap-break-word">
+                <div className="inline-flex self-start font-mono text-xs text-error-accent bg-error-glow px-1.5 mr-2 rounded-lg border border-error-accent-soft">
+                  {errorName}
+                </div>
                 <span>{errorMessage}</span>
               </div>
             </div>
             {errorStack && (
-              <div className="error-boundary__section">
+              <div className="flex flex-col gap-2 py-4 border-b border-error-border first:pt-0 last:border-b-0 last:pb-0">
                 <Typography variant="caption">Stack Trace</Typography>
-                <pre className="error-boundary__stack">{errorStack}</pre>
+                <pre className="error-boundary__stack font-mono text-[11px] text-error-text-muted bg-error-surface-dark p-4 rounded-[10px] border border-error-border overflow-x-auto leading-8 m-0 whitespace-pre-wrap wrap-break-word max-h-50 overflow-y-auto">
+                  {errorStack}
+                </pre>
               </div>
             )}
           </div>
-          <div className="error-boundary__actions">
+          <div className="flex justify-end py-5 px-7 bg-error-surface-dark border-t border-error-border">
             <Button onClick={this.props.resetErrorBoundary}>Try Again</Button>
           </div>
         </div>

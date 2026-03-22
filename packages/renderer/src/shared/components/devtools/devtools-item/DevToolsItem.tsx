@@ -41,7 +41,7 @@ export function DevToolsItem({
               {panelTitle}
             </div>
           )}
-          <div className="devtools-item--panel-content">{panel}</div>
+          <div className="overflow-auto flex-1 scrollbar-thin">{panel}</div>
         </div>
       )}
     </div>

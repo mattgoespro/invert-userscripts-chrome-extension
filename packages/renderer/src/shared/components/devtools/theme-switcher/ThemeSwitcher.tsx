@@ -103,7 +103,7 @@ export function ThemeSwitcher() {
   const { activeTheme, handleSelect } = useActiveTheme();
 
   return (
-    <div className="theme-switcher--options">
+    <div className="p-1.5 flex flex-col gap-0.5 max-h-90 overflow-y-auto scrollbar-thin">
       {THEMES.map((theme, index) => {
         const prevGroup = index > 0 ? THEMES[index - 1].group : undefined;
         const showSeparator = theme.group && theme.group !== prevGroup;
@@ -120,11 +120,11 @@ export function ThemeSwitcher() {
             <button
               className={clsx(
                 "flex items-center gap-2.5 py-2 px-2.5 rounded-[3px] border-none",
-                "bg-transparent text-text-muted cursor-pointer font-mono text-[11px] text-left",
+                "cursor-pointer font-mono text-[11px] text-left",
                 "transition-colors duration-100",
-                "hover:bg-hover-overlay hover:text-foreground",
-                theme.id === activeTheme &&
-                  "text-accent bg-accent-subtle hover:bg-accent-muted hover:text-accent"
+                theme.id === activeTheme
+                  ? "text-accent bg-accent-subtle hover:bg-accent-muted hover:text-accent"
+                  : "bg-transparent text-text-muted hover:bg-hover-overlay hover:text-foreground"
               )}
               onClick={() => handleSelect(theme.id)}
             >

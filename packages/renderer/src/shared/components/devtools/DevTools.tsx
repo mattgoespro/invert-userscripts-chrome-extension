@@ -84,11 +84,11 @@ export function DevTools() {
       <button
         className={clsx(
           "flex items-center justify-center w-8 h-8 p-0",
-          "border border-border rounded-default bg-surface-raised text-text-muted",
-          "cursor-grab touch-none select-none transition-colors duration-150",
-          "hover:border-accent-border hover:text-foreground",
+          "rounded-default cursor-grab touch-none select-none transition-colors duration-150",
           "active:cursor-grabbing",
-          open && "border-accent-border text-accent bg-accent-subtle"
+          open
+            ? "border border-accent-border text-accent bg-accent-subtle"
+            : "border border-border bg-surface-raised text-text-muted hover:border-accent-border hover:text-foreground"
         )}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}

@@ -17,7 +17,19 @@ export function Panel({
   const mergedStyle = minWidth ? { ...style, minWidth } : style;
 
   return (
-    <div className={clsx("panel", className)} style={mergedStyle} {...rest}>
+    <div
+      className={clsx(
+        "absolute top-[calc(100%+0.5rem)] right-0 z-100",
+        "flex flex-col overflow-hidden",
+        "bg-surface-overlay border border-accent-border rounded-default",
+        "shadow-[0_4px_24px_rgba(0,0,0,0.5),0_0_0_1px_rgba(0,0,0,0.2)]",
+        "font-mono text-xs leading-[1.4]",
+        "animate-panel-enter",
+        className
+      )}
+      style={mergedStyle}
+      {...rest}
+    >
       {children}
     </div>
   );

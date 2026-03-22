@@ -14,7 +14,7 @@ export function ScriptList({ onScriptSelected }: ScriptListProps) {
   const scripts = useAppSelector(selectAllUserscripts);
 
   return (
-    <div className="script-list--list flex-1 overflow-y-auto p-2">
+    <div className="flex-1 overflow-y-auto p-2 scrollbar-thin-6">
       {Object.values(scripts ?? []).map((script) => (
         <ScriptListItem
           key={script.id}

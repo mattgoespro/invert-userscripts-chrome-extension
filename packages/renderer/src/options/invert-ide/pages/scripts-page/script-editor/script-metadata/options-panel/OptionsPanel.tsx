@@ -82,10 +82,11 @@ export function OptionsPanel({
       <button
         type="button"
         className={clsx(
-          "flex items-center justify-center w-(--input-height) h-(--input-height) bg-surface-input border border-border rounded-default cursor-pointer text-text-muted transition-colors duration-150",
-          "hover:border-text-muted hover:text-text-muted-strong hover:bg-hover-overlay",
-          "focus-visible:outline-none focus-visible:border-accent-border",
-          open && "border-accent-border text-accent bg-accent-subtle"
+          "flex items-center justify-center w-(--input-height) h-(--input-height) rounded-default cursor-pointer transition-colors duration-150",
+          open
+            ? "bg-accent-subtle border border-accent-border text-accent"
+            : "bg-surface-input border border-border text-text-muted hover:border-text-muted hover:text-text-muted-strong hover:bg-hover-overlay",
+          "focus-visible:outline-none focus-visible:border-accent-border"
         )}
         onClick={() => setOpen(!open)}
         title="Script options"
