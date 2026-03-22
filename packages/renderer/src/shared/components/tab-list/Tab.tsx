@@ -22,7 +22,7 @@ export function Tab({
       role="tab"
       aria-selected={active}
       className={clsx(
-        "inline-flex items-center gap-1.5 py-[3px] px-2.5",
+        "inline-flex items-center gap-1.5 py-0.75 px-2.5",
         "rounded-default cursor-pointer font-mono text-[11px] font-medium",
         "tracking-[0.03em] transition-colors duration-150",
         active

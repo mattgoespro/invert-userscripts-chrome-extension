@@ -1,7 +1,12 @@
 import { EditorThemeName } from "@packages/monaco";
 import { CodeEditor } from "@/options/invert-ide/components/code-editor/CodeEditor";
 
-const PREVIEW_CODE = `
+type ThemePreviewProps = {
+  theme: EditorThemeName;
+};
+
+export function ThemePreview({ theme }: ThemePreviewProps) {
+  const PREVIEW_CODE = `
 // Invert IDE — theme preview
 
 const greet = (name: string): string => {
@@ -10,11 +15,6 @@ const greet = (name: string): string => {
   return { msg, count };
 };`;
 
-type ThemePreviewProps = {
-  theme: EditorThemeName;
-};
-
-export function ThemePreview({ theme }: ThemePreviewProps) {
   return (
     <div className="rounded-default overflow-hidden border border-border">
       <div className="flex items-center gap-2 py-2 px-3 bg-[rgba(30,30,30,0.9)] border-b border-border-subtle select-none">
