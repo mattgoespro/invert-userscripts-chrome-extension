@@ -2,12 +2,9 @@ import { GlobalModule, GlobalModules } from "@shared/model";
 import { ChromeSyncStorage } from "@shared/storage";
 import { useState } from "react";
 import { Button } from "@/shared/components/button/Button";
-import { Checkbox } from "@/shared/components/checkbox/Checkbox";
 import { CodeComment } from "@/shared/components/code-comment/CodeComment";
-import { IconButton } from "@/shared/components/icon-button/IconButton";
 import { CodeLine } from "@/shared/components/code-line/CodeLine";
-import { Typography } from "@/shared/components/typography/Typography";
-import { DeleteIcon } from "lucide-react";
+import { ModuleCard } from "./ModuleCard";
 
 export function ModulesPage() {
   const [modules, setModules] = useState<GlobalModules>({});
@@ -50,42 +47,18 @@ export function ModulesPage() {
 
   return (
     <div className="flex-1 p-(--page-padding)">
-      <div className="flex justify-between items-center mb-lg pb-sm border-b border-border">
+      <div className="mb-lg pb-sm border-border flex items-center justify-between border-b">
         <CodeLine code="import { Modules } from 'cdn'" />
         <Button onClick={handleCreateModule}>+ Add Module</Button>
       </div>
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-4 h-[calc(100%-4rem)]">
+      <div className="grid h-[calc(100%-4rem)] grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-4">
         {Object.values(modules ?? {}).map((module) => (
-          <div
+          <ModuleCard
             key={module.id}
-            className="bg-surface-raised border border-border rounded-default p-md flex flex-col gap-md transition-colors duration-150 hover:border-accent-muted"
-          >
-            <div className="flex-1">
-              <Typography
-                variant="code"
-                className="block text-[15px] text-syntax-type mb-sm"
-              >
-                {module.name}
-              </Typography>
-              <div className="font-mono text-xs text-text-muted break-all p-sm px-md bg-surface-overlay rounded-default border border-border-subtle">
-                {module.url}
-              </div>
-            </div>
-            <div className="flex justify-between items-center pt-sm border-t border-border-subtle">
-              <Checkbox
-                label="Enabled"
-                checked={module.enabled}
-                onChange={() => handleToggleModule(module)}
-              />
-              <IconButton
-                icon={DeleteIcon}
-                variant="danger"
-                onClick={() => handleDeleteModule(module.id)}
-              >
-                <DeleteIcon />
-              </IconButton>
-            </div>
-          </div>
+            module={module}
+            onToggle={() => handleToggleModule(module)}
+            onDelete={() => handleDeleteModule(module.id)}
+          />
         ))}
         {Object.values(modules ?? {}).length === 0 && (
           <div className="col-span-full flex flex-col items-center justify-center text-center">

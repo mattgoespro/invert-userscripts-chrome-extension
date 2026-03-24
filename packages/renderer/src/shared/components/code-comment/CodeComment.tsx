@@ -12,7 +12,7 @@ export const CodeComment = forwardRef<HTMLElement, CodeCommentProps>(
         ref={ref}
         className={clsx(
           "inline-flex items-center gap-2 font-mono text-sm font-normal",
-          "leading-[1.6] tracking-[-0.01em] opacity-60 italic select-none",
+          "leading-[1.6] tracking-[-0.01em] italic opacity-60 select-none",
           className
         )}
         {...rest}

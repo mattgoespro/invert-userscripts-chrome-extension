@@ -2,8 +2,8 @@ import { CodeLine } from "@/shared/components/code-line/CodeLine";
 
 export function DashboardHeader() {
   return (
-    <header className="relative bg-surface-raised border-b border-border p-0">
-      <div className="relative flex items-center justify-start py-md px-lg">
+    <header className="bg-surface-raised border-border relative border-b p-0">
+      <div className="py-md px-lg relative flex items-center justify-start">
         <CodeLine code="export function InvertUserscripts (doc: Document): void {" />
       </div>
     </header>

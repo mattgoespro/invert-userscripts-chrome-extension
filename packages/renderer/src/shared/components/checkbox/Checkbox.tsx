@@ -10,7 +10,7 @@ export function Checkbox({ label, checked, onChange }: CheckboxProps) {
   };
 
   return (
-    <label className="flex items-center cursor-pointer">
+    <label className="flex cursor-pointer items-center">
       <input
         type="checkbox"
         className="checkbox"
@@ -18,7 +18,7 @@ export function Checkbox({ label, checked, onChange }: CheckboxProps) {
         onChange={handleChange}
       />
       {label && (
-        <span className="font-mono text-[13px] text-text-muted-strong ml-3 select-none">
+        <span className="text-text-muted-strong ml-3 font-mono text-[13px] select-none">
           {label}
         </span>
       )}

@@ -8,7 +8,7 @@ export function TabContent({ children, className, ...rest }: TabContentProps) {
   return (
     <div
       role="tabpanel"
-      className={clsx("flex-1 min-h-0 overflow-hidden", className)}
+      className={clsx("min-h-0 flex-1 overflow-hidden", className)}
       {...rest}
     >
       {children}

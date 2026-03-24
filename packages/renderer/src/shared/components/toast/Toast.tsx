@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
+import { cva } from "class-variance-authority";
 import clsx from "clsx";
 import type { ToastItem, ToastVariant } from "./model";
 
@@ -8,34 +9,43 @@ type ToastProps = {
   onDismiss: (id: string) => void;
 };
 
+const toastVariants = cva(
+  "relative flex flex-col min-w-70 max-w-90 border rounded-default shadow-(--toast-shadow) overflow-hidden pointer-events-auto",
+  {
+    variants: {
+      variant: {
+        info: "bg-toast-info-surface border-toast-info-border",
+        warning: "bg-toast-warning-surface border-toast-warning-border",
+        error: "bg-toast-error-surface border-toast-error-border",
+      },
+      dismissing: {
+        true: "animate-toast-slide-out",
+        false: "animate-toast-slide-in",
+      },
+    },
+    defaultVariants: {
+      variant: "info",
+      dismissing: false,
+    },
+  }
+);
+
 const variantLabel: Record<ToastVariant, string> = {
   info: "info",
   warning: "warn",
   error: "error",
 };
 
-const variantStyles: Record<
-  ToastVariant,
-  { bg: string; border: string; accent: string; label: string }
-> = {
-  info: {
-    bg: "bg-toast-info-surface",
-    border: "border-toast-info-border",
-    accent: "bg-toast-info-accent",
-    label: "text-toast-info-accent",
-  },
-  warning: {
-    bg: "bg-toast-warning-surface",
-    border: "border-toast-warning-border",
-    accent: "bg-toast-warning-accent",
-    label: "text-toast-warning-accent",
-  },
-  error: {
-    bg: "bg-toast-error-surface",
-    border: "border-toast-error-border",
-    accent: "bg-toast-error-accent",
-    label: "text-toast-error-accent",
-  },
+const variantAccent: Record<ToastVariant, string> = {
+  info: "bg-toast-info-accent",
+  warning: "bg-toast-warning-accent",
+  error: "bg-toast-error-accent",
+};
+
+const variantLabelColor: Record<ToastVariant, string> = {
+  info: "text-toast-info-accent",
+  warning: "text-toast-warning-accent",
+  error: "text-toast-error-accent",
 };
 
 export function Toast({ toast, onDismiss }: ToastProps) {
@@ -65,39 +75,36 @@ export function Toast({ toast, onDismiss }: ToastProps) {
   }, [toast.duration, startDismiss]);
 
   const variant = toast.variant;
-  const vs = variantStyles[variant];
 
   return (
     <div
-      className={clsx(
-        "relative flex flex-col min-w-70 max-w-90",
-        "border rounded-default",
-        "shadow-(--toast-shadow) overflow-hidden pointer-events-auto",
-        vs.bg,
-        vs.border,
-        dismissing ? "animate-toast-slide-out" : "animate-toast-slide-in"
-      )}
+      className={toastVariants({ variant, dismissing })}
       role="alert"
       onAnimationEnd={handleAnimationEnd}
     >
       <div
-        className={clsx("absolute top-0 left-0 bottom-0 w-0.75", vs.accent)}
+        className={clsx(
+          "absolute top-0 bottom-0 left-0 w-0.75",
+          variantAccent[variant]
+        )}
       />
 
-      <div className="flex items-start gap-sm py-sm pr-md pl-[calc(var(--spacing-md)+3px)]">
-        <div className="flex flex-col gap-2xs flex-1 min-w-0">
-          <span className="inline-flex items-center gap-1.5 font-mono text-[0.6875rem] font-medium leading-[1.4] tracking-[0.02em] uppercase select-none">
+      <div className="gap-sm py-sm pr-md flex items-start pl-[calc(var(--spacing-md)+3px)]">
+        <div className="gap-2xs flex min-w-0 flex-1 flex-col">
+          <span className="inline-flex items-center gap-1.5 font-mono text-[0.6875rem] leading-[1.4] font-medium tracking-[0.02em] uppercase select-none">
             <span className="text-syntax-comment italic opacity-60">//</span>
-            <span className={vs.label}>{variantLabel[variant]}</span>
+            <span className={variantLabelColor[variant]}>
+              {variantLabel[variant]}
+            </span>
           </span>
-          <span className="font-mono text-xs leading-normal text-toast-fg wrap-break-word">
+          <span className="text-toast-fg font-mono text-xs leading-normal wrap-break-word">
             {toast.message}
           </span>
         </div>
 
         {toast.dismissible && (
           <button
-            className="flex items-center justify-center shrink-0 w-5 h-5 mt-px p-0 bg-transparent border-none rounded-default text-text-muted cursor-pointer transition-[color,background-color] duration-150 hover:text-foreground hover:bg-hover-overlay"
+            className="rounded-default text-text-muted hover:text-foreground hover:bg-hover-overlay mt-px flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center border-none bg-transparent p-0 transition-[color,background-color] duration-150"
             onClick={startDismiss}
             aria-label="Dismiss"
           >
@@ -110,8 +117,8 @@ export function Toast({ toast, onDismiss }: ToastProps) {
         <div className="h-0.5 bg-transparent">
           <div
             className={clsx(
-              "h-full w-full origin-left animate-toast-drain opacity-60",
-              vs.accent
+              "animate-toast-drain h-full w-full origin-left opacity-60",
+              variantAccent[variant]
             )}
             style={{ animationDuration: `${toast.duration}ms` }}
           />

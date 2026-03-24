@@ -33,7 +33,7 @@ export function TabList({
   return (
     <div className={clsx(className)} {...rest}>
       <div
-        className={clsx("flex items-center gap-md", barClassName)}
+        className={clsx("gap-md flex items-center", barClassName)}
         role="tablist"
       >
         {children}

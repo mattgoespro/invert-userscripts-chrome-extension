@@ -16,14 +16,14 @@ const greet = (name: string): string => {
 };`;
 
   return (
-    <div className="rounded-default overflow-hidden border border-border">
-      <div className="flex items-center gap-2 py-2 px-3 bg-[rgba(30,30,30,0.9)] border-b border-border-subtle select-none">
+    <div className="rounded-default border-border overflow-hidden border">
+      <div className="border-border-subtle flex items-center gap-2 border-b bg-[rgba(30,30,30,0.9)] px-3 py-2 select-none">
         <div className="flex gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-full opacity-85 bg-[#ff5f57]" />
-          <span className="w-2.5 h-2.5 rounded-full opacity-85 bg-[#febc2e]" />
-          <span className="w-2.5 h-2.5 rounded-full opacity-85 bg-[#28c840]" />
+          <span className="h-2.5 w-2.5 rounded-full bg-[#ff5f57] opacity-85" />
+          <span className="h-2.5 w-2.5 rounded-full bg-[#febc2e] opacity-85" />
+          <span className="h-2.5 w-2.5 rounded-full bg-[#28c840] opacity-85" />
         </div>
-        <span className="flex-1 text-center font-mono text-[0.6875rem] text-text-muted tracking-[0.02em]">
+        <span className="text-text-muted flex-1 text-center font-mono text-[0.6875rem] tracking-[0.02em]">
           preview.ts
         </span>
         <span className="w-11" />

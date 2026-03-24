@@ -44,7 +44,7 @@ export function StoragePreview() {
   }, [fetchStorage]);
 
   return (
-    <pre className="m-0 py-3 px-3.5 font-mono text-[11px] leading-[1.6] text-text-muted whitespace-pre">
+    <pre className="text-text-muted m-0 px-3.5 py-3 font-mono text-[11px] leading-[1.6] whitespace-pre">
       {JSON.stringify(storageData, null, 2)}
     </pre>
   );

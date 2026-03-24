@@ -35,27 +35,27 @@ export function ScriptListItem({
   return (
     <div
       className={clsx(
-        "group flex items-center p-2 mb-1.5 rounded-default cursor-pointer transition-colors duration-150",
+        "group rounded-default mb-1.5 flex cursor-pointer items-center p-2 transition-colors duration-150",
         active
-          ? "bg-accent-subtle border border-accent-muted border-l-[3px] border-l-accent"
-          : "bg-surface-overlay border border-transparent hover:bg-hover-overlay hover:border-border",
-        "focus:outline-none focus:border-accent-border",
+          ? "bg-accent-subtle border-accent-muted border-l-accent border border-l-[3px]"
+          : "bg-surface-overlay hover:bg-hover-overlay hover:border-border border border-transparent",
+        "focus:border-accent-border focus:outline-none",
         script.error && "border-error"
       )}
       onClick={() => onSelectScript()}
     >
       {script.status === "modified" && (
-        <div className="w-2 h-2 bg-accent rounded-full mr-3 shrink-0 animate-pulse-indicator" />
+        <div className="bg-accent animate-pulse-indicator mr-3 h-2 w-2 shrink-0 rounded-full" />
       )}
       {script.shared && (
         <PackageIcon
           size={12}
-          className="shrink-0 mr-2 text-syntax-keyword opacity-70"
+          className="text-syntax-keyword mr-2 shrink-0 opacity-70"
         />
       )}
       <span
         className={clsx(
-          "font-mono text-[11px] font-medium flex-1 whitespace-nowrap overflow-hidden text-ellipsis",
+          "flex-1 overflow-hidden font-mono text-[11px] font-medium text-ellipsis whitespace-nowrap",
           script.shared ? "text-syntax-keyword" : "text-syntax-function"
         )}
       >

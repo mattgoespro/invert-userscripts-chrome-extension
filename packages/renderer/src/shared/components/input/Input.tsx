@@ -24,9 +24,9 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
       [props]
     );
     return (
-      <div className={clsx("relative min-w-0 flex flex-col gap-2", className)}>
+      <div className={clsx("relative flex min-w-0 flex-col gap-2", className)}>
         {label && (
-          <label className="font-mono text-xs font-normal leading-none text-label-fg uppercase">
+          <label className="text-label-fg font-mono text-xs leading-none font-normal uppercase">
             {label}
           </label>
         )}
@@ -35,13 +35,13 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           ref={ref}
           type={type}
           className={clsx(
-            "w-full box-border font-mono text-base font-normal leading-normal",
+            "box-border w-full font-mono text-base leading-normal font-normal",
             "text-foreground h-(--input-height) px-3 py-1.5",
-            "bg-surface-input border border-border rounded-default",
+            "bg-surface-input border-border rounded-default border",
             "transition-colors duration-150",
-            "placeholder:text-base placeholder:text-text-muted-faint",
+            "placeholder:text-text-muted-faint placeholder:text-base",
             "hover:border-text-muted",
-            "focus:outline-none focus:border-accent-border",
+            "focus:border-accent-border focus:outline-none",
             "focus-visible:outline-none",
             !valid && "border-danger placeholder:text-danger"
           )}

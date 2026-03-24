@@ -34,7 +34,7 @@ export function ScriptEditorDrawer({
 
   return (
     <TabList
-      className="flex flex-col h-full overflow-hidden"
+      className="flex h-full flex-col overflow-hidden"
       barClassName="shrink-0 h-9 pl-md pr-xs bg-surface-raised border-b border-border"
     >
       <TabListTitle>{"// output"}</TabListTitle>
@@ -44,7 +44,7 @@ export function ScriptEditorDrawer({
       >
         <Typography
           variant="caption"
-          className="inline-flex items-center py-px px-1.25 rounded-[3px] text-[9px] font-bold tracking-[0.05em] uppercase text-[#f0db4f] bg-[rgba(240,219,79,0.12)]"
+          className="inline-flex items-center rounded-[3px] bg-[rgba(240,219,79,0.12)] px-1.25 py-px text-[9px] font-bold tracking-[0.05em] text-[#f0db4f] uppercase"
         >
           js
         </Typography>
@@ -62,7 +62,7 @@ export function ScriptEditorDrawer({
         )}
       </Tab>
       <Tab active={activeTab === "css"} onClick={() => onTabChange("css")}>
-        <span className="inline-flex items-center py-px px-1.25 rounded-[3px] text-[9px] font-bold tracking-[0.05em] uppercase text-[#6fa8ff] bg-[rgba(111,168,255,0.12)]">
+        <span className="inline-flex items-center rounded-[3px] bg-[rgba(111,168,255,0.12)] px-1.25 py-px text-[9px] font-bold tracking-[0.05em] text-[#6fa8ff] uppercase">
           css
         </span>
         css

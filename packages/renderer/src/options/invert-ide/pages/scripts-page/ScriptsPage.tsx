@@ -54,7 +54,7 @@ export function ScriptsPage() {
     <Group
       orientation="horizontal"
       id="scripts-page-panels"
-      className="flex-1 h-full min-w-0 overflow-hidden"
+      className="h-full min-w-0 flex-1 overflow-hidden"
       defaultLayout={{
         "scripts-sidebar": globalState.panelSizes.scriptListSidebarWidth,
         "scripts-editor": 100 - globalState.panelSizes.scriptListSidebarWidth,
@@ -67,9 +67,14 @@ export function ScriptsPage() {
       }}
     >
       <Panel id="scripts-sidebar" minSize="15%" maxSize="30%">
-        <div className="h-full bg-surface-raised border-r border-border flex flex-col">
-          <div className="scripts--sidebar-header flex justify-between items-center p-md border-b border-border">
-            <Typography variant="subtitle">Scripts</Typography>
+        <div className="bg-surface-raised border-border flex h-full flex-col border-r">
+          <div className="p-md border-border flex items-center justify-between border-b">
+            <Typography variant="subtitle">
+              <span className="text-text-muted-faint mr-2 font-mono text-sm">
+                //
+              </span>
+              Scripts
+            </Typography>
             <IconButton
               icon={PlusIcon}
               size="sm"

@@ -68,14 +68,14 @@ function InvertIdeContent() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-surface-base relative overflow-hidden">
+    <div className="bg-surface-base relative flex h-full flex-col overflow-hidden">
       <DashboardHeader />
-      <div className="flex flex-1 relative">
+      <div className="relative flex flex-1">
         <Sidebar
           active={globalState.activeSidebarTab}
           onNavigate={onNavigate}
         />
-        <div className="flex-1 flex relative *:animate-page-reveal">
+        <div className="*:animate-page-reveal relative flex flex-1">
           {globalState.activeSidebarTab === "scripts" && <ScriptsPage />}
           {globalState.activeSidebarTab === "modules" && <ModulesPage />}
           {globalState.activeSidebarTab === "settings" && <Settings />}

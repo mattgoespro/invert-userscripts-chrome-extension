@@ -166,10 +166,10 @@ All persistence is handled via `chrome.storage.sync`, abstracted by two manager 
 
 **`GlobalStateManager` API** (all static methods, in `global-state.storage.ts`):
 
-| Method        | Description                                            |
-| ------------- | ------------------------------------------------------ |
-| `get()`       | Returns `GlobalState`, deep-merged with defaults       |
-| `save(state)` | Persists full `GlobalState` to `chrome.storage.sync`   |
+| Method        | Description                                          |
+| ------------- | ---------------------------------------------------- |
+| `get()`       | Returns `GlobalState`, deep-merged with defaults     |
+| `save(state)` | Persists full `GlobalState` to `chrome.storage.sync` |
 
 **Exported defaults**:
 
@@ -178,13 +178,13 @@ All persistence is handled via `chrome.storage.sync`, abstracted by two manager 
 
 ### State Architecture Overview
 
-| State Type                    | Pattern                                                                |
-| ----------------------------- | ---------------------------------------------------------------------- |
-| **Userscripts** (complex)     | Redux Toolkit slice + `createAsyncThunk` for async storage             |
-| **Editor Settings** (complex) | Redux Toolkit slice + `createAsyncThunk` for async storage             |
-| **Editor State** (complex)    | Redux Toolkit slice for Monaco init, saving, and TS defaults           |
+| State Type                    | Pattern                                                                      |
+| ----------------------------- | ---------------------------------------------------------------------------- |
+| **Userscripts** (complex)     | Redux Toolkit slice + `createAsyncThunk` for async storage                   |
+| **Editor Settings** (complex) | Redux Toolkit slice + `createAsyncThunk` for async storage                   |
+| **Editor State** (complex)    | Redux Toolkit slice for Monaco init, saving, and TS defaults                 |
 | **UI Layout State**           | React Context (`GlobalStateProvider`) + `GlobalStateManager` for persistence |
-| **Global Modules** (simple)   | Direct `ChromeSyncStorage` access with `useState` and manual `loadData`|
+| **Global Modules** (simple)   | Direct `ChromeSyncStorage` access with `useState` and manual `loadData`      |
 
 ### Redux Store Configuration
 
@@ -1089,7 +1089,11 @@ export { GlobalStateManager } from "./global-state.storage";
 export type { GlobalState, GlobalStateSizes } from "./global-state.storage";
 
 // ❌ WRONG — mixed value and type re-exports in a single statement
-export { GlobalStateManager, GlobalState, GlobalStateSizes } from "./global-state.storage";
+export {
+  GlobalStateManager,
+  GlobalState,
+  GlobalStateSizes,
+} from "./global-state.storage";
 ```
 
 This applies to all `index.ts` barrel files across every package.

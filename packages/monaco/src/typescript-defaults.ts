@@ -1,14 +1,16 @@
 import { TypeScriptCompilerOptions } from "@shared/typescript";
 import monaco from "monaco-editor";
 
-// The webpack alias resolves the bare "monaco-editor" specifier to the slim
-// editor.api entry, which does not bundle or register the TypeScript language
-// contribution. The "monaco-editor-ts-contribution" alias maps directly to the
-// contribution module so typescriptDefaults, ModuleResolutionKind, and other
-// TS-specific exports are available at module-load time.
-//
-// The contribution module has no usable type declarations — a type assertion
-// via `typeof typescript` is needed.
+/**
+ * The webpack alias resolves the bare "monaco-editor" specifier to the slim
+ * `editor.api` entry, which does not bundle or register the TypeScript language
+ * contribution. The "monaco-editor-ts-contribution" alias maps directly to the
+ * contribution module so `typescriptDefaults`, `ModuleResolutionKind`, and other
+ * TS-specific exports are available at module-load time.
+ *
+ * The contribution module has no usable type declarations — a type assertion
+ * via `typeof typescript` is needed.
+ */
 import type { typescript } from "monaco-editor";
 import * as _tsContribution from "monaco-editor-ts-contribution";
 const tsContribution = _tsContribution as unknown as typeof typescript;

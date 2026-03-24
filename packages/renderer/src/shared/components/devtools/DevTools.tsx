@@ -83,12 +83,12 @@ export function DevTools() {
     >
       <button
         className={clsx(
-          "flex items-center justify-center w-8 h-8 p-0",
-          "rounded-default cursor-grab touch-none select-none transition-colors duration-150",
+          "flex h-8 w-8 items-center justify-center p-0",
+          "rounded-default cursor-grab touch-none transition-colors duration-150 select-none",
           "active:cursor-grabbing",
           open
-            ? "border border-accent-border text-accent bg-accent-subtle"
-            : "border border-border bg-surface-raised text-text-muted hover:border-accent-border hover:text-foreground"
+            ? "border-accent-border text-accent bg-accent-subtle border"
+            : "border-border bg-surface-raised text-text-muted hover:border-accent-border hover:text-foreground border"
         )}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
@@ -102,15 +102,15 @@ export function DevTools() {
         <div
           className={clsx(
             "absolute bottom-[calc(100%+8px)] left-0 min-w-60",
-            "flex flex-col bg-surface-raised border border-border rounded-default",
-            "overflow-hidden animate-devtools-reveal"
+            "bg-surface-raised border-border rounded-default flex flex-col border",
+            "animate-devtools-reveal overflow-hidden"
           )}
         >
-          <div className="px-3.5 py-2.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-text-muted-strong border-b border-border-subtle">
+          <div className="text-text-muted-strong border-border-subtle border-b px-3.5 py-2.5 text-[10px] font-semibold tracking-[0.06em] uppercase">
             <span className="text-text-muted-faint font-normal">{"// "}</span>
             devtools
           </div>
-          <div className="flex flex-col p-1.5 gap-0.5">
+          <div className="flex flex-col gap-0.5 p-1.5">
             <DevToolsItem
               name="chrome.storage.sync"
               panel={<StoragePreview />}

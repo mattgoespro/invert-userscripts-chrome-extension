@@ -12,7 +12,7 @@ interface SidebarProps {
 
 export function Sidebar({ active, onNavigate }: SidebarProps) {
   return (
-    <div className="flex flex-col items-center gap-1 py-sm bg-surface-raised border-r border-border relative">
+    <div className="py-sm bg-surface-raised border-border relative flex flex-col items-center gap-1 border-r">
       <SidebarNavButton
         icon={ClipboardPenIcon}
         active={active === "scripts"}

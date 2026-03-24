@@ -1,6 +1,7 @@
 import { CodeEditor } from "@/options/invert-ide/components/code-editor/CodeEditor";
 import { TypeScriptCodeEditor } from "@/options/invert-ide/components/code-editor/TypeScriptCodeEditor";
 import { SassCompiler, TypeScriptCompiler } from "@/sandbox/compiler";
+import { EditorPanel } from "@/shared/components/editor-panel/EditorPanel";
 import { ResizeHandle } from "@/shared/components/resize-handle/ResizeHandle";
 import { useAppDispatch, useAppSelector } from "@/shared/store/hooks";
 import { selectMonacoReady } from "@/shared/store/slices/monaco-editor";
@@ -113,11 +114,11 @@ export function ScriptEditor() {
   };
 
   return (
-    <div className="flex flex-col h-full min-w-0 gap-sm overflow-hidden">
-      <div className="bg-surface-raised border border-border rounded-default p-sm px-md flex items-center gap-sm">
+    <div className="gap-sm flex h-full min-w-0 flex-col overflow-hidden">
+      <div className="bg-surface-raised border-border rounded-default p-sm px-md gap-sm flex items-center border">
         <ScriptMetadata key={script.id} script={script} />
       </div>
-      <div className="flex-1 min-h-0 min-w-0 overflow-hidden">
+      <div className="min-h-0 min-w-0 flex-1 overflow-hidden">
         {monacoReady && (
           <Group
             orientation="vertical"
@@ -162,7 +163,7 @@ export function ScriptEditor() {
                 }}
               >
                 <Panel id="typescript-editor" minSize="20%" maxSize="80%">
-                  <div className="h-full rounded-default overflow-hidden border border-border bg-surface-base shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]">
+                  <EditorPanel>
                     <TypeScriptCodeEditor
                       modelId={script.id}
                       scriptId={script.id}
@@ -171,11 +172,11 @@ export function ScriptEditor() {
                         onCodeModified("typescript", code)
                       }
                     />
-                  </div>
+                  </EditorPanel>
                 </Panel>
                 <ResizeHandle direction="horizontal" />
                 <Panel id="scss-editor" minSize="20%" maxSize="80%">
-                  <div className="h-full rounded-default overflow-hidden border border-border bg-surface-base shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]">
+                  <EditorPanel>
                     <CodeEditor
                       modelId={script.id}
                       scriptId={script.id}
@@ -183,7 +184,7 @@ export function ScriptEditor() {
                       contents={script.code.source.scss}
                       onCodeModified={(code) => onCodeModified("scss", code)}
                     />
-                  </div>
+                  </EditorPanel>
                 </Panel>
               </Group>
             </Panel>
@@ -198,7 +199,7 @@ export function ScriptEditor() {
               collapsedSize="36px"
               onResize={onDrawerResize}
             >
-              <div className="h-full overflow-hidden rounded-default border border-border bg-surface-base shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]">
+              <EditorPanel className="overflow-hidden">
                 <ScriptEditorDrawer
                   script={script}
                   javascript={liveJs}
@@ -206,7 +207,7 @@ export function ScriptEditor() {
                   isCollapsed={isDrawerCollapsed}
                   onToggleCollapse={onToggleDrawer}
                 />
-              </div>
+              </EditorPanel>
             </Panel>
           </Group>
         )}

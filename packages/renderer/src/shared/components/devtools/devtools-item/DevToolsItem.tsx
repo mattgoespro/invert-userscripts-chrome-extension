@@ -19,29 +19,29 @@ export function DevToolsItem({
   return (
     <div className="relative font-mono">
       <button
-        className="flex items-center gap-2 w-full py-2 px-2.5 bg-transparent border-none rounded-[3px] text-text-muted cursor-pointer font-mono text-[11px] font-medium tracking-[0.02em] text-left transition-colors duration-100 select-none hover:bg-hover-overlay hover:text-foreground"
+        className="text-text-muted hover:bg-hover-overlay hover:text-foreground flex w-full cursor-pointer items-center gap-2 rounded-[3px] border-none bg-transparent px-2.5 py-2 text-left font-mono text-[11px] font-medium tracking-[0.02em] transition-colors duration-100 select-none"
         onClick={() => setExpanded((prev) => !prev)}
         title={`${name} (devtool)`}
       >
-        {icon && <span className="flex items-center shrink-0">{icon}</span>}
-        <span className="whitespace-nowrap flex-1 text-left">{name}</span>
-        <span className="text-[10px] text-text-muted-faint shrink-0">
+        {icon && <span className="flex shrink-0 items-center">{icon}</span>}
+        <span className="flex-1 text-left whitespace-nowrap">{name}</span>
+        <span className="text-text-muted-faint shrink-0 text-[10px]">
           {expanded ? "▾" : "▸"}
         </span>
       </button>
 
       {expanded && (
         <div
-          className="absolute bottom-0 left-[calc(100%+8px)] min-w-55 max-w-130 max-h-120 flex flex-col bg-surface-raised border border-border rounded-default overflow-hidden animate-devtools-item-reveal"
+          className="bg-surface-raised border-border rounded-default animate-devtools-item-reveal absolute bottom-0 left-[calc(100%+8px)] flex max-h-120 max-w-130 min-w-55 flex-col overflow-hidden border"
           ref={panelRef}
         >
           {panelTitle && (
-            <div className="px-3.5 py-2.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-text-muted-strong border-b border-border-subtle shrink-0">
+            <div className="text-text-muted-strong border-border-subtle shrink-0 border-b px-3.5 py-2.5 text-[10px] font-semibold tracking-[0.06em] uppercase">
               <span className="text-text-muted-faint font-normal">{"// "}</span>
               {panelTitle}
             </div>
           )}
-          <div className="overflow-auto flex-1 scrollbar-thin">{panel}</div>
+          <div className="scrollbar-thin flex-1 overflow-auto">{panel}</div>
         </div>
       )}
     </div>

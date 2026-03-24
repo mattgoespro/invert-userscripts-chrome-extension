@@ -41,8 +41,11 @@ export function ScriptMetadata({ script }: ScriptMetadataProps) {
   };
 
   return (
-    <div className="flex flex-col gap-sm w-full">
-      <div className="script-metadata--top-row flex gap-sm items-center w-full">
+    <div className="gap-sm flex w-full flex-col">
+      <div className="gap-sm flex w-full items-center">
+        <span className="text-syntax-keyword shrink-0 font-mono text-sm">
+          const
+        </span>
         <Input
           className="basis-1/4"
           required
@@ -50,16 +53,21 @@ export function ScriptMetadata({ script }: ScriptMetadataProps) {
           placeholder="Script name..."
           onChange={(event) => onUpdateScriptMeta({ name: event.target.value })}
         />
-        <Input
-          className="script-metadata--url-patterns flex-1 relative"
-          defaultValue={script.urlPatterns?.join(", ")}
-          placeholder="URL Patterns (comma separated)..."
-          onChange={(event) =>
-            onUpdateScriptMeta({
-              urlPatterns: event.target.value.split(",").map((p) => p.trim()),
-            })
-          }
-        />
+        <div className="script-metadata--url-patterns relative flex-1">
+          <span className="text-syntax-param pointer-events-none absolute top-1/2 left-3 z-1 -translate-y-1/2 font-mono text-xs">
+            urls:
+          </span>
+          <Input
+            className="w-full"
+            defaultValue={script.urlPatterns?.join(", ")}
+            placeholder="URL Patterns (comma separated)..."
+            onChange={(event) =>
+              onUpdateScriptMeta({
+                urlPatterns: event.target.value.split(",").map((p) => p.trim()),
+              })
+            }
+          />
+        </div>
         <OptionsPanel
           shared={script.shared ?? false}
           scriptName={script.name}
@@ -68,7 +76,7 @@ export function ScriptMetadata({ script }: ScriptMetadataProps) {
           onDelete={onDeleteScript}
         />
       </div>
-      <div className="flex items-center w-full">
+      <div className="flex w-full items-center">
         <ModuleImportsSelector
           script={script}
           onToggleSharedScript={onToggleSharedScript}

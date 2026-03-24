@@ -15,6 +15,7 @@ import {
 import { EditorThemeName, getThemeOptions } from "@packages/monaco";
 import { AppThemeName } from "@shared/model";
 import { useEffect } from "react";
+import { SettingsSection } from "./SettingsSection";
 import { ThemePreview } from "./theme-preview/ThemePreview";
 
 const APP_THEME_OPTIONS = [
@@ -65,13 +66,13 @@ export function Settings() {
   if (isLoading) {
     return (
       <div className="flex-1 p-(--page-padding)">
-        <div className="flex items-center gap-1 mb-lg pb-sm border-b border-border">
-          <span className="font-mono text-[1.25rem] text-syntax-param">
+        <div className="mb-lg pb-sm border-border flex items-center gap-1 border-b">
+          <span className="text-syntax-param font-mono text-[1.25rem]">
             config.
           </span>
           <Typography variant="subtitle">Settings</Typography>
         </div>
-        <div className="flex items-center justify-center p-2xl">
+        <div className="p-2xl flex items-center justify-center">
           <Typography variant="code" className="text-text-muted">
             Loading settings...
           </Typography>
@@ -82,73 +83,58 @@ export function Settings() {
 
   return (
     <div className="flex-1 p-(--page-padding)">
-      <div className="flex items-center gap-1 mb-lg pb-sm border-b border-border">
-        <span className="font-mono text-[1.25rem] text-syntax-param">
+      <div className="mb-lg pb-sm border-border flex items-center gap-1 border-b">
+        <span className="text-syntax-param font-mono text-[1.25rem]">
           config.
         </span>
         <Typography variant="subtitle">Settings</Typography>
       </div>
-      <div className="bg-surface-raised border border-border rounded-default p-(--section-padding) mb-(--section-gap)">
-        <Typography variant="section-title" className="settings--section-title">
-          Application Theme
-        </Typography>
-        <div className="flex flex-col gap-(--field-gap)">
-          <Select
-            label="Theme"
-            value={settings.appTheme ?? "graphite"}
-            onChange={handleAppThemeChange}
-            options={APP_THEME_OPTIONS}
-          />
+      <SettingsSection title="Application Theme">
+        <Select
+          label="Theme"
+          value={settings.appTheme ?? "graphite"}
+          onChange={handleAppThemeChange}
+          options={APP_THEME_OPTIONS}
+        />
+      </SettingsSection>
+      <SettingsSection title="Editor Appearance">
+        <Select
+          label="Theme"
+          value={settings.theme}
+          onChange={handleThemeChange}
+          options={getThemeOptions()}
+        />
+        <div className="pt-1">
+          {monacoReady && <ThemePreview theme={settings.theme} />}
         </div>
-      </div>
-      <div className="bg-surface-raised border border-border rounded-default p-(--section-padding) mb-(--section-gap)">
-        <Typography variant="section-title" className="settings--section-title">
-          Editor Appearance
-        </Typography>
-        <div className="flex flex-col gap-(--field-gap)">
-          <Select
-            label="Theme"
-            value={settings.theme}
-            onChange={handleThemeChange}
-            options={getThemeOptions()}
-          />
-          <div className="pt-1">
-            {monacoReady && <ThemePreview theme={settings.theme} />}
-          </div>
-          <Input
-            type="number"
-            label="Font Size"
-            value={settings.fontSize}
-            onChange={(event) =>
-              handleFontSizeChange(parseInt(event.target.value))
-            }
-            min="8"
-            max="32"
-          />
-        </div>
-      </div>
-      <div className="bg-surface-raised border border-border rounded-default p-(--section-padding) mb-(--section-gap)">
-        <Typography variant="section-title" className="settings--section-title">
-          Formatting
-        </Typography>
-        <div className="flex flex-col gap-(--field-gap)">
-          <Input
-            type="number"
-            label="Tab Size"
-            value={settings.tabSize}
-            onChange={(event) =>
-              handleTabSizeChange(parseInt(event.target.value))
-            }
-            min="2"
-            max="8"
-          />
-          <Checkbox
-            label="Format on save"
-            checked={settings.autoFormat}
-            onChange={handleAutoFormatChange}
-          />
-        </div>
-      </div>
+        <Input
+          type="number"
+          label="Font Size"
+          value={settings.fontSize}
+          onChange={(event) =>
+            handleFontSizeChange(parseInt(event.target.value))
+          }
+          min="8"
+          max="32"
+        />
+      </SettingsSection>
+      <SettingsSection title="Formatting">
+        <Input
+          type="number"
+          label="Tab Size"
+          value={settings.tabSize}
+          onChange={(event) =>
+            handleTabSizeChange(parseInt(event.target.value))
+          }
+          min="2"
+          max="8"
+        />
+        <Checkbox
+          label="Format on save"
+          checked={settings.autoFormat}
+          onChange={handleAutoFormatChange}
+        />
+      </SettingsSection>
     </div>
   );
 }

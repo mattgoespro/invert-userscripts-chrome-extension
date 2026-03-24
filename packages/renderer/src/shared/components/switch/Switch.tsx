@@ -6,16 +6,16 @@ type SwitchProps = {
 
 export function Switch({ checked, onChange, label }: SwitchProps) {
   return (
-    <label className="switch--wrapper relative inline-block w-9 h-5">
+    <label className="switch--wrapper relative inline-block h-5 w-9">
       <input
-        className="switch--input opacity-0 w-0 h-0"
+        className="switch--input h-0 w-0 opacity-0"
         type="checkbox"
         checked={checked}
         onChange={(event) => onChange(event.target.checked)}
       />
       <span className="switch--slider"></span>
       {label && (
-        <span className="flex items-center gap-2.5 cursor-pointer font-mono text-[13px] text-text-muted-strong">
+        <span className="text-text-muted-strong flex cursor-pointer items-center gap-2.5 font-mono text-[13px]">
           {label}
         </span>
       )}
