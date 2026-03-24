@@ -1,7 +1,3 @@
-import {
-  addSharedScriptExtraLib,
-  generateSharedScriptDeclaration,
-} from "@packages/monaco";
 import { createSelector, createSlice } from "@reduxjs/toolkit";
 import { SharedScriptInfo } from "@shared/model";
 import type { RootState } from "../../store";
@@ -16,72 +12,6 @@ const initialState: EditorState = {
   monacoReady: false,
   isSaving: false,
 };
-
-// ── Shared Script Extra Lib Management ────────────────────────────────────────
-
-// Module-level disposable tracking — non-serializable, kept outside Redux state.
-interface SharedLibEntry {
-  disposable: { dispose(): void };
-  sourceHash: string;
-}
-const sharedLibEntries = new Map<string, SharedLibEntry>();
-
-/**
- * Syncs shared-script extra lib registrations with the provided list. Disposes
- * any libs whose source has changed or are no longer present, then registers
- * new/updated declarations so Monaco's TypeScript language service can resolve
- * `import { … } from "shared/…"`.
- */
-export function syncSharedScriptLibs(sharedScripts: SharedScriptInfo[]): void {
-  const currentIds = new Set(sharedScripts.map((s) => s.id));
-
-  // Dispose libs for scripts that are no longer in the dependency list
-  for (const [id, entry] of sharedLibEntries) {
-    console.log("Syncing shared scripts...");
-
-    if (!currentIds.has(id)) {
-      entry.disposable.dispose();
-      sharedLibEntries.delete(id);
-    }
-  }
-
-  // Register or update extra libs for each shared script
-  for (const shared of sharedScripts) {
-    if (!shared.moduleName) {
-      console.warn(
-        `Shared script '${shared.name}' is not a module for some reason`
-      );
-      continue;
-    }
-
-    const existing = sharedLibEntries.get(shared.id);
-
-    // Skip if the source code hasn't changed
-    if (existing && existing.sourceHash === shared.sourceCode) {
-      console.warn(
-        `Shared script '${shared.name}' source unchanged, skipping lib update`
-      );
-      continue;
-    }
-
-    // Dispose the previous registration if updating
-    if (existing) {
-      existing.disposable.dispose();
-    }
-
-    const declaration = generateSharedScriptDeclaration(
-      shared.moduleName,
-      shared.sourceCode
-    );
-
-    const disposable = addSharedScriptExtraLib(declaration, shared.moduleName);
-
-    sharedLibEntries.set(shared.id, {
-      disposable,
-      sourceHash: shared.sourceCode,
-    });
-  }
-}
 
 // ── Slice ─────────────────────────────────────────────────────────────────────
 

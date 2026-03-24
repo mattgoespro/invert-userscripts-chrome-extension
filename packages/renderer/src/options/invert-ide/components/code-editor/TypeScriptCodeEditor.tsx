@@ -1,12 +1,12 @@
-import { ensureTypescriptDefaults } from "@packages/monaco";
+import { useToast } from "@/shared/components/toast/ToastProvider";
 import { useAppSelector } from "@/shared/store/hooks";
+import { selectSharedScriptsForUserscript } from "@/shared/store/slices/monaco-editor";
 import {
-  selectSharedScriptsForUserscript,
+  ensureTypescriptDefaults,
   syncSharedScriptLibs,
-} from "@/shared/store/slices/monaco-editor";
+} from "@packages/monaco";
 import { useEffect, useMemo } from "react";
 import { CodeEditor, CodeEditorProps } from "./CodeEditor";
-import { useToast } from "@/shared/components/toast/ToastProvider";
 
 /**
  * TypeScript-specific wrapper around {@link CodeEditor} that configures Monaco's

@@ -3,10 +3,10 @@ import FaviconsWebpackPlugin from "favicons-webpack-plugin";
 import HtmlWebpackPlugin from "html-webpack-plugin";
 import MonacoEditorWebpackPlugin from "monaco-editor-webpack-plugin";
 import path from "path";
-import { ChromeExtensionReloaderWebpackPlugin } from "./plugins/index.ts";
 import TerserPlugin from "terser-webpack-plugin";
 import webpack from "webpack";
 import packageJson from "./package.json" with { type: "json" };
+import { ChromeExtensionReloaderWebpackPlugin } from "./plugins/index.ts";
 
 const __dirname = import.meta.dirname;
 
@@ -134,26 +134,7 @@ export default (
         "@": path.resolve(__dirname, "packages/renderer/src/"),
         "@shared": path.resolve(__dirname, "packages/shared/src/"),
         "@packages/monaco": path.resolve(__dirname, "packages/monaco/src/"),
-        "monaco-editor-core": path.resolve(
-          __dirname,
-          "node_modules",
-          "monaco-editor",
-          "esm",
-          "vs",
-          "editor",
-          "editor.api.js"
-        ),
-        "monaco-editor-ts-contribution": path.resolve(
-          __dirname,
-          "node_modules",
-          "monaco-editor",
-          "esm",
-          "vs",
-          "language",
-          "typescript",
-          "monaco.contribution.js"
-        ),
-        "monaco-editor": "monaco-editor/esm/vs/editor/editor.api.js",
+        "monaco-editor$": "monaco-editor/esm/vs/editor/editor.api.js",
       },
     },
     plugins: [

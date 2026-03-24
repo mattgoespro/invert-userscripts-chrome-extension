@@ -1,18 +1,19 @@
 import { TypeScriptCompilerOptions } from "@shared/typescript";
+import { SharedScriptInfo } from "@shared/model";
 import monaco from "monaco-editor";
+import { generateSharedScriptDeclaration } from "./typescript-declarations";
 
 /**
- * The webpack alias resolves the bare "monaco-editor" specifier to the slim
- * `editor.api` entry, which does not bundle or register the TypeScript language
- * contribution. The "monaco-editor-ts-contribution" alias maps directly to the
- * contribution module so `typescriptDefaults`, `ModuleResolutionKind`, and other
- * TS-specific exports are available at module-load time.
+ * The TypeScript contribution module is imported directly by its ESM subpath.
+ * The `MonacoEditorWebpackPlugin` already imports this module as a side-effect
+ * into the `editor.api.js` bundle, so the `typescriptDefaults` singleton is
+ * guaranteed to be instantiated by the time this import resolves.
  *
- * The contribution module has no usable type declarations — a type assertion
- * via `typeof typescript` is needed.
+ * The subpath has no usable type declarations — a type assertion via
+ * `typeof typescript` is needed.
  */
 import type { typescript } from "monaco-editor";
-import * as _tsContribution from "monaco-editor-ts-contribution";
+import * as _tsContribution from "monaco-editor/esm/vs/language/typescript/monaco.contribution";
 const tsContribution = _tsContribution as unknown as typeof typescript;
 
 // ── TypeScript Defaults Configuration ─────────────────────────────────────────
@@ -63,4 +64,65 @@ export function addSharedScriptExtraLib(
 ): monaco.IDisposable {
   const filePath = `file:///node_modules/shared/${moduleName}/index.d.ts`;
   return tsContribution.typescriptDefaults.addExtraLib(declaration, filePath);
+}
+
+// ── Shared Script Extra Lib Lifecycle ─────────────────────────────────────────
+
+// Module-level disposable tracking — non-serializable, kept outside Redux state.
+interface SharedLibEntry {
+  disposable: { dispose(): void };
+  sourceHash: string;
+}
+const sharedLibEntries = new Map<string, SharedLibEntry>();
+
+/**
+ * Syncs shared-script extra lib registrations with the provided list. Disposes
+ * any libs whose source has changed or are no longer present, then registers
+ * new/updated declarations so Monaco's TypeScript language service can resolve
+ * `import { … } from "shared/…"`.
+ */
+export function syncSharedScriptLibs(sharedScripts: SharedScriptInfo[]): void {
+  const currentIds = new Set(sharedScripts.map((s) => s.id));
+
+  // Dispose libs for scripts that are no longer in the dependency list
+  for (const [id, entry] of sharedLibEntries) {
+    if (!currentIds.has(id)) {
+      entry.disposable.dispose();
+      sharedLibEntries.delete(id);
+    }
+  }
+
+  // Register or update extra libs for each shared script
+  for (const shared of sharedScripts) {
+    if (!shared.moduleName) {
+      console.warn(
+        `Shared script '${shared.name}' is not a module for some reason`
+      );
+      continue;
+    }
+
+    const existing = sharedLibEntries.get(shared.id);
+
+    // Skip if the source code hasn't changed
+    if (existing && existing.sourceHash === shared.sourceCode) {
+      continue;
+    }
+
+    // Dispose the previous registration if updating
+    if (existing) {
+      existing.disposable.dispose();
+    }
+
+    const declaration = generateSharedScriptDeclaration(
+      shared.moduleName,
+      shared.sourceCode
+    );
+
+    const disposable = addSharedScriptExtraLib(declaration, shared.moduleName);
+
+    sharedLibEntries.set(shared.id, {
+      disposable,
+      sourceHash: shared.sourceCode,
+    });
+  }
 }
