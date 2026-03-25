@@ -6,8 +6,8 @@ export type EditorThemeName = CamelToKebabCase<keyof typeof themes>;
 
 /**
  * Raw TextMate theme definitions for all editor themes. All themes are statically imported and
- * available in memory, but only registered with the Shiki highlighter on demand. This avoids
- * the cost of compiling all ~40 themes at startup.
+ * pre-loaded into the Shiki highlighter at initialization, then registered with Monaco via
+ * `shikiToMonaco`. Theme switching is handled entirely by Monaco's `setTheme` monkey-patch.
  */
 export const EditorThemes: Record<EditorThemeName, ThemeRegistration> = {
   andromeeda: themes.andromeeda,

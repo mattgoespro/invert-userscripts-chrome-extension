@@ -63,7 +63,7 @@ export default class ExtensionReloaderPlugin
       this._log.verbose(
         "Build done. Broadcasting reload message to clients..."
       );
-      this.broadcastMessageToClients({ type: "reload" });
+      this.broadcastActionToClients({ type: "reload" });
     });
 
     compiler.hooks.shutdown.tap(this.name, () => {
@@ -101,13 +101,15 @@ export default class ExtensionReloaderPlugin
     this._log.verbose(`Listening on port: ${this._options.port}`);
   }
 
-  private broadcastMessageToClients(message: BroadcastMessage) {
+  private broadcastActionToClients(message: BroadcastMessage) {
     if (this._wss.clients.size === 0) {
       this._log.warn(`
         No extension clients are connected.
+
         Ensure that:
-          > the browser extension is installed and activated
-          > a browser window is running
+          > the browser window is open
+          > the browser extension is installed
+          > an extension page (e.g. popup, options, or devtools) is open to establish a connection
       `);
     }
 
