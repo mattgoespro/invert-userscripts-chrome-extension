@@ -1,6 +1,8 @@
-/* =============================================================================
-   Theme Token Registration — Maps CSS vars to Tailwind utility classes
-   ============================================================================= */
+/**
+  =============================================================================
+  Theme Token Registration — Maps CSS vars to Tailwind utility classes
+  =============================================================================
+*/
 
 @theme {
   /* Colors */
@@ -124,8 +126,7 @@
   /* Animations */
   --animate-page-reveal: page-reveal 180ms ease-out;
   --animate-panel-enter: panel-enter 150ms ease forwards;
-  --animate-select-reveal: select-panel-reveal 180ms
-    cubic-bezier(0.2, 0, 0.13, 1.5);
+  --animate-select-reveal: select-panel-reveal 180ms cubic-bezier(0.2, 0, 0.13, 1.5);
   --animate-toast-slide-in: toast-slide-in 200ms ease forwards;
   --animate-toast-slide-out: toast-slide-out 150ms ease forwards;
   --animate-toast-drain: toast-drain linear forwards;

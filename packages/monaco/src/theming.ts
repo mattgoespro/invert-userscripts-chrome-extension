@@ -53,14 +53,16 @@ export const EditorThemes: Record<EditorThemeName, ThemeRegistration> = {
   "vitesse-dark": themes.vitesseDark,
 };
 
-/** The default theme registered at initialization time. */
-export const DEFAULT_THEME: EditorThemeName = "invert-dark";
+/**
+ * The default theme registered at initialization time.
+ */
+export const EditorDefaultTheme: EditorThemeName = "invert-dark";
 
-// ── Public API ────────────────────────────────────────────────────────────────
-
-export function getThemeOptions(): { label: string; value: EditorThemeName }[] {
-  return Object.entries(EditorThemes).map(([key, theme]) => ({
-    label: theme.displayName,
-    value: key as EditorThemeName,
-  }));
+/**
+ * Gets the editor theme names and their corresponding TextMate theme definitions.
+ *
+ * @returns An array of tuples, where each tuple contains an editor theme name and its TextMate theme definition.
+ */
+export function getEditorThemes() {
+  return Object.entries(EditorThemes);
 }

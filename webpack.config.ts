@@ -149,11 +149,7 @@ export default (
         filename: "options.html",
         chunks: ["options"],
       }),
-      new HtmlWebpackPlugin({
-        template: "./packages/renderer/src/sandbox/sass-sandbox.html",
-        filename: "sass-sandbox.html",
-        chunks: ["sass-sandbox"],
-      }),
+
       new MonacoEditorWebpackPlugin({
         languages: ["typescript", "scss", "javascript", "css"],
         filename: "monaco-editor/workers/[name].worker.js",
@@ -190,6 +186,17 @@ export default (
               "images"
             ),
             to: path.join(__dirname, "dist", "assets", "images"),
+          },
+          {
+            from: path.join(
+              __dirname,
+              "packages",
+              "renderer",
+              "src",
+              "sandbox",
+              "sass-sandbox.html"
+            ),
+            to: path.join(__dirname, "dist"),
           },
         ],
       }),

@@ -21,7 +21,7 @@ type GlobalStateContextValue = {
   updatePanelSizes: (partial: Partial<GlobalStateSizes>) => void;
 };
 
-const GlobalStateContext = createContext<GlobalStateContextValue | null>(null);
+const GlobalStateContext = createContext<GlobalStateContextValue>(null);
 
 /**
  * Provides persisted global state (sidebar tab, selected script, panel sizes, drawer state)
@@ -37,7 +37,7 @@ export function GlobalStateProvider({
     GlobalStateManager.defaultState
   );
   const [isLoaded, setIsLoaded] = useState(false);
-  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout>>(null);
 
   useEffect(() => {
     GlobalStateManager.get().then((state) => {

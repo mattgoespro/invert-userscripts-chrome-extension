@@ -2,7 +2,7 @@ import { ChildProcess, spawn } from "child_process";
 import fs from "fs-extra";
 import path from "path";
 
-export function resolveChromeExecutablePath(): string | undefined {
+export function resolveChromeExecutablePath(): string {
   const suffixes = [
     "\\Google\\Chrome\\Application\\chrome.exe",
     "\\Google\\Chrome SxS\\Application\\chrome.exe",

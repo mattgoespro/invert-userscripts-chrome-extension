@@ -46,9 +46,9 @@ interface SassCompileResponse {
  * By running the compiler in a sandboxed iframe with relaxed CSP, we can use dart-sass.
  */
 export class SassCompiler {
-  private static iframe: HTMLIFrameElement | null = null;
+  private static iframe: HTMLIFrameElement = null;
   private static isReady = false;
-  private static readyPromise: Promise<void> | null = null;
+  private static readyPromise: Promise<void> = null;
   private static pendingRequests = new Map<
     string,
     { resolve: (result: UserscriptCompileResult) => void }
@@ -67,7 +67,6 @@ export class SassCompiler {
       this.iframe = document.createElement("iframe");
       this.iframe.src = "/sass-sandbox.html";
       this.iframe.style.display = "none";
-      this.iframe.setAttribute("sandbox", "allow-scripts");
 
       const handleMessage = (event: MessageEvent<SassCompileResponse>) => {
         if (event.data?.type === "sandbox-ready") {

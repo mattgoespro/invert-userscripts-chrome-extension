@@ -28,8 +28,8 @@ export function ScriptEditor() {
     globalState.outputDrawerCollapsed
   );
 
-  const drawerPanelRef = useRef<PanelImperativeHandle | null>(null);
-  const scssDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const drawerPanelRef = useRef<PanelImperativeHandle>(null);
+  const scssDebounceRef = useRef<ReturnType<typeof setTimeout>>(null);
 
   // Auto-compile source code on mount and on script switch to pre-populate the output drawer.
   useEffect(() => {

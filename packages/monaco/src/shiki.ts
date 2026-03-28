@@ -2,30 +2,14 @@ import { createHighlighterCore } from "@shikijs/core";
 import { createJavaScriptRegexEngine } from "@shikijs/engine-javascript";
 import { shikiToMonaco } from "@shikijs/monaco";
 import monaco from "monaco-editor";
-import { DEFAULT_THEME, EditorThemes } from "./theming";
-
-/** Languages managed by Shiki's TextMate tokenizer. */
-const SHIKI_LANGUAGES = new Set(["typescript", "javascript", "scss", "css"]);
-
-// ── Public API ────────────────────────────────────────────────────────────────
-
-// Cached initialization promise — ensures `registerMonaco()` only runs once and all callers await the same result.
-let initPromise: Promise<void> | null = null;
+import { EditorDefaultTheme, EditorThemes } from "./theming";
 
 /**
- * Initialize Shiki's TextMate tokenizer and wire it into Monaco.
- * Safe to call multiple times — subsequent calls return the same promise.
- * Must be awaited BEFORE creating any Monaco editor instances so that:
- * 1. Monarch tokenizers are blocked for Shiki-managed languages
- * 2. Monkey-patches on `editor.create` / `editor.setTheme` are installed
- * 3. All themes are defined and token providers are registered
+ * Languages managed by Shiki's TextMate tokenizer.
+ * Monarch tokenizers are blocked for these languages in `registerMonaco()` so that Shiki
+ * is the sole provider of syntax highlighting for them. All other languages continue to use Monarch.
  */
-export function registerMonaco(): Promise<void> {
-  if (!initPromise) {
-    initPromise = initializeShiki();
-  }
-  return initPromise;
-}
+const SHIKI_LANGUAGES = new Set(["typescript", "javascript", "scss", "css"]);
 
 /**
  * Initializes Shiki's TextMate tokenizer and wires it into Monaco via `shikiToMonaco`.
@@ -40,7 +24,7 @@ export function registerMonaco(): Promise<void> {
  *    causes vscode-textmate to return a corrupted mid-parse ruleStack when exceeded, cascading
  *    to all subsequent lines losing syntax highlighting.
  */
-async function initializeShiki(): Promise<void> {
+export async function registerMonaco(): Promise<void> {
   const highlighter = await createHighlighterCore({
     themes: Object.values(EditorThemes),
     langs: [
@@ -70,5 +54,5 @@ async function initializeShiki(): Promise<void> {
   shikiToMonaco(highlighter, monaco as any, { tokenizeTimeLimit: 0 });
 
   // Apply the project's default theme (shikiToMonaco defaults to the first loaded theme).
-  monaco.editor.setTheme(DEFAULT_THEME);
+  monaco.editor.setTheme(EditorDefaultTheme);
 }

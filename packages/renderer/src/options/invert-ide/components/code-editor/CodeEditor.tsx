@@ -53,9 +53,7 @@ export function CodeEditor(props: CodeEditorProps) {
     : appEditorSettings;
 
   const editorRootRef = useRef<HTMLDivElement>(null);
-  const editorInstanceRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(
-    null
-  );
+  const editorInstanceRef = useRef<monaco.editor.IStandaloneCodeEditor>(null);
   const onCodeModifiedRef = useRef(onCodeModified);
   // When true, the model content change listener is muted. Used to prevent
   // programmatic setValue calls (e.g. post-save formatter apply) from being

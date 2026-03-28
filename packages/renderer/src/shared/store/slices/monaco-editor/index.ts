@@ -60,12 +60,10 @@ export const { selectMonacoReady, selectIsSaving } = editorSlice.selectors;
  * Returns SharedScriptInfo[] for the given script ID's shared script dependencies.
  * Resolves the script's `sharedScripts` ID array against all scripts in the store.
  */
-export const selectSharedScriptsForUserscript = (
-  scriptId: string | undefined
-) =>
+export const selectSharedScriptsForUserscript = (scriptId: string) =>
   createSelector(
     (state: RootState) => state.userscripts.scripts,
-    (scripts): SharedScriptInfo[] | undefined => {
+    (scripts): SharedScriptInfo[] => {
       if (!scriptId || !scripts) {
         return undefined;
       }

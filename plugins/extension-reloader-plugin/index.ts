@@ -50,7 +50,7 @@ export default class ExtensionReloaderPlugin
           name: this.name,
           stage: webpack.Compilation.PROCESS_ASSETS_STAGE_SUMMARIZE,
         },
-        (assets) => this.injectAssetClientReloader(compilation, assets)
+        (assets) => this.injectAssetClientReloaderScript(compilation, assets)
       );
     });
 
@@ -179,7 +179,7 @@ export default class ExtensionReloaderPlugin
     }
   }
 
-  private injectAssetClientReloader(
+  private injectAssetClientReloaderScript(
     compilation: webpack.Compilation,
     assets: Record<string, webpack.sources.Source>
   ) {

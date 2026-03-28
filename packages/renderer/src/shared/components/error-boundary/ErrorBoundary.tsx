@@ -28,7 +28,7 @@ export class ErrorBoundary extends Component<FallbackProps> {
     return JSON.stringify(error, null, 2);
   }
 
-  private getErrorStack(): string | null {
+  private getErrorStack(): string {
     const { error } = this.props;
 
     if (error instanceof Error && error.stack) {

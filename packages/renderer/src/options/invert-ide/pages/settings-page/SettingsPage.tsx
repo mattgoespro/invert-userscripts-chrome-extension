@@ -12,7 +12,7 @@ import {
   loadSettings,
   updateSettings,
 } from "@/shared/store/slices/settings/thunks.settings";
-import { EditorThemeName, getThemeOptions } from "@packages/monaco";
+import { EditorThemeName, getEditorThemes } from "@packages/monaco";
 import { AppThemeName } from "@shared/model";
 import { useEffect } from "react";
 import { SettingsSection } from "./SettingsSection";
@@ -63,6 +63,16 @@ export function Settings() {
     dispatch(updateSettings({ autoFormat }));
   };
 
+  function getEditorThemeOptions(): {
+    label: string;
+    value: EditorThemeName;
+  }[] {
+    return getEditorThemes().map(([key, theme]) => ({
+      label: theme.displayName,
+      value: key as EditorThemeName,
+    }));
+  }
+
   if (isLoading) {
     return (
       <div className="flex-1 p-(--page-padding)">
@@ -102,7 +112,7 @@ export function Settings() {
           label="Theme"
           value={settings.theme}
           onChange={handleThemeChange}
-          options={getThemeOptions()}
+          options={getEditorThemeOptions()}
         />
         <div className="pt-1">
           {monacoReady && <ThemePreview theme={settings.theme} />}

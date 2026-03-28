@@ -50,7 +50,7 @@ const variantLabelColor: Record<ToastVariant, string> = {
 
 export function Toast({ toast, onDismiss }: ToastProps) {
   const [dismissing, setDismissing] = useState(false);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout>>(null);
 
   const startDismiss = useCallback(() => {
     setDismissing(true);

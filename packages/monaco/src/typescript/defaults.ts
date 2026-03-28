@@ -1,7 +1,7 @@
-import { TypeScriptCompilerOptions } from "@shared/typescript";
 import { SharedScriptInfo } from "@shared/model";
+import { TypeScriptCompilerOptions } from "@shared/typescript";
 import monaco from "monaco-editor";
-import { generateSharedScriptDeclaration } from "./typescript-declarations";
+import { generateSharedScriptDeclaration } from "./declarations";
 
 /**
  * The TypeScript contribution module is imported directly by its ESM subpath.
