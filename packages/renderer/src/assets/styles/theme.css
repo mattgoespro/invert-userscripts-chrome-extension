@@ -1,28 +1,36 @@
-/**
-  =============================================================================
-  Theme Token Registration — Maps CSS vars to Tailwind utility classes
-  =============================================================================
-*/
+/* =============================================================================
+   Theme Token Registration — Maps CSS vars to Tailwind utility classes
+   ============================================================================= */
 
-@theme {
+@theme inline {
+  /* Disable unused default namespaces */
+  --color-*: initial;
+  --shadow-*: initial;
+  --inset-shadow-*: initial;
+  --drop-shadow-*: initial;
+  --text-shadow-*: initial;
+  --tracking-*: initial;
+  --blur-*: initial;
+  --perspective-*: initial;
+  --container-*: initial;
+  --aspect-*: initial;
+  --breakpoint-*: initial;
+
+  /* Default colors (re-added after reset) */
+  --color-white: #fff;
+  --color-black: #000;
+
   /* Colors */
-  --color-primary: var(--primary);
-  --color-primary-hover: var(--primary-hover);
   --color-accent: var(--accent);
   --color-accent-hover: var(--accent-hover);
   --color-accent-muted: var(--accent-muted);
   --color-accent-subtle: var(--accent-subtle);
   --color-accent-border: var(--accent-border);
   --color-danger: var(--danger);
-  --color-danger-soft: var(--danger-soft);
-  --color-danger-strong: var(--danger-strong);
-  --color-success: var(--success);
 
-  --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-border: var(--border);
   --color-border-subtle: var(--border-subtle);
-  --color-border-focus: var(--border-focus);
 
   --color-surface-base: var(--surface-base);
   --color-surface-raised: var(--surface-raised);
@@ -41,61 +49,25 @@
   --color-error-glow: var(--error-glow);
   --color-error-surface: var(--error-surface);
   --color-error-surface-dark: var(--error-surface-dark);
-  --color-error-text: var(--error-text);
   --color-error-text-muted: var(--error-text-muted);
   --color-error-border: var(--error-border);
 
   --color-syntax-keyword: var(--syntax-keyword);
-  --color-syntax-member: var(--syntax-member);
   --color-syntax-function: var(--syntax-function);
   --color-syntax-param: var(--syntax-param);
   --color-syntax-type: var(--syntax-type);
   --color-syntax-punctuation: var(--syntax-punctuation);
   --color-syntax-comment: var(--syntax-comment);
 
-  --color-info: var(--info);
-  --color-warning: var(--warning);
   --color-error: var(--error);
 
   /* Component colors */
-  --color-input-fg: var(--input-foreground);
-  --color-input-bg: var(--input-background);
-  --color-input-border: var(--input-border);
-  --color-input-placeholder: var(--input-placeholder);
   --color-label-fg: var(--label-foreground);
 
-  --color-button-fg: var(--button-foreground);
-  --color-button-bg: var(--button-background);
-  --color-button-hover-bg: var(--button-hover-background);
-  --color-button-active-bg: var(--button-active-background);
-  --color-button-disabled-fg: var(--button-disabled-foreground);
-  --color-button-disabled-bg: var(--button-disabled-background);
-
-  --color-icon-button-fg: var(--icon-button-foreground);
-  --color-icon-button-bg: var(--icon-button-background);
-  --color-icon-button-border: var(--icon-button-border);
-  --color-icon-button-hover-bg: var(--icon-button-hover-background);
-  --color-icon-button-focus-bg: var(--icon-button-focus-background);
-
-  --color-switch-fg: var(--switch-foreground);
-  --color-switch-bg: var(--switch-background);
-  --color-switch-checked-fg: var(--switch-checked-foreground);
-  --color-switch-checked-bg: var(--switch-checked-background);
-  --color-switch-border: var(--switch-border);
-
-  --color-select-fg: var(--select-foreground);
   --color-select-bg: var(--select-background);
   --color-select-border: var(--select-border);
 
-  --color-checkbox-fg: var(--checkbox-foreground);
-  --color-checkbox-bg: var(--checkbox-background);
-  --color-checkbox-border: var(--checkbox-border);
-  --color-checkbox-checked-bg: var(--checkbox-checked-background);
-  --color-checkbox-checked-fg: var(--checkbox-checked-foreground);
-
   --color-toast-fg: var(--toast-foreground);
-  --color-toast-bg: var(--toast-background);
-  --color-toast-border: var(--toast-border);
   --color-toast-info-accent: var(--toast-info-accent);
   --color-toast-info-surface: var(--toast-info-surface);
   --color-toast-info-border: var(--toast-info-border);
@@ -106,6 +78,11 @@
   --color-toast-error-surface: var(--toast-error-surface);
   --color-toast-error-border: var(--toast-error-border);
 
+  /* Border radius */
+  --radius-default: var(--geometry-border-radius);
+}
+
+@theme {
   /* Typography */
   --font-heading: "Outfit", "Open Sans", sans-serif;
   --font-body: "Open Sans", sans-serif;
@@ -120,18 +97,104 @@
   --spacing-xl: 20px;
   --spacing-2xl: 24px;
 
-  /* Border radius */
-  --radius-default: var(--geometry-border-radius);
-
   /* Animations */
   --animate-page-reveal: page-reveal 180ms ease-out;
+
+  @keyframes page-reveal {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
   --animate-panel-enter: panel-enter 150ms ease forwards;
+
+  @keyframes panel-enter {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
   --animate-select-reveal: select-panel-reveal 180ms cubic-bezier(0.2, 0, 0.13, 1.5);
+
+  @keyframes select-panel-reveal {
+    from {
+      opacity: 0;
+      transform: scaleY(0.92) translateY(-4px);
+    }
+    to {
+      opacity: 1;
+      transform: scaleY(1) translateY(0);
+    }
+  }
+
   --animate-toast-slide-in: toast-slide-in 200ms ease forwards;
+
+  @keyframes toast-slide-in {
+    from {
+      opacity: 0;
+      transform: translateX(24px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
   --animate-toast-slide-out: toast-slide-out 150ms ease forwards;
+
+  @keyframes toast-slide-out {
+    from {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    to {
+      opacity: 0;
+      transform: translateX(24px);
+    }
+  }
+
   --animate-toast-drain: toast-drain linear forwards;
-  --animate-cursor-blink: dashboard-header-cursor-blink 1s step-end infinite;
+
+  @keyframes toast-drain {
+    from {
+      transform: scaleX(1);
+    }
+    to {
+      transform: scaleX(0);
+    }
+  }
+
   --animate-pulse-indicator: pulse-indicator 2s ease-in-out infinite;
-  --animate-devtools-reveal: devtools-menu-reveal 120ms ease-out;
-  --animate-devtools-item-reveal: devtools-item-reveal 120ms ease-out;
+
+  @keyframes pulse-indicator {
+    0%,
+    100% {
+      opacity: 0.5;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+
+  --animate-devtools-reveal: devtools-reveal 120ms ease-out;
+  --animate-devtools-item-reveal: devtools-reveal 120ms ease-out;
+
+  @keyframes devtools-reveal {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 }

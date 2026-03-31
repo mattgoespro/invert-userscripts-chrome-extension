@@ -49,34 +49,34 @@ export class ErrorBoundary extends Component<FallbackProps> {
     const errorStack = this.getErrorStack();
 
     return (
-      <div className="from-error-surface-dark via-error-surface to-error-surface-dark absolute box-border flex h-full w-full flex-col items-center justify-center overflow-auto bg-linear-to-b p-8">
-        <div className="bg-error-surface border-error-border flex w-full max-w-150 flex-col overflow-hidden rounded-2xl border">
-          <div className="border-error-border flex items-center gap-3.5 border-b bg-[linear-gradient(135deg,var(--error-glow)_0%,transparent_60%)] px-7 py-6">
-            <span className="bg-error-glow border-error-accent-soft h-10 w-10 rounded-[10px] border text-center text-lg leading-[1.8] shadow-[0_0_20px_var(--error-glow)]">
+      <div className="absolute box-border flex h-full w-full flex-col items-center justify-center overflow-auto bg-linear-to-b from-error-surface-dark via-error-surface to-error-surface-dark p-8">
+        <div className="flex w-full max-w-150 flex-col overflow-hidden rounded-2xl border border-error-border bg-error-surface">
+          <div className="flex items-center gap-3.5 border-b border-error-border bg-[linear-gradient(135deg,var(--error-glow)_0%,transparent_60%)] px-7 py-6">
+            <span className="h-10 w-10 rounded-[10px] border border-error-accent-soft bg-error-glow text-center text-lg leading-[1.8] shadow-[0_0_20px_var(--error-glow)]">
               ⚠️
             </span>
             <Typography variant="title">Something went wrong</Typography>
           </div>
           <div className="flex flex-col px-7 py-6">
-            <div className="border-error-border flex flex-col gap-2 border-b py-4 first:pt-0 last:border-b-0 last:pb-0">
+            <div className="flex flex-col gap-2 border-b border-error-border py-4 first:pt-0 last:border-b-0 last:pb-0">
               <Typography variant="caption">Error</Typography>
-              <div className="text-error-text-muted bg-error-surface-dark border-error-border rounded-[10px] border p-4 font-mono text-[13px] leading-8 wrap-break-word">
-                <div className="text-error-accent bg-error-glow border-error-accent-soft mr-2 inline-flex self-start rounded-lg border px-1.5 font-mono text-xs">
+              <div className="rounded-[10px] border border-error-border bg-error-surface-dark p-4 font-mono text-[13px] leading-8 wrap-break-word text-error-text-muted">
+                <div className="mr-2 inline-flex self-start rounded-lg border border-error-accent-soft bg-error-glow px-1.5 font-mono text-xs text-error-accent">
                   {errorName}
                 </div>
                 <span>{errorMessage}</span>
               </div>
             </div>
             {errorStack && (
-              <div className="border-error-border flex flex-col gap-2 border-b py-4 first:pt-0 last:border-b-0 last:pb-0">
+              <div className="flex flex-col gap-2 border-b border-error-border py-4 first:pt-0 last:border-b-0 last:pb-0">
                 <Typography variant="caption">Stack Trace</Typography>
-                <pre className="error-boundary__stack text-error-text-muted bg-error-surface-dark border-error-border m-0 max-h-50 overflow-x-auto overflow-y-auto rounded-[10px] border p-4 font-mono text-[11px] leading-8 wrap-break-word whitespace-pre-wrap">
+                <pre className="m-0 scrollbar-error max-h-50 overflow-x-auto overflow-y-auto rounded-[10px] border border-error-border bg-error-surface-dark p-4 font-mono text-[11px] leading-8 wrap-break-word whitespace-pre-wrap text-error-text-muted">
                   {errorStack}
                 </pre>
               </div>
             )}
           </div>
-          <div className="bg-error-surface-dark border-error-border flex justify-end border-t px-7 py-5">
+          <div className="flex justify-end border-t border-error-border bg-error-surface-dark px-7 py-5">
             <Button onClick={this.props.resetErrorBoundary}>Try Again</Button>
           </div>
         </div>

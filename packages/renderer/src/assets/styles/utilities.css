@@ -1,17 +1,6 @@
-/**
-  =============================================================================
-  Custom Utilities
-  =============================================================================
-*/
-
-@utility label-style {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  font-weight: 400;
-  line-height: 1;
-  color: var(--label-foreground);
-  text-transform: uppercase;
-}
+/* =============================================================================
+   Custom Utilities
+   ============================================================================= */
 
 @utility scrollbar-thin {
   &::-webkit-scrollbar {
@@ -27,9 +16,27 @@
   }
 }
 
+@utility scrollbar-error {
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--error-border);
+    border-radius: 3px;
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background-color: var(--error-text-muted);
+  }
+}
+
 @utility scrollbar-thin-6 {
   &::-webkit-scrollbar {
     width: 6px;
+    height: 6px;
   }
   &::-webkit-scrollbar-track {
     background: transparent;
