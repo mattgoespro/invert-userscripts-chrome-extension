@@ -4,7 +4,7 @@ import { cva } from "class-variance-authority";
 import clsx from "clsx";
 
 const tabVariants = cva(
-  "inline-flex items-center gap-1.5 py-0.75 px-2.5 rounded-default cursor-pointer font-mono text-[11px] font-medium tracking-[0.03em] transition-colors duration-150",
+  "inline-flex items-center gap-1.5 py-0.75 px-2.5 rounded-default cursor-pointer font-mono text-base font-medium tracking-[0.03em] transition-colors duration-150",
   {
     variants: {
       active: {

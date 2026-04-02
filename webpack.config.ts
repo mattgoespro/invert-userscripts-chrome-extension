@@ -16,7 +16,7 @@ export default (
 ) =>
   ({
     mode,
-    devtool: mode === "production" ? false : "cheap-module-source-map",
+    devtool: mode === "production" ? false : "source-map",
     entry: {
       background: {
         import: "./packages/runtime/src/background.ts",
@@ -52,6 +52,7 @@ export default (
           use: {
             loader: "esbuild-loader",
             options: {
+              target: "esnext",
               tsconfig: path.join(
                 __dirname,
                 "packages",
@@ -68,6 +69,7 @@ export default (
           use: {
             loader: "esbuild-loader",
             options: {
+              target: "esnext",
               tsconfig: path.join(
                 __dirname,
                 "packages",
@@ -84,6 +86,7 @@ export default (
           use: {
             loader: "esbuild-loader",
             options: {
+              target: "esnext",
               tsconfig: path.join(
                 __dirname,
                 "packages",
@@ -100,6 +103,7 @@ export default (
           use: {
             loader: "esbuild-loader",
             options: {
+              target: "esnext",
               loader: "tsx",
               tsconfig: path.join(
                 __dirname,

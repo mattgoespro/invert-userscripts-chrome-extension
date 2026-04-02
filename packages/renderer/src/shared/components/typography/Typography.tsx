@@ -6,7 +6,7 @@ const typographyVariants = cva("m-0", {
   variants: {
     variant: {
       title:
-        "font-heading text-2xl font-semibold text-foreground leading-[1.2]",
+        "font-heading text-base font-semibold text-foreground leading-[1.2]",
       subtitle:
         "font-heading text-xl font-medium text-text-muted leading-[1.3]",
       "section-title":

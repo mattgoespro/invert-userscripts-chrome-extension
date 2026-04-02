@@ -23,12 +23,12 @@ export function ModuleImportsSelector({
 
   if (availableSharedScripts.length === 0) {
     return (
-      <div className="bg-surface-overlay border-border rounded-default relative flex items-center gap-3 border border-dashed px-4 opacity-60">
+      <div className="relative flex items-center gap-3 rounded-default border border-dashed border-border bg-surface-overlay px-4 opacity-60">
         <div className="flex items-center gap-1.5">
           <PackageIcon size={14} className="text-text-muted" />
           <Typography
             variant="caption"
-            className="text-text-muted font-mono text-[11px] italic"
+            className="font-mono text-base text-text-muted italic"
           >
             No shared scripts available
           </Typography>
@@ -40,14 +40,14 @@ export function ModuleImportsSelector({
   const selectedIds = new Set(script.sharedScripts ?? []);
 
   return (
-    <div className="bg-surface-overlay border-border rounded-default relative flex items-center gap-3 border px-4">
+    <div className="relative flex items-center gap-3 rounded-default border border-border bg-surface-overlay px-4">
       <div className="flex shrink-0 items-center gap-1.5">
         <PackageIcon size={13} className="text-syntax-keyword opacity-75" />
-        <span className="text-syntax-keyword font-mono text-[10px] tracking-[0.01em] select-none">
+        <span className="font-mono text-[10px] tracking-[0.01em] text-syntax-keyword select-none">
           imports
         </span>
       </div>
-      <div className="gap-sm flex flex-wrap items-center">
+      <div className="flex flex-wrap items-center gap-sm">
         {availableSharedScripts.map((shared) => (
           <div key={shared.id} className="flex items-center">
             <Checkbox

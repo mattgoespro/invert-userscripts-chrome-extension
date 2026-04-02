@@ -87,6 +87,7 @@
   --surface-overlay: var(--base-surface-overlay);
   --surface-input: var(--base-surface-input);
 
+  --text-base: 11px;
   --text-muted: var(--base-text-muted);
   --text-muted-faint: var(--base-text-muted-faint);
   --text-muted-strong: var(--base-text-muted-strong);

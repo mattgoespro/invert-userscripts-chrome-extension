@@ -3,7 +3,7 @@ import { cva } from "class-variance-authority";
 import clsx from "clsx";
 
 const selectToggleVariants = cva(
-  "flex items-center gap-2 w-full py-2 px-3.5 h-(--input-height) rounded-default cursor-pointer font-mono text-[11px] font-medium tracking-[0.02em] select-none transition-all duration-200 focus-visible:outline-none focus-visible:border-accent-border focus-visible:shadow-[0_0_0_2px_var(--accent-muted)]",
+  "flex items-center gap-2 w-full py-2 px-3.5 h-(--input-height) rounded-default cursor-pointer font-mono text-base font-medium tracking-[0.02em] select-none transition-all duration-200 focus-visible:outline-none focus-visible:border-accent-border focus-visible:shadow-[0_0_0_2px_var(--accent-muted)]",
   {
     variants: {
       expanded: {
@@ -19,7 +19,7 @@ const selectToggleVariants = cva(
 );
 
 const selectOptionVariants = cva(
-  "flex items-center gap-2 w-full py-1.75 px-2.5 border-none rounded-[calc(var(--geometry-border-radius)-2px)] cursor-pointer font-mono text-[11px] font-medium tracking-[0.02em] text-left whitespace-nowrap overflow-hidden text-ellipsis transition-colors duration-120 active:bg-active-overlay",
+  "flex items-center gap-2 w-full py-1.75 px-2.5 border-none rounded-[calc(var(--geometry-border-radius)-2px)] cursor-pointer font-mono text-base font-medium tracking-[0.02em] text-left whitespace-nowrap overflow-hidden text-ellipsis transition-colors duration-120 active:bg-active-overlay",
   {
     variants: {
       selected: {
@@ -120,7 +120,7 @@ export function Select<T>({ label, options, value, onChange }: SelectProps<T>) {
   return (
     <div className="relative flex flex-col gap-2 font-mono" ref={wrapperRef}>
       {label && (
-        <label className="text-label-fg font-mono text-xs leading-none font-normal uppercase">
+        <label className="font-mono text-xs leading-none font-normal text-label-fg uppercase">
           {label}
         </label>
       )}
@@ -135,9 +135,9 @@ export function Select<T>({ label, options, value, onChange }: SelectProps<T>) {
         </span>
         <span
           className={clsx(
-            "text-text-muted-faint inline-flex shrink-0 text-[10px]",
+            "inline-flex shrink-0 text-[10px] text-text-muted-faint",
             "transition-transform duration-250 ease-in-out",
-            expanded && "text-accent rotate-90"
+            expanded && "rotate-90 text-accent"
           )}
         >
           ▸
@@ -148,10 +148,10 @@ export function Select<T>({ label, options, value, onChange }: SelectProps<T>) {
         <div
           className={clsx(
             "absolute top-[calc(100%+6px)] left-0 max-h-70 w-full min-w-45",
-            "bg-surface-overlay border-accent-border rounded-default flex flex-col border",
+            "flex flex-col rounded-default border border-accent-border bg-surface-overlay",
             "z-100 overflow-hidden",
             "shadow-[0_8px_32px_rgba(0,0,0,0.4),0_0_0_1px_var(--border-subtle)]",
-            "animate-select-reveal origin-top"
+            "origin-top animate-select-reveal"
           )}
         >
           <div>

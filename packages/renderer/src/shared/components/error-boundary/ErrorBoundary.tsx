@@ -70,7 +70,7 @@ export class ErrorBoundary extends Component<FallbackProps> {
             {errorStack && (
               <div className="flex flex-col gap-2 border-b border-error-border py-4 first:pt-0 last:border-b-0 last:pb-0">
                 <Typography variant="caption">Stack Trace</Typography>
-                <pre className="m-0 scrollbar-error max-h-50 overflow-x-auto overflow-y-auto rounded-[10px] border border-error-border bg-error-surface-dark p-4 font-mono text-[11px] leading-8 wrap-break-word whitespace-pre-wrap text-error-text-muted">
+                <pre className="m-0 scrollbar-error max-h-50 overflow-x-auto overflow-y-auto rounded-[10px] border border-error-border bg-error-surface-dark p-4 font-mono text-base leading-8 wrap-break-word whitespace-pre-wrap text-error-text-muted">
                   {errorStack}
                 </pre>
               </div>

@@ -19,25 +19,25 @@ export function DevToolsItem({
   return (
     <div className="relative font-mono">
       <button
-        className="text-text-muted hover:bg-hover-overlay hover:text-foreground flex w-full cursor-pointer items-center gap-2 rounded-[3px] border-none bg-transparent px-2.5 py-2 text-left font-mono text-[11px] font-medium tracking-[0.02em] transition-colors duration-100 select-none"
+        className="flex w-full cursor-pointer items-center gap-2 rounded-[3px] border-none bg-transparent px-2.5 py-2 text-left font-mono text-base font-medium tracking-[0.02em] text-text-muted transition-colors duration-100 select-none hover:bg-hover-overlay hover:text-foreground"
         onClick={() => setExpanded((prev) => !prev)}
         title={`${name} (devtool)`}
       >
         {icon && <span className="flex shrink-0 items-center">{icon}</span>}
         <span className="flex-1 text-left whitespace-nowrap">{name}</span>
-        <span className="text-text-muted-faint shrink-0 text-[10px]">
+        <span className="shrink-0 text-[10px] text-text-muted-faint">
           {expanded ? "▾" : "▸"}
         </span>
       </button>
 
       {expanded && (
         <div
-          className="bg-surface-raised border-border rounded-default animate-devtools-item-reveal absolute bottom-0 left-[calc(100%+8px)] flex max-h-120 max-w-130 min-w-55 flex-col overflow-hidden border"
+          className="absolute bottom-0 left-[calc(100%+8px)] flex max-h-120 max-w-130 min-w-55 animate-devtools-item-reveal flex-col overflow-hidden rounded-default border border-border bg-surface-raised"
           ref={panelRef}
         >
           {panelTitle && (
-            <div className="text-text-muted-strong border-border-subtle shrink-0 border-b px-3.5 py-2.5 text-[10px] font-semibold tracking-[0.06em] uppercase">
-              <span className="text-text-muted-faint font-normal">{"// "}</span>
+            <div className="shrink-0 border-b border-border-subtle px-3.5 py-2.5 text-[10px] font-semibold tracking-[0.06em] text-text-muted-strong uppercase">
+              <span className="font-normal text-text-muted-faint">{"// "}</span>
               {panelTitle}
             </div>
           )}

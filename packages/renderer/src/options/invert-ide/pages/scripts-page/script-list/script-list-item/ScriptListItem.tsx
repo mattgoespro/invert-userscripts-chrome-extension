@@ -35,27 +35,27 @@ export function ScriptListItem({
   return (
     <div
       className={clsx(
-        "group rounded-default mb-1.5 flex cursor-pointer items-center p-2 transition-colors duration-150",
+        "group mb-1.5 flex cursor-pointer items-center rounded-default p-2 transition-colors duration-150",
         active
-          ? "bg-accent-subtle border-accent-muted border-l-accent border border-l-[3px]"
-          : "bg-surface-overlay hover:bg-hover-overlay hover:border-border border border-transparent",
+          ? "border border-l-[3px] border-accent-muted border-l-accent bg-accent-subtle"
+          : "border border-transparent bg-surface-overlay hover:border-border hover:bg-hover-overlay",
         "focus:border-accent-border focus:outline-none",
         script.error && "border-error"
       )}
       onClick={() => onSelectScript()}
     >
       {script.status === "modified" && (
-        <div className="bg-accent animate-pulse-indicator mr-3 h-2 w-2 shrink-0 rounded-full" />
+        <div className="mr-3 h-2 w-2 shrink-0 animate-pulse-indicator rounded-full bg-accent" />
       )}
       {script.shared && (
         <PackageIcon
           size={12}
-          className="text-syntax-keyword mr-2 shrink-0 opacity-70"
+          className="mr-2 shrink-0 text-syntax-keyword opacity-70"
         />
       )}
       <span
         className={clsx(
-          "flex-1 overflow-hidden font-mono text-[11px] font-medium text-ellipsis whitespace-nowrap",
+          "flex-1 overflow-hidden font-mono text-base font-medium text-ellipsis whitespace-nowrap",
           script.shared ? "text-syntax-keyword" : "text-syntax-function"
         )}
       >
