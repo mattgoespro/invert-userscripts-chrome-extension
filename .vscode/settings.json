@@ -1,9 +1,11 @@
 {
   "[chatagent]": {
-    "editor.defaultFormatter": "yzhang.markdown-all-in-one"
+    "editor.defaultFormatter": "darkriszty.markdown-table-prettify",
+    "editor.formatOnPaste": true,
+    "editor.formatOnSave": true
   },
   "[css]": {
-    "editor.defaultFormatter": "sibiraj-s.vscode-scss-formatter",
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.formatOnPaste": true,
     "editor.formatOnSave": true
   },
@@ -20,20 +22,8 @@
     "editor.formatOnPaste": true,
     "editor.formatOnSave": true
   },
+  "chat.agent.maxRequests": 1000,
   "chat.agent.thinking.collapsedTools": "withThinking",
-  "chat.agent.thinking.phrases": {
-    "mode": "append",
-    "phrases": [
-      "Let me think about it.",
-      "Let me check.",
-      "Let me see.",
-      "Let me find out.",
-      "Let me look into that.",
-      "Let me consider the options.",
-      "Let me analyze that.",
-      "Let me review the information."
-    ]
-  },
   "chat.agent.thinkingStyle": "collapsedPreview",
   "chat.artifacts.enabled": true,
   "chat.autopilot.enabled": true,
@@ -52,9 +42,8 @@
     "https://*": true
   },
   "chat.viewSessions.orientation": "stacked",
-  "css.customData": [".vscode/css-custom-data.json"],
+  "css.customData": [".vscode/tailwindcss.data.json"],
   "editor.codeActionsOnSave": {
-    "source.addMissingImports.ts": "always",
     "source.fixAll.eslint": "always",
     "source.fixAll.prettier": "always",
     "source.removeUnusedImports": "never"

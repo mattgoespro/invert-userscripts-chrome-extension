@@ -20,10 +20,11 @@
     "aaron-bond.better-comments",
     "vscode-icons-team.vscode-icons",
     "mrmlnc.vscode-scss",
-    "sibiraj-s.vscode-scss-formatter",
     "yzhang.markdown-all-in-one",
     "davidanson.vscode-markdownlint",
     "eamodio.gitlens",
-    "bradlc.vscode-tailwindcss"
+    "bradlc.vscode-tailwindcss",
+    "darkriszty.markdown-table-prettify",
+    "mattgoespro.npm-package-viewer"
   ]
 }

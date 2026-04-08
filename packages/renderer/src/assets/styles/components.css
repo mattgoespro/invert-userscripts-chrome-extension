@@ -1,11 +1,12 @@
-/* =============================================================================
-   Component Styles — Rules that require CSS (pseudo-elements, sibling
-   combinators, attribute selectors, descendant overrides, !important)
-   ============================================================================= */
+/*
+=============================================================================
+  Component Styles — Rules that require CSS (pseudo-elements, sibling
+  combinators, attribute selectors, descendant overrides, !important)
+=============================================================================
+*/
 
 @layer components {
   /* --- Switch (peer-checked pseudo styling) --- */
-
   .switch--slider {
     position: absolute;
     cursor: pointer;
@@ -133,14 +134,12 @@
   }
 
   /* --- Theme Preview (force-hide cursor in read-only editor) --- */
-
   .theme-preview--editor .cursor,
   .theme-preview--editor .cursors-layer {
     display: none !important;
   }
 
   /* --- ThemeSwitcher (pseudo-element decorations) --- */
-
   .theme-switcher--group-separator {
     display: flex;
     align-items: center;
@@ -180,8 +179,7 @@
      ============================================================================= */
 
   /* --- ScriptMetadata (url-patterns input padding override) --- */
-
   .script-metadata--url-patterns input {
     padding-left: 52px;
   }
-} /* @layer components */
+}

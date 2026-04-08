@@ -1,5 +1,6 @@
 {
-  "include": ["tools/**/*.ts", "tools/**/*.js", "*.ts"],
+  "include": ["tools/**/*.ts", "tools/**/*.js", "demo/**/*.ts", "*.ts"],
+  "exclude": ["node_modules", "dist", "demo"],
   "compilerOptions": {
     "baseUrl": ".",
     "module": "esnext",
@@ -19,7 +20,6 @@
       "@monaco/*": ["packages/monaco/src/*"]
     }
   },
-  "exclude": ["node_modules", "dist"],
   "references": [
     { "path": "./packages/shared" },
     { "path": "./packages/monaco" },

@@ -20,7 +20,7 @@
     "build": "webpack --mode production",
     "dev": "webpack --mode development --watch",
     "clean": "rm -rf dist && rm -rf node_modules/.cache",
-    "lint": "eslint packages plugins",
+    "lint": "eslint packages plugins examples",
     "format": "prettier --write ."
   },
   "dependencies": {

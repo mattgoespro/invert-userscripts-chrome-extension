@@ -50,22 +50,21 @@ The monaco package encapsulates all Monaco editor integration: Shiki tokenizer r
 
 ### Build & Run
 
-| Command                        | Description                               |
-| ------------------------------ | ----------------------------------------- |
-| `npm run dev`                  | Run Webpack in watch mode for development |
-| `npm run build`                | Production build                          |
-| `npm run lint`                 | Run ESLint across all packages and tools  |
-| `npm run format`               | Run Prettier to format all files          |
-| `npm run clean`                | Remove the `dist` directory               |
-| `npm run icons`                | Generate extension icons via `scripts/`   |
-| `npm run start-redux-devtools` | Launch Redux DevTools on localhost:8001   |
+| Command                        | Description                                         |
+| ------------------------------ | --------------------------------------------------- |
+| `npm run dev`                  | Run Webpack in watch mode for development           |
+| `npm run build`                | Production build                                    |
+| `npm run lint`                 | Run ESLint across all packages, tools, and examples |
+| `npm run format`               | Run Prettier to format all files                    |
+| `npm run clean`                | Remove the `dist` directory                         |
+| `npm run icons`                | Generate extension icons via `scripts/`             |
+| `npm run start-redux-devtools` | Launch Redux DevTools on localhost:8001             |
 
 ### Path Aliases
 
 - `@shared/*` → Maps to `packages/shared/src/*`. Use for importing shared logic across packages.
 - `@packages/monaco` → Maps to `packages/monaco/src/index.ts`. Use for importing Monaco editor integration, themes, and utilities.
 - `@/*` → Maps to `./src/*` within the renderer package (e.g., `@/shared/components` → `packages/renderer/src/shared/components`).
-- `@assets/styles/invert-ide` → Maps to the main SCSS entry file (`packages/renderer/src/assets/styles/_index.scss`).
 
 ---
 
@@ -279,20 +278,24 @@ const { uiState, updateUIState, updatePanelSizes } = useGlobalState();
 
 Use the custom component library in `packages/renderer/src/shared/components`:
 
-| Component       | Purpose                                         | Import Path                                        |
-| --------------- | ----------------------------------------------- | -------------------------------------------------- |
-| `Button`        | Standard buttons                                | `@/shared/components/button/Button`                |
-| `IconButton`    | Icon-only buttons (Lucide icons)                | `@/shared/components/icon-button/IconButton`       |
-| `Input`         | Text inputs                                     | `@/shared/components/input/Input`                  |
-| `Select`        | Custom dropdown select (not native `<select>`)  | `@/shared/components/select/Select`                |
-| `Checkbox`      | Checkboxes                                      | `@/shared/components/checkbox/Checkbox`            |
-| `Switch`        | Toggle switches                                 | `@/shared/components/switch/Switch`                |
-| `Typography`    | Text elements with variant styling              | `@/shared/components/typography/Typography`        |
-| `CodeComment`   | Code-styled `//` comment display                | `@/shared/components/code-comment/CodeComment`     |
-| `CodeLine`      | Inline TypeScript syntax highlighter            | `@/shared/components/code-line/CodeLine`           |
-| `ResizeHandle`  | Panel resize separator (react-resizable-panels) | `@/shared/components/resize-handle/ResizeHandle`   |
-| `ErrorBoundary` | Error boundary fallback UI                      | `@/shared/components/error-boundary/ErrorBoundary` |
-| `DevTools`      | Development toolbar (theme switcher, storage)   | `@/shared/components/devtools/DevTools`            |
+| Component       | Purpose                                           | Import Path                                        |
+| --------------- | ------------------------------------------------- | -------------------------------------------------- |
+| `Button`        | Standard buttons (CVA variants)                   | `@/shared/components/button/Button`                |
+| `IconButton`    | Icon-only buttons (Lucide icons, CVA variants)    | `@/shared/components/icon-button/IconButton`       |
+| `Input`         | Text inputs                                       | `@/shared/components/input/Input`                  |
+| `Select`        | Custom dropdown select (not native `<select>`)    | `@/shared/components/select/Select`                |
+| `Checkbox`      | Checkboxes                                        | `@/shared/components/checkbox/Checkbox`            |
+| `Switch`        | Toggle switches                                   | `@/shared/components/switch/Switch`                |
+| `Typography`    | Text elements with CVA variant styling            | `@/shared/components/typography/Typography`        |
+| `CodeComment`   | Code-styled `//` comment display                  | `@/shared/components/code-comment/CodeComment`     |
+| `CodeLine`      | Inline TypeScript syntax highlighter              | `@/shared/components/code-line/CodeLine`           |
+| `ResizeHandle`  | Panel resize separator (react-resizable-panels)   | `@/shared/components/resize-handle/ResizeHandle`   |
+| `Panel`         | Dropdown overlay panel                            | `@/shared/components/panel/Panel`                  |
+| `TabList`       | Tabbed navigation (Tab, TabContent, TabListTitle) | `@/shared/components/tab-list/TabList`             |
+| `Toast`         | Toast notifications (with ToastProvider context)  | `@/shared/components/toast/Toast`                  |
+| `EditorPanel`   | Editor panel wrapper with inset styling           | `@/shared/components/editor-panel/EditorPanel`     |
+| `ErrorBoundary` | Error boundary fallback UI                        | `@/shared/components/error-boundary/ErrorBoundary` |
+| `DevTools`      | Development toolbar (theme switcher, storage)     | `@/shared/components/devtools/DevTools`            |
 
 **Do NOT use raw HTML elements** (e.g., `<button>`, `<input>`) when a custom component exists.
 
@@ -316,15 +319,23 @@ import { CodeLine } from "@/shared/components/code-line/CodeLine";
 
 ### Component Details
 
-**`Select`** is a fully custom dropdown — not a native `<select>` element. It is generic (`Select<T>`), supports keyboard navigation (arrow keys, Escape), click-outside-to-close, and custom chevron animation.
+**`Select`** is a fully custom dropdown — not a native `<select>` element. It is generic (`Select<T>`), supports keyboard navigation (arrow keys, Escape), click-outside-to-close, and custom chevron animation. Uses CVA for toggle and option variants.
 
 **`CodeLine`** renders inline TypeScript syntax highlighting with a regex-based tokenizer. Token types: `keyword`, `type`, `function-name`, `string`, `punctuation`, `identifier`, `comment`, `whitespace`. Each token renders as a `<span>` with a BEM-style class (`code-line--keyword`, etc.).
+
+**`Panel`** is a dropdown overlay panel positioned absolutely below its container with `animate-panel-enter`. Uses Tailwind utilities for styling with `z-100` layering and custom shadow.
+
+**`TabList`** provides tabbed navigation using `Tab`, `TabContent`, and `TabListTitle` subcomponents. `TabList` renders the tab bar and automatically displays the content of the active `Tab`. Supports `barClassName` for tab bar styling.
+
+**`Toast`** and **`ToastProvider`** implement a toast notification system. `ToastProvider` wraps the app and exposes `toast()` and `dismiss()` via React Context. Supports `info`, `warning`, and `error` variants with CVA, auto-dismiss with configurable duration, and max 5 concurrent toasts.
+
+**`EditorPanel`** wraps editor content with a rounded, bordered container using inset shadow styling.
 
 **`ResizeHandle`** wraps `Separator` from `react-resizable-panels`.
 
 **`ErrorBoundary`** uses `react-error-boundary` with `FallbackProps` pattern. Renders error name, message, and filtered stack trace.
 
-**`DevTools`** provides a development toolbar with two items: a theme switcher (for UI SCSS themes) and a chrome.storage.sync inspector.
+**`DevTools`** provides a development toolbar with two items: a theme switcher (for UI CSS themes) and a chrome.storage.sync inspector.
 
 ### Additional Shared Exports
 
@@ -341,30 +352,47 @@ Every component MUST follow this structure:
 ```text
 component-name/
   ComponentName.tsx
-  ComponentName.scss
 ```
 
 - **Folder naming**: `kebab-case` (e.g., `icon-button/`, `script-editor/`)
-- **File naming**: `PascalCase` for TSX (e.g., `IconButton.tsx`), matching `PascalCase.scss` for styles
+- **File naming**: `PascalCase` for TSX (e.g., `IconButton.tsx`)
+- **No separate style files** — all styling is inline via Tailwind utility classes and CVA
 
 ### React Component Pattern
 
 Follow this exact structure for all components:
 
 ```tsx
-import "./ComponentName.scss";
+import { cva, type VariantProps } from "class-variance-authority";
+import clsx from "clsx";
+
+const componentVariants = cva(
+  "base-utility-classes here",
+  {
+    variants: {
+      variant: {
+        primary: "variant-specific-classes",
+        secondary: "variant-specific-classes",
+      },
+    },
+    defaultVariants: {
+      variant: "primary",
+    },
+  }
+);
 
 type ComponentNameProps = {
-  variant?: "primary" | "secondary";
   // ... other props
-} & React.HTMLAttributes<HTMLDivElement>; // Extend native attributes when applicable
+} & VariantProps<typeof componentVariants> &
+  React.HTMLAttributes<HTMLDivElement>;
 
 export function ComponentName({
-  variant = "primary",
+  variant,
+  className,
   ...rest
 }: ComponentNameProps) {
   return (
-    <div className={`component-name component-name--${variant}`} {...rest}>
+    <div className={clsx(componentVariants({ variant }), className)} {...rest}>
       {/* content */}
     </div>
   );
@@ -373,291 +401,211 @@ export function ComponentName({
 
 **Key Patterns**:
 
-1. **SCSS import first** — Always import the component's SCSS file at the top
-2. **Props type definition** — Define a `ComponentNameProps` type, extending native HTML attributes when appropriate
-3. **Named export** — Use named exports (not default exports) for components
-4. **Spread rest props** — Pass through additional HTML attributes via `...rest`
-5. **Double quotes** — Always use double quotes for strings and JSX attributes
-6. **`forwardRef` when needed** — Use `forwardRef` for components that expose a DOM ref (see `CodeComment` for example)
+1. **CVA for variants** — Use `class-variance-authority` for components with multiple visual variants
+2. **`clsx` for class composition** — Combine CVA output, conditional classes, and `className` prop via `clsx()`
+3. **Props type definition** — Define a `ComponentNameProps` type, extending `VariantProps<typeof variants>` and native HTML attributes
+4. **Named export** — Use named exports (not default exports) for components
+5. **Spread rest props** — Pass through additional HTML attributes via `...rest`
+6. **Accept `className` prop** — Always allow parent components to extend styling via `className`
+7. **Double quotes** — Always use double quotes for strings and JSX attributes
+8. **`forwardRef` when needed** — Use `forwardRef` for components that expose a DOM ref
 
 ---
 
-## SCSS Design Token System
+## Styling System — Tailwind CSS v4
 
 ### Architecture Overview
 
-The styling system uses a **3-tier design token pipeline** with a **multi-theme override layer**, defined in `packages/renderer/src/assets/styles/`. All tokens are CSS custom properties on `:root`, imported once at the app root via `_index.scss`.
+The styling system uses **Tailwind CSS v4** with **PostCSS**, combined with a **CSS custom property design token pipeline** and a **multi-theme override layer**. All configuration lives in `packages/renderer/src/assets/styles/`.
 
 ```text
-_primitives.scss  →  _themes.scss  →  _semantic.scss  →  _components.scss
-   (raw values)     (theme overrides)  (intent aliases)   (component contracts)
-                                     ↘                  ↗
-                                       _typography.scss
-                                       _mixins.scss
+tailwind.css          ← Entry point (imported once at app root)
+  ├── base.css        ← :root CSS custom properties (primitives + semantic + component tokens + theme overrides)
+  ├── theme.css       ← @theme inline (maps CSS vars → Tailwind utilities) + @theme (typography, spacing, animations)
+  ├── utilities.css   ← @utility directives (custom scrollbar utilities, etc.)
+  └── components.css  ← @layer components (styles requiring CSS: pseudo-elements, sibling combinators, attribute selectors)
 ```
 
-Import order in `_index.scss`: `primitives → themes → semantic → components → typography → mixins`
+> **Important**: `tailwind.css` is imported once in `options/index.tsx` as `import "../assets/styles/tailwind.css"`. All Tailwind utilities and CSS variables are globally available — **do NOT import style files directly into React components**.
 
-> **Important**: `_index.scss` is imported once in `options/index.tsx`. **Do NOT import any style token file directly into React components** — the CSS variables are globally available via `var()` syntax.
+### Key Libraries
 
-### Tier 1: Primitives (`_primitives.scss`)
+| Library                       | Purpose                       | Usage                                               |
+| ----------------------------- | ----------------------------- | --------------------------------------------------- |
+| `tailwindcss` v4              | Utility-first CSS framework   | All component styling via utility classes in JSX    |
+| `class-variance-authority`    | Type-safe variant management  | `cva()` for defining component variant classes      |
+| `clsx`                        | Conditional class composition | Combining CVA output, conditionals, and `className` |
+| `prettier-plugin-tailwindcss` | Automatic class sorting       | Prettier sorts Tailwind classes on format           |
 
-Raw design values. All prefixed with `--base-*`. **Never reference these directly in components.**
+### CSS Custom Properties — Token Pipeline
+
+All design tokens are CSS custom properties defined on `:root` in `base.css`, following a 3-tier pipeline:
+
+#### Tier 1: Primitives (prefix `--base-*`)
+
+Raw design values. **Never reference these directly in Tailwind classes or component code.**
 
 | Category             | Examples                                                                                                      |
 | -------------------- | ------------------------------------------------------------------------------------------------------------- |
-| Core palette         | `--base-black`, `--base-white`, `--base-grey`, `--base-blue`, `--base-gold`, `--base-red`, `--base-green`     |
+| Core palette         | `--base-white`, `--base-grey`, `--base-blue`, `--base-gold`, `--base-red`                                     |
 | Surfaces             | `--base-surface-base`, `--base-surface-raised`, `--base-surface-overlay`, `--base-surface-input`              |
-| Borders              | `--base-border`, `--base-border-subtle`, `--base-border-focus`                                                |
-| Text                 | `--base-text`, `--base-text-muted`, `--base-text-muted-faint`, `--base-text-muted-strong`                     |
+| Borders              | `--base-border`, `--base-border-subtle`                                                                       |
+| Text                 | `--base-text-muted`, `--base-text-muted-faint`, `--base-text-muted-strong`                                    |
 | Accent               | `--base-accent`, `--base-accent-hover`, `--base-accent-muted`, `--base-accent-subtle`, `--base-accent-border` |
-| Interactive overlays | `--base-hover-overlay`, `--base-active-overlay` (micro white wash)                                            |
-| Danger               | `--base-danger`, `--base-danger-soft`                                                                         |
-| Error states         | `--base-error-accent`, `--base-error-surface`, `--base-error-text`, etc.                                      |
+| Interactive overlays | `--base-hover-overlay`, `--base-active-overlay`                                                               |
+| Danger               | `--base-danger`                                                                                               |
+| Error states         | `--base-error-accent`, `--base-error-surface`, `--base-error-text-muted`, etc.                                |
 | Syntax highlighting  | `--base-syntax-keyword`, `--base-syntax-function`, etc.                                                       |
-| Component-specific   | Button, switch, select, icon button, input primitives                                                         |
+| Component-specific   | Switch (`--base-switch-*`), Select (`--base-select-*`)                                                        |
 
-Also defines SCSS variables (`$black`, `$white`, `$blue`, `$gold`, etc.) used for `color.scale()` transformations within the same file.
+#### Tier 2: Semantic Tokens
 
-### Theme Layer (`_themes.scss`)
+Intent-driven aliases referencing `--base-*` primitives. **These are the primary tokens — used in component code via Tailwind utility classes.**
 
-Multi-theme system via `[data-theme]` attribute selectors. The default theme (Graphite) comes from `_primitives.scss`. Theme files override `--base-*` primitives.
+| Category    | Variables                                                                                                                                  |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Core        | `--accent`, `--accent-hover`, `--accent-muted`, `--accent-subtle`, `--accent-border`, `--danger`                                           |
+| Layout      | `--foreground`, `--border`, `--border-subtle`                                                                                              |
+| Surfaces    | `--surface-base`, `--surface-raised`, `--surface-overlay`, `--surface-input`                                                               |
+| Text        | `--text-muted`, `--text-muted-faint`, `--text-muted-strong`                                                                                |
+| Interactive | `--hover-overlay`, `--active-overlay`                                                                                                      |
+| Error       | `--error-accent`, `--error-accent-soft`, `--error-glow`, `--error-surface`, `--error-surface-dark`, `--error-text-muted`, `--error-border` |
+| Syntax      | `--syntax-keyword`, `--syntax-function`, `--syntax-param`, `--syntax-type`, `--syntax-punctuation`, `--syntax-comment`                     |
+| Status      | `--info`, `--error`                                                                                                                        |
+| Geometry    | `--geometry-border-radius: 4px`                                                                                                            |
 
-| Theme File             | `data-theme` Value |
-| ---------------------- | ------------------ |
-| `_graphite-warm.scss`  | `graphite-warm`    |
-| `_graphite-dusk.scss`  | `graphite-dusk`    |
-| `_graphite-ember.scss` | `graphite-ember`   |
-| `_obsidian.scss`       | `obsidian`         |
-| `_obsidian-deep.scss`  | `obsidian-deep`    |
-| `_obsidian-ember.scss` | `obsidian-ember`   |
-| `_obsidian-frost.scss` | `obsidian-frost`   |
+#### Tier 3: Component Tokens
 
-Themes are switched at runtime by setting the `data-theme` attribute on a root element, managed by the `DevTools` → `ThemeSwitcher` component.
+Themeable tokens for specific UI components:
 
-### Tier 2: Semantic Tokens (`_semantic.scss`)
-
-Intent-driven aliases referencing `--base-*` primitives. **These are the primary tokens for component styling.**
-
-| Category    | Variables                                                                                                                                                      |
-| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Core        | `--primary`, `--primary-hover`, `--accent`, `--accent-hover`, `--accent-muted`, `--accent-subtle`, `--accent-border`, `--danger`, `--success`                  |
-| Layout      | `--background`, `--foreground`, `--border`, `--border-subtle`, `--border-focus`                                                                                |
-| Surfaces    | `--surface-base`, `--surface-raised`, `--surface-overlay`, `--surface-input`                                                                                   |
-| Text        | `--text-muted`, `--text-muted-faint`, `--text-muted-strong`                                                                                                    |
-| Interactive | `--hover-overlay`, `--active-overlay`                                                                                                                          |
-| Danger      | `--danger-soft`, `--danger-strong`                                                                                                                             |
-| Error       | `--error-accent`, `--error-accent-soft`, `--error-glow`, `--error-surface`, `--error-surface-dark`, `--error-text`, `--error-text-muted`, `--error-border`     |
-| Syntax      | `--syntax-keyword`, `--syntax-member`, `--syntax-function`, `--syntax-param`, `--syntax-type`, `--syntax-punctuation`, `--syntax-comment`                      |
-| Status      | `--info`, `--warning`, `--error`                                                                                                                               |
-| Geometry    | `--geometry-border-radius: 4px`                                                                                                                                |
-| Spacing     | `--spacing-2xs` (2px), `--spacing-xs` (4px), `--spacing-sm` (8px), `--spacing-md` (12px), `--spacing-lg` (16px), `--spacing-xl` (20px), `--spacing-2xl` (24px) |
-
-### Tier 3: Component Tokens (`_components.scss`)
-
-Themeable tokens that form the styling contract for each UI component:
-
-- **Input**: `--input-foreground`, `--input-background`, `--input-border`, `--input-placeholder`
 - **Label**: `--label-foreground`
-- **Button**: `--button-foreground`, `--button-background`, `--button-hover-background`, `--button-active-background`, `--button-disabled-foreground`, `--button-disabled-background`
-- **Icon Button**: `--icon-button-foreground`, `--icon-button-background`, `--icon-button-border`, `--icon-button-hover-background`, `--icon-button-focus-background`
-- **Switch**: `--switch-foreground`, `--switch-background`, `--switch-checked-foreground`, `--switch-checked-background`, `--switch-border`
-- **Select**: `--select-foreground`, `--select-background`, `--select-border`, `--select-placeholder`
-- **Checkbox**: `--checkbox-foreground`, `--checkbox-background`, `--checkbox-border`, `--checkbox-checked-background`, `--checkbox-checked-foreground`
-- **Typography**: `--title-foreground`, `--subtitle-foreground`
-- **Layout Spacing**: `--input-height`, `--button-padding-y`, `--button-padding-x`, `--page-padding`, `--section-padding`, `--section-gap`, `--field-gap`
+- **Switch**: `--switch-foreground`, `--switch-background`, `--switch-border`
+- **Select**: `--select-background`, `--select-border`
+- **Toast**: `--toast-foreground`, `--toast-shadow`, `--toast-info-*`, `--toast-warning-*`, `--toast-error-*`
+- **Layout Spacing**: `--input-height`, `--page-padding`, `--section-padding`, `--section-gap`, `--field-gap`
 
-### Typography Tokens (`_typography.scss`)
+### Tailwind Theme Registration (`theme.css`)
 
-**Font Families** (exposed as CSS variables):
+CSS custom properties are mapped to Tailwind utility classes via `@theme inline` (for CSS variable references) and `@theme` (for static values):
 
-| Variable         | Font Stack                          | Usage                         |
-| ---------------- | ----------------------------------- | ----------------------------- |
-| `--font-heading` | `"Outfit", "Open Sans", sans-serif` | Headings                      |
-| `--font-body`    | `"Open Sans", sans-serif`           | Body text                     |
-| `--font-mono`    | `"JetBrains Mono", monospace`       | Code, inputs, buttons, labels |
+```css
+@theme inline {
+  --color-accent: var(--accent);
+  --color-foreground: var(--foreground);
+  --color-surface-base: var(--surface-base);
+  /* ... maps semantic tokens → Tailwind color-* namespace */
 
-**Typography Variants** (8 variants, each with `font-family`, `font-size`, `font-weight`, `line-height`, `color`):
-
-| Variant    | Font           | Size     | Weight |
-| ---------- | -------------- | -------- | ------ |
-| `title`    | Outfit         | 1.5rem   | 600    |
-| `subtitle` | Outfit         | 1.25rem  | 500    |
-| `body`     | Open Sans      | 0.875rem | 400    |
-| `caption`  | Open Sans      | 0.75rem  | 400    |
-| `button`   | JetBrains Mono | 0.875rem | 500    |
-| `input`    | JetBrains Mono | 0.875rem | 400    |
-| `label`    | JetBrains Mono | 12px     | 400    |
-| `code`     | JetBrains Mono | 0.875rem | 400    |
-
-The `code` variant also has `--typography-code-letter-spacing: -0.01em`.
-
-Access via: `var(--typography-{variant}-font-size)`, `var(--typography-{variant}-font-weight)`, etc.
-
-### Global Mixins (`_mixins.scss`)
-
-| Mixin         | Purpose                                                                                |
-| ------------- | -------------------------------------------------------------------------------------- |
-| `focus-ring`  | Applies `:focus-visible` with `outline: none` and `border-color: var(--accent-border)` |
-| `label-style` | Applies full typography-label token set + `text-transform: uppercase`                  |
-
----
-
-## SCSS Styling Patterns
-
-### Styling Basics
-
-- Import SCSS files directly into components: `import "./Component.scss"`
-- **CSS Modules are NOT used** — use global SCSS with scoped class naming
-- **Never import token files** (`_primitives.scss`, `_semantic.scss`, etc.) directly in components — they are globally available
-
-### Class Naming Convention
-
-Use **BEM-inspired double-dash syntax** for class names:
-
-```scss
-// Block
-.component-name {
+  --radius-default: var(--geometry-border-radius);
 }
 
-// Block with modifier
-.component-name--variant {
-}
+@theme {
+  --font-heading: "Outfit", "Open Sans", sans-serif;
+  --font-body: "Open Sans", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
 
-// Block with element (nested)
-.component-name {
-  .component-name--element {
-  }
-}
+  --spacing-2xs: 2px;
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 20px;
+  --spacing-2xl: 24px;
 
-// Alternative element syntax (also acceptable)
-.component-name--wrapper {
-  .component-name--label {
-  }
-  .component-name--field {
-  }
+  /* Named animations: --animate-page-reveal, --animate-panel-enter, etc. */
 }
 ```
 
-**Examples from the codebase**:
+This means Tailwind utilities like `bg-surface-base`, `text-foreground`, `border-accent-border`, `font-mono`, `gap-md`, `rounded-default`, `animate-panel-enter` all resolve to the design tokens.
 
-- `.input--wrapper`, `.input--label`, `.input--field`
-- `.select--wrapper`, `.select--label`, `.select--field`
-- `.switch--wrapper`, `.switch--input`, `.switch--slider`
-- `.icon-btn--primary`, `.icon-btn--secondary`
-- `.typography--title`, `.typography--subtitle`
-- `.script-list-item--wrapper`, `.script-list-item--name`
-- `.code-line`, `.code-line--keyword`, `.code-line--function-name`
-- `.resize-handle`, `.resize-handle--horizontal`, `.resize-handle--dragging`
+### Multi-Theme System
 
-### CSS Variables Usage
+The application supports **8 UI themes** (1 default + 7 overrides) via `[data-theme]` attribute selectors in `base.css`:
 
-**ALWAYS use CSS variables** from the design token system. Never hardcode colors, typography, or geometry values.
+| `data-theme` Value | Theme Name     |
+| ------------------ | -------------- |
+| _(default)_        | Graphite       |
+| `graphite-warm`    | Graphite Warm  |
+| `graphite-dusk`    | Graphite Dusk  |
+| `graphite-ember`   | Graphite Ember |
+| `obsidian`         | Obsidian       |
+| `obsidian-deep`    | Obsidian Deep  |
+| `obsidian-ember`   | Obsidian Ember |
+| `obsidian-frost`   | Obsidian Frost |
 
-```scss
-// ✅ CORRECT - Use semantic and component tokens
-.my-component {
-  color: var(--foreground);
-  background-color: var(--input-background);
-  font-family: var(--typography-input-font-family);
-  font-size: var(--typography-input-font-size);
-  border-radius: var(--geometry-border-radius);
-  border: 1px solid var(--border);
-}
+Themes override `--base-*` primitives; semantic and component tokens cascade automatically. The `DevTools` → `ThemeSwitcher` manages theme switching at runtime.
 
-// ✅ CORRECT - Interactive state using overlay tokens
-.my-interactive {
-  &:hover {
-    background-color: var(--hover-overlay);
+### Typography
+
+**Font Families** (available as Tailwind `font-*` utilities):
+
+| Utility        | Font Stack                          | Usage                         |
+| -------------- | ----------------------------------- | ----------------------------- |
+| `font-heading` | `"Outfit", "Open Sans", sans-serif` | Headings                      |
+| `font-body`    | `"Open Sans", sans-serif`           | Body text                     |
+| `font-mono`    | `"JetBrains Mono", monospace`       | Code, inputs, buttons, labels |
+
+**Typography Variants** are defined as CVA variants in the `Typography` component (`section-title`, `title`, `subtitle`, `body`, `caption`, `button`, `code`).
+
+### Components Layer (`components.css`)
+
+Styles that **cannot be expressed as Tailwind utilities** live in `@layer components` in `components.css`. Use this only for:
+
+- Pseudo-element styling (`::before`, `::after`)
+- Sibling combinators (`input:checked + .slider`)
+- Attribute selectors (`[data-separator="hover"]`)
+- Descendant overrides that need CSS specificity
+
+Current component styles: Switch, Checkbox, Resize Handle, Theme Preview, ThemeSwitcher, ScriptMetadata.
+
+### Custom Utilities (`utilities.css`)
+
+Custom Tailwind utilities defined via `@utility` directive:
+
+- `scrollbar-thin` — 4px thin scrollbar
+- `scrollbar-thin-6` — 6px scrollbar with hover state
+- `scrollbar-error` — 6px error-themed scrollbar
+
+### Styling Patterns in Components
+
+**Use Tailwind utility classes directly in JSX** — not separate CSS files:
+
+```tsx
+// ✅ CORRECT — Tailwind utilities + CVA variants + clsx composition
+import { cva, type VariantProps } from "class-variance-authority";
+import clsx from "clsx";
+
+const buttonVariants = cva(
+  "inline-flex items-center justify-center font-mono text-sm font-medium rounded-default cursor-pointer transition-colors duration-150",
+  {
+    variants: {
+      variant: {
+        primary: "bg-accent text-surface-base hover:bg-accent-hover",
+        secondary: "bg-surface-overlay text-text-muted-strong border border-border hover:bg-hover-overlay",
+      },
+    },
   }
-  &:active {
-    background-color: var(--active-overlay);
-  }
-}
+);
 
-// ❌ WRONG - Hardcoded values
-.my-component {
-  color: #f0f0f0;
-  background-color: #2d2d2d;
-  font-family: "Nunito Sans";
-  border-radius: 6px;
-}
+// In JSX:
+<button className={clsx(buttonVariants({ variant }), className)}>
+
+// ✅ CORRECT — Conditional classes with clsx
+<div className={clsx("flex items-center gap-2", isActive && "text-accent", className)}>
+
+// ❌ WRONG — Hardcoded colors or inline styles
+<div style={{ backgroundColor: "#2d2d2d" }}>
+<div className="bg-[#2d2d2d]">
 ```
 
-**Token Reference Priority** (prefer higher tiers):
+### Important Styling Rules
 
-1. **Component tokens** (`--input-background`, `--button-hover-background`) — most specific
-2. **Semantic tokens** (`--primary`, `--foreground`, `--surface-raised`) — intent-based
-3. **Primitive tokens** (`--base-*`) — avoid using directly in components
-
-### SCSS Best Practices
-
-```scss
-// 1. Use SCSS nesting for element scoping
-.component--wrapper {
-  display: flex;
-
-  .component--label {
-    @include label-style;
-  }
-
-  .component--field {
-    background-color: var(--input-background);
-  }
-}
-
-// 2. Use & for pseudo-classes and modifiers
-.button {
-  background: var(--button-background);
-  transition: background-color 0.2s ease;
-
-  &:hover {
-    background: var(--button-hover-background);
-  }
-
-  &:disabled {
-    background: var(--button-disabled-background);
-    cursor: not-allowed;
-  }
-
-  &--primary {
-    /* variant styles */
-  }
-  &--secondary {
-    /* variant styles */
-  }
-}
-
-// 3. Define SCSS variables for repeated values
-$transition-duration: 0.2s;
-
-.switch--slider {
-  transition: $transition-duration;
-}
-
-// 4. Use @mixin for reusable style blocks
-@mixin icon-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  border: none;
-  border-radius: 4px;
-  transition: background-color 0.2s ease;
-}
-
-.icon-btn--primary {
-  @include icon-btn;
-}
-```
-
-### Important SCSS Rules
-
-1. **Never import token SCSS files** directly in components — CSS variables are globally available
-2. **Use `rem` units** for sizing (not `px`) when possible
-3. **Keep transitions short** — 0.2s to 0.3s for interactive elements
-4. **Scope all styles** under a component-specific class to avoid conflicts
-5. **Use the spacing scale** (`--spacing-xs`, `--spacing-sm`, `--spacing-md`, etc.) for consistent spacing
+1. **Tailwind-first** — Use Tailwind utility classes for all styling. Only use `components.css` for patterns that require CSS (pseudo-elements, sibling combinators)
+2. **CVA for variants** — When a component has distinct visual variants, define them with `cva()`
+3. **`clsx` for composition** — Combine CVA output, conditional classes, and forwarded `className` props
+4. **Use design token utilities** — Always use token-mapped utilities (`bg-surface-base`, `text-foreground`, `border-accent-border`) — never hardcode colors via arbitrary values
+5. **Accept `className` prop** — Components should accept and forward `className` for parent-level styling overrides
+6. **Use the spacing scale** — Use `gap-sm`, `p-md`, `mt-lg`, etc. for consistent spacing
+7. **Prettier auto-sorts** — Tailwind classes are automatically sorted by `prettier-plugin-tailwindcss` on format
 
 ---
 
@@ -667,9 +615,9 @@ $transition-duration: 0.2s;
 
 The design system uses **Outfit** for headings, **Open Sans** for body text, and **JetBrains Mono** for code, inputs, buttons, and labels. Ensure:
 
-- Proper hierarchy with `Typography` variants (`title`, `subtitle`, `body`, `caption`)
-- Uppercase labels with `text-transform: uppercase` for form labels (use `@include label-style` mixin)
-- JetBrains Mono for all interactive/code-related text
+- Proper hierarchy with `Typography` variants (`title`, `subtitle`, `section-title`, `body`, `caption`, `button`, `code`)
+- Uppercase labels with `font-mono text-xs uppercase` for form labels
+- JetBrains Mono (`font-mono`) for all interactive/code-related text
 - Appropriate font weights from the typography scale
 
 ### Color & Theme
@@ -707,28 +655,14 @@ These decorations use JetBrains Mono font and syntax highlighting tokens (`--syn
 
 ### Motion & Interaction
 
-Apply subtle, purposeful animations:
+Apply subtle, purposeful animations via Tailwind `animate-*` utilities or `transition-*` classes:
 
-```scss
-// Smooth state transitions
-transition: background-color 0.2s ease;
-
-// Staggered reveal for list items
-@keyframes item-reveal {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-.list-item {
-  animation: item-reveal 0.3s ease forwards;
-  animation-delay: calc(var(--index) * 0.05s); // staggered
-}
-```
+- `animate-page-reveal` — Fade-in on page load (180ms)
+- `animate-panel-enter` — Panel dropdown (150ms)
+- `animate-select-reveal` — Select dropdown with scale (180ms)
+- `animate-toast-slide-in` / `animate-toast-slide-out` — Toast notifications (200ms/150ms)
+- `animate-pulse-indicator` — Pulsing save indicator (2s infinite)
+- `transition-colors duration-150` — Standard interactive transitions
 
 ---
 
@@ -826,49 +760,47 @@ Background script (`packages/runtime/src/background.ts`) registers Chrome event 
 | Entry          | Source File                                     | Output            |
 | -------------- | ----------------------------------------------- | ----------------- |
 | `background`   | `packages/runtime/src/background.ts`            | `background.js`   |
-| `popup`        | `packages/renderer/src/popup/index.tsx`         | `popup.js`        |
 | `options`      | `packages/renderer/src/options/index.tsx`       | `options.js`      |
 | `sass-sandbox` | `packages/renderer/src/sandbox/sass-sandbox.ts` | `sass-sandbox.js` |
 
+> **Note**: The `popup` entry (`packages/renderer/src/popup/index.tsx`) is currently commented out pending implementation.
+
 ### Module Processing
 
-| Scope                         | Loader                                                 | Config              |
-| ----------------------------- | ------------------------------------------------------ | ------------------- |
-| `packages/shared/src/*.ts`    | `esbuild-loader`                                       | Shared tsconfig     |
-| `packages/monaco/src/*.ts`    | `esbuild-loader`                                       | Monaco tsconfig     |
-| `packages/runtime/**/*.ts`    | `esbuild-loader`                                       | Runtime tsconfig    |
-| `packages/renderer/**/*.tsx?` | `esbuild-loader` (`loader: "tsx"`, `jsx: "automatic"`) | Renderer tsconfig   |
-| `.scss`                       | `style-loader → css-loader → sass-loader`              |                     |
-| `.css`                        | `style-loader → css-loader`                            |                     |
-| `.ttf`                        | `asset/resource`                                       | Monaco editor fonts |
+| Scope                         | Loader                                                 | Config               |
+| ----------------------------- | ------------------------------------------------------ | -------------------- |
+| `packages/shared/src/*.ts`    | `esbuild-loader`                                       | Shared tsconfig      |
+| `packages/monaco/src/*.ts`    | `esbuild-loader`                                       | Monaco tsconfig      |
+| `packages/runtime/**/*.ts`    | `esbuild-loader`                                       | Runtime tsconfig     |
+| `packages/renderer/**/*.tsx?` | `esbuild-loader` (`loader: "tsx"`, `jsx: "automatic"`) | Renderer tsconfig    |
+| `.css`                        | `style-loader → css-loader → postcss-loader`           | Tailwind via PostCSS |
+| `.ttf`                        | `asset/resource`                                       | Monaco editor fonts  |
 
-**`noParse`**: `typescript.js` and `sass.dart.js` are excluded from parsing to improve build performance.
+**`noParse`**: `typescript.js` is excluded from parsing to improve build performance.
 
 ### Resolve Aliases
 
 - `@` → `packages/renderer/src/`
 - `@shared` → `packages/shared/src/`
 - `@packages/monaco` → `packages/monaco/src/`
-- `@assets/styles/invert-ide` → main SCSS index
-- `monaco-editor-core` → `monaco-editor/esm/vs/editor/editor.api.js`
-- `monaco-editor` → ESM editor API entry
+- `monaco-editor$` → `monaco-editor/esm/vs/editor/editor.api.js`
 
 ### Plugins
 
-- `HtmlWebpackPlugin` ×3 (popup, options, sass-sandbox)
+- `HtmlWebpackPlugin` (options)
 - `MonacoEditorWebpackPlugin`
-- `CopyWebpackPlugin` (manifest.json + images)
+- `CopyWebpackPlugin` (manifest.json + images + sass-sandbox.html)
 - `FaviconsWebpackPlugin`
 - `ChromeExtensionReloaderWebpackPlugin` (development only — see Development Tooling)
 
 ### Chunk Splitting
 
-Monaco editor and Sass are isolated into separate chunks to optimize loading.
+Monaco editor is isolated into a separate chunk to optimize loading.
 
 ### Build Optimization
 
 - **Minimizer**: `TerserPlugin` (production only, `extractComments: false`)
-- **Split Chunks**: Monaco editor and Sass isolated into named cache groups with content-hashed filenames
+- **Split Chunks**: Monaco editor isolated into a named cache group with content-hashed filenames
 - **Cache**: Filesystem caching enabled for faster rebuilds
 - **Output**: `pathinfo: false` to reduce garbage collector pressure; chunk files output to `chunks/[chunkhash].js`
 - **Stats**: `"errors-warnings"` for reduced console noise
@@ -964,14 +896,12 @@ The project uses ESLint flat config with a shared base and package-specific exte
 
 Consistent code formatting is enforced via Prettier (`prettier.config.mjs`):
 
-| Option          | Value   |
-| --------------- | ------- |
-| `semi`          | `true`  |
-| `trailingComma` | `"es5"` |
-| `singleQuote`   | `false` |
-| `printWidth`    | `100`   |
-| `tabWidth`      | `2`     |
-| `useTabs`       | `false` |
+| Option               | Value                                              |
+| -------------------- | -------------------------------------------------- |
+| `trailingComma`      | `"es5"`                                            |
+| `plugins`            | `["prettier-plugin-tailwindcss"]`                  |
+| `tailwindStylesheet` | `packages/renderer/src/assets/styles/tailwind.css` |
+| `tailwindFunctions`  | `["clsx"]`                                         |
 
 ---
 
@@ -1114,31 +1044,22 @@ packages/renderer/src/
 ├── assets/                           # Images and global styles
 │   ├── images/
 │   └── styles/
-│       ├── _index.scss               # Token orchestrator (imported at app root)
-│       ├── _primitives.scss          # Tier 1: Raw design values (--base-*)
-│       ├── _semantic.scss            # Tier 2: Intent aliases (--primary, etc.)
-│       ├── _components.scss          # Tier 3: Component tokens (--input-*, etc.)
-│       ├── _typography.scss          # Typography variants and font families
-│       ├── _themes.scss              # Theme import orchestrator
-│       ├── _mixins.scss              # Shared mixins (focus-ring, label-style)
-│       └── themes/                   # Per-theme override files
-│           ├── _graphite-warm.scss
-│           ├── _graphite-dusk.scss
-│           ├── _graphite-ember.scss
-│           ├── _obsidian.scss
-│           ├── _obsidian-deep.scss
-│           ├── _obsidian-ember.scss
-│           └── _obsidian-frost.scss
+│       ├── tailwind.css              # Entry point (imports all style layers)
+│       ├── base.css                  # :root CSS custom properties + theme overrides
+│       ├── theme.css                 # @theme inline + @theme (Tailwind token registration)
+│       ├── utilities.css             # @utility directives (scrollbar utilities)
+│       └── components.css            # @layer components (pseudo-elements, sibling combinators)
 ├── options/                          # Options page (main IDE)
 │   ├── index.html
 │   ├── index.tsx                     # Entry: ErrorBoundary → Provider → InvertIde
 │   └── invert-ide/
 │       ├── InvertIde.tsx             # Root IDE component
-│       ├── InvertIde.scss
 │       ├── components/
 │       │   ├── code-editor/          # Monaco editor wrapper (CodeEditor.tsx)
 │       │   ├── dashboard-header/     # Decorative banner with syntax-highlighted snippet
 │       │   └── sidebar/              # Navigation sidebar + SidebarNavButton
+│       ├── contexts/
+│       │   └── global-state.context.tsx
 │       └── pages/
 │           ├── scripts-page/         # Script management + dual-pane editor
 │           │   ├── ScriptsPage.tsx
@@ -1152,10 +1073,9 @@ packages/renderer/src/
 │           ├── modules-page/         # Global module management (direct ChromeSyncStorage)
 │           └── settings-page/        # Editor settings (Redux-backed)
 │               └── theme-preview/    # Editor theme preview component
-├── popup/                            # Extension popup
+├── popup/                            # Extension popup (not yet implemented)
 │   ├── index.html
-│   ├── index.tsx                     # Minimal entry: just renders InvertIdePopup
-│   └── invert-ide-popup/
+│   └── index.tsx
 ├── sandbox/                          # In-browser compilation & formatting
 │   ├── compiler.ts                   # TypeScriptCompiler + SassCompiler
 │   ├── formatter.ts                  # PrettierFormatter
@@ -1172,12 +1092,16 @@ packages/renderer/src/
     │   │   ├── devtools-item/
     │   │   ├── storage-preview/
     │   │   └── theme-switcher/
+    │   ├── editor-panel/             # Editor panel wrapper with inset styling
     │   ├── error-boundary/
     │   ├── icon-button/
     │   ├── input/
+    │   ├── panel/                    # Dropdown overlay panel
     │   ├── resize-handle/
     │   ├── select/
     │   ├── switch/
+    │   ├── tab-list/                 # Tabbed navigation (Tab, TabContent, TabListTitle)
+    │   ├── toast/                    # Toast notifications (ToastProvider context)
     │   └── typography/
     └── store/
         ├── store.ts                  # configureStore (userscripts + settings + editor slices)
@@ -1209,11 +1133,13 @@ packages/runtime/src/
 
 ```text
 packages/monaco/src/
-├── index.ts                # Barrel: re-exports from monaco.ts, theming.ts, typescript-lsp.ts
-├── monaco.ts               # registerMonaco() — cached Shiki initialization entry point
+├── index.ts                # Barrel: re-exports from shiki.ts, theming.ts, typescript/*
+├── shiki.ts                # registerMonaco() — cached Shiki initialization entry point
 ├── theming.ts              # EditorThemes map, applyHighlighter(), getThemeOptions()
-├── typescript-lsp.ts       # ensureTypescriptDefaults(), shared script declaration generation
 ├── utils.ts                # CamelToKebabCase utility type
+├── typescript/
+│   ├── declarations.ts     # Shared script declaration generation (addExtraLib)
+│   └── defaults.ts         # ensureTypescriptDefaults() configuration
 └── themes/
     ├── index.ts             # Barrel for all theme modules
     ├── defaults.ts          # Re-exports of all Shiki built-in themes
@@ -1241,7 +1167,7 @@ packages/shared/src/
 ### Root-Level Files
 
 ```text
-├── webpack.config.ts          # Build configuration (4 entry points, loaders, plugins)
+├── webpack.config.ts          # Build configuration (3 entry points, loaders, plugins)
 ├── eslint.config.mjs          # Shared ESLint base config
 ├── prettier.config.mjs        # Prettier formatting config
 ├── tsconfig.json              # Root TS config for plugins/ + root files

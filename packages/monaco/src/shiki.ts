@@ -1,7 +1,7 @@
 import { createHighlighterCore } from "@shikijs/core";
 import { createJavaScriptRegexEngine } from "@shikijs/engine-javascript";
 import { shikiToMonaco } from "@shikijs/monaco";
-import monaco from "monaco-editor";
+import * as monaco from "monaco-editor";
 import { EditorDefaultTheme, EditorThemes } from "./theming";
 
 /**
@@ -9,7 +9,7 @@ import { EditorDefaultTheme, EditorThemes } from "./theming";
  * Monarch tokenizers are blocked for these languages in `registerMonaco()` so that Shiki
  * is the sole provider of syntax highlighting for them. All other languages continue to use Monarch.
  */
-const SHIKI_LANGUAGES = new Set(["typescript", "javascript", "scss", "css"]);
+const ShikiLanguages = new Set(["typescript", "javascript", "scss", "css"]);
 
 /**
  * Initializes Shiki's TextMate tokenizer and wires it into Monaco via `shikiToMonaco`.
@@ -42,16 +42,19 @@ export async function registerMonaco(): Promise<void> {
     monaco.languages
   );
   monaco.languages.setMonarchTokensProvider = (languageId, languageDef) => {
-    if (SHIKI_LANGUAGES.has(languageId)) {
-      return { dispose() {} };
+    if (ShikiLanguages.has(languageId)) {
+      return { dispose: () => {} };
     }
+
     return _setMonarch(languageId, languageDef);
   };
 
   // Wire Shiki into Monaco: registers all themes, installs setTheme/create monkey-patches,
   // and sets up TextMate token providers for each loaded language.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  shikiToMonaco(highlighter, monaco as any, { tokenizeTimeLimit: 0 });
+
+  shikiToMonaco(highlighter, monaco as typeof import("monaco-editor-core"), {
+    tokenizeTimeLimit: 0,
+  });
 
   // Apply the project's default theme (shikiToMonaco defaults to the first loaded theme).
   monaco.editor.setTheme(EditorDefaultTheme);

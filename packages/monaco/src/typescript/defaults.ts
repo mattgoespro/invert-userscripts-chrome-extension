@@ -13,7 +13,8 @@ import { generateSharedScriptDeclaration } from "./declarations";
  * `typeof typescript` is needed.
  */
 import type { typescript } from "monaco-editor";
-import * as _tsContribution from "monaco-editor/esm/vs/language/typescript/monaco.contribution";
+import * as _tsContribution from "monaco-editor/esm/vs/language/typescript/monaco.contribution.js";
+
 const tsContribution = _tsContribution as unknown as typeof typescript;
 
 // ── TypeScript Defaults Configuration ─────────────────────────────────────────
