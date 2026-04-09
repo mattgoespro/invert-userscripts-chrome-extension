@@ -143,7 +143,7 @@ async function wait(time: number) {
  * Checks if a function may return another function.
  * This is purely static text inspection (no execution).
  */
-function couldReturnFunction(fn: (...args: any[]) => any): boolean {
+function couldReturnFunction(fn: (...args: unknown[]) => unknown): boolean {
   const src = fn.toString();
 
   // Normalize whitespace
@@ -385,7 +385,7 @@ function openUrl(url: string) {
   document.body.removeChild(openUrlForm);
 }
 
-async function waitForModule(module: any) {
+async function waitForModule(module: unknown) {
   await retry(() => module != null);
 }
 

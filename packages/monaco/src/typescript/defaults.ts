@@ -25,13 +25,9 @@ let configured = false;
  * Configures the TypeScript language service compiler options once. Because the
  * contribution module is imported directly above, its exports are available
  * immediately — no lazy-load polling is required.
- *
- * @param signal - An AbortSignal to skip configuration (e.g. on component unmount).
  */
-export async function ensureTypescriptDefaults(
-  signal?: AbortSignal
-): Promise<void> {
-  if (configured || signal?.aborted) {
+export function ensureTypescriptDefaults(): void {
+  if (configured) {
     return;
   }
 

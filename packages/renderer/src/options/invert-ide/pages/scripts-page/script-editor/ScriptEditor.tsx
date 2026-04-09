@@ -1,4 +1,4 @@
-import { CodeEditor } from "@/options/invert-ide/components/code-editor/CodeEditor";
+import { CodeEditor } from "@/options/invert-ide/shared/CodeEditor";
 import { TypeScriptCodeEditor } from "@/options/invert-ide/components/code-editor/TypeScriptCodeEditor";
 import { SassCompiler, TypeScriptCompiler } from "@/sandbox/compiler";
 import { EditorPanel } from "@/shared/components/editor-panel/EditorPanel";
@@ -114,8 +114,8 @@ export function ScriptEditor() {
   };
 
   return (
-    <div className="gap-sm flex h-full min-w-0 flex-col overflow-hidden">
-      <div className="bg-surface-raised border-border rounded-default p-sm px-md gap-sm flex items-center border">
+    <div className="flex h-full min-w-0 flex-col gap-sm overflow-hidden">
+      <div className="flex items-center gap-sm rounded-default border border-border bg-surface-raised p-sm px-md">
         <ScriptMetadata key={script.id} script={script} />
       </div>
       <div className="min-h-0 min-w-0 flex-1 overflow-hidden">

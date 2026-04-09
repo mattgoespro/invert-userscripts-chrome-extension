@@ -1,8 +1,0 @@
-{
-  "include": ["*.ts", "*.d.ts"],
-  "compilerOptions": {
-    "module": "preserve",
-    "baseUrl": "../..",
-    "lib": ["dom", "dom.iterable"]
-  }
-}

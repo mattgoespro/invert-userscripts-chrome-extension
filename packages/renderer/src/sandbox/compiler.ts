@@ -132,7 +132,7 @@ export class SassCompiler {
           this.pendingRequests.delete(id);
           resolve({
             success: false,
-            error: new Error("SCSS compilation timed out"),
+            error: new Error("SCSS compilation timed out."),
           });
         }
       }, 10000);

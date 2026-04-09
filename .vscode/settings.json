@@ -104,22 +104,12 @@
   "npm-outdated.majorUpdateProtection": false,
   "prettier.configPath": "prettier.config.mjs",
   "prettier.requireConfig": true,
-  "scss.format.enable": false,
-  "scss.lint.duplicateProperties": "error",
-  "scss.lint.emptyRules": "warning",
-  "scss.lint.propertyIgnoredDueToDisplay": "warning",
-  "scss.lint.unknownAtRules": "warning",
-  "scss.lint.unknownProperties": "warning",
-  "scss.lint.zeroUnits": "warning",
-  "scss.showErrors": true,
-  "scss.validate": true,
-  "scssFormatter.printWidth": 100,
-  "scssFormatter.trailingComma": "es5",
   "search.exclude": {
     "**/*.json": true,
     "**/*.md": true,
     "**/.vscode/**": true,
-    "**/dist/**": true
+    "**/dist/**": true,
+    "**/examples/**": true
   },
   "tailwindCSS.includeLanguages": {
     "typescriptreact": "html"
@@ -150,7 +140,6 @@
     }
   },
   "terminal.integrated.shellIntegration.enabled": true,
-  "terminalAllInOne.terminalTheme": "Google Dark",
   "vsicons.dontShowNewVersionMessage": true,
   "workbench.browser.enableChatTools": true,
   "workbench.colorTheme": "Dark Modern",

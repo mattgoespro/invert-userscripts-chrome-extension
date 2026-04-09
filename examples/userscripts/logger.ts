@@ -21,7 +21,7 @@ function shouldLogDebug(): boolean {
  * @returns `true` if the message should be logged; otherwise, `false`.
  */
 
-
+function shouldLogLevel(
   currentLevel: LogLevel,
   messageLevel: LogLevel
 ): boolean {
@@ -47,7 +47,7 @@ const DefaultLogColors: LogColors = {
  *
  * @returns {string} the colored log level string
  */
-
+function colorizeLogLevel(level: LogLevel): string {
   let style = (text: string) => text; // Default to no color
 
   switch (level) {
@@ -127,12 +127,13 @@ function coalesceLoggerOptions(options: LoggerOptions): LoggerOptions {
   };
   return coercedLoggerOptions;
 }
+
 /**
  * Returns a function that logs messages of different levels prefixed with the logger name.
  *
  * @param name the log message prefix
  */
-
+function createLogger(name: string, options: LoggerOptions): Logger {
   const coercedOptions = coalesceLoggerOptions(options);
 
   const createLogMessage: CreateLogMessageFn = (

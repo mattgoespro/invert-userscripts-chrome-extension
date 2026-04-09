@@ -1,4 +1,4 @@
-import { CodeEditor } from "@/options/invert-ide/components/code-editor/CodeEditor";
+import { CodeEditor } from "@/options/invert-ide/shared/CodeEditor";
 import { useGlobalState } from "@/options/invert-ide/contexts/global-state.context";
 import { IconButton } from "@/shared/components/icon-button/IconButton";
 import { Tab } from "@/shared/components/tab-list/Tab";
@@ -7,7 +7,6 @@ import { TabList } from "@/shared/components/tab-list/TabList";
 import { TabListTitle } from "@/shared/components/tab-list/TabListTitle";
 import { ScriptEditorDrawerTab } from "@shared/storage";
 import { ChevronsDown, ChevronsUp } from "lucide-react";
-import { Typography } from "@/shared/components/typography/Typography";
 import { Userscript } from "@shared/model";
 
 type ScriptEditorDrawerProps = {
@@ -42,12 +41,9 @@ export function ScriptEditorDrawer({
         active={activeTab === "javascript"}
         onClick={() => onTabChange("javascript")}
       >
-        <Typography
-          variant="caption"
-          className="inline-flex items-center rounded-[3px] bg-[rgba(240,219,79,0.12)] px-1.25 py-px text-[9px] font-bold tracking-[0.05em] text-[#f0db4f] uppercase"
-        >
+        <span className="inline-flex items-center rounded-[3px] bg-[rgba(240,219,79,0.12)] px-1.25 py-px text-[9px] font-bold tracking-[0.05em] text-[#f0db4f] uppercase">
           js
-        </Typography>
+        </span>
         javascript
         {!isCollapsed && (
           <TabContent>

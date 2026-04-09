@@ -5,7 +5,11 @@ import { selectEditorSettings } from "@/shared/store/slices/settings";
 import { EditorSettings } from "@shared/model";
 import * as monaco from "monaco-editor";
 import { useEffect, useRef } from "react";
-import { buildModelUri, disposeModel, getOrCreateModel } from "./model-cache";
+import {
+  buildModelUri,
+  disposeModel,
+  getOrCreateModel,
+} from "../components/code-editor/model-cache";
 
 export type CodeEditorProps = {
   /**
