@@ -122,7 +122,8 @@
     }
   }
 
-  --animate-select-reveal: select-panel-reveal 180ms cubic-bezier(0.2, 0, 0.13, 1.5);
+  --animate-select-reveal: select-panel-reveal 180ms
+    cubic-bezier(0.2, 0, 0.13, 1.5);
 
   @keyframes select-panel-reveal {
     from {
@@ -180,6 +181,30 @@
       opacity: 0.5;
     }
     50% {
+      opacity: 1;
+    }
+  }
+
+  --animate-dialog-enter: dialog-enter 180ms ease-out;
+
+  @keyframes dialog-enter {
+    from {
+      opacity: 0;
+      transform: scale(0.96) translateY(-8px);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+
+  --animate-backdrop-enter: backdrop-enter 180ms ease-out;
+
+  @keyframes backdrop-enter {
+    from {
+      opacity: 0;
+    }
+    to {
       opacity: 1;
     }
   }

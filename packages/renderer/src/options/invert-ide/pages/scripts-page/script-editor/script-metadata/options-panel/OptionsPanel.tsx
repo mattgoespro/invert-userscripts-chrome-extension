@@ -1,4 +1,5 @@
 import { Button } from "@/shared/components/button/Button";
+import { Checkbox } from "@/shared/components/checkbox/Checkbox";
 import { IconButton } from "@/shared/components/icon-button/IconButton";
 import { Input } from "@/shared/components/input/Input";
 import {
@@ -7,8 +8,11 @@ import {
   PanelHeader,
   PanelSection,
 } from "@/shared/components/panel/Panel";
+import { GlobalModule } from "@shared/model";
+import { ChromeSyncStorage } from "@shared/storage";
 import {
   EllipsisVerticalIcon,
+  PackageIcon,
   Share2Icon,
   Trash2Icon,
   WandSparklesIcon,
@@ -49,17 +53,22 @@ type OptionsPanelProps = {
   shared: boolean;
   scriptName: string;
   moduleName: string;
+  selectedModuleIds: string[];
   onModuleNameChange: (value: string) => void;
+  onToggleModule: (moduleId: string, selected: boolean) => void;
   onDelete: () => void;
 };
 
 export function OptionsPanel({
   scriptName,
   moduleName,
+  selectedModuleIds,
   onModuleNameChange,
+  onToggleModule,
   onDelete,
 }: OptionsPanelProps) {
   const [open, setOpen] = useState(false);
+  const [globalModules, setGlobalModules] = useState<GlobalModule[]>([]);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const moduleInputRef = useRef<HTMLInputElement>(null);
 
@@ -78,6 +87,9 @@ export function OptionsPanel({
   useEffect(() => {
     if (open) {
       document.addEventListener("mousedown", handleClickOutside);
+      ChromeSyncStorage.getAllModules().then((modules) => {
+        setGlobalModules(Object.values(modules).filter((m) => m.enabled));
+      });
     }
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [open, handleClickOutside]);
@@ -111,7 +123,7 @@ export function OptionsPanel({
             script options
           </PanelHeader>
           <PanelSection>
-            <span className="font-body text-text-muted text-xs leading-[1.4]">
+            <span className="font-body text-xs leading-[1.4] text-text-muted">
               Set a module name to share this script with other scripts.
             </span>
             <div className="relative w-full">
@@ -126,11 +138,33 @@ export function OptionsPanel({
                 icon={WandSparklesIcon}
                 variant="ghost"
                 size="sm"
-                className="text-text-muted-faint hover:text-accent hover:bg-accent-subtle hover:border-accent-border absolute top-1/2 right-1.5 -translate-y-1/2 active:scale-[0.92]"
+                className="absolute top-1/2 right-1.5 -translate-y-1/2 text-text-muted-faint hover:border-accent-border hover:bg-accent-subtle hover:text-accent active:scale-[0.92]"
                 onClick={handleAutoFillModuleName}
                 title="Auto-fill from script name"
               />
             </div>
+          </PanelSection>
+          <PanelDivider />
+          <PanelHeader icon={<PackageIcon size={12} />}>
+            CDN Modules
+          </PanelHeader>
+          <PanelSection>
+            {globalModules.length > 0 ? (
+              <div className="flex flex-col gap-sm">
+                {globalModules.map((module) => (
+                  <Checkbox
+                    key={module.id}
+                    label={module.name}
+                    checked={selectedModuleIds.includes(module.id)}
+                    onChange={(checked) => onToggleModule(module.id, checked)}
+                  />
+                ))}
+              </div>
+            ) : (
+              <span className="font-body text-xs leading-[1.4] text-text-muted italic">
+                No modules available. Add modules from the Modules page.
+              </span>
+            )}
           </PanelSection>
           <PanelDivider />
           <PanelSection>

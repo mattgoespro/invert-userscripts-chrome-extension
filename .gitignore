@@ -2,6 +2,7 @@ node_modules/
 dist/
 build/
 temp/
+.cache/
+*.ini
 *.log
 *.zip
-.cache/

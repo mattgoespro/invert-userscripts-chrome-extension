@@ -2,6 +2,7 @@ import { SharedScriptInfo } from "@shared/model";
 import { TypeScriptCompilerOptions } from "@shared/typescript";
 import monaco from "monaco-editor";
 import { generateSharedScriptDeclaration } from "./declarations";
+import { fetchModuleTypes } from "./cdn-types";
 
 /**
  * The TypeScript contribution module is imported directly by its ESM subpath.
@@ -120,6 +121,82 @@ export function syncSharedScriptLibs(sharedScripts: SharedScriptInfo[]): void {
     sharedLibEntries.set(shared.id, {
       disposable,
       sourceHash: shared.sourceCode,
+    });
+  }
+}
+
+// ── CDN Module Extra Lib Registration ─────────────────────────────────────────
+
+export interface CdnModuleInfo {
+  id: string;
+  packageName: string;
+}
+
+interface CdnLibEntry {
+  disposable: { dispose(): void };
+  packageName: string;
+}
+const cdnLibEntries = new Map<string, CdnLibEntry>();
+
+/**
+ * Registers a CDN module's type declarations as an extra lib on the TypeScript
+ * language service at the conventional `node_modules/<packageName>/index.d.ts`
+ * path so that ambient globals from `@types/*` are visible to the editor.
+ */
+function addCdnModuleExtraLib(
+  declaration: string,
+  packageName: string
+): monaco.IDisposable {
+  const filePath = `file:///node_modules/@types/${packageName}/index.d.ts`;
+  return tsContribution.typescriptDefaults.addExtraLib(declaration, filePath);
+}
+
+/**
+ * Syncs CDN module extra lib registrations with the provided list. Fetches type
+ * definitions from DefinitelyTyped for modules that have a `packageName`, then
+ * registers them as extra libs. Disposes libs that are no longer in the list.
+ */
+export async function syncCdnModuleLibs(
+  modules: CdnModuleInfo[]
+): Promise<void> {
+  const currentIds = new Set(modules.map((m) => m.id));
+
+  // Dispose libs for modules no longer in the dependency list
+  for (const [id, entry] of cdnLibEntries) {
+    if (!currentIds.has(id)) {
+      entry.disposable.dispose();
+      cdnLibEntries.delete(id);
+    }
+  }
+
+  // Register extra libs for each module with a package name
+  for (const module of modules) {
+    if (!module.packageName) {
+      continue;
+    }
+
+    // Skip if already registered with the same package name
+    const existing = cdnLibEntries.get(module.id);
+    if (existing && existing.packageName === module.packageName) {
+      continue;
+    }
+
+    // Dispose previous registration if updating
+    if (existing) {
+      existing.disposable.dispose();
+    }
+
+    const declaration = await fetchModuleTypes(module.packageName);
+
+    if (!declaration) {
+      continue;
+    }
+
+    const disposable = addCdnModuleExtraLib(declaration, module.packageName);
+
+    cdnLibEntries.set(module.id, {
+      disposable,
+      packageName: module.packageName,
     });
   }
 }

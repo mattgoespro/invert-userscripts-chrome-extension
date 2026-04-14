@@ -1,4 +1,4 @@
-import { Userscript } from "../../../shared/src/model";
+import { Userscript, GlobalModule } from "../../../shared/src/model";
 import { ChromeSyncStorage } from "@shared/storage";
 
 /**
@@ -112,26 +112,52 @@ export async function injectMatchingScripts(
     const scriptsMap = await ChromeSyncStorage.getAllScripts();
     const allScripts: Userscript[] = Object.values(scriptsMap);
     const enabledScripts = allScripts.filter((script) => script.enabled);
-    const injectedShared = new Set<string>();
 
-    for (const script of enabledScripts) {
-      if (matchesUrlPattern(url, script.urlPatterns)) {
-        // Inject shared script dependencies before the consumer
-        if (script.sharedScripts?.length > 0) {
-          for (const sharedId of script.sharedScripts) {
-            if (!injectedShared.has(sharedId)) {
-              const shared = allScripts.find(
-                (s) => s.id === sharedId && s.shared
-              );
-              if (shared?.moduleName && shared?.code?.compiled?.javascript) {
-                await injectSharedScript(tabId, shared);
-                injectedShared.add(sharedId);
-              }
+    // Collect all scripts that match this URL
+    const matchingScripts = enabledScripts.filter((script) =>
+      matchesUrlPattern(url, script.urlPatterns)
+    );
+
+    if (matchingScripts.length === 0) {
+      return;
+    }
+
+    // Phase 1: Inject CDN modules (deduplicated across all matching scripts)
+    const modulesMap = await ChromeSyncStorage.getAllModules();
+    const injectedModules = new Set<string>();
+
+    for (const script of matchingScripts) {
+      if (script.globalModules?.length > 0) {
+        for (const moduleId of script.globalModules) {
+          if (!injectedModules.has(moduleId)) {
+            const module = modulesMap[moduleId];
+            if (module?.enabled) {
+              await injectCdnModule(tabId, module);
+              injectedModules.add(moduleId);
             }
           }
         }
-        await injectScript(tabId, script);
       }
+    }
+
+    // Phase 2: Inject shared script dependencies, then Phase 3: userscripts
+    const injectedShared = new Set<string>();
+
+    for (const script of matchingScripts) {
+      if (script.sharedScripts?.length > 0) {
+        for (const sharedId of script.sharedScripts) {
+          if (!injectedShared.has(sharedId)) {
+            const shared = allScripts.find(
+              (s) => s.id === sharedId && s.shared
+            );
+            if (shared?.moduleName && shared?.code?.compiled?.javascript) {
+              await injectSharedScript(tabId, shared);
+              injectedShared.add(sharedId);
+            }
+          }
+        }
+      }
+      await injectScript(tabId, script);
     }
   } catch (error) {
     console.error("Error injecting scripts: ", error);
@@ -217,5 +243,38 @@ async function injectSharedScript(
     console.log(`Injected shared script: ${script.name} into tab ${tabId}`);
   } catch (error) {
     console.error(`Error injecting shared script ${script.name}:`, error);
+  }
+}
+
+/**
+ * Injects a CDN module into the page by creating a `<script src="url">` element.
+ * Waits for the script to load before resolving so that downstream userscripts
+ * can safely reference globals provided by the module.
+ */
+async function injectCdnModule(
+  tabId: number,
+  module: GlobalModule
+): Promise<void> {
+  try {
+    await chrome.scripting.executeScript({
+      target: { tabId },
+      func: (url: string) => {
+        return new Promise<void>((resolve, reject) => {
+          const scriptEl = document.createElement("script");
+          scriptEl.src = url;
+          scriptEl.onload = () => resolve();
+          scriptEl.onerror = () => {
+            console.warn(`Failed to load CDN module: ${url}`);
+            resolve();
+          };
+          document.head.appendChild(scriptEl);
+        });
+      },
+      args: [module.url],
+      world: "MAIN",
+    });
+    console.log(`Injected CDN module: ${module.name} into tab ${tabId}`);
+  } catch (error) {
+    console.error(`Error injecting CDN module ${module.name}:`, error);
   }
 }

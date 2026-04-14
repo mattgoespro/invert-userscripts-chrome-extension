@@ -40,10 +40,18 @@ export function ScriptMetadata({ script }: ScriptMetadataProps) {
     onUpdateScriptMeta({ sharedScripts: updatedShared });
   };
 
+  const onToggleModule = (moduleId: string, selected: boolean) => {
+    const currentModules = script.globalModules ?? [];
+    const updatedModules = selected
+      ? [...currentModules, moduleId]
+      : currentModules.filter((id) => id !== moduleId);
+    onUpdateScriptMeta({ globalModules: updatedModules });
+  };
+
   return (
-    <div className="gap-sm flex w-full flex-col">
-      <div className="gap-sm flex w-full items-center">
-        <span className="text-syntax-keyword shrink-0 font-mono text-sm">
+    <div className="flex w-full flex-col gap-sm">
+      <div className="flex w-full items-center gap-sm">
+        <span className="shrink-0 font-mono text-sm text-syntax-keyword">
           const
         </span>
         <Input
@@ -54,7 +62,7 @@ export function ScriptMetadata({ script }: ScriptMetadataProps) {
           onChange={(event) => onUpdateScriptMeta({ name: event.target.value })}
         />
         <div className="script-metadata--url-patterns relative flex-1">
-          <span className="text-syntax-param pointer-events-none absolute top-1/2 left-3 z-1 -translate-y-1/2 font-mono text-xs">
+          <span className="pointer-events-none absolute top-1/2 left-3 z-1 -translate-y-1/2 font-mono text-xs text-syntax-param">
             urls:
           </span>
           <Input
@@ -72,7 +80,9 @@ export function ScriptMetadata({ script }: ScriptMetadataProps) {
           shared={script.shared ?? false}
           scriptName={script.name}
           moduleName={script.moduleName ?? ""}
+          selectedModuleIds={script.globalModules ?? []}
           onModuleNameChange={onModuleNameChange}
+          onToggleModule={onToggleModule}
           onDelete={onDeleteScript}
         />
       </div>

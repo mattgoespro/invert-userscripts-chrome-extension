@@ -25,6 +25,7 @@ export interface Userscript {
   shared: boolean;
   moduleName: string;
   sharedScripts: string[];
+  globalModules: string[];
   code: {
     source: {
       [key in UserscriptSourceLanguage]: string;
@@ -48,6 +49,7 @@ export interface GlobalModule {
   name: string;
   url: string;
   enabled: boolean;
+  packageName?: string;
 }
 
 export interface EditorSettings {

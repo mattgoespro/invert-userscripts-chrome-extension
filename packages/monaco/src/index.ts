@@ -1,4 +1,5 @@
 export * from "./shiki";
 export * from "./theming";
+export * from "./typescript/cdn-types";
 export * from "./typescript/declarations";
 export * from "./typescript/defaults";

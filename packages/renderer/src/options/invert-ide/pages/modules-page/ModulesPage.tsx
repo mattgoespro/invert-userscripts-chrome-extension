@@ -1,35 +1,29 @@
 import { GlobalModule, GlobalModules } from "@shared/model";
 import { ChromeSyncStorage } from "@shared/storage";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/shared/components/button/Button";
 import { CodeComment } from "@/shared/components/code-comment/CodeComment";
 import { CodeLine } from "@/shared/components/code-line/CodeLine";
 import { ModuleCard } from "./ModuleCard";
+import { AddModuleDialog } from "./add-module-dialog/AddModuleDialog";
 
 export function ModulesPage() {
   const [modules, setModules] = useState<GlobalModules>({});
+  const [dialogOpen, setDialogOpen] = useState(false);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     const loadedModules = await ChromeSyncStorage.getAllModules();
     setModules(loadedModules);
-  };
+  }, []);
 
-  const handleCreateModule = async () => {
-    const name = prompt("Module name:");
-    if (!name) return;
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
-    const url = prompt("CDN URL:");
-    if (!url) return;
-
-    const newModule: GlobalModule = {
-      id: Date.now().toString(),
-      name,
-      url,
-      enabled: true,
-    };
-
-    await ChromeSyncStorage.saveModule(newModule);
+  const handleAddModule = async (module: GlobalModule) => {
+    await ChromeSyncStorage.saveModule(module);
     await loadData();
+    setDialogOpen(false);
   };
 
   const handleDeleteModule = async (moduleId: string) => {
@@ -47,11 +41,11 @@ export function ModulesPage() {
 
   return (
     <div className="flex-1 p-(--page-padding)">
-      <div className="mb-lg pb-sm border-border flex items-center justify-between border-b">
+      <div className="mb-lg flex items-center justify-between border-b border-border pb-sm">
         <CodeLine code="import { Modules } from 'cdn'" />
-        <Button onClick={handleCreateModule}>+ Add Module</Button>
+        <Button onClick={() => setDialogOpen(true)}>+ Add Module</Button>
       </div>
-      <div className="grid h-[calc(100%-4rem)] grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-4">
+      <div className="flex h-[calc(100%-4rem)] flex-col gap-4">
         {Object.values(modules ?? {}).map((module) => (
           <ModuleCard
             key={module.id}
@@ -66,6 +60,11 @@ export function ModulesPage() {
           </div>
         )}
       </div>
+      <AddModuleDialog
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        onSubmit={handleAddModule}
+      />
     </div>
   );
 }

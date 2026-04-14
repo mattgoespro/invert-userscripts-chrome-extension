@@ -86,4 +86,22 @@ export const selectSharedScriptsForUserscript = (scriptId: string) =>
     }
   );
 
+/**
+ * Returns the globalModules ID array for the given script ID.
+ */
+export const selectGlobalModuleIdsForUserscript = (scriptId: string) =>
+  createSelector(
+    (state: RootState) => state.userscripts.scripts,
+    (scripts): string[] => {
+      if (!scriptId || !scripts) {
+        return undefined;
+      }
+
+      const script = scripts[scriptId];
+      return script?.globalModules?.length > 0
+        ? script.globalModules
+        : undefined;
+    }
+  );
+
 export default editorSlice.reducer;

@@ -12,28 +12,20 @@ type ModuleCardProps = {
 
 export function ModuleCard({ module, onToggle, onDelete }: ModuleCardProps) {
   return (
-    <div className="bg-surface-raised border-border rounded-default p-md gap-md hover:border-accent-muted flex flex-col border transition-colors duration-150">
-      <div className="flex-1">
-        <Typography
-          variant="code"
-          className="text-syntax-type mb-sm block text-[15px]"
-        >
-          {module.name}
-        </Typography>
-        <div className="text-text-muted p-sm px-md bg-surface-overlay rounded-default border-border-subtle border font-mono text-xs break-all">
-          {module.url}
-        </div>
-      </div>
-      <div className="pt-sm border-border-subtle flex items-center justify-between border-t">
-        <Checkbox
-          label="Enabled"
-          checked={module.enabled}
-          onChange={onToggle}
-        />
-        <IconButton icon={DeleteIcon} variant="danger" onClick={onDelete}>
-          <DeleteIcon />
-        </IconButton>
-      </div>
+    <div className="flex items-center gap-sm rounded-default border border-border bg-surface-raised px-md py-sm transition-colors duration-150 hover:border-accent-muted">
+      <Checkbox checked={module.enabled} onChange={onToggle} />
+      <Typography variant="code" className="shrink-0 text-sm text-syntax-type">
+        {module.name}
+      </Typography>
+      {module.packageName && (
+        <span className="shrink-0 font-mono text-[10px] text-text-muted-faint">
+          @types/{module.packageName}
+        </span>
+      )}
+      <span className="min-w-0 flex-1 truncate font-mono text-xs text-text-muted">
+        {module.url}
+      </span>
+      <IconButton icon={DeleteIcon} variant="danger" onClick={onDelete} />
     </div>
   );
 }

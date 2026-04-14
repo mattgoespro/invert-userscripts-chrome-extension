@@ -25,6 +25,7 @@ export const createUserscript = createAsyncThunk(
       shared: false,
       moduleName: "",
       sharedScripts: [],
+      globalModules: [],
       code: {
         source: {
           typescript: "// Your code here",
