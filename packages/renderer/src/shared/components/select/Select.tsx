@@ -148,7 +148,7 @@ export function Select<T>({ label, options, value, onChange }: SelectProps<T>) {
         <div
           className={clsx(
             "absolute top-[calc(100%+6px)] left-0 max-h-70 w-full min-w-45",
-            "flex flex-col rounded-default border border-accent-border bg-surface-overlay",
+            "flex flex-col rounded-default border border-accent-border bg-surface-panel",
             "z-100 overflow-hidden",
             "shadow-[0_8px_32px_rgba(0,0,0,0.4),0_0_0_1px_var(--border-subtle)]",
             "origin-top animate-select-reveal"

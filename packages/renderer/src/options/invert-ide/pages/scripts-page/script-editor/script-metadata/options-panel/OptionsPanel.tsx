@@ -8,10 +8,13 @@ import {
   PanelHeader,
   PanelSection,
 } from "@/shared/components/panel/Panel";
-import { GlobalModule } from "@shared/model";
+import { useAppSelector } from "@/shared/store/hooks";
+import { selectSharedUserscripts } from "@/shared/store/slices/userscripts";
+import { GlobalModule, Userscript } from "@shared/model";
 import { ChromeSyncStorage } from "@shared/storage";
 import {
   EllipsisVerticalIcon,
+  GitForkIcon,
   PackageIcon,
   Share2Icon,
   Trash2Icon,
@@ -50,25 +53,30 @@ function sanitizeModuleName(name: string): string {
 }
 
 type OptionsPanelProps = {
+  script: Userscript;
   shared: boolean;
   scriptName: string;
   moduleName: string;
   selectedModuleIds: string[];
   onModuleNameChange: (value: string) => void;
   onToggleModule: (moduleId: string, selected: boolean) => void;
+  onToggleSharedScript: (sharedScriptId: string, selected: boolean) => void;
   onDelete: () => void;
 };
 
 export function OptionsPanel({
+  script,
   scriptName,
   moduleName,
   selectedModuleIds,
   onModuleNameChange,
   onToggleModule,
+  onToggleSharedScript,
   onDelete,
 }: OptionsPanelProps) {
   const [open, setOpen] = useState(false);
   const [globalModules, setGlobalModules] = useState<GlobalModule[]>([]);
+  const sharedScripts = useAppSelector(selectSharedUserscripts);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const moduleInputRef = useRef<HTMLInputElement>(null);
 
@@ -143,6 +151,33 @@ export function OptionsPanel({
                 title="Auto-fill from script name"
               />
             </div>
+          </PanelSection>
+          <PanelDivider />
+          <PanelHeader icon={<GitForkIcon size={12} />}>
+            Shared Scripts
+          </PanelHeader>
+          <PanelSection>
+            {sharedScripts.filter((s) => s.id !== script.id).length > 0 ? (
+              <div className="flex flex-col gap-sm">
+                {sharedScripts
+                  .filter((s) => s.id !== script.id)
+                  .map((shared) => (
+                    <Checkbox
+                      key={shared.id}
+                      label={shared.name}
+                      checked={(script.sharedScripts ?? []).includes(shared.id)}
+                      onChange={(checked) =>
+                        onToggleSharedScript(shared.id, checked)
+                      }
+                    />
+                  ))}
+              </div>
+            ) : (
+              <span className="font-body text-xs leading-[1.4] text-text-muted italic">
+                No shared scripts available. Set a module name on a script to
+                share it.
+              </span>
+            )}
           </PanelSection>
           <PanelDivider />
           <PanelHeader icon={<PackageIcon size={12} />}>

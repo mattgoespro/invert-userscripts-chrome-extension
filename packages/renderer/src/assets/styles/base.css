@@ -17,6 +17,7 @@
   --base-surface-base: #1e1e1e;
   --base-surface-raised: #252526;
   --base-surface-overlay: #2d2d30;
+  --base-surface-panel: #1a1a1c;
   --base-surface-input: #1b1b1c;
 
   /* Borders */
@@ -85,6 +86,7 @@
   --surface-base: var(--base-surface-base);
   --surface-raised: var(--base-surface-raised);
   --surface-overlay: var(--base-surface-overlay);
+  --surface-panel: var(--base-surface-panel);
   --surface-input: var(--base-surface-input);
 
   --text-base: 11px;
@@ -183,6 +185,7 @@
   --base-surface-base: #1e1d20;
   --base-surface-raised: #252428;
   --base-surface-overlay: #2d2c32;
+  --base-surface-panel: #1a191e;
   --base-surface-input: #1a1a1d;
   --base-border: #3c3a42;
   --base-border-subtle: #323036;
@@ -237,6 +240,7 @@
   --base-surface-base: #161616;
   --base-surface-raised: #1e1e1e;
   --base-surface-overlay: #262626;
+  --base-surface-panel: #121212;
   --base-surface-input: #131313;
   --base-border: #333333;
   --base-border-subtle: #282828;
@@ -277,6 +281,7 @@
   --base-surface-base: #101010;
   --base-surface-raised: #171717;
   --base-surface-overlay: #1e1e1e;
+  --base-surface-panel: #0c0c0c;
   --base-surface-input: #0d0d0d;
   --base-border: #2a2a2a;
   --base-border-subtle: #212121;
@@ -317,6 +322,7 @@
   --base-surface-base: #181414;
   --base-surface-raised: #201c1a;
   --base-surface-overlay: #282420;
+  --base-surface-panel: #141010;
   --base-surface-input: #141110;
   --base-border: #382e2a;
   --base-border-subtle: #2c2522;
@@ -357,6 +363,7 @@
   --base-surface-base: #141618;
   --base-surface-raised: #1b1e22;
   --base-surface-overlay: #24272c;
+  --base-surface-panel: #101214;
   --base-surface-input: #111315;
   --base-border: #2e3238;
   --base-border-subtle: #252830;

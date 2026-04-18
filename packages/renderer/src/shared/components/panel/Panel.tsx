@@ -21,7 +21,7 @@ export function Panel({
       className={clsx(
         "absolute top-[calc(100%+0.5rem)] right-0 z-100",
         "flex flex-col overflow-hidden",
-        "bg-surface-overlay border-accent-border rounded-default border",
+        "rounded-default border border-accent-border bg-surface-panel",
         "shadow-[0_4px_24px_rgba(0,0,0,0.5),0_0_0_1px_rgba(0,0,0,0.2)]",
         "font-mono text-xs leading-[1.4]",
         "animate-panel-enter",
@@ -44,15 +44,15 @@ export function PanelHeader({ icon, className, children }: PanelHeaderProps) {
   return (
     <div
       className={clsx(
-        "gap-sm px-md py-sm flex items-center",
-        "border-border-subtle border-b",
+        "flex items-center gap-sm px-md py-sm",
+        "border-b border-border-subtle",
         className
       )}
     >
       {icon && (
-        <span className="text-text-muted-faint flex items-center">{icon}</span>
+        <span className="flex items-center text-text-muted-faint">{icon}</span>
       )}
-      <span className="text-text-muted-strong font-mono text-[10px] font-semibold tracking-[0.06em] uppercase">
+      <span className="font-mono text-[10px] font-semibold tracking-[0.06em] text-text-muted-strong uppercase">
         {children}
       </span>
     </div>
@@ -65,12 +65,12 @@ type PanelSectionProps = PropsWithChildren<{
 
 export function PanelSection({ className, children }: PanelSectionProps) {
   return (
-    <div className={clsx("gap-md p-md flex flex-col", className)}>
+    <div className={clsx("flex flex-col gap-md p-md", className)}>
       {children}
     </div>
   );
 }
 
 export function PanelDivider() {
-  return <div className="bg-border-subtle h-px" />;
+  return <div className="h-px bg-border-subtle" />;
 }

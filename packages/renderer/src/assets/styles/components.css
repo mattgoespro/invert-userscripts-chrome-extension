@@ -178,8 +178,20 @@
      Page-Level Styles (pseudo-elements + descendant overrides)
      ============================================================================= */
 
-  /* --- ScriptMetadata (url-patterns input padding override) --- */
-  .script-metadata--url-patterns input {
-    padding-left: 52px;
+  /* --- UrlPatternInput (duplicate flash animation — requires keyframes) --- */
+  .url-pattern-flash {
+    animation: url-pattern-flash-anim 600ms ease;
+  }
+
+  @keyframes url-pattern-flash-anim {
+    0%,
+    100% {
+      background: var(--surface-raised);
+    }
+    30%,
+    70% {
+      background: var(--accent-muted);
+      border-color: var(--accent-border);
+    }
   }
 }

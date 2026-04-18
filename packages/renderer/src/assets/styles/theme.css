@@ -35,6 +35,7 @@
   --color-surface-base: var(--surface-base);
   --color-surface-raised: var(--surface-raised);
   --color-surface-overlay: var(--surface-overlay);
+  --color-surface-panel: var(--surface-panel);
   --color-surface-input: var(--surface-input);
 
   --color-text-muted: var(--text-muted);
