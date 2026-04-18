@@ -4,7 +4,7 @@
 
 ### **Script Editor**
 
-- Implement the `runAt` field for userscripts to allow users to specify when their userscript should be injected during a page's lifecycle.
+- ~~Implement the `runAt` field for userscripts to allow users to specify when their userscript should be injected during a page's lifecycle.~~
 
 ### **Code Editor**
 

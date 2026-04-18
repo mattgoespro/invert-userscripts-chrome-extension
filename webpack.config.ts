@@ -22,11 +22,11 @@ export default (
         import: "./packages/runtime/src/background.ts",
         filename: "background.js",
       },
-      // TODO: implement popup UI and uncomment this entry
-      // popup: {
-      //   import: "./packages/renderer/src/popup/index.tsx",
-      //   filename: "popup.js",
-      // },
+      // Popup entry
+      popup: {
+        import: "./packages/renderer/src/popup/index.tsx",
+        filename: "popup.js",
+      },
       options: {
         import: "./packages/renderer/src/options/index.tsx",
         filename: "options.js",
@@ -142,12 +142,11 @@ export default (
       },
     },
     plugins: [
-      // TODO: implement popup UI and uncomment this plugin
-      // new HtmlWebpackPlugin({
-      //   template: "./packages/renderer/src/popup/index.html",
-      //   filename: "popup.html",
-      //   chunks: ["popup"],
-      // }),
+      new HtmlWebpackPlugin({
+        template: "./packages/renderer/src/popup/index.html",
+        filename: "popup.html",
+        chunks: ["popup"],
+      }),
       new HtmlWebpackPlugin({
         template: "./packages/renderer/src/options/index.html",
         filename: "options.html",

@@ -1,7 +1,7 @@
 import { SassCompiler, TypeScriptCompiler } from "@/sandbox/compiler";
 import { createAsyncThunk } from "@reduxjs/toolkit/react";
 import { Userscript, UserscriptSourceLanguage } from "@shared/model";
-import { ChromeSyncStorage } from "@shared/storage";
+import { ChromeSyncStorage, CompiledCodeStorage } from "@shared/storage";
 import { RootState } from "../../store";
 import { uuid } from "@/shared/utils";
 
@@ -42,6 +42,10 @@ export const createUserscript = createAsyncThunk(
       updatedAt: timestamp,
     };
     await ChromeSyncStorage.saveScript(script);
+    await CompiledCodeStorage.saveCompiledCode(script.id, {
+      javascript: "",
+      css: "",
+    });
     return script;
   }
 );
@@ -50,6 +54,7 @@ export const deleteUserscript = createAsyncThunk(
   "userscripts/deleteUserscript",
   async (scriptId: string) => {
     await ChromeSyncStorage.deleteScript(scriptId);
+    await CompiledCodeStorage.deleteCompiledCode(scriptId);
     return scriptId;
   }
 );
@@ -104,6 +109,10 @@ export const updateUserscript = createAsyncThunk<
     },
   };
   await ChromeSyncStorage.updateScript(script.id, storageScript);
+  await CompiledCodeStorage.saveCompiledCode(script.id, {
+    javascript: script.code.compiled.javascript,
+    css: script.code.compiled.css,
+  });
   return script;
 });
 
@@ -147,6 +156,10 @@ export const updateUserscriptCode = createAsyncThunk(
     script.updatedAt = Date.now();
 
     await ChromeSyncStorage.updateScript(id, script);
+    await CompiledCodeStorage.saveCompiledCode(id, {
+      javascript: script.code.compiled.javascript,
+      css: script.code.compiled.css,
+    });
 
     return script;
   }

@@ -1,5 +1,6 @@
 import { Userscript, GlobalModule } from "../../../shared/src/model";
-import { ChromeSyncStorage } from "@shared/storage";
+import { ChromeSyncStorage, CompiledCodeStorage } from "@shared/storage";
+import { matchesUrlPattern } from "@shared/url-matching";
 
 /**
  * Wraps a shared script's compiled JavaScript so its exports are registered
@@ -106,16 +107,35 @@ function resolveSharedImports(compiledJs: string): string {
 
 export async function injectMatchingScripts(
   tabId: number,
-  url: string
+  url: string,
+  timing: "beforePageLoad" | "afterPageLoad"
 ): Promise<void> {
   try {
     const scriptsMap = await ChromeSyncStorage.getAllScripts();
-    const allScripts: Userscript[] = Object.values(scriptsMap);
+    const compiledCodeMap = await CompiledCodeStorage.getAllCompiledCode();
+    const allScripts: Userscript[] = Object.values(scriptsMap).map((script) => {
+      const compiled = compiledCodeMap[script.id];
+      if (compiled) {
+        return {
+          ...script,
+          code: {
+            ...script.code,
+            compiled: {
+              javascript:
+                compiled.javascript || script.code.compiled.javascript,
+              css: compiled.css || script.code.compiled.css,
+            },
+          },
+        };
+      }
+      return script;
+    });
     const enabledScripts = allScripts.filter((script) => script.enabled);
 
-    // Collect all scripts that match this URL
-    const matchingScripts = enabledScripts.filter((script) =>
-      matchesUrlPattern(url, script.urlPatterns)
+    // Collect all scripts that match this URL and timing
+    const matchingScripts = enabledScripts.filter(
+      (script) =>
+        script.runAt === timing && matchesUrlPattern(url, script.urlPatterns)
     );
 
     if (matchingScripts.length === 0) {
@@ -158,28 +178,11 @@ export async function injectMatchingScripts(
         }
       }
       await injectScript(tabId, script);
+      await injectStylesheet(tabId, script);
     }
   } catch (error) {
     console.error("Error injecting scripts: ", error);
   }
-}
-
-export function matchesUrlPattern(url: string, patterns: string[]): boolean {
-  if (!patterns || patterns.length === 0) {
-    return false;
-  }
-
-  return patterns.some((pattern) => {
-    // Convert glob pattern to regex with proper escaping
-    // First escape all regex special characters except * and ?
-    const regexPattern = pattern
-      .replace(/[.+^${}()|[\]\\]/g, "\\$&") // Escape regex special chars including backslash
-      .replace(/\*/g, ".*") // Convert * to .*
-      .replace(/\?/g, "."); // Convert ? to .
-
-    const regex = new RegExp(`^${regexPattern}$`);
-    return regex.test(url);
-  });
 }
 
 export async function injectScript(
@@ -276,5 +279,30 @@ async function injectCdnModule(
     console.log(`Injected CDN module: ${module.name} into tab ${tabId}`);
   } catch (error) {
     console.error(`Error injecting CDN module ${module.name}:`, error);
+  }
+}
+
+/**
+ * Injects compiled CSS into a tab using `chrome.scripting.insertCSS`.
+ * Skips injection if the script has no compiled CSS.
+ */
+async function injectStylesheet(
+  tabId: number,
+  script: Userscript
+): Promise<void> {
+  const cssCode = script.code?.compiled?.css ?? "";
+
+  if (!cssCode) {
+    return;
+  }
+
+  try {
+    await chrome.scripting.insertCSS({
+      target: { tabId },
+      css: cssCode,
+    });
+    console.log(`Injected stylesheet: ${script.name} into tab ${tabId}`);
+  } catch (error) {
+    console.error(`Error injecting stylesheet ${script.name}:`, error);
   }
 }

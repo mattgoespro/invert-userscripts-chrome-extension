@@ -1,3 +1,7 @@
+import {
+  onTabActivated,
+  onTabUpdated,
+} from "./handlers/component-handlers/tab.handler";
 import { onWebNavigationCompleted } from "./handlers/extension-handlers/navigation.handler";
 import {
   onInstalled,
@@ -18,3 +22,9 @@ chrome.webNavigation.onCompleted.addListener(onWebNavigationCompleted);
  * Runtime message listeners
  */
 chrome.runtime.onMessage.addListener(onMessage);
+
+/**
+ * Tab activation listeners
+ */
+chrome.tabs.onUpdated.addListener(onTabUpdated);
+chrome.tabs.onActivated.addListener(onTabActivated);

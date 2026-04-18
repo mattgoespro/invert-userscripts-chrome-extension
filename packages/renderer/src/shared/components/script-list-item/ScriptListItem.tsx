@@ -8,19 +8,19 @@ import clsx from "clsx";
 
 type ScriptListItemProps = {
   script: Userscript;
-  active: boolean;
-  onScriptSelected: (scriptId: string) => void;
+  active?: boolean;
+  onScriptSelected?: (scriptId: string) => void;
 };
 
 export function ScriptListItem({
   script,
-  active,
+  active = false,
   onScriptSelected,
 }: ScriptListItemProps) {
   const dispatch = useAppDispatch();
 
   const onSelectScript = () => {
-    if (active) {
+    if (!onScriptSelected || active) {
       return;
     }
 
@@ -35,7 +35,8 @@ export function ScriptListItem({
   return (
     <div
       className={clsx(
-        "group mb-1.5 flex cursor-pointer items-center rounded-default p-2 transition-colors duration-150",
+        "group mb-1.5 flex items-center rounded-default p-2 transition-colors duration-150",
+        onScriptSelected && "cursor-pointer",
         active
           ? "border border-l-[3px] border-accent-muted border-l-accent bg-accent-subtle"
           : "border border-transparent bg-surface-overlay hover:border-border hover:bg-hover-overlay",

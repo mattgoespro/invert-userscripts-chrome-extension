@@ -1,4 +1,5 @@
 import { RuntimePortMessageEvent } from "@shared/messages";
+import { updateBadgeForTab } from "../../ide/badge";
 import { injectMatchingScripts } from "../../ide/scripts";
 
 export const onInstalled = (_details: chrome.runtime.InstalledDetails) => {
@@ -15,7 +16,9 @@ export const onMessage = async (
       chrome.tabs.query({}, async (tabs) => {
         for (const tab of tabs) {
           if (tab.id && tab.url) {
-            await injectMatchingScripts(tab.id, tab.url);
+            await injectMatchingScripts(tab.id, tab.url, "beforePageLoad");
+            await injectMatchingScripts(tab.id, tab.url, "afterPageLoad");
+            await updateBadgeForTab(tab.id, tab.url);
           }
         }
       });

@@ -12,7 +12,7 @@ import { PlusIcon } from "lucide-react";
 import { useEffect } from "react";
 import { Group, Panel } from "react-resizable-panels";
 import { ScriptEditor } from "./script-editor/ScriptEditor";
-import { ScriptList } from "./script-list/ScriptList";
+import { ScriptList } from "@/shared/components/script-list/ScriptList";
 import { createUserscript } from "@/shared/store/slices/userscripts/thunks.userscripts";
 
 export function ScriptsPage() {
@@ -67,10 +67,10 @@ export function ScriptsPage() {
       }}
     >
       <Panel id="scripts-sidebar" minSize="15%" maxSize="30%">
-        <div className="bg-surface-raised border-border flex h-full flex-col border-r">
-          <div className="p-md border-border flex items-center justify-between border-b">
+        <div className="flex h-full flex-col border-r border-border bg-surface-raised">
+          <div className="flex items-center justify-between border-b border-border p-md">
             <Typography variant="subtitle">
-              <span className="text-text-muted-faint mr-2 font-mono text-sm">
+              <span className="mr-2 font-mono text-sm text-text-muted-faint">
                 //
               </span>
               Scripts
