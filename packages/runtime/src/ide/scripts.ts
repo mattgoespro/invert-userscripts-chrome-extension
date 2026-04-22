@@ -111,9 +111,28 @@ export async function injectMatchingScripts(
   timing: "beforePageLoad" | "afterPageLoad"
 ): Promise<void> {
   try {
-    const scriptsMap = await ChromeSyncStorage.getAllScripts();
-    const compiledCodeMap = await CompiledCodeStorage.getAllCompiledCode();
-    const allScripts: Userscript[] = Object.values(scriptsMap).map((script) => {
+    // Parallelize independent storage reads
+    const [scriptsMap, compiledCodeMap] = await Promise.all([
+      ChromeSyncStorage.getAllScripts(),
+      CompiledCodeStorage.getAllCompiledCode(),
+    ]);
+
+    const allScripts = Object.values(scriptsMap);
+
+    // Filter before merging compiled code to avoid unnecessary object spreading
+    const matchingScripts = allScripts.filter(
+      (script) =>
+        script.enabled &&
+        script.runAt === timing &&
+        matchesUrlPattern(url, script.urlPatterns)
+    );
+
+    if (matchingScripts.length === 0) {
+      return;
+    }
+
+    // Merge compiled code only for scripts that will actually be injected
+    const mergeCompiled = (script: Userscript): Userscript => {
       const compiled = compiledCodeMap[script.id];
       if (compiled) {
         return {
@@ -129,31 +148,31 @@ export async function injectMatchingScripts(
         };
       }
       return script;
-    });
-    const enabledScripts = allScripts.filter((script) => script.enabled);
+    };
 
-    // Collect all scripts that match this URL and timing
-    const matchingScripts = enabledScripts.filter(
-      (script) =>
-        script.runAt === timing && matchesUrlPattern(url, script.urlPatterns)
+    const resolvedScripts = matchingScripts.map(mergeCompiled);
+
+    // Build a lookup map for shared script resolution (O(1) vs O(n) per lookup)
+    const scriptById = new Map(allScripts.map((s) => [s.id, s]));
+
+    // Phase 1: Inject CDN modules (deduplicated, only fetch modules if needed)
+    const needsCdnModules = resolvedScripts.some(
+      (s) => s.globalModules?.length > 0
     );
 
-    if (matchingScripts.length === 0) {
-      return;
-    }
+    if (needsCdnModules) {
+      const modulesMap = await ChromeSyncStorage.getAllModules();
+      const injectedModules = new Set<string>();
 
-    // Phase 1: Inject CDN modules (deduplicated across all matching scripts)
-    const modulesMap = await ChromeSyncStorage.getAllModules();
-    const injectedModules = new Set<string>();
-
-    for (const script of matchingScripts) {
-      if (script.globalModules?.length > 0) {
-        for (const moduleId of script.globalModules) {
-          if (!injectedModules.has(moduleId)) {
-            const module = modulesMap[moduleId];
-            if (module?.enabled) {
-              await injectCdnModule(tabId, module);
-              injectedModules.add(moduleId);
+      for (const script of resolvedScripts) {
+        if (script.globalModules?.length > 0) {
+          for (const moduleId of script.globalModules) {
+            if (!injectedModules.has(moduleId)) {
+              const module = modulesMap[moduleId];
+              if (module?.enabled) {
+                await injectCdnModule(tabId, module);
+                injectedModules.add(moduleId);
+              }
             }
           }
         }
@@ -163,15 +182,18 @@ export async function injectMatchingScripts(
     // Phase 2: Inject shared script dependencies, then Phase 3: userscripts
     const injectedShared = new Set<string>();
 
-    for (const script of matchingScripts) {
+    for (const script of resolvedScripts) {
       if (script.sharedScripts?.length > 0) {
         for (const sharedId of script.sharedScripts) {
-          if (!injectedShared.has(sharedId)) {
-            const shared = allScripts.find(
-              (s) => s.id === sharedId && s.shared
-            );
-            if (shared?.moduleName && shared?.code?.compiled?.javascript) {
-              await injectSharedScript(tabId, shared);
+          if (injectedShared.has(sharedId)) {
+            continue;
+          }
+          const shared = scriptById.get(sharedId);
+
+          if (shared?.shared && shared?.moduleName) {
+            const resolvedShared = mergeCompiled(shared);
+            if (resolvedShared.code?.compiled?.javascript) {
+              await injectSharedScript(tabId, resolvedShared);
               injectedShared.add(sharedId);
             }
           }
@@ -262,7 +284,7 @@ async function injectCdnModule(
     await chrome.scripting.executeScript({
       target: { tabId },
       func: (url: string) => {
-        return new Promise<void>((resolve, reject) => {
+        return new Promise<void>((resolve) => {
           const scriptEl = document.createElement("script");
           scriptEl.src = url;
           scriptEl.onload = () => resolve();

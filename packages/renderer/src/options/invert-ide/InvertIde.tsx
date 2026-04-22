@@ -4,7 +4,10 @@ import { useAppDispatch, useAppSelector } from "@/shared/store/hooks";
 import { initializeMonaco } from "@/shared/store/slices/monaco-editor/thunks.monaco-editor";
 import { selectEditorSettings } from "@/shared/store/slices/settings";
 import { loadSettings } from "@/shared/store/slices/settings/thunks.settings";
-import { loadUserscripts } from "@/shared/store/slices/userscripts/thunks.userscripts";
+import {
+  compileStaleUserscripts,
+  loadUserscripts,
+} from "@/shared/store/slices/userscripts/thunks.userscripts";
 import { useEffect } from "react";
 import { DashboardHeader } from "./components/dashboard-header/DashboardHeader";
 import { Sidebar, SidebarButton } from "./components/sidebar/Sidebar";
@@ -29,7 +32,11 @@ export function InvertIde() {
     // are available regardless of which page is active on load.
     dispatch(initializeMonaco());
 
-    dispatch(loadUserscripts());
+    // Load scripts, then compile any that are missing compiled output in
+    // chrome.storage.local (e.g. after syncing to a new device).
+    dispatch(loadUserscripts()).then(() => {
+      dispatch(compileStaleUserscripts());
+    });
     dispatch(loadSettings());
   }, [dispatch]);
 
