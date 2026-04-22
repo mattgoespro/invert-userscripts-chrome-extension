@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import "./ThemeSwitcher.scss";
+import clsx from "clsx";
 
 type ThemeOption = {
   id: string;
@@ -9,7 +9,7 @@ type ThemeOption = {
   group?: string;
 };
 
-const THEMES: ThemeOption[] = [
+const Themes: ThemeOption[] = [
   { id: "graphite", label: "Graphite", accent: "#569cd6", surface: "#1e1e1e" },
   { id: "obsidian", label: "Obsidian", accent: "#e2a555", surface: "#161616" },
   // Graphite variants
@@ -85,14 +85,17 @@ export function useActiveTheme() {
     applyTheme(themeId);
   }, []);
 
-  const activeOption = THEMES.find((t) => t.id === activeTheme) ?? THEMES[0];
+  const activeOption = Themes.find((t) => t.id === activeTheme) ?? Themes[0];
 
   return { activeTheme, activeOption, handleSelect };
 }
 
 export function ThemeSwitcherIcon({ accent }: { accent: string }) {
   return (
-    <span className="theme-switcher--swatch" style={{ background: accent }} />
+    <span
+      className="h-2.5 w-2.5 shrink-0 rounded-full border border-white/10"
+      style={{ background: accent }}
+    />
   );
 }
 
@@ -100,9 +103,9 @@ export function ThemeSwitcher() {
   const { activeTheme, handleSelect } = useActiveTheme();
 
   return (
-    <div className="theme-switcher--options">
-      {THEMES.map((theme, index) => {
-        const prevGroup = index > 0 ? THEMES[index - 1].group : undefined;
+    <div className="flex scrollbar-thin max-h-90 flex-col gap-0.5 overflow-y-auto p-1.5">
+      {Themes.map((theme, index) => {
+        const prevGroup = index > 0 ? Themes[index - 1].group : undefined;
         const showSeparator = theme.group && theme.group !== prevGroup;
 
         return (
@@ -115,29 +118,29 @@ export function ThemeSwitcher() {
               </div>
             )}
             <button
-              className={
-                "theme-switcher--option" +
-                (theme.id === activeTheme
-                  ? " theme-switcher--option-active"
-                  : "")
-              }
+              className={clsx(
+                "flex items-center gap-2.5 rounded-[3px] border-none px-2.5 py-2",
+                "cursor-pointer text-left font-mono text-base",
+                "transition-colors duration-100",
+                theme.id === activeTheme
+                  ? "bg-accent-subtle text-accent hover:bg-accent-muted hover:text-accent"
+                  : "bg-transparent text-text-muted hover:bg-hover-overlay hover:text-foreground"
+              )}
               onClick={() => handleSelect(theme.id)}
             >
-              <span className="theme-switcher--option-swatches">
+              <span className="flex shrink-0 gap-0.75">
                 <span
-                  className="theme-switcher--option-swatch"
+                  className="h-3 w-3 rounded-[3px] border border-white/8"
                   style={{ background: theme.surface }}
                 />
                 <span
-                  className="theme-switcher--option-swatch"
+                  className="h-3 w-3 rounded-[3px] border border-white/8"
                   style={{ background: theme.accent }}
                 />
               </span>
-              <span className="theme-switcher--option-label">
-                {theme.label}
-              </span>
+              <span className="flex-1">{theme.label}</span>
               {theme.id === activeTheme && (
-                <span className="theme-switcher--option-check">&#10003;</span>
+                <span className="shrink-0 text-xs text-accent">&#10003;</span>
               )}
             </button>
           </div>

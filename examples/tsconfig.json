@@ -1,0 +1,6 @@
+{
+  "include": ["userscripts/**/*.ts"],
+  "compilerOptions": {
+    "lib": ["dom", "dom.iterable"]
+  }
+}

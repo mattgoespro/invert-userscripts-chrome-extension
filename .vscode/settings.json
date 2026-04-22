@@ -1,14 +1,16 @@
 {
   "[chatagent]": {
-    "editor.defaultFormatter": "yzhang.markdown-all-in-one"
+    "editor.defaultFormatter": "darkriszty.markdown-table-prettify",
+    "editor.formatOnPaste": true,
+    "editor.formatOnSave": true
+  },
+  "[css]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnPaste": true,
+    "editor.formatOnSave": true
   },
   "[instructions]": {
     "editor.defaultFormatter": "yzhang.markdown-all-in-one"
-  },
-  "[scss]": {
-    "editor.defaultFormatter": "sibiraj-s.vscode-scss-formatter",
-    "editor.formatOnPaste": true,
-    "editor.formatOnSave": true
   },
   "[typescript]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode",
@@ -21,25 +23,29 @@
     "editor.formatOnSave": true
   },
   "chat.agent.maxRequests": 1000,
+  "chat.agent.thinking.collapsedTools": "withThinking",
+  "chat.agent.thinkingStyle": "collapsedPreview",
+  "chat.artifacts.enabled": true,
   "chat.autopilot.enabled": true,
-  "chat.planAgent.defaultModel": "Claude Opus 4.6 (fast mode) (Preview) (claude-code)",
+  "chat.implicitContext.enabled": {
+    "agent": "always",
+    "ask": "always"
+  },
+  "chat.planAgent.defaultModel": "Claude Opus 4.6 (copilotcli)",
   "chat.tools.terminal.autoApprove": {
     "/.*/": true
   },
   "chat.tools.terminal.autoReplyToPrompts": true,
   "chat.tools.terminal.ignoreDefaultAutoApproveRules": true,
   "chat.tools.urls.autoApprove": {
-    "https://*.github.com": true,
-    "https://*.npmjs.com": true,
-    "https://github.com": true,
-    "https://raw.githubusercontent.com": true,
-    "https://shiki.style": true,
-    "https://www.npmjs.com": true
+    "http://*": true,
+    "https://*": true
   },
   "chat.viewSessions.orientation": "stacked",
+  "css.customData": [".vscode/tailwindcss.data.json"],
   "editor.codeActionsOnSave": {
-    "source.addMissingImports.ts": "always",
     "source.fixAll.eslint": "always",
+    "source.fixAll.prettier": "always",
     "source.removeUnusedImports": "never"
   },
   "editor.defaultFormatter": "esbenp.prettier-vscode",
@@ -69,23 +75,22 @@
   "github.copilot.chat.agent.autoFix": true,
   "github.copilot.chat.completionsFetcher": "electron-fetch",
   "github.copilot.chat.copilotMemory.enabled": true,
+  "github.copilot.chat.exploreAgent.model": "Claude Opus 4.6 (copilotcli)",
   "github.copilot.chat.githubMcpServer.enabled": true,
-  "github.copilot.chat.implementAgent.model": "Claude Opus 4.6",
+  "github.copilot.chat.implementAgent.model": "Claude Opus 4.6 (copilotcli)",
   "github.copilot.chat.languageContext.fix.typescript.enabled": true,
   "github.copilot.chat.languageContext.inline.typescript.enabled": true,
   "github.copilot.chat.languageContext.typescript.enabled": true,
   "github.copilot.chat.languageContext.typescript.includeDocumentation": true,
-  "github.copilot.chat.responsesApiReasoningEffort": "high",
   "github.copilot.chat.switchAgent.enabled": true,
   "github.copilot.enable": {
-    "markdown": true,
-    "plaintext": true,
-    "scminput": true
+    "*": true
   },
   "github.copilot.nextEditSuggestions.enabled": true,
   "inlineChat.enableV2": true,
   "js/ts.format.enabled": false,
   "js/ts.preferences.importModuleSpecifier": "shortest",
+  "js/ts.preferences.useAliasesForRenames": false,
   "js/ts.tsc.autoDetect": "off",
   "js/ts.tsdk.path": "node_modules\\typescript\\lib",
   "js/ts.updateImportsOnFileMove.enabled": "always",
@@ -99,22 +104,15 @@
   "npm-outdated.majorUpdateProtection": false,
   "prettier.configPath": "prettier.config.mjs",
   "prettier.requireConfig": true,
-  "scss.format.enable": false,
-  "scss.lint.duplicateProperties": "error",
-  "scss.lint.emptyRules": "warning",
-  "scss.lint.propertyIgnoredDueToDisplay": "warning",
-  "scss.lint.unknownAtRules": "warning",
-  "scss.lint.unknownProperties": "warning",
-  "scss.lint.zeroUnits": "warning",
-  "scss.showErrors": true,
-  "scss.validate": true,
-  "scssFormatter.printWidth": 100,
-  "scssFormatter.trailingComma": "es5",
   "search.exclude": {
     "**/*.json": true,
     "**/*.md": true,
     "**/.vscode/**": true,
-    "**/dist/**": true
+    "**/dist/**": true,
+    "**/examples/**": true
+  },
+  "tailwindCSS.includeLanguages": {
+    "typescriptreact": "html"
   },
   "terminal.integrated.automationProfile.windows": {
     "args": ["-l"],
@@ -144,5 +142,6 @@
   "terminal.integrated.shellIntegration.enabled": true,
   "vsicons.dontShowNewVersionMessage": true,
   "workbench.browser.enableChatTools": true,
+  "workbench.colorTheme": "Dark Modern",
   "workbench.iconTheme": "vscode-icons"
 }

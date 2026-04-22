@@ -1,0 +1,51 @@
+/* =============================================================================
+   Custom Utilities
+   ============================================================================= */
+
+@utility scrollbar-thin {
+  &::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 2px;
+  }
+}
+
+@utility scrollbar-error {
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--error-border);
+    border-radius: 3px;
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background-color: var(--error-text-muted);
+  }
+}
+
+@utility scrollbar-thin-6 {
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 3px;
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted-strong);
+  }
+}

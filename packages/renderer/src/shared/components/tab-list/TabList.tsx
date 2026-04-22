@@ -1,13 +1,19 @@
 import { Children, isValidElement, type ReactNode } from "react";
 import { Tab } from "./Tab";
 import { TabContent } from "./TabContent";
-import "./TabList.scss";
+import clsx from "clsx";
 
 type TabListProps = {
   children: ReactNode;
+  barClassName?: string;
 } & React.HTMLAttributes<HTMLDivElement>;
 
-export function TabList({ children, className, ...rest }: TabListProps) {
+export function TabList({
+  children,
+  className,
+  barClassName,
+  ...rest
+}: TabListProps) {
   let activeContent: ReactNode = null;
 
   Children.forEach(children, (child) => {
@@ -25,8 +31,11 @@ export function TabList({ children, className, ...rest }: TabListProps) {
   });
 
   return (
-    <div className={`tab-list${className ? ` ${className}` : ""}`} {...rest}>
-      <div className="tab-list--bar" role="tablist">
+    <div className={clsx(className)} {...rest}>
+      <div
+        className={clsx("gap-md flex items-center", barClassName)}
+        role="tablist"
+      >
         {children}
       </div>
       {activeContent}

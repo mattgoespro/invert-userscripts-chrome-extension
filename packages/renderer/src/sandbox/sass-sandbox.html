@@ -5,6 +5,10 @@
     <title>SASS Sandbox</title>
   </head>
   <body>
-    <script src="/sass-sandbox.js"></script>
+    <!--
+    Chrome blocks scripts loaded from absolute paths in sandboxed iframes, so we have to load the
+    script using a relative path.
+    -->
+    <script src="sass-sandbox.js"></script>
   </body>
 </html>

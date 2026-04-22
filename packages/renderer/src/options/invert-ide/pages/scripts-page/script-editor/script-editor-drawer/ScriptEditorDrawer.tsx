@@ -1,4 +1,4 @@
-import { CodeEditor } from "@/options/invert-ide/components/code-editor/CodeEditor";
+import { CodeEditor } from "@/options/invert-ide/shared/CodeEditor";
 import { useGlobalState } from "@/options/invert-ide/contexts/global-state.context";
 import { IconButton } from "@/shared/components/icon-button/IconButton";
 import { Tab } from "@/shared/components/tab-list/Tab";
@@ -7,8 +7,6 @@ import { TabList } from "@/shared/components/tab-list/TabList";
 import { TabListTitle } from "@/shared/components/tab-list/TabListTitle";
 import { ScriptEditorDrawerTab } from "@shared/storage";
 import { ChevronsDown, ChevronsUp } from "lucide-react";
-import "./ScriptEditorDrawer.scss";
-import { Typography } from "@/shared/components/typography/Typography";
 import { Userscript } from "@shared/model";
 
 type ScriptEditorDrawerProps = {
@@ -34,18 +32,18 @@ export function ScriptEditorDrawer({
   };
 
   return (
-    <TabList className="compiled-output--wrapper">
+    <TabList
+      className="flex h-full flex-col overflow-hidden"
+      barClassName="shrink-0 h-9 pl-md pr-xs bg-surface-raised border-b border-border"
+    >
       <TabListTitle>{"// output"}</TabListTitle>
       <Tab
         active={activeTab === "javascript"}
         onClick={() => onTabChange("javascript")}
       >
-        <Typography
-          variant="caption"
-          className="compiled-output--tab-badge compiled-output--tab-badge-js"
-        >
+        <span className="inline-flex items-center rounded-[3px] bg-[rgba(240,219,79,0.12)] px-1.25 py-px text-[9px] font-bold tracking-[0.05em] text-[#f0db4f] uppercase">
           js
-        </Typography>
+        </span>
         javascript
         {!isCollapsed && (
           <TabContent>
@@ -60,7 +58,7 @@ export function ScriptEditorDrawer({
         )}
       </Tab>
       <Tab active={activeTab === "css"} onClick={() => onTabChange("css")}>
-        <span className="compiled-output--tab-badge compiled-output--tab-badge-css">
+        <span className="inline-flex items-center rounded-[3px] bg-[rgba(111,168,255,0.12)] px-1.25 py-px text-[9px] font-bold tracking-[0.05em] text-[#6fa8ff] uppercase">
           css
         </span>
         css
@@ -77,7 +75,7 @@ export function ScriptEditorDrawer({
         )}
       </Tab>
       <IconButton
-        className="compiled-output--collapse-btn"
+        className="ml-auto"
         icon={isCollapsed ? ChevronsUp : ChevronsDown}
         variant="secondary"
         size="sm"

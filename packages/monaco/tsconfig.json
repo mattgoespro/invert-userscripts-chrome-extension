@@ -7,8 +7,7 @@
     "lib": ["es2020", "dom", "dom.iterable"],
     "outDir": "dist/packages/monaco",
     "paths": {
-      "@shared/*": ["../../packages/shared/src/*"],
-      "monaco-editor-core": ["../../node_modules/monaco-editor"]
+      "@shared/*": ["../../packages/shared/src/*"]
     }
   },
   "references": [

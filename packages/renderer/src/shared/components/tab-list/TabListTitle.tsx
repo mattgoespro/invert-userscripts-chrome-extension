@@ -1,4 +1,4 @@
-import "./TabListTitle.scss";
+import clsx from "clsx";
 
 type TabListTitleProps = {
   children: React.ReactNode;
@@ -11,7 +11,11 @@ export function TabListTitle({
 }: TabListTitleProps) {
   return (
     <span
-      className={`tab-list--title${className ? ` ${className}` : ""}`}
+      className={clsx(
+        "text-text-muted font-mono text-(length:--typography-label-font-size)",
+        "pr-sm border-border border-r tracking-[0.03em] select-none",
+        className
+      )}
       {...rest}
     >
       {children}

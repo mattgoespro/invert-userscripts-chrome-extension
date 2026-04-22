@@ -1,14 +1,13 @@
 import { Input } from "@/shared/components/input/Input";
 import { Userscript } from "@shared/model";
-import "./ScriptMetadata.scss";
 import { useAppDispatch } from "@/shared/store/hooks";
 import { AppDispatch } from "@/shared/store/store";
-import { ModuleImportsSelector } from "./module-imports-selector/ModuleImportsSelector";
 import {
   deleteUserscript,
   updateUserscript,
 } from "@/shared/store/slices/userscripts/thunks.userscripts";
 import { OptionsPanel } from "./options-panel/OptionsPanel";
+import { UrlPatternInput } from "./url-pattern-input/UrlPatternInput";
 
 type ScriptMetadataProps = {
   script: Userscript;
@@ -41,40 +40,42 @@ export function ScriptMetadata({ script }: ScriptMetadataProps) {
     onUpdateScriptMeta({ sharedScripts: updatedShared });
   };
 
+  const onToggleModule = (moduleId: string, selected: boolean) => {
+    const currentModules = script.globalModules ?? [];
+    const updatedModules = selected
+      ? [...currentModules, moduleId]
+      : currentModules.filter((id) => id !== moduleId);
+    onUpdateScriptMeta({ globalModules: updatedModules });
+  };
+
   return (
-    <div className="script-metadata--wrapper">
-      <div className="script-metadata--top-row">
-        <Input
-          className="script-metadata--name"
-          required
-          defaultValue={script.name}
-          placeholder="Script name..."
-          onChange={(event) => onUpdateScriptMeta({ name: event.target.value })}
-        />
-        <Input
-          className="script-metadata--url-patterns"
-          defaultValue={script.urlPatterns?.join(", ")}
-          placeholder="URL Patterns (comma separated)..."
-          onChange={(event) =>
-            onUpdateScriptMeta({
-              urlPatterns: event.target.value.split(",").map((p) => p.trim()),
-            })
-          }
-        />
-        <OptionsPanel
-          shared={script.shared ?? false}
-          scriptName={script.name}
-          moduleName={script.moduleName ?? ""}
-          onModuleNameChange={onModuleNameChange}
-          onDelete={onDeleteScript}
-        />
-      </div>
-      <div className="script-metadata--imports-row">
-        <ModuleImportsSelector
-          script={script}
-          onToggleSharedScript={onToggleSharedScript}
-        />
-      </div>
+    <div className="flex w-full items-center gap-sm">
+      <span className="shrink-0 font-mono text-sm text-syntax-keyword">
+        const
+      </span>
+      <Input
+        className="basis-1/4"
+        required
+        defaultValue={script.name}
+        placeholder="Script name..."
+        onChange={(event) => onUpdateScriptMeta({ name: event.target.value })}
+      />
+      <UrlPatternInput
+        className="flex-1"
+        patterns={script.urlPatterns ?? []}
+        onChange={(urlPatterns) => onUpdateScriptMeta({ urlPatterns })}
+      />
+      <OptionsPanel
+        script={script}
+        shared={script.shared ?? false}
+        scriptName={script.name}
+        moduleName={script.moduleName ?? ""}
+        selectedModuleIds={script.globalModules ?? []}
+        onModuleNameChange={onModuleNameChange}
+        onToggleModule={onToggleModule}
+        onToggleSharedScript={onToggleSharedScript}
+        onDelete={onDeleteScript}
+      />
     </div>
   );
 }

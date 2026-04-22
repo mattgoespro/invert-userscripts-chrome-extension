@@ -1,6 +1,7 @@
-import { CodeEditor } from "@/options/invert-ide/components/code-editor/CodeEditor";
+import { CodeEditor } from "@/options/invert-ide/shared/CodeEditor";
 import { TypeScriptCodeEditor } from "@/options/invert-ide/components/code-editor/TypeScriptCodeEditor";
 import { SassCompiler, TypeScriptCompiler } from "@/sandbox/compiler";
+import { EditorPanel } from "@/shared/components/editor-panel/EditorPanel";
 import { ResizeHandle } from "@/shared/components/resize-handle/ResizeHandle";
 import { useAppDispatch, useAppSelector } from "@/shared/store/hooks";
 import { selectMonacoReady } from "@/shared/store/slices/monaco-editor";
@@ -14,7 +15,6 @@ import { useEffect, useRef, useState } from "react";
 import { Group, Panel, PanelImperativeHandle } from "react-resizable-panels";
 import { ScriptEditorDrawer } from "./script-editor-drawer/ScriptEditorDrawer";
 import { ScriptMetadata } from "./script-metadata/ScriptMetadata";
-import "./ScriptEditor.scss";
 
 export function ScriptEditor() {
   const dispatch = useAppDispatch();
@@ -28,8 +28,8 @@ export function ScriptEditor() {
     globalState.outputDrawerCollapsed
   );
 
-  const drawerPanelRef = useRef<PanelImperativeHandle | null>(null);
-  const scssDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const drawerPanelRef = useRef<PanelImperativeHandle>(null);
+  const scssDebounceRef = useRef<ReturnType<typeof setTimeout>>(null);
 
   // Auto-compile source code on mount and on script switch to pre-populate the output drawer.
   useEffect(() => {
@@ -114,11 +114,11 @@ export function ScriptEditor() {
   };
 
   return (
-    <div className="script-editor--editor-area">
-      <div className="script-editor--editor-header">
+    <div className="flex h-full min-w-0 flex-col gap-sm overflow-hidden">
+      <div className="flex items-center gap-sm rounded-default border border-border bg-surface-raised p-sm px-md">
         <ScriptMetadata key={script.id} script={script} />
       </div>
-      <div className="script-editor--editor-container">
+      <div className="min-h-0 min-w-0 flex-1 overflow-hidden">
         {monacoReady && (
           <Group
             orientation="vertical"
@@ -163,7 +163,7 @@ export function ScriptEditor() {
                 }}
               >
                 <Panel id="typescript-editor" minSize="20%" maxSize="80%">
-                  <div className="script-editor--code-editor">
+                  <EditorPanel>
                     <TypeScriptCodeEditor
                       modelId={script.id}
                       scriptId={script.id}
@@ -172,11 +172,11 @@ export function ScriptEditor() {
                         onCodeModified("typescript", code)
                       }
                     />
-                  </div>
+                  </EditorPanel>
                 </Panel>
                 <ResizeHandle direction="horizontal" />
                 <Panel id="scss-editor" minSize="20%" maxSize="80%">
-                  <div className="script-editor--code-editor">
+                  <EditorPanel>
                     <CodeEditor
                       modelId={script.id}
                       scriptId={script.id}
@@ -184,7 +184,7 @@ export function ScriptEditor() {
                       contents={script.code.source.scss}
                       onCodeModified={(code) => onCodeModified("scss", code)}
                     />
-                  </div>
+                  </EditorPanel>
                 </Panel>
               </Group>
             </Panel>
@@ -199,7 +199,7 @@ export function ScriptEditor() {
               collapsedSize="36px"
               onResize={onDrawerResize}
             >
-              <div className="script-editor--output-drawer">
+              <EditorPanel className="overflow-hidden">
                 <ScriptEditorDrawer
                   script={script}
                   javascript={liveJs}
@@ -207,7 +207,7 @@ export function ScriptEditor() {
                   isCollapsed={isDrawerCollapsed}
                   onToggleCollapse={onToggleDrawer}
                 />
-              </div>
+              </EditorPanel>
             </Panel>
           </Group>
         )}

@@ -1,0 +1,396 @@
+/* =============================================================================
+   CSS Custom Properties (Primitives + Semantic + Components + Typography)
+   ============================================================================= */
+
+/* =========================================================================
+   Primitive Tokens — Graphite Theme (Default)
+   ========================================================================= */
+:root {
+  /* Core Palette */
+  --base-white: #d4d4d4;
+  --base-grey: #858585;
+  --base-blue: #4fc1ff;
+  --base-gold: #569cd6;
+  --base-red: #f44747;
+
+  /* Surfaces */
+  --base-surface-base: #1e1e1e;
+  --base-surface-raised: #252526;
+  --base-surface-overlay: #2d2d30;
+  --base-surface-panel: #1a1a1c;
+  --base-surface-input: #1b1b1c;
+
+  /* Borders */
+  --base-border: #3e3e42;
+  --base-border-subtle: #333336;
+
+  /* Text */
+  --base-text-muted: #a0a0a0;
+  --base-text-muted-faint: #5a5a5e;
+  --base-text-muted-strong: #858585;
+
+  /* Accent */
+  --base-accent: #569cd6;
+  --base-accent-hover: #71abda;
+  --base-accent-muted: #569cd625;
+  --base-accent-subtle: #569cd612;
+  --base-accent-border: #569cd650;
+
+  /* Danger */
+  --base-danger: #f44747;
+
+  /* Interactive Overlays */
+  --base-hover-overlay: rgba(255, 255, 255, 0.04);
+  --base-active-overlay: rgba(255, 255, 255, 0.07);
+
+  /* Error States */
+  --base-error-accent: #f48771;
+  --base-error-accent-soft: rgba(244, 135, 113, 0.2);
+  --base-error-glow: rgba(244, 71, 71, 0.12);
+  --base-error-surface: #2d2020;
+  --base-error-surface-dark: #1e1616;
+  --base-error-text-muted: #858585;
+  --base-error-border: #5a3030;
+
+  /* Syntax Highlighting */
+  --base-syntax-keyword: #c586c0;
+  --base-syntax-function: #dcdcaa;
+  --base-syntax-param: #9cdcfe;
+  --base-syntax-type: #4ec9b0;
+  --base-syntax-punctuation: #d4d4d499;
+  --base-syntax-comment: #6a9955;
+
+  /* Component Primitives: Switch */
+  --base-switch-fg: #858585;
+  --base-switch-bg: #333336;
+  --base-switch-border: var(--base-border);
+
+  /* Component Primitives: Select */
+  --base-select-bg: var(--base-surface-input);
+  --base-select-border: var(--base-border);
+
+  /* ===================================================================
+     Semantic Tokens
+     =================================================================== */
+  --accent: var(--base-accent);
+  --accent-hover: var(--base-accent-hover);
+  --accent-muted: var(--base-accent-muted);
+  --accent-subtle: var(--base-accent-subtle);
+  --accent-border: var(--base-accent-border);
+  --danger: var(--base-danger);
+
+  --foreground: var(--base-white);
+  --border: var(--base-border);
+  --border-subtle: var(--base-border-subtle);
+
+  --surface-base: var(--base-surface-base);
+  --surface-raised: var(--base-surface-raised);
+  --surface-overlay: var(--base-surface-overlay);
+  --surface-panel: var(--base-surface-panel);
+  --surface-input: var(--base-surface-input);
+
+  --text-base: 11px;
+  --text-muted: var(--base-text-muted);
+  --text-muted-faint: var(--base-text-muted-faint);
+  --text-muted-strong: var(--base-text-muted-strong);
+
+  --hover-overlay: var(--base-hover-overlay);
+  --active-overlay: var(--base-active-overlay);
+
+  --error-accent: var(--base-error-accent);
+  --error-accent-soft: var(--base-error-accent-soft);
+  --error-glow: var(--base-error-glow);
+  --error-surface: var(--base-error-surface);
+  --error-surface-dark: var(--base-error-surface-dark);
+  --error-text-muted: var(--base-error-text-muted);
+  --error-border: var(--base-error-border);
+
+  --syntax-keyword: var(--base-syntax-keyword);
+  --syntax-function: var(--base-syntax-function);
+  --syntax-param: var(--base-syntax-param);
+  --syntax-type: var(--base-syntax-type);
+  --syntax-punctuation: var(--base-syntax-punctuation);
+  --syntax-comment: var(--base-syntax-comment);
+
+  --info: var(--base-blue);
+  --error: var(--base-red);
+
+  --geometry-border-radius: 4px;
+
+  /* ===================================================================
+     Component Tokens
+     =================================================================== */
+  --label-foreground: var(--base-grey);
+
+  --switch-foreground: var(--base-switch-fg);
+  --switch-background: var(--base-switch-bg);
+  --switch-border: var(--base-switch-border);
+
+  --select-background: var(--base-select-bg);
+  --select-border: var(--base-select-border);
+
+  --toast-foreground: var(--base-white);
+  --toast-shadow: 0 4px 24px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(0, 0, 0, 0.2);
+
+  --toast-info-accent: var(--info);
+  --toast-info-surface: color-mix(in srgb, var(--info) 6%, transparent);
+  --toast-info-border: color-mix(in srgb, var(--info) 18%, transparent);
+
+  --toast-warning-accent: var(--base-gold);
+  --toast-warning-surface: color-mix(in srgb, var(--base-gold) 6%, transparent);
+  --toast-warning-border: color-mix(in srgb, var(--base-gold) 18%, transparent);
+
+  --toast-error-accent: var(--error-accent);
+  --toast-error-surface: var(--error-surface);
+  --toast-error-border: var(--error-border);
+
+  --input-height: 1.75rem;
+  --page-padding: var(--spacing-lg);
+  --section-padding: var(--spacing-lg);
+  --section-gap: var(--spacing-md);
+  --field-gap: var(--spacing-sm);
+
+  /* ===================================================================
+     Typography Tokens
+     =================================================================== */
+  --typography-label-font-size: 12px;
+}
+
+/* =========================================================================
+   Theme Overrides
+   ========================================================================= */
+
+[data-theme="graphite-warm"] {
+  --base-gold: #d4a054;
+  --base-red: #d46050;
+  --base-accent: #d4a054;
+  --base-accent-hover: #deb06a;
+  --base-accent-muted: #d4a05425;
+  --base-accent-subtle: #d4a05412;
+  --base-accent-border: #d4a05450;
+  --base-danger: #d46050;
+  --base-syntax-keyword: #c586c0;
+  --base-syntax-function: #d4a054;
+  --base-syntax-param: #9cdcfe;
+  --base-syntax-type: #4ec9b0;
+  --base-syntax-comment: #6a9955;
+}
+
+[data-theme="graphite-dusk"] {
+  --base-white: #d2d0d6;
+  --base-grey: #82808a;
+  --base-blue: #a4a0e0;
+  --base-gold: #a088c8;
+  --base-red: #d06878;
+  --base-surface-base: #1e1d20;
+  --base-surface-raised: #252428;
+  --base-surface-overlay: #2d2c32;
+  --base-surface-panel: #1a191e;
+  --base-surface-input: #1a1a1d;
+  --base-border: #3c3a42;
+  --base-border-subtle: #323036;
+  --base-text-muted: #9e9aa4;
+  --base-text-muted-faint: #58545e;
+  --base-text-muted-strong: #82808a;
+  --base-accent: #a088c8;
+  --base-accent-hover: #b09ad4;
+  --base-accent-muted: #a088c825;
+  --base-accent-subtle: #a088c812;
+  --base-accent-border: #a088c850;
+  --base-danger: #d06878;
+  --base-error-accent: #e08080;
+  --base-error-accent-soft: rgba(224, 128, 128, 0.2);
+  --base-error-glow: rgba(208, 104, 120, 0.12);
+  --base-error-surface: #2a2024;
+  --base-error-surface-dark: #1e1618;
+  --base-error-text-muted: #82808a;
+  --base-error-border: #503040;
+  --base-syntax-keyword: #c586c0;
+  --base-syntax-function: #dcdcaa;
+  --base-syntax-param: #b8b4ea;
+  --base-syntax-type: #4ec9b0;
+  --base-syntax-punctuation: #d2d0d699;
+  --base-syntax-comment: #626068;
+  --base-switch-fg: #82808a;
+  --base-switch-bg: #323036;
+}
+
+[data-theme="graphite-ember"] {
+  --base-gold: #d4785a;
+  --base-red: #d46050;
+  --base-accent: #d4785a;
+  --base-accent-hover: #de8c70;
+  --base-accent-muted: #d4785a25;
+  --base-accent-subtle: #d4785a12;
+  --base-accent-border: #d4785a50;
+  --base-danger: #d46050;
+  --base-syntax-keyword: #c586c0;
+  --base-syntax-function: #d4785a;
+  --base-syntax-param: #9cdcfe;
+  --base-syntax-type: #4ec9b0;
+  --base-syntax-comment: #6a9955;
+}
+
+[data-theme="obsidian"] {
+  --base-white: #c8c8c8;
+  --base-grey: #6e6e6e;
+  --base-blue: #82aaff;
+  --base-gold: #e2a555;
+  --base-red: #d16969;
+  --base-surface-base: #161616;
+  --base-surface-raised: #1e1e1e;
+  --base-surface-overlay: #262626;
+  --base-surface-panel: #121212;
+  --base-surface-input: #131313;
+  --base-border: #333333;
+  --base-border-subtle: #282828;
+  --base-text-muted: #999999;
+  --base-text-muted-faint: #444444;
+  --base-text-muted-strong: #6e6e6e;
+  --base-accent: #e2a555;
+  --base-accent-hover: #eab56e;
+  --base-accent-muted: #e2a55525;
+  --base-accent-subtle: #e2a55512;
+  --base-accent-border: #e2a55550;
+  --base-danger: #d16969;
+  --base-hover-overlay: rgba(255, 255, 255, 0.03);
+  --base-active-overlay: rgba(255, 255, 255, 0.06);
+  --base-error-accent: #e07070;
+  --base-error-accent-soft: rgba(224, 112, 112, 0.2);
+  --base-error-glow: rgba(209, 105, 105, 0.12);
+  --base-error-surface: #221c1c;
+  --base-error-surface-dark: #181414;
+  --base-error-text-muted: #6e6e6e;
+  --base-error-border: #442e2e;
+  --base-syntax-keyword: #c792ea;
+  --base-syntax-function: #e2a555;
+  --base-syntax-param: #89ddff;
+  --base-syntax-type: #73c991;
+  --base-syntax-punctuation: #c8c8c899;
+  --base-syntax-comment: #555555;
+  --base-switch-fg: #6e6e6e;
+  --base-switch-bg: #282828;
+}
+
+[data-theme="obsidian-deep"] {
+  --base-white: #b8b8b8;
+  --base-grey: #606060;
+  --base-blue: #7a9ee0;
+  --base-gold: #cc9650;
+  --base-red: #c06060;
+  --base-surface-base: #101010;
+  --base-surface-raised: #171717;
+  --base-surface-overlay: #1e1e1e;
+  --base-surface-panel: #0c0c0c;
+  --base-surface-input: #0d0d0d;
+  --base-border: #2a2a2a;
+  --base-border-subtle: #212121;
+  --base-text-muted: #888888;
+  --base-text-muted-faint: #3a3a3a;
+  --base-text-muted-strong: #606060;
+  --base-accent: #cc9650;
+  --base-accent-hover: #d8a866;
+  --base-accent-muted: #cc965025;
+  --base-accent-subtle: #cc965012;
+  --base-accent-border: #cc965050;
+  --base-danger: #c06060;
+  --base-hover-overlay: rgba(255, 255, 255, 0.025);
+  --base-active-overlay: rgba(255, 255, 255, 0.05);
+  --base-error-accent: #d46868;
+  --base-error-accent-soft: rgba(212, 104, 104, 0.2);
+  --base-error-glow: rgba(192, 96, 96, 0.12);
+  --base-error-surface: #1c1616;
+  --base-error-surface-dark: #141010;
+  --base-error-text-muted: #606060;
+  --base-error-border: #3e2828;
+  --base-syntax-keyword: #b888d8;
+  --base-syntax-function: #cc9650;
+  --base-syntax-param: #80c8e8;
+  --base-syntax-type: #68b580;
+  --base-syntax-punctuation: #b8b8b899;
+  --base-syntax-comment: #484848;
+  --base-switch-fg: #606060;
+  --base-switch-bg: #212121;
+}
+
+[data-theme="obsidian-ember"] {
+  --base-white: #ccc4be;
+  --base-grey: #756860;
+  --base-blue: #82aaff;
+  --base-gold: #d4785a;
+  --base-red: #d46050;
+  --base-surface-base: #181414;
+  --base-surface-raised: #201c1a;
+  --base-surface-overlay: #282420;
+  --base-surface-panel: #141010;
+  --base-surface-input: #141110;
+  --base-border: #382e2a;
+  --base-border-subtle: #2c2522;
+  --base-text-muted: #a09488;
+  --base-text-muted-faint: #4a403a;
+  --base-text-muted-strong: #756860;
+  --base-accent: #d4785a;
+  --base-accent-hover: #de8c70;
+  --base-accent-muted: #d4785a25;
+  --base-accent-subtle: #d4785a12;
+  --base-accent-border: #d4785a50;
+  --base-danger: #d46050;
+  --base-hover-overlay: rgba(255, 248, 240, 0.03);
+  --base-active-overlay: rgba(255, 248, 240, 0.06);
+  --base-error-accent: #e07060;
+  --base-error-accent-soft: rgba(224, 112, 96, 0.2);
+  --base-error-glow: rgba(212, 96, 80, 0.12);
+  --base-error-surface: #241c18;
+  --base-error-surface-dark: #1a1412;
+  --base-error-text-muted: #756860;
+  --base-error-border: #4a3028;
+  --base-syntax-keyword: #c792ea;
+  --base-syntax-function: #d4785a;
+  --base-syntax-param: #89ddff;
+  --base-syntax-type: #73c991;
+  --base-syntax-punctuation: #ccc4be99;
+  --base-syntax-comment: #584e48;
+  --base-switch-fg: #756860;
+  --base-switch-bg: #2c2522;
+}
+
+[data-theme="obsidian-frost"] {
+  --base-white: #c4c8cc;
+  --base-grey: #687078;
+  --base-blue: #8aacc8;
+  --base-gold: #8aacc8;
+  --base-red: #c86868;
+  --base-surface-base: #141618;
+  --base-surface-raised: #1b1e22;
+  --base-surface-overlay: #24272c;
+  --base-surface-panel: #101214;
+  --base-surface-input: #111315;
+  --base-border: #2e3238;
+  --base-border-subtle: #252830;
+  --base-text-muted: #909498;
+  --base-text-muted-faint: #3e4248;
+  --base-text-muted-strong: #687078;
+  --base-accent: #8aacc8;
+  --base-accent-hover: #9ebcd4;
+  --base-accent-muted: #8aacc825;
+  --base-accent-subtle: #8aacc812;
+  --base-accent-border: #8aacc850;
+  --base-danger: #c86868;
+  --base-hover-overlay: rgba(240, 248, 255, 0.03);
+  --base-active-overlay: rgba(240, 248, 255, 0.06);
+  --base-error-accent: #d87070;
+  --base-error-accent-soft: rgba(216, 112, 112, 0.2);
+  --base-error-glow: rgba(200, 104, 104, 0.12);
+  --base-error-surface: #1e1c20;
+  --base-error-surface-dark: #161418;
+  --base-error-text-muted: #687078;
+  --base-error-border: #402e2e;
+  --base-syntax-keyword: #b898d8;
+  --base-syntax-function: #8aacc8;
+  --base-syntax-param: #a0d4e8;
+  --base-syntax-type: #70b890;
+  --base-syntax-punctuation: #c4c8cc99;
+  --base-syntax-comment: #4a4e54;
+  --base-switch-fg: #687078;
+  --base-switch-bg: #252830;
+}

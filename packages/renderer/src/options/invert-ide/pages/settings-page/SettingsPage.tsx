@@ -12,10 +12,10 @@ import {
   loadSettings,
   updateSettings,
 } from "@/shared/store/slices/settings/thunks.settings";
-import { EditorThemeName, getThemeOptions } from "@packages/monaco";
+import { EditorThemeName, getEditorThemes } from "@packages/monaco";
 import { AppThemeName } from "@shared/model";
 import { useEffect } from "react";
-import "./SettingsPage.scss";
+import { SettingsSection } from "./SettingsSection";
 import { ThemePreview } from "./theme-preview/ThemePreview";
 
 const APP_THEME_OPTIONS = [
@@ -63,85 +63,88 @@ export function Settings() {
     dispatch(updateSettings({ autoFormat }));
   };
 
+  function getEditorThemeOptions(): {
+    label: string;
+    value: EditorThemeName;
+  }[] {
+    return getEditorThemes().map(([key, theme]) => ({
+      label: theme.displayName,
+      value: key as EditorThemeName,
+    }));
+  }
+
   if (isLoading) {
     return (
-      <div className="settings--content">
-        <div className="settings--header">
-          <span className="settings--header-prefix">config.</span>
+      <div className="flex-1 p-(--page-padding)">
+        <div className="mb-lg pb-sm border-border flex items-center gap-1 border-b">
+          <span className="text-syntax-param font-mono text-[1.25rem]">
+            config.
+          </span>
           <Typography variant="subtitle">Settings</Typography>
         </div>
-        <div className="settings--loading">
-          <Typography variant="code">Loading settings...</Typography>
+        <div className="p-2xl flex items-center justify-center">
+          <Typography variant="code" className="text-text-muted">
+            Loading settings...
+          </Typography>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="settings--content">
-      <div className="settings--header">
-        <span className="settings--header-prefix">config.</span>
+    <div className="flex-1 p-(--page-padding)">
+      <div className="mb-lg pb-sm border-border flex items-center gap-1 border-b">
+        <span className="text-syntax-param font-mono text-[1.25rem]">
+          config.
+        </span>
         <Typography variant="subtitle">Settings</Typography>
       </div>
-      <div className="settings--section">
-        <Typography variant="section-title" className="settings--section-title">
-          Application Theme
-        </Typography>
-        <div className="settings--section-fields">
-          <Select
-            label="Theme"
-            value={settings.appTheme ?? "graphite"}
-            onChange={handleAppThemeChange}
-            options={APP_THEME_OPTIONS}
-          />
+      <SettingsSection title="Application Theme">
+        <Select
+          label="Theme"
+          value={settings.appTheme ?? "graphite"}
+          onChange={handleAppThemeChange}
+          options={APP_THEME_OPTIONS}
+        />
+      </SettingsSection>
+      <SettingsSection title="Editor Appearance">
+        <Select
+          label="Theme"
+          value={settings.theme}
+          onChange={handleThemeChange}
+          options={getEditorThemeOptions()}
+        />
+        <div className="pt-1">
+          {monacoReady && <ThemePreview theme={settings.theme} />}
         </div>
-      </div>
-      <div className="settings--section">
-        <Typography variant="section-title" className="settings--section-title">
-          Editor Appearance
-        </Typography>
-        <div className="settings--section-fields">
-          <Select
-            label="Theme"
-            value={settings.theme}
-            onChange={handleThemeChange}
-            options={getThemeOptions()}
-          />
-          <div className="settings--theme-preview-wrapper">
-            {monacoReady && <ThemePreview theme={settings.theme} />}
-          </div>
-          <Input
-            type="number"
-            label="Font Size"
-            value={settings.fontSize}
-            onChange={(event) =>
-              handleFontSizeChange(parseInt(event.target.value))
-            }
-            min="8"
-            max="32"
-          />
-        </div>
-      </div>
-      <div className="settings--section">
-        <Typography variant="section-title" className="settings--section-title">
-          Formatting
-        </Typography>
-        <div className="settings--section-fields">
-          <Input
-            type="number"
-            label="Tab Size"
-            value={settings.tabSize}
-            onChange={(event) => handleTabSizeChange(parseInt(event.target.value))}
-            min="2"
-            max="8"
-          />
-          <Checkbox
-            label="Format on save"
-            checked={settings.autoFormat}
-            onChange={handleAutoFormatChange}
-          />
-        </div>
-      </div>
+        <Input
+          type="number"
+          label="Font Size"
+          value={settings.fontSize}
+          onChange={(event) =>
+            handleFontSizeChange(parseInt(event.target.value))
+          }
+          min="8"
+          max="32"
+        />
+      </SettingsSection>
+      <SettingsSection title="Formatting">
+        <Input
+          type="number"
+          label="Tab Size"
+          value={settings.tabSize}
+          onChange={(event) =>
+            handleTabSizeChange(parseInt(event.target.value))
+          }
+          min="2"
+          max="8"
+        />
+        <Checkbox
+          label="Format on save"
+          checked={settings.autoFormat}
+          onChange={handleAutoFormatChange}
+        />
+      </SettingsSection>
     </div>
   );
 }

@@ -12,8 +12,7 @@ import { PlusIcon } from "lucide-react";
 import { useEffect } from "react";
 import { Group, Panel } from "react-resizable-panels";
 import { ScriptEditor } from "./script-editor/ScriptEditor";
-import { ScriptList } from "./script-list/ScriptList";
-import "./ScriptsPage.scss";
+import { ScriptList } from "@/shared/components/script-list/ScriptList";
 import { createUserscript } from "@/shared/store/slices/userscripts/thunks.userscripts";
 
 export function ScriptsPage() {
@@ -55,7 +54,7 @@ export function ScriptsPage() {
     <Group
       orientation="horizontal"
       id="scripts-page-panels"
-      className="scripts--content"
+      className="h-full min-w-0 flex-1 overflow-hidden"
       defaultLayout={{
         "scripts-sidebar": globalState.panelSizes.scriptListSidebarWidth,
         "scripts-editor": 100 - globalState.panelSizes.scriptListSidebarWidth,
@@ -68,9 +67,14 @@ export function ScriptsPage() {
       }}
     >
       <Panel id="scripts-sidebar" minSize="15%" maxSize="30%">
-        <div className="scripts--sidebar">
-          <div className="scripts--sidebar-header">
-            <Typography variant="subtitle">Scripts</Typography>
+        <div className="flex h-full flex-col border-r border-border bg-surface-raised">
+          <div className="flex items-center justify-between border-b border-border p-md">
+            <Typography variant="subtitle">
+              <span className="mr-2 font-mono text-sm text-text-muted-faint">
+                //
+              </span>
+              Scripts
+            </Typography>
             <IconButton
               icon={PlusIcon}
               size="sm"
@@ -86,7 +90,7 @@ export function ScriptsPage() {
         {selectedScript ? (
           <ScriptEditor />
         ) : (
-          <CodeComment className="scripts--empty-editor">
+          <CodeComment className="m-auto">
             Select a script to start editing.
           </CodeComment>
         )}

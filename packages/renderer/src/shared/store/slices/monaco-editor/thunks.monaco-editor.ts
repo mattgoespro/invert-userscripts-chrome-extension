@@ -3,6 +3,7 @@ import { createAsyncThunk } from "@reduxjs/toolkit/react";
 import { updateUserscriptCode } from "../userscripts/thunks.userscripts";
 import { PrettierFormatter } from "@/sandbox/formatter";
 import { UserscriptSourceLanguage } from "@shared/model";
+import type { RuntimePortMessageEvent } from "@shared/messages";
 
 export const initializeMonaco = createAsyncThunk(
   "editor/initializeMonaco",
@@ -10,6 +11,20 @@ export const initializeMonaco = createAsyncThunk(
     await registerMonaco();
   }
 );
+
+/**
+ * Notifies the background service worker to re-inject matching scripts
+ * into all open tabs. Called after a script is saved successfully.
+ */
+function notifyRuntimeRefresh(): void {
+  const message: RuntimePortMessageEvent<"refreshTabs"> = {
+    source: "options",
+    type: "refreshTabs",
+  };
+  chrome.runtime.sendMessage(message).catch((error) => {
+    console.warn("Failed to send refreshTabs message:", error);
+  });
+}
 
 export const saveEditorCode = createAsyncThunk(
   "editor/saveEditorCode",
@@ -36,6 +51,8 @@ export const saveEditorCode = createAsyncThunk(
     await dispatch(
       updateUserscriptCode({ id: scriptId, language, code: formattedCode })
     ).unwrap();
+
+    notifyRuntimeRefresh();
 
     return { code: formattedCode };
   }

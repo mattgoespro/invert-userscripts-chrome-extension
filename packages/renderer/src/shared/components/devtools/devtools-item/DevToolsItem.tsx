@@ -1,5 +1,4 @@
 import { type ReactNode, useRef, useState } from "react";
-import "./DevToolsItem.scss";
 
 type DevToolsItemProps = {
   name: string;
@@ -18,28 +17,31 @@ export function DevToolsItem({
   const panelRef = useRef<HTMLDivElement>(null);
 
   return (
-    <div className="devtools-item">
+    <div className="relative font-mono">
       <button
-        className="devtools-item--toggle"
+        className="flex w-full cursor-pointer items-center gap-2 rounded-[3px] border-none bg-transparent px-2.5 py-2 text-left font-mono text-base font-medium tracking-[0.02em] text-text-muted transition-colors duration-100 select-none hover:bg-hover-overlay hover:text-foreground"
         onClick={() => setExpanded((prev) => !prev)}
         title={`${name} (devtool)`}
       >
-        {icon && <span className="devtools-item--toggle-icon">{icon}</span>}
-        <span className="devtools-item--toggle-label">{name}</span>
-        <span className="devtools-item--toggle-chevron">
+        {icon && <span className="flex shrink-0 items-center">{icon}</span>}
+        <span className="flex-1 text-left whitespace-nowrap">{name}</span>
+        <span className="shrink-0 text-[10px] text-text-muted-faint">
           {expanded ? "▾" : "▸"}
         </span>
       </button>
 
       {expanded && (
-        <div className="devtools-item--panel" ref={panelRef}>
+        <div
+          className="absolute bottom-0 left-[calc(100%+8px)] flex max-h-120 max-w-130 min-w-55 animate-devtools-item-reveal flex-col overflow-hidden rounded-default border border-border bg-surface-raised"
+          ref={panelRef}
+        >
           {panelTitle && (
-            <div className="devtools-item--panel-header">
-              <span className="devtools-item--panel-prefix">{"// "}</span>
+            <div className="shrink-0 border-b border-border-subtle px-3.5 py-2.5 text-[10px] font-semibold tracking-[0.06em] text-text-muted-strong uppercase">
+              <span className="font-normal text-text-muted-faint">{"// "}</span>
               {panelTitle}
             </div>
           )}
-          <div className="devtools-item--panel-content">{panel}</div>
+          <div className="scrollbar-thin flex-1 overflow-auto">{panel}</div>
         </div>
       )}
     </div>

@@ -3,10 +3,10 @@ import FaviconsWebpackPlugin from "favicons-webpack-plugin";
 import HtmlWebpackPlugin from "html-webpack-plugin";
 import MonacoEditorWebpackPlugin from "monaco-editor-webpack-plugin";
 import path from "path";
-import { ChromeExtensionReloaderWebpackPlugin } from "./plugins/index.ts";
 import TerserPlugin from "terser-webpack-plugin";
 import webpack from "webpack";
 import packageJson from "./package.json" with { type: "json" };
+import { ChromeExtensionReloaderWebpackPlugin } from "./plugins/index.ts";
 
 const __dirname = import.meta.dirname;
 
@@ -16,12 +16,13 @@ export default (
 ) =>
   ({
     mode,
-    devtool: mode === "production" ? false : "cheap-module-source-map",
+    devtool: mode === "production" ? false : "source-map",
     entry: {
       background: {
         import: "./packages/runtime/src/background.ts",
         filename: "background.js",
       },
+      // Popup entry
       popup: {
         import: "./packages/renderer/src/popup/index.tsx",
         filename: "popup.js",
@@ -51,6 +52,7 @@ export default (
           use: {
             loader: "esbuild-loader",
             options: {
+              target: "esnext",
               tsconfig: path.join(
                 __dirname,
                 "packages",
@@ -67,6 +69,7 @@ export default (
           use: {
             loader: "esbuild-loader",
             options: {
+              target: "esnext",
               tsconfig: path.join(
                 __dirname,
                 "packages",
@@ -83,6 +86,7 @@ export default (
           use: {
             loader: "esbuild-loader",
             options: {
+              target: "esnext",
               tsconfig: path.join(
                 __dirname,
                 "packages",
@@ -99,6 +103,7 @@ export default (
           use: {
             loader: "esbuild-loader",
             options: {
+              target: "esnext",
               loader: "tsx",
               tsconfig: path.join(
                 __dirname,
@@ -113,12 +118,8 @@ export default (
           exclude: /node_modules/,
         },
         {
-          test: /\.scss$/,
-          use: ["style-loader", "css-loader", "sass-loader"],
-        },
-        {
           test: /\.css$/,
-          use: ["style-loader", "css-loader"],
+          use: ["style-loader", "css-loader", "postcss-loader"],
         },
         {
           // Fonts bundled with monaco-editor
@@ -129,41 +130,15 @@ export default (
           },
         },
       ],
-      noParse: [
-        /node_modules[\\/]typescript[\\/]lib[\\/]typescript\.js/,
-        /node_modules[\\/]sass[\\/]sass\.dart\.js/,
-      ],
+      noParse: [/node_modules[\\/]typescript[\\/]lib[\\/]typescript\.js/],
     },
     resolve: {
-      extensions: [".tsx", ".ts", ".js", ".scss", ".css"],
+      extensions: [".tsx", ".ts", ".js", ".css"],
       alias: {
         "@": path.resolve(__dirname, "packages/renderer/src/"),
         "@shared": path.resolve(__dirname, "packages/shared/src/"),
         "@packages/monaco": path.resolve(__dirname, "packages/monaco/src/"),
-        "@assets/styles/invert-ide": path.resolve(
-          __dirname,
-          "packages/renderer/src/assets/styles/_index.scss"
-        ),
-        "monaco-editor-core": path.resolve(
-          __dirname,
-          "node_modules",
-          "monaco-editor",
-          "esm",
-          "vs",
-          "editor",
-          "editor.api.js"
-        ),
-        "monaco-editor-ts-contribution": path.resolve(
-          __dirname,
-          "node_modules",
-          "monaco-editor",
-          "esm",
-          "vs",
-          "language",
-          "typescript",
-          "monaco.contribution.js"
-        ),
-        "monaco-editor": "monaco-editor/esm/vs/editor/editor.api.js",
+        "monaco-editor$": "monaco-editor/esm/vs/editor/editor.api.js",
       },
     },
     plugins: [
@@ -177,11 +152,7 @@ export default (
         filename: "options.html",
         chunks: ["options"],
       }),
-      new HtmlWebpackPlugin({
-        template: "./packages/renderer/src/sandbox/sass-sandbox.html",
-        filename: "sass-sandbox.html",
-        chunks: ["sass-sandbox"],
-      }),
+
       new MonacoEditorWebpackPlugin({
         languages: ["typescript", "scss", "javascript", "css"],
         filename: "monaco-editor/workers/[name].worker.js",
@@ -208,16 +179,27 @@ export default (
               return JSON.stringify(manifest);
             },
           },
+          // {
+          //   from: path.join(
+          //     __dirname,
+          //     "packages",
+          //     "renderer",
+          //     "src",
+          //     "assets",
+          //     "images"
+          //   ),
+          //   to: path.join(__dirname, "dist", "assets", "images"),
+          // },
           {
             from: path.join(
               __dirname,
               "packages",
               "renderer",
               "src",
-              "assets",
-              "images"
+              "sandbox",
+              "sass-sandbox.html"
             ),
-            to: path.join(__dirname, "dist", "assets", "images"),
+            to: path.join(__dirname, "dist"),
           },
         ],
       }),
@@ -244,6 +226,7 @@ export default (
               captureLevels: ["warn", "error"],
             },
             excludeAssets: ["sass-sandbox.html", "popup.html"],
+            verbose: true,
           })
         : undefined,
     ],
@@ -266,12 +249,6 @@ export default (
                   name: "monaco-editor",
                   filename: "monaco-editor/[chunkhash].js",
                   chunks: "all",
-                },
-                sass: {
-                  test: /[\\/]node_modules[\\/]sass[\\/]/,
-                  name: "sass",
-                  filename: "sass/[chunkhash].js",
-                  chunks: (chunk) => chunk.name === "sass-sandbox",
                 },
               },
             }

@@ -12,7 +12,7 @@ export function ToastContainer({ toasts, onDismiss }: ToastContainerProps) {
   }
 
   return (
-    <div className="toast-container">
+    <div className="bottom-xl right-xl gap-sm pointer-events-none fixed z-9999 flex flex-col">
       {toasts.map((item) => (
         <Toast key={item.id} toast={item} onDismiss={onDismiss} />
       ))}

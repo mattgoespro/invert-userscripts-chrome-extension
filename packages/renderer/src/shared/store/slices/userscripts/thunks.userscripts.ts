@@ -1,7 +1,8 @@
 import { SassCompiler, TypeScriptCompiler } from "@/sandbox/compiler";
 import { createAsyncThunk } from "@reduxjs/toolkit/react";
 import { Userscript, UserscriptSourceLanguage } from "@shared/model";
-import { ChromeSyncStorage } from "@shared/storage";
+import type { RuntimePortMessageEvent } from "@shared/messages";
+import { ChromeSyncStorage, CompiledCodeStorage } from "@shared/storage";
 import { RootState } from "../../store";
 import { uuid } from "@/shared/utils";
 
@@ -25,6 +26,7 @@ export const createUserscript = createAsyncThunk(
       shared: false,
       moduleName: "",
       sharedScripts: [],
+      globalModules: [],
       code: {
         source: {
           typescript: "// Your code here",
@@ -41,6 +43,10 @@ export const createUserscript = createAsyncThunk(
       updatedAt: timestamp,
     };
     await ChromeSyncStorage.saveScript(script);
+    await CompiledCodeStorage.saveCompiledCode(script.id, {
+      javascript: "",
+      css: "",
+    });
     return script;
   }
 );
@@ -49,6 +55,7 @@ export const deleteUserscript = createAsyncThunk(
   "userscripts/deleteUserscript",
   async (scriptId: string) => {
     await ChromeSyncStorage.deleteScript(scriptId);
+    await CompiledCodeStorage.deleteCompiledCode(scriptId);
     return scriptId;
   }
 );
@@ -103,6 +110,10 @@ export const updateUserscript = createAsyncThunk<
     },
   };
   await ChromeSyncStorage.updateScript(script.id, storageScript);
+  await CompiledCodeStorage.saveCompiledCode(script.id, {
+    javascript: script.code.compiled.javascript,
+    css: script.code.compiled.css,
+  });
   return script;
 });
 
@@ -146,7 +157,76 @@ export const updateUserscriptCode = createAsyncThunk(
     script.updatedAt = Date.now();
 
     await ChromeSyncStorage.updateScript(id, script);
+    await CompiledCodeStorage.saveCompiledCode(id, {
+      javascript: script.code.compiled.javascript,
+      css: script.code.compiled.css,
+    });
 
     return script;
+  }
+);
+
+/**
+ * Detects userscripts that were synced via `chrome.storage.sync` but have no
+ * compiled code in `chrome.storage.local` (e.g. after a fresh Chrome install
+ * on a new device). Batch-compiles all stale scripts and persists the output
+ * so the runtime can inject them without a manual save.
+ */
+export const compileStaleUserscripts = createAsyncThunk(
+  "userscripts/compileStaleUserscripts",
+  async () => {
+    await SassCompiler.initialize();
+
+    const [scriptsMap, compiledCodeMap] = await Promise.all([
+      ChromeSyncStorage.getAllScripts(),
+      CompiledCodeStorage.getAllCompiledCode(),
+    ]);
+
+    const scripts = Object.values(scriptsMap);
+    const staleScripts = scripts.filter(
+      (script) => !compiledCodeMap[script.id]
+    );
+
+    if (staleScripts.length === 0) {
+      return [];
+    }
+
+    const compiledScripts: Userscript[] = [];
+
+    for (const script of staleScripts) {
+      const tsResult = TypeScriptCompiler.compile(
+        script.code.source.typescript
+      );
+      const scssResult = await SassCompiler.compile(script.code.source.scss);
+
+      const updatedScript: Userscript = {
+        ...script,
+        code: {
+          ...script.code,
+          compiled: {
+            javascript: tsResult.success ? (tsResult.code ?? "") : "",
+            css: scssResult.success ? (scssResult.code ?? "") : "",
+          },
+        },
+      };
+
+      await CompiledCodeStorage.saveCompiledCode(script.id, {
+        javascript: updatedScript.code.compiled.javascript,
+        css: updatedScript.code.compiled.css,
+      });
+
+      compiledScripts.push(updatedScript);
+    }
+
+    // Notify the background service worker to re-inject scripts into open tabs
+    const message: RuntimePortMessageEvent<"refreshTabs"> = {
+      source: "options",
+      type: "refreshTabs",
+    };
+    chrome.runtime.sendMessage(message).catch((error) => {
+      console.warn("Failed to send refreshTabs message:", error);
+    });
+
+    return compiledScripts;
   }
 );

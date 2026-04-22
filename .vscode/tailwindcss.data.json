@@ -1,0 +1,65 @@
+{
+  "version": 1.1,
+  "atDirectives": [
+    {
+      "name": "@theme",
+      "description": "Tailwind CSS v4: Register custom theme tokens (colors, spacing, fonts, etc.) that generate utility classes.",
+      "references": [
+        {
+          "name": "Tailwind CSS v4 Documentation",
+          "url": "https://tailwindcss.com/docs/theme"
+        }
+      ]
+    },
+    {
+      "name": "@utility",
+      "description": "Tailwind CSS v4: Define a custom utility class that participates in Tailwind's variant system.",
+      "references": [
+        {
+          "name": "Tailwind CSS v4 Documentation",
+          "url": "https://tailwindcss.com/docs/adding-custom-styles#adding-custom-utilities"
+        }
+      ]
+    },
+    {
+      "name": "@variant",
+      "description": "Tailwind CSS v4: Define a custom variant for use with utility classes.",
+      "references": [
+        {
+          "name": "Tailwind CSS v4 Documentation",
+          "url": "https://tailwindcss.com/docs/adding-custom-styles#adding-custom-variants"
+        }
+      ]
+    },
+    {
+      "name": "@source",
+      "description": "Tailwind CSS v4: Add additional source paths for Tailwind to scan for class usage.",
+      "references": [
+        {
+          "name": "Tailwind CSS v4 Documentation",
+          "url": "https://tailwindcss.com/docs/detecting-classes-in-source-files"
+        }
+      ]
+    },
+    {
+      "name": "@plugin",
+      "description": "Tailwind CSS v4: Load a Tailwind CSS plugin.",
+      "references": [
+        {
+          "name": "Tailwind CSS v4 Documentation",
+          "url": "https://tailwindcss.com/docs/plugins"
+        }
+      ]
+    },
+    {
+      "name": "@config",
+      "description": "Tailwind CSS v4: Reference a legacy JavaScript config file.",
+      "references": [
+        {
+          "name": "Tailwind CSS v4 Documentation",
+          "url": "https://tailwindcss.com/docs/compatibility"
+        }
+      ]
+    }
+  ]
+}

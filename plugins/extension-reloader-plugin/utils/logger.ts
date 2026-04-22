@@ -34,7 +34,7 @@ export const createLogger = (name: string, options: { verbose?: boolean }) => {
   const createMessage = (level: LogLevel, message: string) =>
     `${loggerName} ${stringifyLevel(level)} ${stringifyMessage(level, message)}`;
 
-  const printMessage = (level: LogLevel, message: string) => {
+  const log = (level: LogLevel, message: string) => {
     if (!message.includes("\n")) {
       console.log(createMessage(level, message));
       return;
@@ -52,21 +52,27 @@ export const createLogger = (name: string, options: { verbose?: boolean }) => {
       lines.pop();
     }
 
+    // dedent: find the minimum leading whitespace across non-empty lines
+    const indents = lines
+      .filter((l) => l.trim().length > 0)
+      .map((l) => l.match(/^(\s*)/)?.[1].length ?? 0);
+    const minIndent = Math.min(...indents);
+
     for (const line of lines) {
-      console.log(createMessage(level, line.trim()));
+      console.log(createMessage(level, line.slice(minIndent)));
     }
     return;
   };
 
   return {
     info: (message: string) => {
-      printMessage("INFO", message);
+      log("INFO", message);
     },
     warn: (message: string) => {
-      printMessage("WARN", message);
+      log("WARN", message);
     },
     error: (message: string) => {
-      printMessage("ERROR", message);
+      log("ERROR", message);
     },
     verbose: (message: string | object) => {
       if (!options.verbose) {
@@ -77,11 +83,11 @@ export const createLogger = (name: string, options: { verbose?: boolean }) => {
         typeof message === "object" ||
         Object.getPrototypeOf(message) === Object.prototype
       ) {
-        printMessage("VERB", JSON.stringify(message, null, 2));
+        log("VERB", JSON.stringify(message, null, 2));
         return;
       }
 
-      printMessage("VERB", message);
+      log("VERB", message);
     },
     createMessage: createMessage,
   };

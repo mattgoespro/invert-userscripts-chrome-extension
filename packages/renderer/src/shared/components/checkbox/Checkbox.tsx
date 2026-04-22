@@ -1,5 +1,3 @@
-import "./Checkbox.scss";
-
 type CheckboxProps = {
   label?: string;
   checked: boolean;
@@ -12,14 +10,18 @@ export function Checkbox({ label, checked, onChange }: CheckboxProps) {
   };
 
   return (
-    <label className="checkbox-wrapper">
+    <label className="flex cursor-pointer items-center">
       <input
         type="checkbox"
         className="checkbox"
         checked={checked}
         onChange={handleChange}
       />
-      {label && <span className="checkbox-label">{label}</span>}
+      {label && (
+        <span className="text-text-muted-strong ml-3 font-mono text-[13px] select-none">
+          {label}
+        </span>
+      )}
     </label>
   );
 }

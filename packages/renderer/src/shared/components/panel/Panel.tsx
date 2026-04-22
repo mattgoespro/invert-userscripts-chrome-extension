@@ -1,5 +1,5 @@
 import { PropsWithChildren } from "react";
-import "./Panel.scss";
+import clsx from "clsx";
 
 type PanelProps = PropsWithChildren<{
   className?: string;
@@ -18,7 +18,15 @@ export function Panel({
 
   return (
     <div
-      className={`panel ${className ?? ""}`.trim()}
+      className={clsx(
+        "absolute top-[calc(100%+0.5rem)] right-0 z-100",
+        "flex flex-col overflow-hidden",
+        "rounded-default border border-accent-border bg-surface-panel",
+        "shadow-[0_4px_24px_rgba(0,0,0,0.5),0_0_0_1px_rgba(0,0,0,0.2)]",
+        "font-mono text-xs leading-[1.4]",
+        "animate-panel-enter",
+        className
+      )}
       style={mergedStyle}
       {...rest}
     >
@@ -34,9 +42,19 @@ type PanelHeaderProps = PropsWithChildren<{
 
 export function PanelHeader({ icon, className, children }: PanelHeaderProps) {
   return (
-    <div className={`panel--header ${className ?? ""}`.trim()}>
-      {icon && <span className="panel--header-icon">{icon}</span>}
-      <span className="panel--header-title">{children}</span>
+    <div
+      className={clsx(
+        "flex items-center gap-sm px-md py-sm",
+        "border-b border-border-subtle",
+        className
+      )}
+    >
+      {icon && (
+        <span className="flex items-center text-text-muted-faint">{icon}</span>
+      )}
+      <span className="font-mono text-[10px] font-semibold tracking-[0.06em] text-text-muted-strong uppercase">
+        {children}
+      </span>
     </div>
   );
 }
@@ -47,10 +65,12 @@ type PanelSectionProps = PropsWithChildren<{
 
 export function PanelSection({ className, children }: PanelSectionProps) {
   return (
-    <div className={`panel--section ${className ?? ""}`.trim()}>{children}</div>
+    <div className={clsx("flex flex-col gap-md p-md", className)}>
+      {children}
+    </div>
   );
 }
 
 export function PanelDivider() {
-  return <div className="panel--divider" />;
+  return <div className="h-px bg-border-subtle" />;
 }

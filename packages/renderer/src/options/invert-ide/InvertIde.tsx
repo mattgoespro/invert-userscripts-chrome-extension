@@ -1,44 +1,25 @@
+import { useGlobalState } from "@/options/invert-ide/contexts/global-state.context";
 import { SassCompiler } from "@/sandbox/compiler";
 import { useAppDispatch, useAppSelector } from "@/shared/store/hooks";
+import { initializeMonaco } from "@/shared/store/slices/monaco-editor/thunks.monaco-editor";
 import { selectEditorSettings } from "@/shared/store/slices/settings";
+import { loadSettings } from "@/shared/store/slices/settings/thunks.settings";
 import {
-  GlobalStateProvider,
-  useGlobalState,
-} from "@/options/invert-ide/contexts/global-state.context";
+  compileStaleUserscripts,
+  loadUserscripts,
+} from "@/shared/store/slices/userscripts/thunks.userscripts";
 import { useEffect } from "react";
-import "./InvertIde.scss";
 import { DashboardHeader } from "./components/dashboard-header/DashboardHeader";
 import { Sidebar, SidebarButton } from "./components/sidebar/Sidebar";
 import { ModulesPage } from "./pages/modules-page/ModulesPage";
 import { ScriptsPage } from "./pages/scripts-page/ScriptsPage";
 import { Settings } from "./pages/settings-page/SettingsPage";
-import { loadUserscripts } from "@/shared/store/slices/userscripts/thunks.userscripts";
-import { loadSettings } from "@/shared/store/slices/settings/thunks.settings";
-import { initializeMonaco } from "@/shared/store/slices/monaco-editor/thunks.monaco-editor";
-
-function applyAppTheme(themeId: string) {
-  const root = document.documentElement;
-
-  if (themeId === "graphite") {
-    root.removeAttribute("data-theme");
-  } else {
-    root.setAttribute("data-theme", themeId);
-  }
-}
 
 /**
- * Root IDE shell. Mounts the {@link GlobalStateProvider} so that all child components
- * have access to persisted UI state before they first render.
+ * Root IDE shell. Renders the main layout with sidebar navigation and page content.
+ * Expects {@link GlobalStateProvider} to be mounted by a parent component.
  */
 export function InvertIde() {
-  return (
-    <GlobalStateProvider>
-      <InvertIdeContent />
-    </GlobalStateProvider>
-  );
-}
-
-function InvertIdeContent() {
   const { globalState, updateGlobalState } = useGlobalState();
   const dispatch = useAppDispatch();
   const settings = useAppSelector(selectEditorSettings);
@@ -47,36 +28,48 @@ function InvertIdeContent() {
     // Initialize the SASS sandbox compiler early so it's ready when needed
     SassCompiler.initialize();
 
-    /**
-     * Initialize Monaco (registers Shiki tokenizer + defines all custom themes) unconditionally here so themes
-     * are available regardless of which page is active on load.
-     */
+    // Initialize Monaco (registers Shiki tokenizer + defines all custom themes) unconditionally here so themes
+    // are available regardless of which page is active on load.
     dispatch(initializeMonaco());
 
-    dispatch(loadUserscripts());
+    // Load scripts, then compile any that are missing compiled output in
+    // chrome.storage.local (e.g. after syncing to a new device).
+    dispatch(loadUserscripts()).then(() => {
+      dispatch(compileStaleUserscripts());
+    });
     dispatch(loadSettings());
   }, [dispatch]);
 
-  /** Apply the persisted application UI theme to the document root whenever it changes. */
+  // Apply the persisted application UI theme to the document root whenever it changes.
   useEffect(() => {
     if (settings.appTheme) {
       applyAppTheme(settings.appTheme);
     }
   }, [settings.appTheme]);
 
-  const onNavigate = (button: SidebarButton) => {
+  function applyAppTheme(themeId: string) {
+    const root = document.documentElement;
+
+    if (themeId === "graphite") {
+      root.removeAttribute("data-theme");
+    } else {
+      root.setAttribute("data-theme", themeId);
+    }
+  }
+
+  function onNavigate(button: SidebarButton) {
     updateGlobalState({ activeSidebarTab: button });
-  };
+  }
 
   return (
-    <div className="invert-ide--dashboard">
+    <div className="bg-surface-base relative flex h-full flex-col overflow-hidden">
       <DashboardHeader />
-      <div className="invert-ide--dashboard-page">
+      <div className="relative flex flex-1">
         <Sidebar
           active={globalState.activeSidebarTab}
           onNavigate={onNavigate}
         />
-        <div className="invert-ide--dashboard-page-content">
+        <div className="*:animate-page-reveal relative flex flex-1">
           {globalState.activeSidebarTab === "scripts" && <ScriptsPage />}
           {globalState.activeSidebarTab === "modules" && <ModulesPage />}
           {globalState.activeSidebarTab === "settings" && <Settings />}
@@ -85,5 +78,3 @@ function InvertIdeContent() {
     </div>
   );
 }
-
-export default InvertIde;

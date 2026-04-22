@@ -1,0 +1,226 @@
+/* =============================================================================
+   Theme Token Registration — Maps CSS vars to Tailwind utility classes
+   ============================================================================= */
+
+@theme inline {
+  /* Disable unused default namespaces */
+  --color-*: initial;
+  --shadow-*: initial;
+  --inset-shadow-*: initial;
+  --drop-shadow-*: initial;
+  --text-shadow-*: initial;
+  --tracking-*: initial;
+  --blur-*: initial;
+  --perspective-*: initial;
+  --container-*: initial;
+  --aspect-*: initial;
+  --breakpoint-*: initial;
+
+  /* Default colors (re-added after reset) */
+  --color-white: #fff;
+  --color-black: #000;
+
+  /* Colors */
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-muted: var(--accent-muted);
+  --color-accent-subtle: var(--accent-subtle);
+  --color-accent-border: var(--accent-border);
+  --color-danger: var(--danger);
+
+  --color-foreground: var(--foreground);
+  --color-border: var(--border);
+  --color-border-subtle: var(--border-subtle);
+
+  --color-surface-base: var(--surface-base);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-overlay: var(--surface-overlay);
+  --color-surface-panel: var(--surface-panel);
+  --color-surface-input: var(--surface-input);
+
+  --color-text-muted: var(--text-muted);
+  --color-text-muted-faint: var(--text-muted-faint);
+  --color-text-muted-strong: var(--text-muted-strong);
+
+  --color-hover-overlay: var(--hover-overlay);
+  --color-active-overlay: var(--active-overlay);
+
+  --color-error-accent: var(--error-accent);
+  --color-error-accent-soft: var(--error-accent-soft);
+  --color-error-glow: var(--error-glow);
+  --color-error-surface: var(--error-surface);
+  --color-error-surface-dark: var(--error-surface-dark);
+  --color-error-text-muted: var(--error-text-muted);
+  --color-error-border: var(--error-border);
+
+  --color-syntax-keyword: var(--syntax-keyword);
+  --color-syntax-function: var(--syntax-function);
+  --color-syntax-param: var(--syntax-param);
+  --color-syntax-type: var(--syntax-type);
+  --color-syntax-punctuation: var(--syntax-punctuation);
+  --color-syntax-comment: var(--syntax-comment);
+
+  --color-error: var(--error);
+
+  /* Component colors */
+  --color-label-fg: var(--label-foreground);
+
+  --color-select-bg: var(--select-background);
+  --color-select-border: var(--select-border);
+
+  --color-toast-fg: var(--toast-foreground);
+  --color-toast-info-accent: var(--toast-info-accent);
+  --color-toast-info-surface: var(--toast-info-surface);
+  --color-toast-info-border: var(--toast-info-border);
+  --color-toast-warning-accent: var(--toast-warning-accent);
+  --color-toast-warning-surface: var(--toast-warning-surface);
+  --color-toast-warning-border: var(--toast-warning-border);
+  --color-toast-error-accent: var(--toast-error-accent);
+  --color-toast-error-surface: var(--toast-error-surface);
+  --color-toast-error-border: var(--toast-error-border);
+
+  /* Border radius */
+  --radius-default: var(--geometry-border-radius);
+}
+
+@theme {
+  /* Typography */
+  --font-heading: "Outfit", "Open Sans", sans-serif;
+  --font-body: "Open Sans", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+
+  /* Spacing */
+  --spacing-2xs: 2px;
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 20px;
+  --spacing-2xl: 24px;
+
+  /* Animations */
+  --animate-page-reveal: page-reveal 180ms ease-out;
+
+  @keyframes page-reveal {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  --animate-panel-enter: panel-enter 150ms ease forwards;
+
+  @keyframes panel-enter {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  --animate-select-reveal: select-panel-reveal 180ms
+    cubic-bezier(0.2, 0, 0.13, 1.5);
+
+  @keyframes select-panel-reveal {
+    from {
+      opacity: 0;
+      transform: scaleY(0.92) translateY(-4px);
+    }
+    to {
+      opacity: 1;
+      transform: scaleY(1) translateY(0);
+    }
+  }
+
+  --animate-toast-slide-in: toast-slide-in 200ms ease forwards;
+
+  @keyframes toast-slide-in {
+    from {
+      opacity: 0;
+      transform: translateX(24px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  --animate-toast-slide-out: toast-slide-out 150ms ease forwards;
+
+  @keyframes toast-slide-out {
+    from {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    to {
+      opacity: 0;
+      transform: translateX(24px);
+    }
+  }
+
+  --animate-toast-drain: toast-drain linear forwards;
+
+  @keyframes toast-drain {
+    from {
+      transform: scaleX(1);
+    }
+    to {
+      transform: scaleX(0);
+    }
+  }
+
+  --animate-pulse-indicator: pulse-indicator 2s ease-in-out infinite;
+
+  @keyframes pulse-indicator {
+    0%,
+    100% {
+      opacity: 0.5;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+
+  --animate-dialog-enter: dialog-enter 180ms ease-out;
+
+  @keyframes dialog-enter {
+    from {
+      opacity: 0;
+      transform: scale(0.96) translateY(-8px);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+
+  --animate-backdrop-enter: backdrop-enter 180ms ease-out;
+
+  @keyframes backdrop-enter {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  --animate-devtools-reveal: devtools-reveal 120ms ease-out;
+  --animate-devtools-item-reveal: devtools-reveal 120ms ease-out;
+
+  @keyframes devtools-reveal {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
