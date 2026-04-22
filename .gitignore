@@ -6,3 +6,5 @@ temp/
 *.ini
 *.log
 *.zip
+.cache/
+*.ini
