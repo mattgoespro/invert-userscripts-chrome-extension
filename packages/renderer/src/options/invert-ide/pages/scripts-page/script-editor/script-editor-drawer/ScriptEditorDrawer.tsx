@@ -6,8 +6,12 @@ import { TabContent } from "@/shared/components/tab-list/TabContent";
 import { TabList } from "@/shared/components/tab-list/TabList";
 import { TabListTitle } from "@/shared/components/tab-list/TabListTitle";
 import { ScriptEditorDrawerTab } from "@shared/storage";
-import { ChevronsDown, ChevronsUp } from "lucide-react";
+import { ChevronsDown, ChevronsUp, AlertCircle } from "lucide-react";
 import { Userscript } from "@shared/model";
+import { ErrorPanel } from "./ErrorPanel";
+import { useAppSelector } from "@/shared/store/hooks";
+import { selectErrorCount } from "@/shared/store/slices/workspace";
+import type * as monaco from "monaco-editor";
 
 type ScriptEditorDrawerProps = {
   script: Userscript;
@@ -15,6 +19,7 @@ type ScriptEditorDrawerProps = {
   css: string;
   isCollapsed: boolean;
   onToggleCollapse: () => void;
+  editorInstance?: monaco.editor.IStandaloneCodeEditor;
 };
 
 export function ScriptEditorDrawer({
@@ -23,9 +28,13 @@ export function ScriptEditorDrawer({
   css,
   isCollapsed,
   onToggleCollapse,
+  editorInstance,
 }: ScriptEditorDrawerProps) {
   const { globalState, updateGlobalState } = useGlobalState();
   const activeTab = globalState.outputDrawerActiveTab;
+  const errorCount = useAppSelector((state) =>
+    selectErrorCount(state, script.id)
+  );
 
   const onTabChange = (tab: ScriptEditorDrawerTab) => {
     updateGlobalState({ outputDrawerActiveTab: tab });
@@ -70,6 +79,35 @@ export function ScriptEditorDrawer({
               contents={css}
               editable={false}
               settingsOverride={{ fontSize: 12 }}
+            />
+          </TabContent>
+        )}
+      </Tab>
+      <Tab
+        active={activeTab === "errors"}
+        onClick={() => onTabChange("errors")}
+      >
+        <AlertCircle className="h-3.5 w-3.5" />
+        errors
+        {errorCount > 0 && (
+          <span className="ml-xs inline-flex items-center rounded-[3px] bg-error-surface px-1.25 py-px text-[9px] font-bold tracking-[0.05em] text-error-accent">
+            {errorCount}
+          </span>
+        )}
+        {!isCollapsed && (
+          <TabContent>
+            <ErrorPanel
+              scriptId={script.id}
+              onErrorClick={(error) => {
+                if (editorInstance) {
+                  editorInstance.revealLineInCenter(error.line);
+                  editorInstance.setPosition({
+                    lineNumber: error.line,
+                    column: error.column,
+                  });
+                  editorInstance.focus();
+                }
+              }}
             />
           </TabContent>
         )}

@@ -75,4 +75,4 @@ You are able to ask the user clarifying questions to better understand their req
 
 You can also ask about any specific technical constraints or requirements that need to be considered during implementation.
 
-This will help you create a more tailored and effective design solution.
+You use the `vscode_askQuestions` tool to ask these questions and gather the necessary information from the user. This will help you create a more tailored and effective design solution.

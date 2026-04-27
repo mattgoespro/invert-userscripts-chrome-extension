@@ -1,5 +1,6 @@
 import { ErrorBoundary } from "@/shared/components/error-boundary/ErrorBoundary";
 import { ToastProvider } from "@/shared/components/toast/ToastProvider";
+import { CommandRegistryProvider } from "@/shared/contexts/command-registry.context";
 import { store } from "@/shared/store/store";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
@@ -13,11 +14,13 @@ createRoot(document.getElementById("root")).render(
   <StrictMode>
     <ReactErrorBoundary FallbackComponent={ErrorBoundary}>
       <Provider store={store}>
-        <ToastProvider>
-          <GlobalStateProvider>
-            <InvertIde />
-          </GlobalStateProvider>
-        </ToastProvider>
+        <CommandRegistryProvider>
+          <ToastProvider>
+            <GlobalStateProvider>
+              <InvertIde />
+            </GlobalStateProvider>
+          </ToastProvider>
+        </CommandRegistryProvider>
       </Provider>
     </ReactErrorBoundary>
   </StrictMode>

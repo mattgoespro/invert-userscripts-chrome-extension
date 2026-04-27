@@ -6,6 +6,7 @@ import path from "path";
 import TerserPlugin from "terser-webpack-plugin";
 import webpack from "webpack";
 import packageJson from "./package.json" with { type: "json" };
+import ForkTsCheckerWebpackPlugin from "fork-ts-checker-webpack-plugin";
 import { ChromeExtensionReloaderWebpackPlugin } from "./plugins/index.ts";
 
 const __dirname = import.meta.dirname;
@@ -152,7 +153,6 @@ export default (
         filename: "options.html",
         chunks: ["options"],
       }),
-
       new MonacoEditorWebpackPlugin({
         languages: ["typescript", "scss", "javascript", "css"],
         filename: "monaco-editor/workers/[name].worker.js",
@@ -162,6 +162,12 @@ export default (
           "node_modules",
           "monaco-editor"
         ),
+      }),
+      new ForkTsCheckerWebpackPlugin({
+        typescript: {
+          configFile: path.join(__dirname, "tsconfig.typecheck.json"),
+          memoryLimit: 4096,
+        },
       }),
       new CopyWebpackPlugin({
         patterns: [

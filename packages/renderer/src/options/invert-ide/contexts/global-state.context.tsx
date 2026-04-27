@@ -8,6 +8,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -81,18 +82,21 @@ export function GlobalStateProvider({
     [scheduleSave]
   );
 
+  const contextValue = useMemo(
+    () => ({
+      globalState,
+      updateGlobalState,
+      updatePanelSizes,
+    }),
+    [globalState, updateGlobalState, updatePanelSizes]
+  );
+
   if (!isLoaded) {
     return null;
   }
 
   return (
-    <GlobalStateContext.Provider
-      value={{
-        globalState: globalState,
-        updateGlobalState,
-        updatePanelSizes,
-      }}
-    >
+    <GlobalStateContext.Provider value={contextValue}>
       {children}
     </GlobalStateContext.Provider>
   );

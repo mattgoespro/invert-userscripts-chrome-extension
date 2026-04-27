@@ -8,6 +8,10 @@ import {
 } from "@/shared/store/slices/userscripts/thunks.userscripts";
 import { OptionsPanel } from "./options-panel/OptionsPanel";
 import { UrlPatternInput } from "./url-pattern-input/UrlPatternInput";
+import { IconButton } from "@/shared/components/icon-button/IconButton";
+import { Globe } from "lucide-react";
+import { useState } from "react";
+import { UrlPatternTester } from "@/shared/components/url-pattern-tester/UrlPatternTester";
 
 type ScriptMetadataProps = {
   script: Userscript;
@@ -15,6 +19,7 @@ type ScriptMetadataProps = {
 
 export function ScriptMetadata({ script }: ScriptMetadataProps) {
   const dispatch: AppDispatch = useAppDispatch();
+  const [showUrlTester, setShowUrlTester] = useState(false);
 
   const onUpdateScriptMeta = async (updates: Partial<Userscript>) => {
     dispatch(updateUserscript({ ...script, ...updates }));
@@ -49,33 +54,51 @@ export function ScriptMetadata({ script }: ScriptMetadataProps) {
   };
 
   return (
-    <div className="flex w-full items-center gap-sm">
-      <span className="shrink-0 font-mono text-sm text-syntax-keyword">
-        const
-      </span>
-      <Input
-        className="basis-1/4"
-        required
-        defaultValue={script.name}
-        placeholder="Script name..."
-        onChange={(event) => onUpdateScriptMeta({ name: event.target.value })}
-      />
-      <UrlPatternInput
-        className="flex-1"
-        patterns={script.urlPatterns ?? []}
-        onChange={(urlPatterns) => onUpdateScriptMeta({ urlPatterns })}
-      />
-      <OptionsPanel
-        script={script}
-        shared={script.shared ?? false}
-        scriptName={script.name}
-        moduleName={script.moduleName ?? ""}
-        selectedModuleIds={script.globalModules ?? []}
-        onModuleNameChange={onModuleNameChange}
-        onToggleModule={onToggleModule}
-        onToggleSharedScript={onToggleSharedScript}
-        onDelete={onDeleteScript}
-      />
-    </div>
+    <>
+      <div className="flex w-full items-center gap-sm">
+        <span className="shrink-0 font-mono text-sm text-syntax-keyword">
+          const
+        </span>
+        <Input
+          className="basis-1/4"
+          required
+          defaultValue={script.name}
+          placeholder="Script name..."
+          onChange={(event) => onUpdateScriptMeta({ name: event.target.value })}
+        />
+        <UrlPatternInput
+          className="flex-1"
+          patterns={script.urlPatterns ?? []}
+          onChange={(urlPatterns) => onUpdateScriptMeta({ urlPatterns })}
+        />
+        <IconButton
+          icon={Globe}
+          variant="secondary"
+          size="sm"
+          onClick={() => setShowUrlTester(true)}
+          title="Test URL patterns"
+        />
+        <OptionsPanel
+          script={script}
+          shared={script.shared ?? false}
+          scriptName={script.name}
+          moduleName={script.moduleName ?? ""}
+          selectedModuleIds={script.globalModules ?? []}
+          onModuleNameChange={onModuleNameChange}
+          onToggleModule={onToggleModule}
+          onToggleSharedScript={onToggleSharedScript}
+          onDelete={onDeleteScript}
+        />
+      </div>
+      {showUrlTester && (
+        <UrlPatternTester
+          patterns={script.urlPatterns ?? []}
+          onClose={() => setShowUrlTester(false)}
+          onPatternsChange={(urlPatterns) =>
+            onUpdateScriptMeta({ urlPatterns })
+          }
+        />
+      )}
+    </>
   );
 }

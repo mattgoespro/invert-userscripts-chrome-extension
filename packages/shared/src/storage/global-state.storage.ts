@@ -1,6 +1,6 @@
 export type AppSidebarTab = "scripts" | "modules" | "settings";
 
-export type ScriptEditorDrawerTab = "javascript" | "css";
+export type ScriptEditorDrawerTab = "javascript" | "css" | "errors";
 
 export interface GlobalStateSizes {
   /**

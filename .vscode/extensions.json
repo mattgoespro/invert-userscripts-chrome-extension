@@ -19,12 +19,11 @@
     "naumovs.color-highlight",
     "aaron-bond.better-comments",
     "vscode-icons-team.vscode-icons",
-    "mrmlnc.vscode-scss",
     "yzhang.markdown-all-in-one",
     "davidanson.vscode-markdownlint",
-    "eamodio.gitlens",
     "bradlc.vscode-tailwindcss",
     "darkriszty.markdown-table-prettify",
-    "mattgoespro.npm-package-viewer"
+    "eamodio.gitlens",
+    "ibm.output-colorizer"
   ]
 }

@@ -1,6 +1,6 @@
 import { FormatterLanguage } from "@/sandbox/formatter";
 import { useAppDispatch, useAppSelector } from "@/shared/store/hooks";
-import { saveEditorCode } from "@/shared/store/slices/monaco-editor/thunks.monaco-editor";
+import { saveEditorCode } from "@/shared/store/slices/code-editor/thunks.code-editor";
 import { selectEditorSettings } from "@/shared/store/slices/settings";
 import { EditorSettings } from "@shared/model";
 import * as monaco from "monaco-editor";
@@ -37,6 +37,7 @@ export type CodeEditorProps = {
    */
   settingsOverride?: Partial<EditorSettings>;
   onCodeModified?: (value: string) => void;
+  onEditorReady?: (editor: monaco.editor.IStandaloneCodeEditor) => void;
 };
 
 export function CodeEditor(props: CodeEditorProps) {
@@ -48,6 +49,7 @@ export function CodeEditor(props: CodeEditorProps) {
     settingsOverride,
     editable = true,
     onCodeModified,
+    onEditorReady,
   } = props;
 
   const dispatch = useAppDispatch();
@@ -101,6 +103,9 @@ export function CodeEditor(props: CodeEditorProps) {
     });
 
     editorInstanceRef.current = editorInstance;
+
+    // Notify parent that editor is ready
+    onEditorReady?.(editorInstance);
 
     return () => {
       // Dispose the editor's model for read-only previews to prevent unbounded model accumulation.

@@ -7,7 +7,7 @@ export const onInstalled = (_details: chrome.runtime.InstalledDetails) => {
 };
 
 export const onMessage = async (
-  message: RuntimePortMessageEvent<"refreshTabs">,
+  message: RuntimePortMessageEvent,
   _sender: chrome.runtime.MessageSender,
   sendResponse: (response?: unknown) => void
 ) => {

@@ -3,7 +3,7 @@ import { Input } from "@/shared/components/input/Input";
 import { Select } from "@/shared/components/select/Select";
 import { Typography } from "@/shared/components/typography/Typography";
 import { useAppDispatch, useAppSelector } from "@/shared/store/hooks";
-import { selectMonacoReady } from "@/shared/store/slices/monaco-editor";
+import { selectMonacoReady } from "@/shared/store/slices/code-editor";
 import {
   selectEditorSettings,
   selectIsLoading,
@@ -76,13 +76,13 @@ export function Settings() {
   if (isLoading) {
     return (
       <div className="flex-1 p-(--page-padding)">
-        <div className="mb-lg pb-sm border-border flex items-center gap-1 border-b">
-          <span className="text-syntax-param font-mono text-[1.25rem]">
+        <div className="mb-lg flex items-center gap-1 border-b border-border pb-sm">
+          <span className="font-mono text-[1.25rem] text-syntax-param">
             config.
           </span>
           <Typography variant="subtitle">Settings</Typography>
         </div>
-        <div className="p-2xl flex items-center justify-center">
+        <div className="flex items-center justify-center p-2xl">
           <Typography variant="code" className="text-text-muted">
             Loading settings...
           </Typography>
@@ -93,8 +93,8 @@ export function Settings() {
 
   return (
     <div className="flex-1 p-(--page-padding)">
-      <div className="mb-lg pb-sm border-border flex items-center gap-1 border-b">
-        <span className="text-syntax-param font-mono text-[1.25rem]">
+      <div className="mb-lg flex items-center gap-1 border-b border-border pb-sm">
+        <span className="font-mono text-[1.25rem] text-syntax-param">
           config.
         </span>
         <Typography variant="subtitle">Settings</Typography>

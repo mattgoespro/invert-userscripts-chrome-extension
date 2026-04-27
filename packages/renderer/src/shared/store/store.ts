@@ -1,8 +1,9 @@
 import { configureStore } from "@reduxjs/toolkit";
 import { createLogger } from "redux-logger";
-import editorReducer from "./slices/monaco-editor";
+import editorReducer from "./slices/code-editor";
 import settingsReducer from "./slices/settings";
 import userscriptsReducer from "./slices/userscripts";
+import workspaceReducer from "./slices/workspace";
 
 const logger = createLogger({
   collapsed: true,
@@ -14,6 +15,7 @@ export const store = configureStore({
     userscripts: userscriptsReducer,
     settings: settingsReducer,
     editor: editorReducer,
+    workspace: workspaceReducer,
   },
   devTools: {
     name: "Invert IDE Userscripts",

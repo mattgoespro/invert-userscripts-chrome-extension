@@ -1,28 +1,17 @@
 import { createSelector, createSlice } from "@reduxjs/toolkit";
 import { SharedScriptInfo } from "@shared/model";
 import type { RootState } from "../../store";
-import { initializeMonaco, saveEditorCode } from "./thunks.monaco-editor";
+import { initializeMonaco, saveEditorCode } from "./thunks.code-editor";
+import { initialState, MonacoEditorState } from "./state.code-editor";
 
-export type EditorState = {
-  monacoReady: boolean;
-  isSaving: boolean;
-};
-
-const initialState: EditorState = {
-  monacoReady: false,
-  isSaving: false,
-};
-
-// ── Slice ─────────────────────────────────────────────────────────────────────
-
-const editorSlice = createSlice({
+const codeEditorSlice = createSlice({
   name: "editor",
   initialState,
   selectors: {
-    selectMonacoReady(state: EditorState) {
+    selectMonacoReady(state: MonacoEditorState) {
       return state.monacoReady;
     },
-    selectIsSaving(state: EditorState) {
+    selectIsSaving(state: MonacoEditorState) {
       return state.isSaving;
     },
   },
@@ -52,7 +41,7 @@ const editorSlice = createSlice({
   },
 });
 
-export const { selectMonacoReady, selectIsSaving } = editorSlice.selectors;
+export const { selectMonacoReady, selectIsSaving } = codeEditorSlice.selectors;
 
 // ── Parameterized Selectors ───────────────────────────────────────────────────
 
@@ -104,4 +93,4 @@ export const selectGlobalModuleIdsForUserscript = (scriptId: string) =>
     }
   );
 
-export default editorSlice.reducer;
+export default codeEditorSlice.reducer;

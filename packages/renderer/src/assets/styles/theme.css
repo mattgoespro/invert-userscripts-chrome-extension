@@ -199,6 +199,17 @@
     }
   }
 
+  --animate-fade-in: fade-in 150ms ease-out;
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
   --animate-backdrop-enter: backdrop-enter 180ms ease-out;
 
   @keyframes backdrop-enter {

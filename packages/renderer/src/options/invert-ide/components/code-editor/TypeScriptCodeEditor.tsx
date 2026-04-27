@@ -2,7 +2,7 @@ import { useAppSelector } from "@/shared/store/hooks";
 import {
   selectGlobalModuleIdsForUserscript,
   selectSharedScriptsForUserscript,
-} from "@/shared/store/slices/monaco-editor";
+} from "@/shared/store/slices/code-editor";
 import {
   ensureTypescriptDefaults,
   syncCdnModuleLibs,
@@ -12,6 +12,8 @@ import type { CdnModuleInfo } from "@packages/monaco";
 import { ChromeSyncStorage } from "@shared/storage";
 import { useEffect, useMemo, useState } from "react";
 import { CodeEditor, CodeEditorProps } from "../../shared/CodeEditor";
+import { registerTypeScriptQuickFixProvider } from "@/shared/utils/quick-fix-provider";
+import { registerImportIntelligence } from "@/shared/utils/import-intelligence";
 
 /**
  * TypeScript-specific wrapper around {@link CodeEditor} that configures Monaco's
@@ -49,9 +51,24 @@ export function TypeScriptCodeEditor(props: Omit<CodeEditorProps, "language">) {
   useEffect(() => {
     ensureTypescriptDefaults();
 
+    // Register Quick Fix provider (returns disposable)
+    const quickFixDisposable = registerTypeScriptQuickFixProvider(
+      () => sharedScripts ?? []
+    );
+
+    // Register Import Intelligence providers (returns array of disposables)
+    const importIntelligenceDisposables = registerImportIntelligence(
+      () => sharedScripts ?? []
+    );
+
     if (sharedScripts) {
       syncSharedScriptLibs(sharedScripts);
     }
+
+    return () => {
+      quickFixDisposable.dispose();
+      importIntelligenceDisposables.forEach((d) => d.dispose());
+    };
   }, [sharedScripts]);
 
   // Sync CDN module type declarations when the module list changes.

@@ -4,7 +4,7 @@ import { SassCompiler, TypeScriptCompiler } from "@/sandbox/compiler";
 import { EditorPanel } from "@/shared/components/editor-panel/EditorPanel";
 import { ResizeHandle } from "@/shared/components/resize-handle/ResizeHandle";
 import { useAppDispatch, useAppSelector } from "@/shared/store/hooks";
-import { selectMonacoReady } from "@/shared/store/slices/monaco-editor";
+import { selectMonacoReady } from "@/shared/store/slices/code-editor";
 import {
   markUserscriptModified,
   selectCurrentUserscript,
@@ -15,6 +15,8 @@ import { useEffect, useRef, useState } from "react";
 import { Group, Panel, PanelImperativeHandle } from "react-resizable-panels";
 import { ScriptEditorDrawer } from "./script-editor-drawer/ScriptEditorDrawer";
 import { ScriptMetadata } from "./script-metadata/ScriptMetadata";
+import type * as monaco from "monaco-editor";
+import { useEditorErrorTracking } from "@/shared/hooks/useEditorErrorTracking";
 
 export function ScriptEditor() {
   const dispatch = useAppDispatch();
@@ -27,9 +29,21 @@ export function ScriptEditor() {
   const [isDrawerCollapsed, setIsDrawerCollapsed] = useState(
     globalState.outputDrawerCollapsed
   );
+  const [tsEditorInstance, setTsEditorInstance] =
+    useState<monaco.editor.IStandaloneCodeEditor | null>(null);
+  const [tsModel, setTsModel] = useState<monaco.editor.ITextModel | null>(null);
+  const [scssModel, setScssModel] = useState<monaco.editor.ITextModel | null>(
+    null
+  );
 
   const drawerPanelRef = useRef<PanelImperativeHandle>(null);
   const scssDebounceRef = useRef<ReturnType<typeof setTimeout>>(null);
+
+  // Track TypeScript errors
+  useEditorErrorTracking(script.id, tsModel, "typescript");
+
+  // Track SCSS errors
+  useEditorErrorTracking(script.id, scssModel, "scss");
 
   // Auto-compile source code on mount and on script switch to pre-populate the output drawer.
   useEffect(() => {
@@ -171,6 +185,10 @@ export function ScriptEditor() {
                       onCodeModified={(code) =>
                         onCodeModified("typescript", code)
                       }
+                      onEditorReady={(editor) => {
+                        setTsEditorInstance(editor);
+                        setTsModel(editor.getModel());
+                      }}
                     />
                   </EditorPanel>
                 </Panel>
@@ -183,6 +201,9 @@ export function ScriptEditor() {
                       language="scss"
                       contents={script.code.source.scss}
                       onCodeModified={(code) => onCodeModified("scss", code)}
+                      onEditorReady={(editor) => {
+                        setScssModel(editor.getModel());
+                      }}
                     />
                   </EditorPanel>
                 </Panel>
@@ -206,6 +227,7 @@ export function ScriptEditor() {
                   css={liveCss}
                   isCollapsed={isDrawerCollapsed}
                   onToggleCollapse={onToggleDrawer}
+                  editorInstance={tsEditorInstance ?? undefined}
                 />
               </EditorPanel>
             </Panel>

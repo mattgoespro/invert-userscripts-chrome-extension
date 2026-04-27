@@ -1,0 +1,23 @@
+{
+  "extends": "./tsconfig.base.json",
+  "include": [
+    "packages/renderer/src/**/*.ts",
+    "packages/renderer/src/**/*.tsx",
+    "packages/runtime/src/**/*.ts",
+    "packages/shared/src/**/*.ts",
+    "packages/monaco/src/**/*.ts"
+  ],
+  "compilerOptions": {
+    "noEmit": true,
+    "baseUrl": ".",
+    "jsx": "react-jsx",
+    "lib": ["es2020", "dom", "dom.iterable", "es2023.array"],
+    "types": ["node", "chrome", "react", "react-dom"],
+    "paths": {
+      "@/*": ["packages/renderer/src/*"],
+      "@shared/*": ["packages/shared/src/*"],
+      "@packages/monaco": ["packages/monaco/src/index.ts"],
+      "monaco-editor-core": ["node_modules/monaco-editor"]
+    }
+  }
+}

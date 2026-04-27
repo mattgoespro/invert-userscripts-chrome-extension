@@ -6,28 +6,14 @@ import { UserscriptSourceLanguage } from "@shared/model";
 import type { RuntimePortMessageEvent } from "@shared/messages";
 
 export const initializeMonaco = createAsyncThunk(
-  "editor/initializeMonaco",
+  "code-editor/initializeMonaco",
   async () => {
     await registerMonaco();
   }
 );
 
-/**
- * Notifies the background service worker to re-inject matching scripts
- * into all open tabs. Called after a script is saved successfully.
- */
-function notifyRuntimeRefresh(): void {
-  const message: RuntimePortMessageEvent<"refreshTabs"> = {
-    source: "options",
-    type: "refreshTabs",
-  };
-  chrome.runtime.sendMessage(message).catch((error) => {
-    console.warn("Failed to send refreshTabs message:", error);
-  });
-}
-
 export const saveEditorCode = createAsyncThunk(
-  "editor/saveEditorCode",
+  "code-editor/saveEditorCode",
   async (
     {
       scriptId,
@@ -52,7 +38,16 @@ export const saveEditorCode = createAsyncThunk(
       updateUserscriptCode({ id: scriptId, language, code: formattedCode })
     ).unwrap();
 
-    notifyRuntimeRefresh();
+    const message: RuntimePortMessageEvent<"refreshTabs"> = {
+      source: "options",
+      type: "refreshTabs",
+    };
+
+    chrome.runtime
+      .sendMessage(message)
+      .catch((error) => {
+        console.warn("Failed to send refreshTabs message:", error);
+      });
 
     return { code: formattedCode };
   }
