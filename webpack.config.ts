@@ -165,7 +165,7 @@ export default (
       }),
       new ForkTsCheckerWebpackPlugin({
         typescript: {
-          configFile: path.join(__dirname, "tsconfig.typecheck.json"),
+          configFile: path.join(__dirname, "tsconfig.json"),
           memoryLimit: 4096,
         },
       }),
