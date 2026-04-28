@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from "react";
 import { cva } from "class-variance-authority";
 import clsx from "clsx";
+import { useEffect, useRef, useState } from "react";
 
 const selectToggleVariants = cva(
   "flex items-center gap-2 w-full py-2 px-3.5 h-(--input-height) rounded-default cursor-pointer font-mono text-base font-medium tracking-[0.02em] select-none transition-all duration-200 focus-visible:outline-none focus-visible:border-accent-border focus-visible:shadow-[0_0_0_2px_var(--accent-muted)]",
@@ -149,7 +149,7 @@ export function Select<T>({ label, options, value, onChange }: SelectProps<T>) {
           className={clsx(
             "absolute top-[calc(100%+6px)] left-0 max-h-70 w-full min-w-45",
             "flex flex-col rounded-default border border-accent-border bg-surface-panel",
-            "z-100 overflow-hidden",
+            "scrollbar-track-transparent scrollbar-thumb-transparent hover:scrollbar-thumb-hover-overlay z-100 scrollbar-thin overflow-scroll",
             "shadow-[0_8px_32px_rgba(0,0,0,0.4),0_0_0_1px_var(--border-subtle)]",
             "origin-top animate-select-reveal"
           )}

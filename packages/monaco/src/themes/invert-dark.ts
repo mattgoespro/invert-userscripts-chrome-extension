@@ -5,9 +5,9 @@ export const invertDark: ThemeRegistration = {
   displayName: "Invert Dark",
   type: "dark",
   fg: "#f0f0f0",
-  bg: "#0a0a0c",
+  bg: "#0e0e0e",
   settings: [
-    { settings: { foreground: "#f0f0f0", background: "#0a0a0c" } },
+    { settings: { foreground: "#f0f0f0", background: "#0e0e0e" } },
     {
       scope: ["keyword", "storage", "storage.type", "storage.modifier"],
       settings: { foreground: "#da70d6", fontStyle: "bold" },
@@ -69,7 +69,7 @@ export const invertDark: ThemeRegistration = {
     },
   ],
   colors: {
-    "editor.background": "#0a0a0c",
+    "editor.background": "#0e0e0e",
     "editor.foreground": "#f0f0f0",
     "editorLineNumber.foreground": "#808080",
     "editorLineNumber.activeForeground": "#f0f0f0",

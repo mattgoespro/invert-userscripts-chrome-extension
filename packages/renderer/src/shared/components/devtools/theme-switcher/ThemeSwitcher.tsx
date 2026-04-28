@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
 import clsx from "clsx";
+import { useCallback, useEffect, useState } from "react";
 
 type ThemeOption = {
   id: string;
@@ -40,13 +40,6 @@ const Themes: ThemeOption[] = [
     label: "Obsidian Deep",
     accent: "#cc9650",
     surface: "#101010",
-    group: "obsidian variants",
-  },
-  {
-    id: "obsidian-ember",
-    label: "Obsidian Ember",
-    accent: "#d4785a",
-    surface: "#181414",
     group: "obsidian variants",
   },
   {

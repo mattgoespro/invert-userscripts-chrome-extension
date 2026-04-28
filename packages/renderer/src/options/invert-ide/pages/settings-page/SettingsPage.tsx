@@ -13,21 +13,11 @@ import {
   updateSettings,
 } from "@/shared/store/slices/settings/thunks.settings";
 import { EditorThemeName, getEditorThemes } from "@packages/monaco";
+import { AppThemes } from "@shared/constants";
 import { AppThemeName } from "@shared/model";
 import { useEffect } from "react";
 import { SettingsSection } from "./SettingsSection";
 import { ThemePreview } from "./theme-preview/ThemePreview";
-
-const APP_THEME_OPTIONS = [
-  { value: "graphite", label: "Graphite" },
-  { value: "graphite-warm", label: "Graphite Warm" },
-  { value: "graphite-dusk", label: "Graphite Dusk" },
-  { value: "graphite-ember", label: "Graphite Ember" },
-  { value: "obsidian", label: "Obsidian" },
-  { value: "obsidian-deep", label: "Obsidian Deep" },
-  { value: "obsidian-ember", label: "Obsidian Ember" },
-  { value: "obsidian-frost", label: "Obsidian Frost" },
-];
 
 export function Settings() {
   const dispatch = useAppDispatch();
@@ -104,7 +94,10 @@ export function Settings() {
           label="Theme"
           value={settings.appTheme ?? "graphite"}
           onChange={handleAppThemeChange}
-          options={APP_THEME_OPTIONS}
+          options={AppThemes.map((theme) => ({
+            label: theme.displayName,
+            value: theme.name,
+          }))}
         />
       </SettingsSection>
       <SettingsSection title="Editor Appearance">
