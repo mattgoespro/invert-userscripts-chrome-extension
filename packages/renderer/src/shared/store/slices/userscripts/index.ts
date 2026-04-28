@@ -7,6 +7,7 @@ import {
   toggleUserscript,
   updateUserscript,
   updateUserscriptCode,
+  updateUserscriptTypeDefinitions,
 } from "./thunks.userscripts";
 import { initialState, UserscriptsState } from "./state.userscripts";
 
@@ -101,6 +102,15 @@ const userscriptsSlice = createSlice({
         }
       })
       .addCase(updateUserscriptCode.fulfilled, (state, action) => {
+        const updatedScript = action.payload;
+
+        state.scripts[updatedScript.id] = updatedScript;
+
+        if (state.currentUserscript?.id === updatedScript.id) {
+          state.currentUserscript = updatedScript;
+        }
+      })
+      .addCase(updateUserscriptTypeDefinitions.fulfilled, (state, action) => {
         const updatedScript = action.payload;
 
         state.scripts[updatedScript.id] = updatedScript;

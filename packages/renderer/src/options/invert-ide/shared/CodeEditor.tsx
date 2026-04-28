@@ -36,7 +36,15 @@ export type CodeEditorProps = {
    * Options to override the app's saved editor settings.
    */
   settingsOverride?: Partial<EditorSettings>;
+  disposeModelOnUnmount?: boolean;
+  preserveDisposedValue?: boolean;
   onCodeModified?: (value: string) => void;
+  onSave?: (args: {
+    code: string;
+    language: FormatterLanguage;
+    autoFormat: boolean;
+    scriptId?: string;
+  }) => Promise<string | void>;
   onEditorReady?: (editor: monaco.editor.IStandaloneCodeEditor) => void;
 };
 
@@ -48,7 +56,10 @@ export function CodeEditor(props: CodeEditorProps) {
     contents,
     settingsOverride,
     editable = true,
+    disposeModelOnUnmount = false,
+    preserveDisposedValue = false,
     onCodeModified,
+    onSave,
     onEditorReady,
   } = props;
 
@@ -110,10 +121,12 @@ export function CodeEditor(props: CodeEditorProps) {
     return () => {
       // Dispose the editor's model for read-only previews to prevent unbounded model accumulation.
       // Editable models are kept alive in the cache so undo history and cursor positions survive tab switches.
-      if (!editable) {
+      if (!editable || disposeModelOnUnmount) {
         const model = editorInstance.getModel();
         if (model) {
-          disposeModel(model.uri.toString());
+          disposeModel(model.uri.toString(), {
+            preserveValue: editable && preserveDisposedValue,
+          });
         }
       }
 
@@ -199,37 +212,54 @@ export function CodeEditor(props: CodeEditorProps) {
 
         const code = editorInstance.getValue();
 
-        const result = await dispatch(
-          saveEditorCode({
-            scriptId,
-            language,
-            code,
-            autoFormat: settings?.autoFormat ?? false,
-          })
-        );
+        const autoFormat = settings?.autoFormat ?? false;
+
+        const result = onSave
+          ? await onSave({
+              code,
+              language,
+              autoFormat,
+              scriptId,
+            })
+          : await dispatch(
+              saveEditorCode({
+                scriptId,
+                language,
+                code,
+                autoFormat,
+              })
+            ).unwrap();
 
         /**
          * Apply code back to the editor as a set of edits that replace the entire content. This ensures that:
          *   - Full undo/redo history is preserved
          *   - Cursor and selection positions are restored
          */
-        if (saveEditorCode.fulfilled.match(result)) {
-          const model = editorInstance.getModel();
+        const savedCode =
+          typeof result === "string"
+            ? result
+            : result &&
+                typeof result === "object" &&
+                "code" in result &&
+                typeof result.code === "string"
+              ? result.code
+              : code;
 
-          if (!model) {
-            return;
-          }
+        const model = editorInstance.getModel();
 
-          const savedSelections = editorInstance.getSelections() ?? [];
-
-          suppressModelChangeRef.current = true;
-          editorInstance.executeEdits(
-            "prettier-format",
-            [{ range: model.getFullModelRange(), text: result.payload.code }],
-            savedSelections
-          );
-          suppressModelChangeRef.current = false;
+        if (!model) {
+          return;
         }
+
+        const savedSelections = editorInstance.getSelections() ?? [];
+
+        suppressModelChangeRef.current = true;
+        editorInstance.executeEdits(
+          "prettier-format",
+          [{ range: model.getFullModelRange(), text: savedCode }],
+          savedSelections
+        );
+        suppressModelChangeRef.current = false;
       }
     };
 
@@ -237,7 +267,7 @@ export function CodeEditor(props: CodeEditorProps) {
 
     return () =>
       editorRootRef.current?.removeEventListener("keydown", handleKeyDown);
-  }, [editable, scriptId, settings?.autoFormat, language, dispatch]);
+  }, [editable, scriptId, settings?.autoFormat, language, dispatch, onSave]);
 
   return (
     <div

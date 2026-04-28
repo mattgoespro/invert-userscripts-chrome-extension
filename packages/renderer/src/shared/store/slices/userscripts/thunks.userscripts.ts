@@ -6,11 +6,31 @@ import { ChromeSyncStorage, CompiledCodeStorage } from "@shared/storage";
 import { RootState } from "../../store";
 import { uuid } from "@/shared/utils";
 
+function normalizeUserscript(script: Userscript): Userscript {
+  return {
+    ...script,
+    typeDefinitions: script.typeDefinitions ?? "",
+  };
+}
+
+function buildStorageSafeScript(script: Userscript): Userscript {
+  return {
+    ...script,
+    code: {
+      source: script.code.source,
+      compiled: {
+        javascript: "",
+        css: "",
+      },
+    },
+  };
+}
+
 export const loadUserscripts = createAsyncThunk(
   "userscripts/loadUserscripts",
   async () => {
     const scriptsMap = await ChromeSyncStorage.getAllScripts();
-    return Object.values(scriptsMap);
+    return Object.values(scriptsMap).map(normalizeUserscript);
   }
 );
 
@@ -27,6 +47,7 @@ export const createUserscript = createAsyncThunk(
       moduleName: "",
       sharedScripts: [],
       globalModules: [],
+      typeDefinitions: "",
       code: {
         source: {
           typescript: "// Your code here",
@@ -64,7 +85,7 @@ export const toggleUserscript = createAsyncThunk(
   "userscripts/toggleUserscript",
   async (scriptId: string) => {
     const scriptsMap = await ChromeSyncStorage.getAllScripts();
-    const script = scriptsMap[scriptId];
+    const script = normalizeUserscript(scriptsMap[scriptId]);
 
     if (!script) {
       throw new Error(`Userscript not found: ${scriptId}`);
@@ -98,24 +119,32 @@ export const updateUserscript = createAsyncThunk<
   Userscript,
   { state: RootState }
 >("userscripts/updateUserscript", async (script: Userscript) => {
-  // Save storage-safe version without compiled code to preserve quota
-  const storageScript: Userscript = {
-    ...script,
-    code: {
-      source: script.code.source,
-      compiled: {
-        javascript: "",
-        css: "",
-      },
-    },
-  };
-  await ChromeSyncStorage.updateScript(script.id, storageScript);
-  await CompiledCodeStorage.saveCompiledCode(script.id, {
-    javascript: script.code.compiled.javascript,
-    css: script.code.compiled.css,
+  const normalizedScript = normalizeUserscript(script);
+  const storageScript = buildStorageSafeScript(normalizedScript);
+
+  await ChromeSyncStorage.updateScript(normalizedScript.id, storageScript);
+  await CompiledCodeStorage.saveCompiledCode(normalizedScript.id, {
+    javascript: normalizedScript.code.compiled.javascript,
+    css: normalizedScript.code.compiled.css,
   });
-  return script;
+  return normalizedScript;
 });
+
+export const updateUserscriptTypeDefinitions = createAsyncThunk(
+  "userscripts/updateUserscriptTypeDefinitions",
+  async ({ id, typeDefinitions }: { id: string; typeDefinitions: string }) => {
+    const scriptsMap = await ChromeSyncStorage.getAllScripts();
+    const script = normalizeUserscript(scriptsMap[id]);
+
+    script.typeDefinitions = typeDefinitions;
+    script.status = "saved";
+    script.updatedAt = Date.now();
+
+    await ChromeSyncStorage.updateScript(id, buildStorageSafeScript(script));
+
+    return script;
+  }
+);
 
 export const updateUserscriptCode = createAsyncThunk(
   "userscripts/updateUserscriptCode",
@@ -129,7 +158,7 @@ export const updateUserscriptCode = createAsyncThunk(
     code: string;
   }) => {
     const scriptsMap = await ChromeSyncStorage.getAllScripts();
-    const script = scriptsMap[id];
+    const script = normalizeUserscript(scriptsMap[id]);
 
     if (language === "typescript") {
       const compiled = TypeScriptCompiler.compile(code);
@@ -156,7 +185,7 @@ export const updateUserscriptCode = createAsyncThunk(
     script.status = "saved";
     script.updatedAt = Date.now();
 
-    await ChromeSyncStorage.updateScript(id, script);
+    await ChromeSyncStorage.updateScript(id, buildStorageSafeScript(script));
     await CompiledCodeStorage.saveCompiledCode(id, {
       javascript: script.code.compiled.javascript,
       css: script.code.compiled.css,

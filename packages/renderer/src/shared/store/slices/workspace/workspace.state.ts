@@ -1,10 +1,14 @@
 import { CompilationError } from "@shared/errors";
 
+type ScriptErrorMap = Partial<
+  Record<CompilationError["language"], CompilationError[]>
+>;
+
 export interface WorkspaceState {
   /**
    * Errors by userscript ID
    */
-  scriptErrors: Record<string, CompilationError[]>;
+  scriptErrors: Record<string, ScriptErrorMap>;
   /**
    * Currently visible userscript errors in the error panel.
    */

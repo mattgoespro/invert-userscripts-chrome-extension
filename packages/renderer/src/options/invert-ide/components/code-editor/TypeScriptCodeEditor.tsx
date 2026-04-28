@@ -5,6 +5,7 @@ import {
 } from "@/shared/store/slices/code-editor";
 import {
   ensureTypescriptDefaults,
+  syncAmbientTypeDefinitionLibs,
   syncCdnModuleLibs,
   syncSharedScriptLibs,
 } from "@packages/monaco";
@@ -20,8 +21,12 @@ import { registerImportIntelligence } from "@/shared/utils/import-intelligence";
  * TypeScript language service defaults, and synchronizes shared script type
  * declarations and CDN module type definitions for intellisense.
  */
-export function TypeScriptCodeEditor(props: Omit<CodeEditorProps, "language">) {
-  const { scriptId, ...rest } = props;
+export function TypeScriptCodeEditor(
+  props: Omit<CodeEditorProps, "language"> & {
+    ambientTypeDefinitions?: string;
+  }
+) {
+  const { scriptId, ambientTypeDefinitions = "", ...rest } = props;
   const sharedScripts = useAppSelector(
     useMemo(() => selectSharedScriptsForUserscript(scriptId), [scriptId])
   );
@@ -70,6 +75,26 @@ export function TypeScriptCodeEditor(props: Omit<CodeEditorProps, "language">) {
       importIntelligenceDisposables.forEach((d) => d.dispose());
     };
   }, [sharedScripts]);
+
+  useEffect(() => {
+    const ambientLibs = [
+      ...(sharedScripts ?? [])
+        .filter((shared) => shared.typeDefinitions.trim())
+        .map((shared) => ({
+          id: `shared:${scriptId}:${shared.id}`,
+          filePath: `file:///userscripts/${scriptId}/shared/${shared.id}.d.ts`,
+          contents: shared.typeDefinitions,
+        })),
+    ].filter((lib) => lib.contents.trim());
+
+    syncAmbientTypeDefinitionLibs(ambientLibs);
+  }, [scriptId, sharedScripts]);
+
+  useEffect(() => {
+    return () => {
+      syncAmbientTypeDefinitionLibs([]);
+    };
+  }, []);
 
   // Sync CDN module type declarations when the module list changes.
   useEffect(() => {

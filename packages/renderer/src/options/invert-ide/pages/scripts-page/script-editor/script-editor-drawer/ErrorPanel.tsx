@@ -45,6 +45,12 @@ type ErrorItemProps = {
 
 function ErrorItem({ error, onClick }: ErrorItemProps) {
   const isError = error.severity === "error";
+  const languageLabel =
+    error.language === "typescript"
+      ? "TS"
+      : error.language === "type-definition"
+        ? "DTS"
+        : "SCSS";
 
   return (
     <button
@@ -66,7 +72,7 @@ function ErrorItem({ error, onClick }: ErrorItemProps) {
       <div className="flex min-w-0 flex-1 flex-col gap-2xs">
         <div className="flex items-baseline gap-sm">
           <Typography variant="caption" className="font-mono text-text-muted">
-            {error.language === "typescript" ? "TS" : "SCSS"}
+            {languageLabel}
           </Typography>
           <Typography
             variant="caption"

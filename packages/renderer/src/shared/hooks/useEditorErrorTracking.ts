@@ -11,7 +11,7 @@ import { v4 as uuid } from "uuid";
 export function useEditorErrorTracking(
   scriptId: string | undefined,
   model: monaco.editor.ITextModel | null,
-  language: "typescript" | "scss"
+  language: CompilationError["language"]
 ) {
   const dispatch = useAppDispatch();
 
@@ -41,7 +41,7 @@ export function useEditorErrorTracking(
         timestamp: Date.now(),
       }));
 
-      dispatch(setScriptErrors({ scriptId, errors }));
+      dispatch(setScriptErrors({ scriptId, language, errors }));
     };
 
     // Update errors initially

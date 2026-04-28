@@ -1,5 +1,5 @@
 /**
- * Represents a TypeScript or SCSS compilation error
+ * Represents a TypeScript, declaration-file, or SCSS compilation error
  */
 export interface CompilationError {
   /**
@@ -13,9 +13,9 @@ export interface CompilationError {
   scriptId: string;
 
   /**
-   * Source language (typescript or scss)
+   * Source language that produced the error
    */
-  language: "typescript" | "scss";
+  language: "typescript" | "type-definition" | "scss";
 
   /**
    * Error message

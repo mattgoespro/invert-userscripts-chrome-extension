@@ -11,6 +11,7 @@ import { Userscript } from "@shared/model";
 import { ErrorPanel } from "./ErrorPanel";
 import { useAppSelector } from "@/shared/store/hooks";
 import { selectErrorCount } from "@/shared/store/slices/workspace";
+import { CompilationError } from "@shared/errors";
 import type * as monaco from "monaco-editor";
 
 type ScriptEditorDrawerProps = {
@@ -19,7 +20,9 @@ type ScriptEditorDrawerProps = {
   css: string;
   isCollapsed: boolean;
   onToggleCollapse: () => void;
-  editorInstance?: monaco.editor.IStandaloneCodeEditor;
+  editorInstances?: Partial<
+    Record<CompilationError["language"], monaco.editor.IStandaloneCodeEditor>
+  >;
 };
 
 export function ScriptEditorDrawer({
@@ -28,7 +31,7 @@ export function ScriptEditorDrawer({
   css,
   isCollapsed,
   onToggleCollapse,
-  editorInstance,
+  editorInstances,
 }: ScriptEditorDrawerProps) {
   const { globalState, updateGlobalState } = useGlobalState();
   const activeTab = globalState.outputDrawerActiveTab;
@@ -99,6 +102,8 @@ export function ScriptEditorDrawer({
             <ErrorPanel
               scriptId={script.id}
               onErrorClick={(error) => {
+                const editorInstance = editorInstances?.[error.language];
+
                 if (editorInstance) {
                   editorInstance.revealLineInCenter(error.line);
                   editorInstance.setPosition({

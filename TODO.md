@@ -4,13 +4,10 @@
 
 ### **Script Editor**
 
-- ~~Implement the `runAt` field for userscripts to allow users to specify when their userscript should be injected during a page's lifecycle.~~
+- Compilation:
+  - Investigate output minimization (unusued members, whitespace, comments, etc) and whether we can add a setting to enable/disable it.
 
 ### **Code Editor**
-
-- **Implement shared userscript intellisense** to allow users to import and use shared userscripts with type safety and autocompletion support.
-- **Implement global modules intellisense**, allowing users to import and use external libraries with type safety and autocompletion support.
-  - Type-definitions for user-imported global modules can be sourced from [DefinitelyTyped](https://github.com/DefinitelyTyped/DefinitelyTyped) or generated automatically from the imported module's API.
 
 ## Performance
 
@@ -21,10 +18,10 @@
   - Managing multiple imported shared scripts
   - Shared module declarations briefly highlighting as errors until the type-checking process completes
 
-## Bundling
+## Webpack Bundling
 
 - Look at creating a manifest generator webpack plugin to mitigate dealing with keeping the package.json, source manifest.json, and JavaScript output paths aligned
-- Investigate output bundles and their file sizes for further chunk-splitting optimizations.
+- Investigate output bundles and their file sizes for further chunk-splitting and minimization optimizations.
 
 ## Bugs
 

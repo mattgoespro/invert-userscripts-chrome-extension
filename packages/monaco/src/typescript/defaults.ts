@@ -1,6 +1,7 @@
 import { SharedScriptInfo } from "@shared/model";
 import { TypeScriptCompilerOptions } from "@shared/typescript";
 import monaco from "monaco-editor";
+import ts from "typescript";
 import { generateSharedScriptDeclaration } from "./declarations";
 import { fetchModuleTypes } from "./cdn-types";
 
@@ -39,6 +40,9 @@ export function ensureTypescriptDefaults(): void {
     module: TypeScriptCompilerOptions.module.valueOf(),
     target: TypeScriptCompilerOptions.target.valueOf(),
     moduleResolution: tsContribution.ModuleResolutionKind.NodeJs,
+    // Each userscript editor model should type-check as an isolated module, even
+    // when Monaco keeps other script models alive for tab switching.
+    moduleDetection: ts.ModuleDetectionKind.Force,
   });
 
   tsContribution.typescriptDefaults.setEagerModelSync(true);
@@ -72,6 +76,23 @@ interface SharedLibEntry {
   sourceHash: string;
 }
 const sharedLibEntries = new Map<string, SharedLibEntry>();
+
+interface AmbientTypeDefinitionLibInfo {
+  id: string;
+  filePath: string;
+  contents: string;
+}
+
+interface AmbientTypeDefinitionEntry {
+  disposable: { dispose(): void };
+  sourceHash: string;
+  filePath: string;
+}
+
+const ambientTypeDefinitionEntries = new Map<
+  string,
+  AmbientTypeDefinitionEntry
+>();
 
 /**
  * Syncs shared-script extra lib registrations with the provided list. Disposes
@@ -121,6 +142,53 @@ export function syncSharedScriptLibs(sharedScripts: SharedScriptInfo[]): void {
     sharedLibEntries.set(shared.id, {
       disposable,
       sourceHash: shared.sourceCode,
+    });
+  }
+}
+
+function addAmbientTypeDefinitionExtraLib(
+  declaration: string,
+  filePath: string
+): monaco.IDisposable {
+  return tsContribution.typescriptDefaults.addExtraLib(declaration, filePath);
+}
+
+export function syncAmbientTypeDefinitionLibs(
+  libs: AmbientTypeDefinitionLibInfo[]
+): void {
+  const currentIds = new Set(libs.map((lib) => lib.id));
+
+  for (const [id, entry] of ambientTypeDefinitionEntries) {
+    if (!currentIds.has(id)) {
+      entry.disposable.dispose();
+      ambientTypeDefinitionEntries.delete(id);
+    }
+  }
+
+  for (const lib of libs) {
+    const existing = ambientTypeDefinitionEntries.get(lib.id);
+
+    if (
+      existing &&
+      existing.sourceHash === lib.contents &&
+      existing.filePath === lib.filePath
+    ) {
+      continue;
+    }
+
+    if (existing) {
+      existing.disposable.dispose();
+    }
+
+    const disposable = addAmbientTypeDefinitionExtraLib(
+      lib.contents,
+      lib.filePath
+    );
+
+    ambientTypeDefinitionEntries.set(lib.id, {
+      disposable,
+      sourceHash: lib.contents,
+      filePath: lib.filePath,
     });
   }
 }

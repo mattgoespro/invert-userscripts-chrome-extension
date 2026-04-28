@@ -8,9 +8,16 @@ const workspaceSlice = createSlice({
   reducers: {
     setScriptErrors: (
       state,
-      action: PayloadAction<{ scriptId: string; errors: CompilationError[] }>
+      action: PayloadAction<{
+        scriptId: string;
+        language: CompilationError["language"];
+        errors: CompilationError[];
+      }>
     ) => {
-      state.scriptErrors[action.payload.scriptId] = action.payload.errors;
+      const scriptErrors = state.scriptErrors[action.payload.scriptId] ?? {};
+
+      scriptErrors[action.payload.language] = action.payload.errors;
+      state.scriptErrors[action.payload.scriptId] = scriptErrors;
     },
     clearScriptErrors: (state, action: PayloadAction<string>) => {
       delete state.scriptErrors[action.payload];
@@ -21,19 +28,23 @@ const workspaceSlice = createSlice({
   },
   selectors: {
     selectScriptErrors: (state, scriptId: string) => {
-      return state.scriptErrors[scriptId] ?? [];
+      return Object.values(state.scriptErrors[scriptId] ?? {}).flat();
     },
     selectAllErrors: (state) => {
-      return Object.values(state.scriptErrors).flat();
+      return Object.values(state.scriptErrors).flatMap((errorsByLanguage) =>
+        Object.values(errorsByLanguage).flat()
+      );
     },
     selectErrorCount: (state, scriptId: string) => {
-      return (state.scriptErrors[scriptId] ?? []).length;
+      return Object.values(state.scriptErrors[scriptId] ?? {}).flat().length;
     },
     selectVisibleErrors: (state) => {
       if (!state.visibleScriptId) {
         return [];
       }
-      return state.scriptErrors[state.visibleScriptId] ?? [];
+      return Object.values(
+        state.scriptErrors[state.visibleScriptId] ?? {}
+      ).flat();
     },
   },
 });

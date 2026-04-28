@@ -14,6 +14,12 @@ export interface GlobalStateSizes {
    */
   scriptCodeEditorHorizontalSplit?: number;
   /**
+   * Height percentage of the main TypeScript editor within the stacked TypeScript panel
+   * (main script editor vs. declaration editor).
+   * Range: 0–100.
+   */
+  scriptTypeDefinitionsVerticalSplit?: number;
+  /**
    * Height percentage of the source editors panel within the outer vertical split
    * (source editors vs. compiled output drawer).
    * Range: 0–100.
@@ -60,6 +66,7 @@ export class GlobalStateManager {
       panelSizes: {
         scriptListSidebarWidth: 30,
         scriptCodeEditorHorizontalSplit: 50,
+        scriptTypeDefinitionsVerticalSplit: 68,
         scriptCompiledOutputDrawerSplit: 70,
       },
     };

@@ -13,10 +13,20 @@ const LANGUAGE_EXTENSIONS: Record<string, string> = {
 /** Cache models by URI to preserve undo history and cursor position. */
 const modelCache = new Map<string, monaco.editor.ITextModel>();
 
-export function disposeModel(uri: string): void {
+/** Preserve transient editable contents for models that should not stay mounted. */
+const disposedModelValueCache = new Map<string, string>();
+
+export function disposeModel(
+  uri: string,
+  options?: { preserveValue?: boolean }
+): void {
   const model = modelCache.get(uri);
 
   if (model && !model.isDisposed()) {
+    if (options?.preserveValue) {
+      disposedModelValueCache.set(uri, model.getValue());
+    }
+
     model.dispose();
   }
 
@@ -49,8 +59,11 @@ export function getOrCreateModel(
     return existing;
   }
 
+  const initialContents = disposedModelValueCache.get(uri) ?? contents;
+  disposedModelValueCache.delete(uri);
+
   const model = monaco.editor.createModel(
-    contents,
+    initialContents,
     language,
     monaco.Uri.parse(uri)
   );

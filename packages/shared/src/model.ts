@@ -26,6 +26,7 @@ export interface Userscript {
   moduleName: string;
   sharedScripts: string[];
   globalModules: string[];
+  typeDefinitions: string;
   code: {
     source: {
       [key in UserscriptSourceLanguage]: string;
@@ -80,4 +81,5 @@ export interface SharedScriptInfo {
   name: string;
   moduleName: string;
   sourceCode: string;
+  typeDefinitions: string;
 }

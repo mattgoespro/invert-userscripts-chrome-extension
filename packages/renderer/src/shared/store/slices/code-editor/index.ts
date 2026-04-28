@@ -71,6 +71,7 @@ export const selectSharedScriptsForUserscript = (scriptId: string) =>
           name: s.name,
           moduleName: s.moduleName ?? "",
           sourceCode: s.code.source.typescript,
+          typeDefinitions: s.typeDefinitions ?? "",
         }));
     }
   );
