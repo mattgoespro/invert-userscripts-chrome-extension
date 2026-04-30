@@ -3,7 +3,6 @@
   "include": ["**/*.ts"],
   "compilerOptions": {
     "composite": true,
-    "baseUrl": ".",
     "lib": ["es2020", "dom", "dom.iterable"],
     "types": ["node", "chrome"],
     "outDir": "dist/packages/runtime",

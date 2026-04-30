@@ -9,7 +9,6 @@
   ],
   "compilerOptions": {
     "noEmit": true,
-    "baseUrl": ".",
     "jsx": "react-jsx",
     "lib": ["es2020", "dom", "dom.iterable", "es2023.array"],
     "types": ["node", "chrome", "react", "react-dom"],

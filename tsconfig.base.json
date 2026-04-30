@@ -1,8 +1,7 @@
 {
   "include": [],
-  "exclude": ["node_modules", "dist", "demo"],
+  "exclude": ["node_modules", "dist", "examples"],
   "compilerOptions": {
-    "baseUrl": ".",
     "module": "esnext",
     "moduleResolution": "bundler",
     "target": "es2020",

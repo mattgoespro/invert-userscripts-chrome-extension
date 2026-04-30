@@ -20,7 +20,7 @@
 
 ## Webpack Bundling
 
-- Look at creating a manifest generator webpack plugin to mitigate dealing with keeping the package.json, source manifest.json, and JavaScript output paths aligned
+- Look at creating a manifest generator webpack plugin to mitigate dealing with keeping the _package.json_, source _manifest.json_, and JavaScript output paths aligned
 - Investigate output bundles and their file sizes for further chunk-splitting and minimization optimizations.
 
 ## Bugs

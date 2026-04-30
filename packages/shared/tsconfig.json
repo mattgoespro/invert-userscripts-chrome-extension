@@ -3,7 +3,6 @@
   "include": ["**/*.ts"],
   "compilerOptions": {
     "composite": true,
-    "baseUrl": ".",
     "lib": ["dom", "dom.iterable"],
     "outDir": "dist/packages/shared",
     "paths": {

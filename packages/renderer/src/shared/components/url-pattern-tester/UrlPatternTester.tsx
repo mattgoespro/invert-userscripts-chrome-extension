@@ -2,13 +2,7 @@ import { Button } from "@/shared/components/button/Button";
 import { Input } from "@/shared/components/input/Input";
 import { Typography } from "@/shared/components/typography/Typography";
 import { matchesUrlPattern } from "@shared/url-matching";
-import {
-  AlertCircle,
-  CheckCircle2,
-  CrossIcon,
-  Globe,
-  History,
-} from "lucide-react";
+import { AlertCircle, CheckCircle2, Globe, History, XIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import clsx from "clsx";
 import { IconButton } from "../icon-button/IconButton";
@@ -107,11 +101,8 @@ export function UrlPatternTester({ patterns, onClose }: UrlPatternTesterProps) {
             <Globe className="h-5 w-5 text-accent" />
             <Typography variant="title">URL Pattern Tester</Typography>
           </div>
-          <IconButton icon={CrossIcon} onClick={onClose}>
-            Close
-          </IconButton>
+          <IconButton icon={XIcon} onClick={onClose} />
         </div>
-
         {/* Test URL Input */}
         <div className="flex flex-col gap-xs">
           <Typography
@@ -127,7 +118,6 @@ export function UrlPatternTester({ patterns, onClose }: UrlPatternTesterProps) {
             autoFocus
           />
         </div>
-
         {/* Action Buttons */}
         <div className="flex gap-sm">
           <Button variant="secondary" onClick={handleTestOpenTabs}>
@@ -139,7 +129,6 @@ export function UrlPatternTester({ patterns, onClose }: UrlPatternTesterProps) {
             Test Recent History ({recentHistoryUrls.length})
           </Button>
         </div>
-
         {/* Current Patterns */}
         <div className="flex flex-col gap-xs">
           <Typography
@@ -165,7 +154,6 @@ export function UrlPatternTester({ patterns, onClose }: UrlPatternTesterProps) {
             )}
           </div>
         </div>
-
         {/* Test Results */}
         {testResults.length > 0 && (
           <div className="flex min-h-0 flex-1 flex-col gap-xs overflow-hidden">

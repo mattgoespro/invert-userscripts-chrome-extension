@@ -52,7 +52,7 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
         className={clsx(iconButtonVariants({ variant, size }), className)}
       >
         {icon &&
-          createElement(icon as React.ElementType, {
+          createElement(icon, {
             color: "#a5a5a5ff",
             size: ICON_SIZES[size ?? "md"],
           })}
