@@ -1,6 +1,45 @@
 import { transpileModule } from "typescript";
 import { TypeScriptCompilerOptions } from "@shared/typescript";
-import { UserscriptCompileResult } from "@shared/model";
+import {
+  CompiledCodeBuildMetadata,
+  CompiledCodeEntry,
+  EditorSettings,
+  Userscript,
+  UserscriptCompileResult,
+} from "@shared/model";
+import { prepareCompiledJavascript } from "@shared/compiled-output";
+import { minify as minifyJavascript } from "terser";
+
+export interface CompiledOutputBuildOptions {
+  minifyCompiledOutput: boolean;
+}
+
+export function getCompiledOutputBuildOptions(
+  settings: Partial<EditorSettings>
+): CompiledOutputBuildOptions {
+  return {
+    minifyCompiledOutput: settings.minifyCompiledOutput ?? false,
+  };
+}
+
+export function createCompiledCodeBuildMetadata(
+  options: CompiledOutputBuildOptions
+): CompiledCodeBuildMetadata {
+  return {
+    version: 1,
+    minifyCompiledOutput: options.minifyCompiledOutput,
+  };
+}
+
+export function isCompiledCodeBuildCurrent(
+  entry: CompiledCodeEntry | null | undefined,
+  options: CompiledOutputBuildOptions
+): boolean {
+  return (
+    entry?.build?.version === 1 &&
+    entry.build.minifyCompiledOutput === options.minifyCompiledOutput
+  );
+}
 
 export class TypeScriptCompiler {
   static compile(code: string): UserscriptCompileResult {
@@ -25,10 +64,98 @@ export class TypeScriptCompiler {
   }
 }
 
+async function minifyCompiledJavascript(
+  code: string
+): Promise<UserscriptCompileResult> {
+  try {
+    const result = await minifyJavascript(code, {
+      compress: true,
+      ecma: 2020,
+      format: {
+        comments: false,
+      },
+      mangle: true,
+    });
+
+    return {
+      success: true,
+      code: result.code ?? "",
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error:
+        error instanceof Error
+          ? error
+          : new Error("Unknown JavaScript minification error"),
+    };
+  }
+}
+
+export async function buildUserscriptJavascript(
+  script: Pick<Userscript, "shared" | "moduleName" | "sharedScripts">,
+  sourceCode: string,
+  options: CompiledOutputBuildOptions
+): Promise<UserscriptCompileResult> {
+  const compiled = TypeScriptCompiler.compile(sourceCode);
+
+  if (!compiled.success) {
+    return compiled;
+  }
+
+  let code = prepareCompiledJavascript(compiled.code ?? "", {
+    shared: script.shared,
+    moduleName: script.moduleName,
+    sharedScripts: script.sharedScripts,
+  });
+
+  if (!options.minifyCompiledOutput) {
+    return {
+      success: true,
+      code,
+    };
+  }
+
+  const minified = await minifyCompiledJavascript(code);
+
+  if (!minified.success) {
+    return minified;
+  }
+
+  code = minified.code ?? "";
+
+  return {
+    success: true,
+    code,
+  };
+}
+
+export async function buildUserscriptStylesheet(
+  sourceCode: string,
+  options: CompiledOutputBuildOptions
+): Promise<UserscriptCompileResult> {
+  return SassCompiler.compile(sourceCode, {
+    minify: options.minifyCompiledOutput,
+  });
+}
+
+export function buildCompiledCodeEntry(
+  javascript: string,
+  css: string,
+  options: CompiledOutputBuildOptions
+): CompiledCodeEntry {
+  return {
+    javascript,
+    css,
+    build: createCompiledCodeBuildMetadata(options),
+  };
+}
+
 interface SassCompileRequest {
   type: "compile";
   id: string;
   scss: string;
+  minify?: boolean;
 }
 
 interface SassCompileResponse {
@@ -108,7 +235,10 @@ export class SassCompiler {
   /**
    * Compile SCSS to CSS using the sandboxed dart-sass compiler.
    */
-  static async compile(scss: string): Promise<UserscriptCompileResult> {
+  static async compile(
+    scss: string,
+    options: { minify?: boolean } = {}
+  ): Promise<UserscriptCompileResult> {
     if (!this.isReady || !this.iframe?.contentWindow) {
       await this.initialize();
     }
@@ -122,6 +252,7 @@ export class SassCompiler {
         type: "compile",
         id,
         scss,
+        minify: options.minify ?? false,
       };
 
       this.iframe!.contentWindow!.postMessage(request, "*");

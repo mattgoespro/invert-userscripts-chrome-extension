@@ -6,8 +6,8 @@ import { initializeMonaco } from "@/shared/store/slices/code-editor/thunks.code-
 import { selectEditorSettings } from "@/shared/store/slices/settings";
 import { loadSettings } from "@/shared/store/slices/settings/thunks.settings";
 import {
-  compileStaleUserscripts,
   loadUserscripts,
+  rebuildCompiledUserscripts,
 } from "@/shared/store/slices/userscripts/thunks.userscripts";
 import { useCallback, useEffect, useState } from "react";
 import { DashboardHeader } from "./components/dashboard-header/DashboardHeader";
@@ -48,12 +48,18 @@ export function InvertIde() {
     // are available regardless of which page is active on load.
     dispatch(initializeMonaco());
 
-    // Load scripts, then compile any that are missing compiled output in
-    // chrome.storage.local (e.g. after syncing to a new device).
-    dispatch(loadUserscripts()).then(() => {
-      dispatch(compileStaleUserscripts());
-    });
-    dispatch(loadSettings());
+    void (async () => {
+      try {
+        await Promise.all([
+          dispatch(loadUserscripts()).unwrap(),
+          dispatch(loadSettings()).unwrap(),
+        ]);
+
+        await dispatch(rebuildCompiledUserscripts({ scope: "stale" })).unwrap();
+      } catch (error) {
+        console.error("Failed to initialize IDE state:", error);
+      }
+    })();
   }, [dispatch]);
 
   // Global keyboard handler for Command Palette

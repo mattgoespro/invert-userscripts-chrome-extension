@@ -4,6 +4,7 @@ interface SassCompileRequest {
   type: "compile";
   id: string;
   scss: string;
+  minify?: boolean;
 }
 
 interface SassCompileResponse {
@@ -27,14 +28,16 @@ window.addEventListener(
       return;
     }
 
-    const { id, scss } = event.data;
+    const { id, minify, scss } = event.data;
 
     // Defer compilation to a separate task to avoid blocking the message handler.
     // dart-sass compileString() is synchronous and can take hundreds of milliseconds,
     // which triggers Chrome's "[Violation] 'message' handler took Xms" warning.
     setTimeout(() => {
       try {
-        const result = compileString(scss);
+        const result = compileString(scss, {
+          style: minify ? "compressed" : "expanded",
+        });
 
         const response: SassCompileResponse = {
           type: "compile-result",

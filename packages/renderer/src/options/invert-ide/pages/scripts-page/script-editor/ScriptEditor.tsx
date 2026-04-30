@@ -1,12 +1,17 @@
 import { CodeEditor } from "@/options/invert-ide/shared/CodeEditor";
 import { TypeDefinitionCodeEditor } from "@/options/invert-ide/components/code-editor/TypeDefinitionCodeEditor";
 import { TypeScriptCodeEditor } from "@/options/invert-ide/components/code-editor/TypeScriptCodeEditor";
-import { SassCompiler, TypeScriptCompiler } from "@/sandbox/compiler";
+import {
+  buildUserscriptJavascript,
+  buildUserscriptStylesheet,
+  getCompiledOutputBuildOptions,
+} from "@/sandbox/compiler";
 import { EditorPanel } from "@/shared/components/editor-panel/EditorPanel";
 import { ResizeHandle } from "@/shared/components/resize-handle/ResizeHandle";
 import { Typography } from "@/shared/components/typography/Typography";
 import { useAppDispatch, useAppSelector } from "@/shared/store/hooks";
 import { selectMonacoReady } from "@/shared/store/slices/code-editor";
+import { selectEditorSettings } from "@/shared/store/slices/settings";
 import {
   markUserscriptModified,
   selectCurrentUserscript,
@@ -26,11 +31,16 @@ export function ScriptEditor() {
   const dispatch = useAppDispatch();
   const script = useAppSelector(selectCurrentUserscript);
   const monacoReady = useAppSelector(selectMonacoReady);
+  const settings = useAppSelector(selectEditorSettings);
   const { globalState, updateGlobalState, updatePanelSizes } = useGlobalState();
 
   const [liveJs, setLiveJs] = useState("");
   const [liveCss, setLiveCss] = useState("");
   const [liveTypeDefinitions, setLiveTypeDefinitions] = useState("");
+  const [liveTypescriptSource, setLiveTypescriptSource] = useState(
+    script.code.source.typescript
+  );
+  const [liveScssSource, setLiveScssSource] = useState(script.code.source.scss);
   const [isDrawerCollapsed, setIsDrawerCollapsed] = useState(
     globalState.outputDrawerCollapsed
   );
@@ -59,39 +69,65 @@ export function ScriptEditor() {
   // Track SCSS errors
   useEditorErrorTracking(script.id, scssModel, "scss");
 
-  // Auto-compile source code on mount and on script switch to pre-populate the output drawer.
   useEffect(() => {
-    const tsResult = TypeScriptCompiler.compile(script.code.source.typescript);
+    setLiveTypescriptSource(script.code.source.typescript);
+  }, [script.id, script.code.source.typescript]);
 
-    setLiveJs(tsResult.success && tsResult.code ? tsResult.code : "");
+  useEffect(() => {
+    setLiveScssSource(script.code.source.scss);
+  }, [script.id, script.code.source.scss]);
 
-    SassCompiler.compile(script.code.source.scss).then((scssResult) => {
-      setLiveCss(scssResult.success && scssResult.code ? scssResult.code : "");
-    });
+  useEffect(() => {
+    let cancelled = false;
+
+    void (async () => {
+      const result = await buildUserscriptJavascript(
+        script,
+        liveTypescriptSource,
+        getCompiledOutputBuildOptions(settings)
+      );
+
+      if (!cancelled) {
+        setLiveJs(result.success && result.code ? result.code : "");
+      }
+    })();
 
     return () => {
+      cancelled = true;
+    };
+  }, [
+    liveTypescriptSource,
+    script.shared,
+    script.moduleName,
+    script.sharedScripts,
+    settings.minifyCompiledOutput,
+  ]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (scssDebounceRef.current) {
+      clearTimeout(scssDebounceRef.current);
+    }
+
+    scssDebounceRef.current = setTimeout(async () => {
+      const result = await buildUserscriptStylesheet(
+        liveScssSource,
+        getCompiledOutputBuildOptions(settings)
+      );
+
+      if (!cancelled) {
+        setLiveCss(result.success && result.code ? result.code : "");
+      }
+    }, 400);
+
+    return () => {
+      cancelled = true;
       if (scssDebounceRef.current) {
         clearTimeout(scssDebounceRef.current);
       }
     };
-  }, [script.id]);
-
-  // After a Ctrl+S save, the CodeEditor suppresses the onDidChangeContent event
-  // that would normally recompile via onCodeModified. Instead, sync the drawer
-  // directly from the compiled output that updateUserscriptCode.fulfilled writes
-  // into Redux. The empty-string guard prevents clearing the drawer on initial
-  // load (when compiled code is stripped from storage to save quota).
-  useEffect(() => {
-    if (script.code.compiled.javascript) {
-      setLiveJs(script.code.compiled.javascript);
-    }
-  }, [script.code.compiled.javascript]);
-
-  useEffect(() => {
-    if (script.code.compiled.css) {
-      setLiveCss(script.code.compiled.css);
-    }
-  }, [script.code.compiled.css]);
+  }, [liveScssSource, settings.minifyCompiledOutput]);
 
   useEffect(() => {
     setLiveTypeDefinitions(script.typeDefinitions);
@@ -103,23 +139,9 @@ export function ScriptEditor() {
     }
 
     if (language === "typescript") {
-      const result = TypeScriptCompiler.compile(code);
-
-      if (result.success && result.code) {
-        setLiveJs(result.code);
-      }
+      setLiveTypescriptSource(code);
     } else if (language === "scss") {
-      if (scssDebounceRef.current) {
-        clearTimeout(scssDebounceRef.current);
-      }
-
-      scssDebounceRef.current = setTimeout(async () => {
-        const result = await SassCompiler.compile(code);
-
-        if (result.success && result.code) {
-          setLiveCss(result.code);
-        }
-      }, 400);
+      setLiveScssSource(code);
     } else if (language === "type-definition") {
       setLiveTypeDefinitions(code);
     }

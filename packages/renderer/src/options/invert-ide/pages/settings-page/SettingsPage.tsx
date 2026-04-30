@@ -1,4 +1,5 @@
 import { Checkbox } from "@/shared/components/checkbox/Checkbox";
+import { useToast } from "@/shared/components/toast/ToastProvider";
 import { Input } from "@/shared/components/input/Input";
 import { Select } from "@/shared/components/select/Select";
 import { Typography } from "@/shared/components/typography/Typography";
@@ -12,6 +13,7 @@ import {
   loadSettings,
   updateSettings,
 } from "@/shared/store/slices/settings/thunks.settings";
+import { rebuildCompiledUserscripts } from "@/shared/store/slices/userscripts/thunks.userscripts";
 import { EditorThemeName, getEditorThemes } from "@packages/monaco";
 import { AppThemes } from "@shared/constants";
 import { AppThemeName } from "@shared/model";
@@ -21,6 +23,7 @@ import { ThemePreview } from "./theme-preview/ThemePreview";
 
 export function Settings() {
   const dispatch = useAppDispatch();
+  const { toast } = useToast();
   const settings = useAppSelector(selectEditorSettings);
   const isLoading = useAppSelector(selectIsLoading);
   const monacoReady = useAppSelector(selectMonacoReady);
@@ -51,6 +54,30 @@ export function Settings() {
 
   const handleAutoFormatChange = (autoFormat: boolean) => {
     dispatch(updateSettings({ autoFormat }));
+  };
+
+  const handleMinifyCompiledOutputChange = async (
+    minifyCompiledOutput: boolean
+  ) => {
+    try {
+      await dispatch(updateSettings({ minifyCompiledOutput })).unwrap();
+      await dispatch(rebuildCompiledUserscripts({ scope: "all" })).unwrap();
+
+      toast({
+        variant: "info",
+        message: minifyCompiledOutput
+          ? "Compiled JavaScript and CSS were rebuilt with minification enabled."
+          : "Compiled JavaScript and CSS were rebuilt without minification.",
+      });
+    } catch (error) {
+      toast({
+        variant: "error",
+        message:
+          error instanceof Error
+            ? `Failed to rebuild compiled output: ${error.message}`
+            : "Failed to rebuild compiled output.",
+      });
+    }
   };
 
   function getEditorThemeOptions(): {
@@ -136,6 +163,13 @@ export function Settings() {
           label="Format on save"
           checked={settings.autoFormat}
           onChange={handleAutoFormatChange}
+        />
+      </SettingsSection>
+      <SettingsSection title="Build Output">
+        <Checkbox
+          label="Minify compiled JavaScript and CSS"
+          checked={settings.minifyCompiledOutput ?? false}
+          onChange={handleMinifyCompiledOutputChange}
         />
       </SettingsSection>
     </div>

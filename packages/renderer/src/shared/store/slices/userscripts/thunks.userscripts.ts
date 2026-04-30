@@ -1,6 +1,16 @@
-import { SassCompiler, TypeScriptCompiler } from "@/sandbox/compiler";
+import {
+  buildCompiledCodeEntry,
+  buildUserscriptJavascript,
+  buildUserscriptStylesheet,
+  getCompiledOutputBuildOptions,
+  isCompiledCodeBuildCurrent,
+} from "@/sandbox/compiler";
 import { createAsyncThunk } from "@reduxjs/toolkit/react";
-import { Userscript, UserscriptSourceLanguage } from "@shared/model";
+import {
+  CompiledCodeEntry,
+  Userscript,
+  UserscriptSourceLanguage,
+} from "@shared/model";
 import type { RuntimePortMessageEvent } from "@shared/messages";
 import { ChromeSyncStorage, CompiledCodeStorage } from "@shared/storage";
 import { RootState } from "../../store";
@@ -26,11 +36,125 @@ function buildStorageSafeScript(script: Userscript): Userscript {
   };
 }
 
+function getBuildOptions(state: RootState) {
+  return getCompiledOutputBuildOptions(state.settings.editorSettings);
+}
+
+function hasSharedJavascriptConfigChanged(
+  nextScript: Userscript,
+  previousScript?: Userscript
+): boolean {
+  if (!previousScript) {
+    return true;
+  }
+
+  const nextSharedScripts = nextScript.sharedScripts ?? [];
+  const previousSharedScripts = previousScript.sharedScripts ?? [];
+
+  if (
+    nextScript.shared !== previousScript.shared ||
+    nextScript.moduleName !== previousScript.moduleName ||
+    nextSharedScripts.length !== previousSharedScripts.length
+  ) {
+    return true;
+  }
+
+  return nextSharedScripts.some(
+    (sharedScriptId, index) => sharedScriptId !== previousSharedScripts[index]
+  );
+}
+
+async function compileJavascriptOrThrow(
+  script: Userscript,
+  state: RootState
+): Promise<string> {
+  const result = await buildUserscriptJavascript(
+    script,
+    script.code.source.typescript,
+    getBuildOptions(state)
+  );
+
+  if (!result.success) {
+    throw new Error(
+      `TypeScript compilation error: ${result.error?.message ?? "Unknown error"}`
+    );
+  }
+
+  return result.code ?? "";
+}
+
+async function compileStylesheetOrThrow(
+  script: Userscript,
+  state: RootState
+): Promise<string> {
+  const result = await buildUserscriptStylesheet(
+    script.code.source.scss,
+    getBuildOptions(state)
+  );
+
+  if (!result.success) {
+    throw new Error(
+      `SCSS compilation error: ${result.error?.message ?? "Unknown error"}`
+    );
+  }
+
+  return result.code ?? "";
+}
+
+async function compileAllOutputsOrThrow(
+  script: Userscript,
+  state: RootState
+): Promise<CompiledCodeEntry> {
+  const [javascript, css] = await Promise.all([
+    compileJavascriptOrThrow(script, state),
+    compileStylesheetOrThrow(script, state),
+  ]);
+
+  return buildCompiledCodeEntry(javascript, css, getBuildOptions(state));
+}
+
+function mergeCompiledCode(
+  script: Userscript,
+  compiled?: CompiledCodeEntry | null
+): Userscript {
+  if (!compiled) {
+    return script;
+  }
+
+  return {
+    ...script,
+    code: {
+      ...script.code,
+      compiled: {
+        javascript: compiled.javascript || script.code.compiled.javascript,
+        css: compiled.css || script.code.compiled.css,
+      },
+    },
+  };
+}
+
+function sendRefreshTabsMessage() {
+  const message: RuntimePortMessageEvent<"refreshTabs"> = {
+    source: "options",
+    type: "refreshTabs",
+  };
+
+  chrome.runtime.sendMessage(message).catch((error) => {
+    console.warn("Failed to send refreshTabs message:", error);
+  });
+}
+
 export const loadUserscripts = createAsyncThunk(
   "userscripts/loadUserscripts",
   async () => {
-    const scriptsMap = await ChromeSyncStorage.getAllScripts();
-    return Object.values(scriptsMap).map(normalizeUserscript);
+    const [scriptsMap, compiledCodeMap] = await Promise.all([
+      ChromeSyncStorage.getAllScripts(),
+      CompiledCodeStorage.getAllCompiledCode(),
+    ]);
+
+    return Object.values(scriptsMap).map((script) =>
+      mergeCompiledCode(normalizeUserscript(script), compiledCodeMap[script.id])
+    );
   }
 );
 
@@ -118,15 +242,53 @@ export const updateUserscript = createAsyncThunk<
   Userscript,
   Userscript,
   { state: RootState }
->("userscripts/updateUserscript", async (script: Userscript) => {
+>("userscripts/updateUserscript", async (script: Userscript, { getState }) => {
   const normalizedScript = normalizeUserscript(script);
+  const previousScriptsMap = await ChromeSyncStorage.getAllScripts();
+  const previousScript = previousScriptsMap[normalizedScript.id]
+    ? normalizeUserscript(previousScriptsMap[normalizedScript.id])
+    : undefined;
+  const compiledEntry = await CompiledCodeStorage.getCompiledCode(
+    normalizedScript.id
+  );
+  const state = getState();
   const storageScript = buildStorageSafeScript(normalizedScript);
 
+  if (!isCompiledCodeBuildCurrent(compiledEntry, getBuildOptions(state))) {
+    const rebuiltEntry = await compileAllOutputsOrThrow(
+      normalizedScript,
+      state
+    );
+
+    normalizedScript.code.compiled.javascript = rebuiltEntry.javascript;
+    normalizedScript.code.compiled.css = rebuiltEntry.css;
+
+    await CompiledCodeStorage.saveCompiledCode(
+      normalizedScript.id,
+      rebuiltEntry
+    );
+  } else if (
+    hasSharedJavascriptConfigChanged(normalizedScript, previousScript)
+  ) {
+    const javascript = await compileJavascriptOrThrow(normalizedScript, state);
+    const css = compiledEntry?.css ?? normalizedScript.code.compiled.css;
+    const rebuiltEntry = buildCompiledCodeEntry(
+      javascript,
+      css,
+      getBuildOptions(state)
+    );
+
+    normalizedScript.code.compiled.javascript = javascript;
+    normalizedScript.code.compiled.css = css;
+
+    await CompiledCodeStorage.saveCompiledCode(
+      normalizedScript.id,
+      rebuiltEntry
+    );
+  }
+
   await ChromeSyncStorage.updateScript(normalizedScript.id, storageScript);
-  await CompiledCodeStorage.saveCompiledCode(normalizedScript.id, {
-    javascript: normalizedScript.code.compiled.javascript,
-    css: normalizedScript.code.compiled.css,
-  });
+
   return normalizedScript;
 });
 
@@ -146,116 +308,84 @@ export const updateUserscriptTypeDefinitions = createAsyncThunk(
   }
 );
 
-export const updateUserscriptCode = createAsyncThunk(
-  "userscripts/updateUserscriptCode",
-  async ({
-    id,
-    language,
-    code,
-  }: {
+export const updateUserscriptCode = createAsyncThunk<
+  Userscript,
+  {
     id: string;
     language: UserscriptSourceLanguage;
     code: string;
-  }) => {
+  },
+  { state: RootState }
+>(
+  "userscripts/updateUserscriptCode",
+  async ({ id, language, code }, { getState }) => {
     const scriptsMap = await ChromeSyncStorage.getAllScripts();
     const script = normalizeUserscript(scriptsMap[id]);
 
     if (language === "typescript") {
-      const compiled = TypeScriptCompiler.compile(code);
-
-      if (!compiled.success) {
-        throw new Error(
-          `TypeScript compilation error: ${compiled.error?.message}`
-        );
-      }
-
       script.code.source.typescript = code;
-      script.code.compiled.javascript = compiled.code ?? "";
     } else if (language === "scss") {
-      const compiled = await SassCompiler.compile(code);
-
-      if (!compiled.success) {
-        throw new Error(`SCSS compilation error: ${compiled.error?.message}`);
-      }
-
       script.code.source.scss = code;
-      script.code.compiled.css = compiled.code ?? "";
     }
+
+    const compiledEntry = await compileAllOutputsOrThrow(script, getState());
+
+    script.code.compiled.javascript = compiledEntry.javascript;
+    script.code.compiled.css = compiledEntry.css;
 
     script.status = "saved";
     script.updatedAt = Date.now();
 
     await ChromeSyncStorage.updateScript(id, buildStorageSafeScript(script));
-    await CompiledCodeStorage.saveCompiledCode(id, {
-      javascript: script.code.compiled.javascript,
-      css: script.code.compiled.css,
-    });
+    await CompiledCodeStorage.saveCompiledCode(id, compiledEntry);
 
     return script;
   }
 );
 
 /**
- * Detects userscripts that were synced via `chrome.storage.sync` but have no
- * compiled code in `chrome.storage.local` (e.g. after a fresh Chrome install
- * on a new device). Batch-compiles all stale scripts and persists the output
- * so the runtime can inject them without a manual save.
+ * Rebuilds compiled userscript code when local artifacts are missing, outdated,
+ * or when the caller explicitly requests a full rebuild.
  */
-export const compileStaleUserscripts = createAsyncThunk(
-  "userscripts/compileStaleUserscripts",
-  async () => {
-    await SassCompiler.initialize();
+export const rebuildCompiledUserscripts = createAsyncThunk<
+  Userscript[],
+  { scope?: "stale" | "all" } | undefined,
+  { state: RootState }
+>("userscripts/rebuildCompiledUserscripts", async (args, { getState }) => {
+  const [scriptsMap, compiledCodeMap] = await Promise.all([
+    ChromeSyncStorage.getAllScripts(),
+    CompiledCodeStorage.getAllCompiledCode(),
+  ]);
+  const scope = args?.scope ?? "stale";
+  const state = getState();
+  const buildOptions = getBuildOptions(state);
+  const scripts = Object.values(scriptsMap).map(normalizeUserscript);
+  const scriptsToRebuild = scripts.filter((script) => {
+    if (scope === "all") {
+      return true;
+    }
 
-    const [scriptsMap, compiledCodeMap] = await Promise.all([
-      ChromeSyncStorage.getAllScripts(),
-      CompiledCodeStorage.getAllCompiledCode(),
-    ]);
-
-    const scripts = Object.values(scriptsMap);
-    const staleScripts = scripts.filter(
-      (script) => !compiledCodeMap[script.id]
+    return !isCompiledCodeBuildCurrent(
+      compiledCodeMap[script.id],
+      buildOptions
     );
+  });
 
-    if (staleScripts.length === 0) {
-      return [];
-    }
-
-    const compiledScripts: Userscript[] = [];
-
-    for (const script of staleScripts) {
-      const tsResult = TypeScriptCompiler.compile(
-        script.code.source.typescript
-      );
-      const scssResult = await SassCompiler.compile(script.code.source.scss);
-
-      const updatedScript: Userscript = {
-        ...script,
-        code: {
-          ...script.code,
-          compiled: {
-            javascript: tsResult.success ? (tsResult.code ?? "") : "",
-            css: scssResult.success ? (scssResult.code ?? "") : "",
-          },
-        },
-      };
-
-      await CompiledCodeStorage.saveCompiledCode(script.id, {
-        javascript: updatedScript.code.compiled.javascript,
-        css: updatedScript.code.compiled.css,
-      });
-
-      compiledScripts.push(updatedScript);
-    }
-
-    // Notify the background service worker to re-inject scripts into open tabs
-    const message: RuntimePortMessageEvent<"refreshTabs"> = {
-      source: "options",
-      type: "refreshTabs",
-    };
-    chrome.runtime.sendMessage(message).catch((error) => {
-      console.warn("Failed to send refreshTabs message:", error);
-    });
-
-    return compiledScripts;
+  if (scriptsToRebuild.length === 0) {
+    return [];
   }
-);
+
+  const rebuiltScripts: Userscript[] = [];
+
+  for (const script of scriptsToRebuild) {
+    const compiledEntry = await compileAllOutputsOrThrow(script, state);
+    const updatedScript = mergeCompiledCode(script, compiledEntry);
+
+    await CompiledCodeStorage.saveCompiledCode(script.id, compiledEntry);
+    rebuiltScripts.push(updatedScript);
+  }
+
+  sendRefreshTabsMessage();
+
+  return rebuiltScripts;
+});

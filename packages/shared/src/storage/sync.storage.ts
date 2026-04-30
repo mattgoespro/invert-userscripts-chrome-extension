@@ -14,6 +14,7 @@ export class ChromeSyncStorage {
     tabSize: 2,
     autoFormat: true,
     autoSave: true,
+    minifyCompiledOutput: false,
   };
 
   static async getAll(): Promise<{

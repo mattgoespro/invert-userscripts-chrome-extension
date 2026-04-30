@@ -1,9 +1,9 @@
 import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import {
-  compileStaleUserscripts,
   createUserscript,
   deleteUserscript,
   loadUserscripts,
+  rebuildCompiledUserscripts,
   toggleUserscript,
   updateUserscript,
   updateUserscriptCode,
@@ -119,7 +119,7 @@ const userscriptsSlice = createSlice({
           state.currentUserscript = updatedScript;
         }
       })
-      .addCase(compileStaleUserscripts.fulfilled, (state, action) => {
+      .addCase(rebuildCompiledUserscripts.fulfilled, (state, action) => {
         for (const script of action.payload) {
           state.scripts[script.id] = script;
 

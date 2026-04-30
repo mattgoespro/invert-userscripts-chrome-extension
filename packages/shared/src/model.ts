@@ -60,6 +60,7 @@ export interface EditorSettings {
   tabSize?: number;
   autoFormat?: boolean;
   autoSave?: boolean;
+  minifyCompiledOutput?: boolean;
 }
 
 export interface UserscriptCompileResult {
@@ -71,9 +72,15 @@ export interface UserscriptCompileResult {
 /**
  * Compiled code stored separately in Chrome local storage.
  */
+export interface CompiledCodeBuildMetadata {
+  version: 1;
+  minifyCompiledOutput: boolean;
+}
+
 export interface CompiledCodeEntry {
   javascript: string;
   css: string;
+  build?: CompiledCodeBuildMetadata;
 }
 
 export interface SharedScriptInfo {
