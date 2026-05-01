@@ -56,12 +56,12 @@ export function TypeScriptCodeEditor(
   useEffect(() => {
     ensureTypescriptDefaults();
 
-    // Register Quick Fix provider (returns disposable)
+    // Register Quick Fix provider
     const quickFixDisposable = registerTypeScriptQuickFixProvider(
       () => sharedScripts ?? []
     );
 
-    // Register Import Intelligence providers (returns array of disposables)
+    // Register Import Intelligence providers
     const importIntelligenceDisposables = registerImportIntelligence(
       () => sharedScripts ?? []
     );
@@ -78,6 +78,11 @@ export function TypeScriptCodeEditor(
 
   useEffect(() => {
     const ambientLibs = [
+      {
+        id: `script:${scriptId}:ambient-types`,
+        filePath: `file:///scripts/${scriptId}/types.d.ts`,
+        contents: ambientTypeDefinitions,
+      },
       ...(sharedScripts ?? [])
         .filter((shared) => shared.typeDefinitions.trim())
         .map((shared) => ({
@@ -88,7 +93,7 @@ export function TypeScriptCodeEditor(
     ].filter((lib) => lib.contents.trim());
 
     syncAmbientTypeDefinitionLibs(ambientLibs);
-  }, [scriptId, sharedScripts]);
+  }, [ambientTypeDefinitions, scriptId, sharedScripts]);
 
   useEffect(() => {
     return () => {

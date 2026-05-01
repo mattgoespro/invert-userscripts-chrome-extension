@@ -10,7 +10,6 @@ import {
   rebuildCompiledUserscripts,
 } from "@/shared/store/slices/userscripts/thunks.userscripts";
 import { useCallback, useEffect, useState } from "react";
-import { DashboardHeader } from "./components/dashboard-header/DashboardHeader";
 import { Sidebar, SidebarButton } from "./components/sidebar/Sidebar";
 import { ModulesPage } from "./pages/modules-page/ModulesPage";
 import { ScriptsPage } from "./pages/scripts-page/ScriptsPage";
@@ -99,7 +98,6 @@ export function InvertIde() {
 
   return (
     <div className="relative flex h-full flex-col overflow-hidden bg-surface-base">
-      <DashboardHeader />
       <div className="relative flex flex-1">
         <Sidebar
           active={globalState.activeSidebarTab}

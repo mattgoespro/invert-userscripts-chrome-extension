@@ -9,7 +9,7 @@ const sidebarNavButtonVariants = cva(
       active: {
         true: "bg-accent-subtle text-accent border-0 border-l-[3px] border-l-accent hover:bg-accent-muted",
         false:
-          "bg-transparent border-0 text-text-muted hover:bg-hover-overlay hover:text-text-muted-strong",
+          "bg-transparent border-0 border-l-[3px] border-l-transparent text-text-muted hover:bg-hover-overlay hover:text-text-muted-strong",
       },
     },
     defaultVariants: {

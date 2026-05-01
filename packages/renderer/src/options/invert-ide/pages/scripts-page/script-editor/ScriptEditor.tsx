@@ -6,7 +6,6 @@ import {
   buildUserscriptStylesheet,
   getCompiledOutputBuildOptions,
 } from "@/sandbox/compiler";
-import { EditorPanel } from "@/shared/components/editor-panel/EditorPanel";
 import { ResizeHandle } from "@/shared/components/resize-handle/ResizeHandle";
 import { Typography } from "@/shared/components/typography/Typography";
 import { useAppDispatch, useAppSelector } from "@/shared/store/hooks";
@@ -170,8 +169,8 @@ export function ScriptEditor() {
   };
 
   return (
-    <div className="flex h-full min-w-0 flex-col gap-sm overflow-hidden">
-      <div className="flex items-center gap-sm rounded-default border border-border bg-surface-raised p-sm px-md">
+    <div className="flex h-full min-w-0 flex-col overflow-hidden">
+      <div className="flex items-center gap-sm border-b border-border bg-surface-raised p-sm px-md">
         <ScriptMetadata key={script.id} script={script} />
       </div>
       <div className="min-h-0 min-w-0 flex-1 overflow-hidden">
@@ -242,16 +241,13 @@ export function ScriptEditor() {
                     }}
                   >
                     <Panel id="typescript-source" minSize="35%">
-                      <EditorPanel className="flex h-full flex-col overflow-hidden">
-                        <div className="flex items-center justify-between border-b border-border bg-surface-raised px-md py-sm">
-                          <Typography variant="section-title">
-                            script.ts
-                          </Typography>
+                      <div className="relative flex h-full flex-col overflow-hidden bg-surface-base">
+                        <div className="pointer-events-none absolute top-2 right-6 z-10 select-none">
                           <Typography
                             variant="caption"
-                            className="font-mono text-text-muted-faint"
+                            className="font-mono font-bold text-text-muted-faint"
                           >
-                            Runtime logic
+                            // script.ts
                           </Typography>
                         </div>
                         <div className="min-h-0 flex-1">
@@ -269,20 +265,17 @@ export function ScriptEditor() {
                             }}
                           />
                         </div>
-                      </EditorPanel>
+                      </div>
                     </Panel>
                     <ResizeHandle direction="vertical" />
                     <Panel id="typescript-definitions" minSize="20%">
-                      <EditorPanel className="flex h-full flex-col overflow-hidden">
-                        <div className="flex items-center justify-between border-b border-border bg-surface-raised px-md py-sm">
-                          <Typography variant="section-title">
-                            types.d.ts
-                          </Typography>
+                      <div className="relative flex h-full flex-col overflow-hidden bg-surface-base">
+                        <div className="pointer-events-none absolute top-2 right-6 z-10 select-none">
                           <Typography
                             variant="caption"
-                            className="font-mono text-text-muted-faint"
+                            className="font-mono font-bold text-text-muted-faint"
                           >
-                            Type-only definitions
+                            // types.d.ts
                           </Typography>
                         </div>
                         <div className="min-h-0 flex-1">
@@ -299,25 +292,35 @@ export function ScriptEditor() {
                             }}
                           />
                         </div>
-                      </EditorPanel>
+                      </div>
                     </Panel>
                   </Group>
                 </Panel>
                 <ResizeHandle direction="horizontal" />
                 <Panel id="scss-editor" minSize="20%" maxSize="80%">
-                  <EditorPanel>
-                    <CodeEditor
-                      modelId={`scripts/${script.id}/styles`}
-                      scriptId={script.id}
-                      language="scss"
-                      contents={script.code.source.scss}
-                      onCodeModified={(code) => onCodeModified("scss", code)}
-                      onEditorReady={(editor) => {
-                        setScssEditorInstance(editor);
-                        setScssModel(editor.getModel());
-                      }}
-                    />
-                  </EditorPanel>
+                  <div className="relative flex h-full flex-col overflow-hidden bg-surface-base">
+                    <div className="pointer-events-none absolute top-2 right-6 z-10 select-none">
+                      <Typography
+                        variant="caption"
+                        className="font-mono font-bold text-text-muted-faint"
+                      >
+                        // styles.scss
+                      </Typography>
+                    </div>
+                    <div className="min-h-0 flex-1">
+                      <CodeEditor
+                        modelId={`scripts/${script.id}/styles`}
+                        scriptId={script.id}
+                        language="scss"
+                        contents={script.code.source.scss}
+                        onCodeModified={(code) => onCodeModified("scss", code)}
+                        onEditorReady={(editor) => {
+                          setScssEditorInstance(editor);
+                          setScssModel(editor.getModel());
+                        }}
+                      />
+                    </div>
+                  </div>
                 </Panel>
               </Group>
             </Panel>
@@ -332,7 +335,7 @@ export function ScriptEditor() {
               collapsedSize="36px"
               onResize={onDrawerResize}
             >
-              <EditorPanel className="overflow-hidden">
+              <div className="h-full overflow-hidden bg-surface-base">
                 <ScriptEditorDrawer
                   script={script}
                   javascript={liveJs}
@@ -346,7 +349,7 @@ export function ScriptEditor() {
                     scss: scssEditorInstance ?? undefined,
                   }}
                 />
-              </EditorPanel>
+              </div>
             </Panel>
           </Group>
         )}
