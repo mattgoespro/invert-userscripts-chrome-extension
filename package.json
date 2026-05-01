@@ -37,6 +37,7 @@
     "clsx": "^2.1.1",
     "fuzzysort": "^3.1.0",
     "lucide-react": "^0.563.0",
+    "monaco-editor": "^0.55.1",
     "monaco-editor-core": "^0.55.1",
     "postcss": "^8.5.8",
     "postcss-loader": "^8.2.1",
@@ -83,5 +84,6 @@
     "webpack": "^5.104.1",
     "webpack-cli": "^6.0.1",
     "ws": "^8.19.0"
-  }
+  },
+  "packageManager": "pnpm@10.33.0"
 }
