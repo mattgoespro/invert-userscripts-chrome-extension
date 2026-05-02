@@ -1,7 +1,7 @@
 ---
-description: "Scaffold a new React component with the correct folder structure, CVA boilerplate, TypeScript types, and Tailwind classes following the project's conventions."
-argument-hint: "ComponentName variant:primary,secondary [location]"
-agent: "agent"
+description: "Use when: scaffolding a new React component in the renderer package with the correct folder structure, CVA boilerplate, TypeScript types, and Tailwind design-system conventions."
+argument-hint: "ComponentName variant:primary,secondary location:packages/renderer/src/shared/components/"
+agent: "frontend-designer-engineer"
 ---
 
 Create a new React component following the project's established patterns from [copilot-instructions.md](../copilot-instructions.md).

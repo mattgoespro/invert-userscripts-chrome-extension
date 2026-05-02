@@ -4,7 +4,7 @@
   "compilerOptions": {
     "composite": true,
     "lib": ["es2020", "dom", "dom.iterable"],
-    "types": ["node", "chrome"],
+    "types": ["chrome"],
     "outDir": "dist/packages/runtime",
     "paths": {
       "@/*": ["./src/*"],

@@ -1,4 +1,5 @@
 ---
+name: "Example Userscripts Instructions"
 applyTo: "examples/userscripts/**"
 description: "Use when working with example userscripts: global script patterns, per-script .global.d.ts type declarations, no-module architecture, ESLint directives for unused global functions."
 ---
@@ -46,12 +47,14 @@ export {};
 Since top-level function declarations are intentionally "unused" within their own file (they're consumed globally by other scripts at runtime), ESLint's `@typescript-eslint/no-unused-vars` is suppressed per-file:
 
 - **File-level disable** — For shared utility scripts where most/all declarations are global API:
+
   ```typescript
   /* eslint-disable @typescript-eslint/no-unused-vars -- global API */
   function myGlobalFunction() { /* ... */ }
   ```
 
 - **Scoped disable/enable** — When only some declarations are global and internal helpers should still be checked:
+
   ```typescript
   function _internalHelper() { /* ... */ }
 

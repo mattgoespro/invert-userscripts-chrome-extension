@@ -1,6 +1,7 @@
 ---
-applyTo: "packages/renderer/src/shared/store/**"
+name: "Renderer Package: Redux Slice Conventions"
 description: "Redux Toolkit slice conventions: createAsyncThunk patterns, RTK selectors API, storage quota stripping, file structure, and typed hooks for the Invert IDE store."
+applyTo: "packages/renderer/src/shared/store/**"
 ---
 
 # Redux Toolkit Slice Conventions
@@ -20,7 +21,7 @@ slices/<slice-name>/
 - **`state.*.ts`**: A named state type (e.g., `UserscriptsState`, `SettingsState`) and an exported `initialState` constant.
 - **`thunks.*.ts`**: All `createAsyncThunk` definitions for the slice. Thunks are imported into `index.ts` for use in `extraReducers`.
 
-If a slice has no async operations, it may omit the thunks file (see `monaco-editor` slice which inlines its `EditorState` type).
+If a slice has no async operations, it may omit the thunks file.
 
 ## createAsyncThunk Import
 
@@ -110,7 +111,7 @@ reducers: {
 
 ## Storage Quota Stripping Pattern
 
-When persisting to `chrome.storage.sync` (8KB per-key quota), **strip compiled code** before saving. Keep full compiled code only in Redux state:
+When persisting userscripts to `chrome.storage.sync` (8KB per-key quota), **strip compiled code** before saving. Persist compiled JavaScript/CSS plus build metadata separately via `CompiledCodeStorage` in `chrome.storage.local`:
 
 ```typescript
 export const updateUserscript = createAsyncThunk<Userscript, Userscript, { state: RootState }>(
@@ -134,6 +135,14 @@ export const updateUserscript = createAsyncThunk<Userscript, Userscript, { state
 );
 ```
 
+Load and update flows must keep both stores in sync:
+
+- `ChromeSyncStorage` stores source and metadata
+- `CompiledCodeStorage` stores compiled JavaScript/CSS and build metadata
+- load thunks merge compiled artifacts back into Redux state after reading both stores
+
+When working in the userscripts/code-editor slices, preserve the normalization and rebuild pipeline around `typeDefinitions`, shared-module config changes, and compiled-output build metadata.
+
 ## extraReducers Pattern
 
 Use the `builder` callback pattern for handling thunk lifecycle states:
@@ -156,12 +165,12 @@ extraReducers: (builder) => {
 
 ## Thunk Action Type Prefix
 
-Use the slice name as the prefix for thunk action types: `"<sliceName>/<actionName>"`:
+Use the established domain namespace for thunk action types. In this repo, the namespace usually matches the slice name, but follow the existing folder/domain convention when it differs:
 
 ```typescript
 createAsyncThunk("userscripts/loadUserscripts", async () => { /* ... */ });
 createAsyncThunk("settings/updateSettings", async () => { /* ... */ });
-createAsyncThunk("editor/saveEditorCode", async () => { /* ... */ });
+createAsyncThunk("code-editor/saveEditorCode", async () => { /* ... */ });
 ```
 
 ## Cross-Slice Thunk Dispatch
@@ -170,7 +179,7 @@ Thunks may dispatch actions from other slices using the `dispatch` parameter fro
 
 ```typescript
 export const saveEditorCode = createAsyncThunk(
-  "editor/saveEditorCode",
+  "code-editor/saveEditorCode",
   async (args, { dispatch }) => {
     await dispatch(updateUserscriptCode({ /* ... */ })).unwrap();
     return result;
@@ -178,9 +187,11 @@ export const saveEditorCode = createAsyncThunk(
 );
 ```
 
+Save flows that should reinject open tabs also participate in the runtime message contract. In current code, `saveEditorCode` and `rebuildCompiledUserscripts` send the `"refreshTabs"` message after compiled output changes that the runtime should reapply.
+
 ## Store Configuration
 
-The store is configured in `store.ts` with three slice reducers (`userscripts`, `settings`, `editor`), `redux-logger` middleware (collapsed, diff mode), and Redux DevTools named `"Invert IDE Userscripts"`. Slice keys in the store must match the slice `name`.
+The store is configured in `store.ts` with four slice reducers (`userscripts`, `settings`, `editor`, `workspace`), `redux-logger` middleware (collapsed, diff mode), and Redux DevTools named `"Invert IDE Userscripts"`. Slice keys in the store must match the slice `name`.
 
 ## Exports
 

@@ -50,21 +50,29 @@ The monaco package encapsulates all Monaco editor integration: Shiki tokenizer r
 
 ### Build & Run
 
-| Command                        | Description                                         |
-| ------------------------------ | --------------------------------------------------- |
-| `npm run dev`                  | Run Webpack in watch mode for development           |
-| `npm run build`                | Production build                                    |
-| `npm run lint`                 | Run ESLint across all packages, tools, and examples |
-| `npm run format`               | Run Prettier to format all files                    |
-| `npm run clean`                | Remove the `dist` directory                         |
-| `npm run icons`                | Generate extension icons via `scripts/`             |
-| `npm run start-redux-devtools` | Launch Redux DevTools on localhost:8001             |
+| Command          | Description                                         |
+| ---------------- | --------------------------------------------------- |
+| `npm run dev`    | Run Webpack in watch mode for development           |
+| `npm run build`  | Production build                                    |
+| `npm run lint`   | Run ESLint across all packages, tools, and examples |
+| `npm run format` | Run Prettier to format all files                    |
+| `npm run clean`  | Remove the `dist` directory                         |
 
 ### Path Aliases
 
 - `@shared/*` → Maps to `packages/shared/src/*`. Use for importing shared logic across packages.
 - `@packages/monaco` → Maps to `packages/monaco/src/index.ts`. Use for importing Monaco editor integration, themes, and utilities.
 - `@/*` → Maps to `./src/*` within the renderer package (e.g., `@/shared/components` → `packages/renderer/src/shared/components`).
+
+### Scoped Instructions
+
+Use the file-scoped instruction files when you touch one of these subsystems:
+
+- [Example userscripts](./instructions/example-userscripts.instructions.md)
+- [Renderer Redux slices](./instructions/renderer.redux-slices.instructions.md)
+- [Runtime script injection](./instructions/runtime.injection.instructions.md)
+- [Shared storage managers](./instructions/shared.storage.instructions.md)
+- [Webpack build conventions](./instructions/tooling.instructions.md)
 
 ---
 
@@ -108,27 +116,30 @@ type Userscripts = Record<string, Userscript>;
 - **`shared`** — When `true`, marks this script as a shared module that other scripts can import.
 - **`moduleName`** — The module name used for import resolution (e.g., `import { fn } from "shared/moduleName"`).
 - **`sharedScripts`** — Array of userscript IDs this script depends on (shared script dependencies).
+- **`globalModules`** — Array of global module IDs that should be injected before this script runs.
+- **`typeDefinitions`** — Extra TypeScript declarations stored alongside the userscript source.
 - **`runAt`** — `"beforePageLoad"` or `"afterPageLoad"` (not `document_start`/`document_end`).
 - **`createdAt` / `updatedAt`** — Numeric timestamps (`Date.now()`), not ISO strings.
 
 ### UI State Models
 
 ```typescript
-type SidebarTab = "scripts" | "modules" | "settings";
-type OutputDrawerTab = "javascript" | "css";
+type AppSidebarTab = "scripts" | "modules" | "settings";
+type ScriptEditorDrawerTab = "javascript" | "css" | "errors";
 
-interface UIPanelSizes {
-  scriptListWidth: number;
-  tsScssHorizontalSplit: number;
-  sourceVsDrawerSplit: number;
+interface GlobalStateSizes {
+  scriptListSidebarWidth?: number;
+  scriptCodeEditorHorizontalSplit?: number;
+  scriptTypeDefinitionsVerticalSplit?: number;
+  scriptCompiledOutputDrawerSplit?: number;
 }
 
-interface UIState {
-  activeSidebarTab: SidebarTab;
-  selectedScriptId: string | null;
-  outputDrawerCollapsed: boolean;
-  outputDrawerActiveTab: OutputDrawerTab;
-  panelSizes: UIPanelSizes;
+interface GlobalState {
+  activeSidebarTab?: AppSidebarTab;
+  selectedScriptId?: string;
+  outputDrawerCollapsed?: boolean;
+  outputDrawerActiveTab?: ScriptEditorDrawerTab;
+  panelSizes?: GlobalStateSizes;
 }
 ```
 
@@ -136,139 +147,27 @@ interface UIState {
 
 - **`GlobalModule`**: External JavaScript modules (`{ id, name, url, enabled }`) that can be injected globally.
 - **`GlobalModules`**: `Record<string, GlobalModule>`.
-- **`EditorSettings`**: Monaco editor configuration (`{ theme?, fontSize?, tabSize?, autoFormat?, autoSave? }`). `theme` is typed as `EditorThemeName` from `@packages/monaco`.
+- **`EditorSettings`**: Monaco and UI settings (`{ theme?, appTheme?, fontSize?, tabSize?, autoFormat?, autoSave?, minifyCompiledOutput? }`). `theme` is typed as `EditorThemeName` from `@packages/monaco`.
+- **`CompiledCodeEntry`**: Compiled JavaScript/CSS plus build metadata stored in `chrome.storage.local`.
 - **`UserscriptCompileResult`**: Compilation output (`{ success, code?, error?: Error }`).
-- **`SharedScriptInfo`**: Shared script metadata (`{ id, name, moduleName, sourceCode }`).
+- **`SharedScriptInfo`**: Shared script metadata (`{ id, name, moduleName, sourceCode, typeDefinitions }`).
 
 ---
 
 ## State Management & Persistence
 
-### Storage Strategy
+Agents should treat persistence and state as a layered system rather than one flat storage surface:
 
-All persistence is handled via `chrome.storage.sync`, abstracted by two manager classes in `packages/shared/src/storage/`.
+- `chrome.storage.sync` stores userscript metadata, modules, settings, command-palette state, and persisted UI layout state.
+- `chrome.storage.local` stores compiled JavaScript/CSS and build metadata via `CompiledCodeStorage`.
+- The renderer store uses four slices: `userscripts`, `settings`, `editor`, and `workspace`.
+- Persistent layout state lives outside Redux in `GlobalStateProvider` and `GlobalStateManager`.
+- Always use the typed hooks from `@/shared/store/hooks`.
 
-**`ChromeSyncStorage` API** (all static methods, in `sync.storage.ts`):
+Keep detailed behavioral contracts in the scoped instruction files instead of duplicating those rules here:
 
-| Method                         | Description                                |
-| ------------------------------ | ------------------------------------------ |
-| `getAll()`                     | Returns all stored data                    |
-| `getAllScripts()`              | Returns `Userscripts` record               |
-| `saveScript(script)`           | Merges script into storage                 |
-| `updateScript(id, updates)`    | Partial update                             |
-| `deleteScript(scriptId)`       | Removes a script                           |
-| `getAllModules()`              | Returns `GlobalModules` record             |
-| `saveModule(module)`           | Upserts a module                           |
-| `deleteModule(moduleId)`       | Removes a module                           |
-| `getEditorSettings()`          | Returns settings (with hardcoded defaults) |
-| `saveEditorSettings(settings)` | Merges partial settings                    |
-
-**`GlobalStateManager` API** (all static methods, in `global-state.storage.ts`):
-
-| Method        | Description                                          |
-| ------------- | ---------------------------------------------------- |
-| `get()`       | Returns `GlobalState`, deep-merged with defaults     |
-| `save(state)` | Persists full `GlobalState` to `chrome.storage.sync` |
-
-**Exported defaults**:
-
-- `ChromeSyncStorage.defaultSettings` — `EditorSettings` with theme `"invert-dark"`, appTheme `"graphite"`, fontSize 11, tabSize 2, autoFormat true, autoSave true.
-- `GlobalStateManager.defaultState` — `GlobalState` with scripts tab active, null selection, drawer open, 30/50/70 panel splits.
-
-### State Architecture Overview
-
-| State Type                    | Pattern                                                                      |
-| ----------------------------- | ---------------------------------------------------------------------------- |
-| **Userscripts** (complex)     | Redux Toolkit slice + `createAsyncThunk` for async storage                   |
-| **Editor Settings** (complex) | Redux Toolkit slice + `createAsyncThunk` for async storage                   |
-| **Editor State** (complex)    | Redux Toolkit slice for Monaco init, saving, and TS defaults                 |
-| **UI Layout State**           | React Context (`GlobalStateProvider`) + `GlobalStateManager` for persistence |
-| **Global Modules** (simple)   | Direct `ChromeSyncStorage` access with `useState` and manual `loadData`      |
-
-### Redux Store Configuration
-
-The store is configured in `packages/renderer/src/shared/store/store.ts`:
-
-- **Three slices**: `userscripts`, `settings`, `editor`
-- **Middleware**: `redux-logger` (collapsed, diff mode)
-- **DevTools**: Named `"Invert IDE Userscripts"`
-- **No epics / no Redux Observable** — all async operations use `createAsyncThunk`
-
-### Typed Redux Hooks
-
-Always use the typed hooks from `packages/renderer/src/shared/store/hooks.ts`:
-
-```tsx
-import {
-  useAppDispatch,
-  useAppSelector,
-  useAppStore,
-} from "@/shared/store/hooks";
-```
-
-### Redux Flow for Userscripts
-
-The `userscripts.slice.ts` defines:
-
-**Async Thunks** (6): `loadUserscripts`, `createUserscript`, `deleteUserscript`, `toggleUserscript`, `updateUserscript`, `updateUserscriptCode`
-
-**Sync Reducers** (2): `setCurrentUserscript`, `markUserscriptModified` (both use `prepare` callback to wrap bare IDs)
-
-**Selectors** (5): `selectAllUserscripts`, `selectCurrentUserscript`, `selectUserscriptById`, `selectUnsavedUserscripts`, `selectSharedUserscripts`
-
-**Storage Quota Pattern**: All write thunks strip `compiled` code before persisting to `chrome.storage.sync` to stay within the 8KB-per-key quota. Full compiled code is kept in Redux state only.
-
-Flow:
-
-1. Component dispatches an async thunk (e.g., `updateUserscriptCode`)
-2. Thunk performs async work (compilation, storage persistence via `ChromeSyncStorage`)
-3. `extraReducers` handles `pending`/`fulfilled`/`rejected` states
-4. Selectors provide derived access to state
-
-### Redux Flow for Settings
-
-The `settings.slice.ts` defines:
-
-**Async Thunks** (2): `loadSettings`, `updateSettings`
-
-**Sync Reducers** (5): `setTheme`, `setFontSize`, `setTabSize`, `setAutoFormat`, `setAutoSave`
-
-**Selectors** (2): `selectEditorSettings`, `selectIsLoading`
-
-**Pattern**: Each setting has a sync reducer (optimistic UI update) while `updateSettings` handles persistent storage. `loadSettings` merges stored values with `defaultSettings`.
-
-### Redux Flow for Editor
-
-The `editor.slice.ts` defines:
-
-**Async Thunks** (2): `initializeMonaco`, `saveEditorCode`
-
-**Plain Thunks** (3): `configureTypescriptDefaults`, `syncSharedScriptLibs`, `disposeSharedScriptLibs` (manual dispatch functions, not `createAsyncThunk`)
-
-**Sync Reducers** (1): `setTsDefaultsConfigured`
-
-**Selectors** (4): `selectMonacoReady`, `selectTsDefaultsConfigured`, `selectIsSaving`, `selectSharedScriptsForUserscript` (parameterized cross-slice selector)
-
-**Key behaviors**:
-
-- `initializeMonaco` calls `registerMonaco()` from the monaco package. If Shiki initialization fails, `monacoReady` is still set to `true` so Monarch tokenizers serve as fallback.
-- `saveEditorCode` optionally formats with Prettier, then dispatches `updateUserscriptCode` from the userscripts slice.
-- Shared script TypeScript declarations are managed via module-scoped `Map<string, IDisposable>` outside Redux state (non-serializable).
-
-### UI State Context
-
-The `GlobalStateProvider` and `useGlobalState()` hook in `packages/renderer/src/options/invert-ide/contexts/global-state.context.tsx` manage persistent UI layout state outside Redux:
-
-```tsx
-import { useGlobalState } from "@/options/invert-ide/contexts/global-state.context";
-
-const { uiState, updateUIState, updatePanelSizes } = useGlobalState();
-```
-
-- React Context + Provider pattern (not Redux)
-- Debounced persistence (500ms) to `chrome.storage.sync` via `GlobalStateManager`
-- Returns `null` (no children rendered) until initial state is loaded, preventing layout flicker
-- Two update methods: `updateUIState` (shallow merge at top level) and `updatePanelSizes` (shallow merge into `panelSizes`)
+- [Renderer Redux slices](./instructions/renderer.redux-slices.instructions.md)
+- [Shared storage managers](./instructions/shared.storage.instructions.md)
 
 ---
 
@@ -734,76 +633,21 @@ Located in `packages/runtime/src/handlers/`:
 
 ### Script Injection
 
-The core injection logic lives in `packages/runtime/src/ide/scripts.ts`:
+Runtime injection is split between compile-time output preparation and runtime delivery:
 
-1. **`injectMatchingScripts(tabId, url)`** — Fetches enabled scripts from storage, filters by URL pattern match, injects shared dependencies first, then injects each script
-2. **`matchesUrlPattern(url, patterns)`** — Converts glob patterns (`*`, `?`) to regex and tests against URL
-3. **`injectScript(tabId, script)`** — Uses `chrome.scripting.executeScript` with `world: "MAIN"` to inject compiled JavaScript via a dynamically created `<script>` element. If the script has shared dependencies, resolves `import ... from "shared/..."` statements first via `resolveSharedImports`
-4. **`injectSharedScript(tabId, script)`** — Wraps shared script code via `wrapSharedScriptForInjection` and injects it into the page
+- Shared-module import/export rewriting happens during compilation in `packages/shared/src/compiled-output.ts` and `packages/renderer/src/sandbox/compiler.ts`.
+- Runtime handlers choose timing (`beforePageLoad` vs `afterPageLoad`) and call `injectMatchingScripts(...)`.
+- Runtime delivery injects CDN modules, shared dependencies, JavaScript, and CSS in a fixed order.
 
-### Shared Script Injection System
-
-Shared scripts use a runtime module registry on `window.__INVERT_SHARED__`:
-
-- **`wrapSharedScriptForInjection(moduleName, compiledJs)`** — Strips `export` keywords from compiled JS, wraps code in an IIFE, and registers all exported members on `window.__INVERT_SHARED__[moduleName]`
-- **`resolveSharedImports(compiledJs)`** — Transforms `import { x } from "shared/name"` statements into `const { x } = window.__INVERT_SHARED__["name"]` lookups
-- Injection order: shared dependencies are injected before consumer scripts, with deduplication via a `Set<string>`
-
-Background script (`packages/runtime/src/background.ts`) registers Chrome event listeners for `onInstalled`, `onMessage`, and `webNavigation.onCompleted`. The `tab.handler.ts` self-registers its `chrome.tabs.onUpdated` listener via side-effect import.
+For the full injection contract, use [Runtime script injection](./instructions/runtime.injection.instructions.md).
 
 ---
 
 ## Build System (Webpack)
 
-### Entry Points
+Treat `webpack.config.ts` as a coupled extension build manifest. Entry points, copied assets, Monaco bundling, manifest rewriting, and dev reloader behavior are coordinated.
 
-| Entry          | Source File                                     | Output            |
-| -------------- | ----------------------------------------------- | ----------------- |
-| `background`   | `packages/runtime/src/background.ts`            | `background.js`   |
-| `options`      | `packages/renderer/src/options/index.tsx`       | `options.js`      |
-| `sass-sandbox` | `packages/renderer/src/sandbox/sass-sandbox.ts` | `sass-sandbox.js` |
-
-> **Note**: The `popup` entry (`packages/renderer/src/popup/index.tsx`) is currently commented out pending implementation.
-
-### Module Processing
-
-| Scope                         | Loader                                                 | Config               |
-| ----------------------------- | ------------------------------------------------------ | -------------------- |
-| `packages/shared/src/*.ts`    | `esbuild-loader`                                       | Shared tsconfig      |
-| `packages/monaco/src/*.ts`    | `esbuild-loader`                                       | Monaco tsconfig      |
-| `packages/runtime/**/*.ts`    | `esbuild-loader`                                       | Runtime tsconfig     |
-| `packages/renderer/**/*.tsx?` | `esbuild-loader` (`loader: "tsx"`, `jsx: "automatic"`) | Renderer tsconfig    |
-| `.css`                        | `style-loader → css-loader → postcss-loader`           | Tailwind via PostCSS |
-| `.ttf`                        | `asset/resource`                                       | Monaco editor fonts  |
-
-**`noParse`**: `typescript.js` is excluded from parsing to improve build performance.
-
-### Resolve Aliases
-
-- `@` → `packages/renderer/src/`
-- `@shared` → `packages/shared/src/`
-- `@packages/monaco` → `packages/monaco/src/`
-- `monaco-editor$` → `monaco-editor/esm/vs/editor/editor.api.js`
-
-### Plugins
-
-- `HtmlWebpackPlugin` (options)
-- `MonacoEditorWebpackPlugin`
-- `CopyWebpackPlugin` (manifest.json + images + sass-sandbox.html)
-- `FaviconsWebpackPlugin`
-- `ChromeExtensionReloaderWebpackPlugin` (development only — see Development Tooling)
-
-### Chunk Splitting
-
-Monaco editor is isolated into a separate chunk to optimize loading.
-
-### Build Optimization
-
-- **Minimizer**: `TerserPlugin` (production only, `extractComments: false`)
-- **Split Chunks**: Monaco editor isolated into a named cache group with content-hashed filenames
-- **Cache**: Filesystem caching enabled for faster rebuilds
-- **Output**: `pathinfo: false` to reduce garbage collector pressure; chunk files output to `chunks/[chunkhash].js`
-- **Stats**: `"errors-warnings"` for reduced console noise
+For detailed build-configuration rules, use [Webpack build conventions](./instructions/tooling.instructions.md).
 
 ---
 
@@ -1073,7 +917,7 @@ packages/renderer/src/
 │           ├── modules-page/         # Global module management (direct ChromeSyncStorage)
 │           └── settings-page/        # Editor settings (Redux-backed)
 │               └── theme-preview/    # Editor theme preview component
-├── popup/                            # Extension popup (not yet implemented)
+├── popup/                            # Extension popup entry
 │   ├── index.html
 │   └── index.tsx
 ├── sandbox/                          # In-browser compilation & formatting

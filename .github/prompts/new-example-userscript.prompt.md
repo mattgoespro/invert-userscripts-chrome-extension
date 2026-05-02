@@ -1,6 +1,6 @@
 ---
-description: "Scaffold a new example userscript with the correct file structure, global type declarations, ESLint directives, and tsconfig inclusion."
-argument-hint: "ScriptName [--shared]"
+description: "Use when: scaffolding a new example userscript in examples/userscripts with the correct file structure, optional shared global declarations, ESLint directives, and tsconfig-visible types."
+argument-hint: "script-name location:examples/userscripts/"
 agent: "agent"
 ---
 

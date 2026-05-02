@@ -3,7 +3,6 @@
   "include": ["src/**/*.ts"],
   "compilerOptions": {
     "composite": true,
-    "baseUrl": ".",
     "lib": ["es2020", "dom", "dom.iterable"],
     "outDir": "dist/packages/monaco",
     "paths": {
