@@ -55,11 +55,17 @@ function clampPercent(bytes: number, quotaBytes: number): number {
 }
 
 function isUserscriptManifestKey(key: string): boolean {
-  return key.startsWith(USERSCRIPT_KEY_PREFIX) && !key.includes(USERSCRIPT_CHUNK_SEPARATOR);
+  return (
+    key.startsWith(USERSCRIPT_KEY_PREFIX) &&
+    !key.includes(USERSCRIPT_CHUNK_SEPARATOR)
+  );
 }
 
 function isUserscriptChunkKey(key: string): boolean {
-  return key.startsWith(USERSCRIPT_KEY_PREFIX) && key.includes(USERSCRIPT_CHUNK_SEPARATOR);
+  return (
+    key.startsWith(USERSCRIPT_KEY_PREFIX) &&
+    key.includes(USERSCRIPT_CHUNK_SEPARATOR)
+  );
 }
 
 function summarizeStorageKeys(
@@ -121,9 +127,8 @@ async function loadStorageUsageSnapshot(): Promise<StorageUsageSnapshot> {
     getBytesByKey(chrome.storage.local, localKeys),
   ]);
 
-  const syncUserscriptEntries = summarizeStorageKeys(
-    syncKeyUsage,
-    (key) => key.startsWith(USERSCRIPT_KEY_PREFIX)
+  const syncUserscriptEntries = summarizeStorageKeys(syncKeyUsage, (key) =>
+    key.startsWith(USERSCRIPT_KEY_PREFIX)
   );
   const syncUserscriptBytes = syncUserscriptEntries.reduce(
     (total, entry) => total + entry.bytes,
@@ -134,9 +139,8 @@ async function loadStorageUsageSnapshot(): Promise<StorageUsageSnapshot> {
     (key) => !key.startsWith(USERSCRIPT_KEY_PREFIX)
   );
 
-  const localCompiledEntries = summarizeStorageKeys(
-    localKeyUsage,
-    (key) => key.startsWith(COMPILED_KEY_PREFIX)
+  const localCompiledEntries = summarizeStorageKeys(localKeyUsage, (key) =>
+    key.startsWith(COMPILED_KEY_PREFIX)
   );
   const localCompiledBytes = localCompiledEntries.reduce(
     (total, entry) => total + entry.bytes,
@@ -195,7 +199,10 @@ function StorageMeter({
             {description}
           </Typography>
         </div>
-        <Typography variant="code" className="text-right text-sm text-foreground">
+        <Typography
+          variant="code"
+          className="text-right text-sm text-foreground"
+        >
           {formatBytes(bytes)}
         </Typography>
       </div>
@@ -282,7 +289,7 @@ export function StorageUsagePanel() {
 
   return (
     <div className="flex flex-col gap-md">
-      <div className="grid gap-sm xl:grid-cols-2">
+      <div className="xl:grid-cols-2 grid gap-sm">
         <StorageMeter
           label="chrome.storage.sync"
           bytes={snapshot.syncTotalBytes}
@@ -299,23 +306,31 @@ export function StorageUsagePanel() {
         />
       </div>
 
-      <div className="grid gap-sm xl:grid-cols-2">
+      <div className="xl:grid-cols-2 grid gap-sm">
         <div className="rounded-default border border-border-subtle bg-surface-base p-md">
-          <Typography variant="section-title" className="mb-3 text-text-muted-strong">
+          <Typography
+            variant="section-title"
+            className="mb-3 text-text-muted-strong"
+          >
             Sync Breakdown
           </Typography>
           <div className="flex flex-col gap-2.5">
             <div className="flex items-center justify-between gap-sm">
               <Typography variant="body">Userscript source payloads</Typography>
-              <Typography variant="code">{formatBytes(snapshot.syncUserscriptBytes)}</Typography>
+              <Typography variant="code">
+                {formatBytes(snapshot.syncUserscriptBytes)}
+              </Typography>
             </div>
             <Typography variant="caption" className="text-text-muted-strong">
-              {snapshot.syncUserscriptManifestCount} manifests, {snapshot.syncUserscriptChunkCount} overflow chunks
+              {snapshot.syncUserscriptManifestCount} manifests,{" "}
+              {snapshot.syncUserscriptChunkCount} overflow chunks
             </Typography>
             <div className="mt-1 flex items-center justify-between gap-sm border-t border-border-subtle pt-2.5">
               <Typography variant="body">Other sync keys</Typography>
               <Typography variant="code">
-                {formatBytes(snapshot.syncTotalBytes - snapshot.syncUserscriptBytes)}
+                {formatBytes(
+                  snapshot.syncTotalBytes - snapshot.syncUserscriptBytes
+                )}
               </Typography>
             </div>
             {snapshot.syncOtherKeys.slice(0, 4).map((entry) => (
@@ -335,13 +350,18 @@ export function StorageUsagePanel() {
         </div>
 
         <div className="rounded-default border border-border-subtle bg-surface-base p-md">
-          <Typography variant="section-title" className="mb-3 text-text-muted-strong">
+          <Typography
+            variant="section-title"
+            className="mb-3 text-text-muted-strong"
+          >
             Local Breakdown
           </Typography>
           <div className="flex flex-col gap-2.5">
             <div className="flex items-center justify-between gap-sm">
               <Typography variant="body">Compiled output entries</Typography>
-              <Typography variant="code">{formatBytes(snapshot.localCompiledBytes)}</Typography>
+              <Typography variant="code">
+                {formatBytes(snapshot.localCompiledBytes)}
+              </Typography>
             </div>
             <Typography variant="caption" className="text-text-muted-strong">
               {snapshot.localCompiledEntryCount} compiled userscript records
@@ -349,7 +369,9 @@ export function StorageUsagePanel() {
             <div className="mt-1 flex items-center justify-between gap-sm border-t border-border-subtle pt-2.5">
               <Typography variant="body">Other local keys</Typography>
               <Typography variant="code">
-                {formatBytes(snapshot.localTotalBytes - snapshot.localCompiledBytes)}
+                {formatBytes(
+                  snapshot.localTotalBytes - snapshot.localCompiledBytes
+                )}
               </Typography>
             </div>
             {snapshot.localOtherKeys.length > 0 ? (
@@ -361,7 +383,10 @@ export function StorageUsagePanel() {
                   <Typography variant="caption" className="text-text-muted">
                     {prettifyStorageKey(entry.key)}
                   </Typography>
-                  <Typography variant="code" className="text-xs text-foreground">
+                  <Typography
+                    variant="code"
+                    className="text-xs text-foreground"
+                  >
                     {formatBytes(entry.bytes)}
                   </Typography>
                 </div>
