@@ -53,8 +53,8 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
       >
         {icon &&
           createElement(icon, {
-            color: "#a5a5a5ff",
             size: ICON_SIZES[size ?? "md"],
+            className: "shrink-0",
           })}
         {children}
       </button>

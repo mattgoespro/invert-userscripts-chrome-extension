@@ -55,7 +55,7 @@ export function ScriptMetadata({ script }: ScriptMetadataProps) {
 
   return (
     <>
-      <div className="flex w-full items-center gap-sm">
+      <div className="flex w-full min-w-0 items-center gap-sm">
         <span className="shrink-0 font-mono text-sm text-syntax-keyword">
           const
         </span>
@@ -67,7 +67,7 @@ export function ScriptMetadata({ script }: ScriptMetadataProps) {
           onChange={(event) => onUpdateScriptMeta({ name: event.target.value })}
         />
         <UrlPatternInput
-          className="flex-1"
+          className="min-w-0 flex-1"
           patterns={script.urlPatterns ?? []}
           onChange={(urlPatterns) => onUpdateScriptMeta({ urlPatterns })}
         />

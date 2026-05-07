@@ -15,6 +15,7 @@ import type { RuntimePortMessageEvent } from "@shared/messages";
 import { ChromeSyncStorage, CompiledCodeStorage } from "@shared/storage";
 import { RootState } from "../../store";
 import { uuid } from "@/shared/utils";
+import { UserscriptsTransferFile } from "./transfer.userscripts";
 
 function normalizeUserscript(script: Userscript): Userscript {
   return {
@@ -388,4 +389,102 @@ export const rebuildCompiledUserscripts = createAsyncThunk<
   sendRefreshTabsMessage();
 
   return rebuiltScripts;
+});
+
+export const importUserscripts = createAsyncThunk<
+  Userscript[],
+  UserscriptsTransferFile,
+  { state: RootState }
+>("userscripts/importUserscripts", async (file, { getState }) => {
+  const [existingScriptsMap, globalModules] = await Promise.all([
+    ChromeSyncStorage.getAllScripts(),
+    ChromeSyncStorage.getAllModules(),
+  ]);
+  const state = getState();
+  const timestampBase = Date.now();
+  const existingSharedByModuleName = new Map(
+    Object.values(existingScriptsMap)
+      .map(normalizeUserscript)
+      .filter((script) => script.shared && script.moduleName.trim().length > 0)
+      .map((script) => [script.moduleName.trim(), script.id])
+  );
+
+  const importedScripts = file.userscripts.map((entry, index) => {
+    const moduleName = entry.moduleName.trim();
+
+    return {
+      id: uuid(),
+      name: entry.name,
+      enabled: entry.enabled,
+      status: "saved",
+      shared: moduleName.length > 0,
+      moduleName,
+      sharedScripts: [] as string[],
+      globalModules: entry.globalModuleImports.filter(
+        (moduleId) => globalModules[moduleId] != null
+      ),
+      typeDefinitions: entry.sources["typescript-declarations"],
+      code: {
+        source: {
+          typescript: entry.sources.typescript,
+          scss: entry.sources.scss,
+        },
+        compiled: {
+          javascript: "",
+          css: "",
+        },
+      },
+      urlPatterns: [...entry.urlPatterns],
+      runAt: entry.runAt,
+      createdAt: timestampBase + index,
+      updatedAt: timestampBase + index,
+    } satisfies Userscript;
+  });
+
+  const importedSharedByModuleName = new Map(
+    importedScripts
+      .filter((script) => script.shared && script.moduleName.length > 0)
+      .map((script) => [script.moduleName, script.id])
+  );
+
+  for (const [index, entry] of file.userscripts.entries()) {
+    importedScripts[index].sharedScripts = entry.sharedImports.map(
+      (moduleName) => {
+        const trimmedModuleName = moduleName.trim();
+        const sharedScriptId =
+          importedSharedByModuleName.get(trimmedModuleName) ??
+          existingSharedByModuleName.get(trimmedModuleName);
+
+        if (!sharedScriptId) {
+          throw new Error(
+            `Script \"${entry.name}\" references unknown shared module \"${trimmedModuleName}\".`
+          );
+        }
+
+        return sharedScriptId;
+      }
+    );
+  }
+
+  const compiledEntries = await Promise.all(
+    importedScripts.map((script) => compileAllOutputsOrThrow(script, state))
+  );
+
+  await Promise.all(
+    importedScripts.map(async (script, index) => {
+      const compiledEntry = compiledEntries[index];
+
+      script.code.compiled.javascript = compiledEntry.javascript;
+      script.code.compiled.css = compiledEntry.css;
+
+      await Promise.all([
+        ChromeSyncStorage.saveScript(buildStorageSafeScript(script)),
+        CompiledCodeStorage.saveCompiledCode(script.id, compiledEntry),
+      ]);
+    })
+  );
+
+  sendRefreshTabsMessage();
+
+  return importedScripts;
 });

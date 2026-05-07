@@ -1,5 +1,10 @@
 import ts from "typescript";
 
+interface DeclarationEntry {
+  suppressKey: string;
+  text: string;
+}
+
 /**
  * Generates a TypeScript ambient module declaration from shared script source code.
  * Uses the TypeScript compiler API to parse the AST and extract all exported members,
@@ -8,8 +13,35 @@ import ts from "typescript";
  */
 export function generateSharedScriptDeclaration(
   _moduleName: string,
-  sourceCode: string
+  sourceCode: string,
+  typeDefinitions = ""
 ): string {
+  const sourceEntries = collectSourceExportDeclarations(sourceCode);
+  const {
+    explicitExportSuppressions,
+    generatedEntries: typeDefinitionEntries,
+  } = collectTypeDefinitionModuleExports(typeDefinitions);
+  const generatedTypeDefinitionSuppressions = new Set(
+    typeDefinitionEntries.map((entry) => entry.suppressKey)
+  );
+
+  const filteredSourceEntries = sourceEntries.filter(
+    (entry) =>
+      !explicitExportSuppressions.has(entry.suppressKey) &&
+      !generatedTypeDefinitionSuppressions.has(entry.suppressKey)
+  );
+
+  return [
+    [...filteredSourceEntries, ...typeDefinitionEntries]
+      .map((entry) => entry.text)
+      .join("\n"),
+    typeDefinitions.trim(),
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+}
+
+function collectSourceExportDeclarations(sourceCode: string): DeclarationEntry[] {
   const sourceFile = ts.createSourceFile(
     "source.ts",
     sourceCode,
@@ -17,31 +49,156 @@ export function generateSharedScriptDeclaration(
     true,
     ts.ScriptKind.TS
   );
-
-  const lines: string[] = [];
   const printer = ts.createPrinter({ removeComments: true });
+  const entries: DeclarationEntry[] = [];
 
   for (const statement of sourceFile.statements) {
     if (!hasExportModifier(statement)) {
       continue;
     }
 
-    if (ts.isVariableStatement(statement)) {
-      lines.push(emitVariableDeclaration(statement, sourceFile, printer));
-    } else if (ts.isFunctionDeclaration(statement)) {
-      lines.push(emitFunctionDeclaration(statement, sourceFile, printer));
-    } else if (ts.isClassDeclaration(statement)) {
-      lines.push(emitClassDeclaration(statement, sourceFile, printer));
-    } else if (ts.isInterfaceDeclaration(statement)) {
-      lines.push(emitInterfaceDeclaration(statement, sourceFile, printer));
-    } else if (ts.isTypeAliasDeclaration(statement)) {
-      lines.push(emitTypeAliasDeclaration(statement, sourceFile, printer));
-    } else if (ts.isEnumDeclaration(statement)) {
-      lines.push(emitEnumDeclaration(statement, sourceFile, printer));
+    appendDeclarationEntries(
+      entries,
+      collectDeclarationEntriesFromStatement(statement, sourceFile, printer)
+    );
+  }
+
+  return dedupeDeclarationEntries(entries);
+}
+
+function collectTypeDefinitionModuleExports(typeDefinitions: string): {
+  explicitExportSuppressions: Set<string>;
+  generatedEntries: DeclarationEntry[];
+} {
+  if (!typeDefinitions.trim()) {
+    return {
+      explicitExportSuppressions: new Set<string>(),
+      generatedEntries: [],
+    };
+  }
+
+  const sourceFile = ts.createSourceFile(
+    "types.d.ts",
+    typeDefinitions,
+    ts.ScriptTarget.ES2020,
+    true,
+    ts.ScriptKind.TS
+  );
+  const printer = ts.createPrinter({ removeComments: true });
+  const explicitExportSuppressions = new Set<string>();
+  const generatedEntries: DeclarationEntry[] = [];
+
+  for (const statement of sourceFile.statements) {
+    if (hasExportModifier(statement)) {
+      for (const entry of collectDeclarationEntriesFromStatement(
+        statement,
+        sourceFile,
+        printer
+      )) {
+        explicitExportSuppressions.add(entry.suppressKey);
+      }
+
+      continue;
+    }
+
+    if (!isDeclareGlobalStatement(statement)) {
+      continue;
+    }
+
+    if (!statement.body || !ts.isModuleBlock(statement.body)) {
+      continue;
+    }
+
+    for (const globalStatement of statement.body.statements) {
+      appendDeclarationEntries(
+        generatedEntries,
+        collectDeclarationEntriesFromStatement(
+          globalStatement,
+          sourceFile,
+          printer
+        )
+      );
     }
   }
 
-  return lines.filter(Boolean).join("\n");
+  return {
+    explicitExportSuppressions,
+    generatedEntries: dedupeDeclarationEntries(generatedEntries),
+  };
+}
+
+function appendDeclarationEntries(
+  target: DeclarationEntry[],
+  entries: DeclarationEntry[]
+): void {
+  for (const entry of entries) {
+    target.push(entry);
+  }
+}
+
+function dedupeDeclarationEntries(
+  entries: DeclarationEntry[]
+): DeclarationEntry[] {
+  const seen = new Set<string>();
+
+  return entries.filter((entry) => {
+    const key = `${entry.suppressKey}:${entry.text}`;
+
+    if (seen.has(key)) {
+      return false;
+    }
+
+    seen.add(key);
+    return true;
+  });
+}
+
+function collectDeclarationEntriesFromStatement(
+  statement: ts.Statement,
+  sourceFile: ts.SourceFile,
+  printer: ts.Printer
+): DeclarationEntry[] {
+  if (ts.isVariableStatement(statement)) {
+    return emitVariableDeclarationEntries(statement, sourceFile, printer);
+  }
+
+  if (ts.isFunctionDeclaration(statement)) {
+    const entry = emitFunctionDeclarationEntry(statement, sourceFile, printer);
+    return entry ? [entry] : [];
+  }
+
+  if (ts.isClassDeclaration(statement)) {
+    const entry = emitClassDeclarationEntry(statement, sourceFile, printer);
+    return entry ? [entry] : [];
+  }
+
+  if (ts.isInterfaceDeclaration(statement)) {
+    return [emitInterfaceDeclarationEntry(statement, sourceFile, printer)];
+  }
+
+  if (ts.isTypeAliasDeclaration(statement)) {
+    return [emitTypeAliasDeclarationEntry(statement, sourceFile, printer)];
+  }
+
+  if (ts.isEnumDeclaration(statement)) {
+    return [emitEnumDeclarationEntry(statement, sourceFile, printer)];
+  }
+
+  if (ts.isModuleDeclaration(statement)) {
+    return [emitModuleDeclarationEntry(statement, sourceFile, printer)];
+  }
+
+  return [];
+}
+
+function isDeclareGlobalStatement(
+  statement: ts.Statement
+): statement is ts.ModuleDeclaration {
+  return (
+    ts.isModuleDeclaration(statement) &&
+    ts.isIdentifier(statement.name) &&
+    statement.name.text === "global"
+  );
 }
 
 function hasExportModifier(node: ts.Statement): boolean {
@@ -53,38 +210,40 @@ function hasExportModifier(node: ts.Statement): boolean {
   );
 }
 
-function emitVariableDeclaration(
+function emitVariableDeclarationEntries(
   statement: ts.VariableStatement,
   sourceFile: ts.SourceFile,
   printer: ts.Printer
-): string {
-  const results: string[] = [];
+): DeclarationEntry[] {
+  const results: DeclarationEntry[] = [];
 
   for (const decl of statement.declarationList.declarations) {
     const name = decl.name.getText(sourceFile);
     const typeNode = decl.type;
 
-    if (typeNode) {
-      const typeText = printer.printNode(
-        ts.EmitHint.Unspecified,
-        typeNode,
-        sourceFile
-      );
-      results.push(`export declare const ${name}: ${typeText};`);
-    } else {
-      results.push(`export declare const ${name}: any;`);
-    }
+    const typeText = typeNode
+      ? printer.printNode(ts.EmitHint.Unspecified, typeNode, sourceFile)
+      : "any";
+
+    results.push({
+      suppressKey: `variable:${name}`,
+      text: `export declare const ${name}: ${typeText};`,
+    });
   }
 
-  return results.join("\n");
+  return results;
 }
 
-function emitFunctionDeclaration(
+function emitFunctionDeclarationEntry(
   statement: ts.FunctionDeclaration,
   sourceFile: ts.SourceFile,
   printer: ts.Printer
-): string {
-  const name = statement.name?.getText(sourceFile) ?? "default";
+): DeclarationEntry | null {
+  const name = statement.name?.getText(sourceFile);
+
+  if (!name) {
+    return null;
+  }
 
   const typeParams = statement.typeParameters
     ? `<${statement.typeParameters.map((tp) => printer.printNode(ts.EmitHint.Unspecified, tp, sourceFile)).join(", ")}>`
@@ -98,15 +257,22 @@ function emitFunctionDeclaration(
     ? printer.printNode(ts.EmitHint.Unspecified, statement.type, sourceFile)
     : "any";
 
-  return `export declare function ${name}${typeParams}(${params}): ${returnType};`;
+  return {
+    suppressKey: `function:${name}`,
+    text: `export declare function ${name}${typeParams}(${params}): ${returnType};`,
+  };
 }
 
-function emitClassDeclaration(
+function emitClassDeclarationEntry(
   statement: ts.ClassDeclaration,
   sourceFile: ts.SourceFile,
   printer: ts.Printer
-): string {
-  const name = statement.name?.getText(sourceFile) ?? "default";
+): DeclarationEntry | null {
+  const name = statement.name?.getText(sourceFile);
+
+  if (!name) {
+    return null;
+  }
 
   const typeParams = statement.typeParameters
     ? `<${statement.typeParameters.map((tp) => printer.printNode(ts.EmitHint.Unspecified, tp, sourceFile)).join(", ")}>`
@@ -146,29 +312,64 @@ function emitClassDeclaration(
     }
   }
 
-  return `export declare class ${name}${typeParams}${heritageClauses} {\n${members.join("\n")}\n}`;
+  return {
+    suppressKey: `class:${name}`,
+    text: `export declare class ${name}${typeParams}${heritageClauses} {\n${members.join("\n")}\n}`,
+  };
 }
 
-function emitInterfaceDeclaration(
+function emitInterfaceDeclarationEntry(
   statement: ts.InterfaceDeclaration,
   sourceFile: ts.SourceFile,
   printer: ts.Printer
-): string {
-  return printer.printNode(ts.EmitHint.Unspecified, statement, sourceFile);
+): DeclarationEntry {
+  return {
+    suppressKey: `interface:${statement.name.getText(sourceFile)}`,
+    text: prefixExport(
+      printer.printNode(ts.EmitHint.Unspecified, statement, sourceFile)
+    ),
+  };
 }
 
-function emitTypeAliasDeclaration(
+function emitTypeAliasDeclarationEntry(
   statement: ts.TypeAliasDeclaration,
   sourceFile: ts.SourceFile,
   printer: ts.Printer
-): string {
-  return printer.printNode(ts.EmitHint.Unspecified, statement, sourceFile);
+): DeclarationEntry {
+  return {
+    suppressKey: `type:${statement.name.getText(sourceFile)}`,
+    text: prefixExport(
+      printer.printNode(ts.EmitHint.Unspecified, statement, sourceFile)
+    ),
+  };
 }
 
-function emitEnumDeclaration(
+function emitEnumDeclarationEntry(
   statement: ts.EnumDeclaration,
   sourceFile: ts.SourceFile,
   printer: ts.Printer
-): string {
-  return printer.printNode(ts.EmitHint.Unspecified, statement, sourceFile);
+): DeclarationEntry {
+  return {
+    suppressKey: `enum:${statement.name.getText(sourceFile)}`,
+    text: prefixExport(
+      printer.printNode(ts.EmitHint.Unspecified, statement, sourceFile)
+    ),
+  };
+}
+
+function emitModuleDeclarationEntry(
+  statement: ts.ModuleDeclaration,
+  sourceFile: ts.SourceFile,
+  printer: ts.Printer
+): DeclarationEntry {
+  return {
+    suppressKey: `namespace:${statement.name.getText(sourceFile)}`,
+    text: prefixExport(
+      printer.printNode(ts.EmitHint.Unspecified, statement, sourceFile)
+    ),
+  };
+}
+
+function prefixExport(text: string): string {
+  return text.startsWith("export ") ? text : `export ${text}`;
 }

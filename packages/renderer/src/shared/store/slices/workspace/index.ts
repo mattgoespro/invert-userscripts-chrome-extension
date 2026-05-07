@@ -1,6 +1,38 @@
 import { CompilationError } from "@shared/errors";
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { initialState } from "./workspace.state";
+import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { initialState, type WorkspaceState } from "./workspace.state";
+
+const EMPTY_ERRORS: CompilationError[] = [];
+
+const flattenScriptErrors = (
+  errorsByLanguage: WorkspaceState["scriptErrors"][string] | undefined
+): CompilationError[] => {
+  if (!errorsByLanguage) {
+    return EMPTY_ERRORS;
+  }
+
+  const errors = Object.values(errorsByLanguage).flatMap(
+    (languageErrors) => languageErrors ?? EMPTY_ERRORS
+  );
+
+  return errors.length > 0 ? errors : EMPTY_ERRORS;
+};
+
+const selectScriptErrorsMemo = createSelector(
+  [(state: WorkspaceState, scriptId: string) => state.scriptErrors[scriptId]],
+  (errorsByLanguage): CompilationError[] => flattenScriptErrors(errorsByLanguage)
+);
+
+const selectAllErrorsMemo = createSelector(
+  [(state: WorkspaceState) => state.scriptErrors],
+  (scriptErrors): CompilationError[] => {
+    const errors = Object.values(scriptErrors).flatMap((errorsByLanguage) =>
+      flattenScriptErrors(errorsByLanguage)
+    );
+
+    return errors.length > 0 ? errors : EMPTY_ERRORS;
+  }
+);
 
 const workspaceSlice = createSlice({
   name: "workspace",
@@ -28,23 +60,20 @@ const workspaceSlice = createSlice({
   },
   selectors: {
     selectScriptErrors: (state, scriptId: string) => {
-      return Object.values(state.scriptErrors[scriptId] ?? {}).flat();
+      return selectScriptErrorsMemo(state, scriptId);
     },
     selectAllErrors: (state) => {
-      return Object.values(state.scriptErrors).flatMap((errorsByLanguage) =>
-        Object.values(errorsByLanguage).flat()
-      );
+      return selectAllErrorsMemo(state);
     },
     selectErrorCount: (state, scriptId: string) => {
-      return Object.values(state.scriptErrors[scriptId] ?? {}).flat().length;
+      return selectScriptErrorsMemo(state, scriptId).length;
     },
     selectVisibleErrors: (state) => {
       if (!state.visibleScriptId) {
-        return [];
+        return EMPTY_ERRORS;
       }
-      return Object.values(
-        state.scriptErrors[state.visibleScriptId] ?? {}
-      ).flat();
+
+      return selectScriptErrorsMemo(state, state.visibleScriptId);
     },
   },
 });

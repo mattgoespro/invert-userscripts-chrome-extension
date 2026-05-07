@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-**Invert IDE** is a Chrome extension (Manifest V3) that provides an integrated TypeScript/SCSS IDE directly in the browser. Users can write, manage, and inject JavaScript userscripts with a Monaco editor, combining development tooling with script injection capabilities. The extension compiles TypeScript and SCSS in-browser, formats code with Prettier, and programmatically injects compiled scripts into matching web pages. Scripts can be marked as **shared modules** to enable cross-script dependency graphs via a runtime import resolution system.
+**Invert IDE** is a Chrome extension (Manifest V3) that provides an integrated TypeScript/SCSS IDE directly in the browser. Users can write, manage, and inject JavaScript userscripts with a Monaco editor, combining development tooling with script injection capabilities. The extension compiles TypeScript and SCSS in-browser, formats code with Prettier, and programmatically injects compiled scripts into matching web pages. Scripts can be marked as **shared modules** so the compile pipeline can rewrite shared imports and exports before runtime injection.
 
 ---
 
@@ -56,7 +56,9 @@ The monaco package encapsulates all Monaco editor integration: Shiki tokenizer r
 | `npm run build`  | Production build                                    |
 | `npm run lint`   | Run ESLint across all packages, tools, and examples |
 | `npm run format` | Run Prettier to format all files                    |
-| `npm run clean`  | Remove the `dist` directory                         |
+| `npm run clean`  | Remove the `dist` directory and webpack cache       |
+
+These are the only verified root scripts today; there is no repo-wide `test` script in `package.json`. The repository uses `pnpm` as its package manager, even when examples show `npm run ...`, and `npm run clean` shells out to `rm -rf`.
 
 ### Path Aliases
 
@@ -69,6 +71,7 @@ The monaco package encapsulates all Monaco editor integration: Shiki tokenizer r
 Use the file-scoped instruction files when you touch one of these subsystems:
 
 - [Example userscripts](./instructions/example-userscripts.instructions.md)
+- [Userscript compile pipeline](./instructions/compiled-output.instructions.md)
 - [Renderer Redux slices](./instructions/renderer.redux-slices.instructions.md)
 - [Runtime script injection](./instructions/runtime.injection.instructions.md)
 - [Shared storage managers](./instructions/shared.storage.instructions.md)
@@ -197,6 +200,8 @@ Use the custom component library in `packages/renderer/src/shared/components`:
 | `DevTools`      | Development toolbar (theme switcher, storage)     | `@/shared/components/devtools/DevTools`            |
 
 **Do NOT use raw HTML elements** (e.g., `<button>`, `<input>`) when a custom component exists.
+
+This applies to feature-level renderer code. Foundational primitives inside `packages/renderer/src/shared/components/` may wrap raw DOM elements when they are themselves the abstraction layer.
 
 | Instead of... | Use...                           |
 | ------------- | -------------------------------- |

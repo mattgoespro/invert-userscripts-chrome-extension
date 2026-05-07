@@ -19,6 +19,7 @@ import { AppThemes } from "@shared/constants";
 import { AppThemeName } from "@shared/model";
 import { useEffect } from "react";
 import { SettingsSection } from "./SettingsSection";
+import { StorageUsagePanel } from "./StorageUsagePanel";
 import { ThemePreview } from "./theme-preview/ThemePreview";
 
 export function Settings() {
@@ -171,6 +172,9 @@ export function Settings() {
           checked={settings.minifyCompiledOutput ?? false}
           onChange={handleMinifyCompiledOutputChange}
         />
+      </SettingsSection>
+      <SettingsSection title="Storage Quota">
+        <StorageUsagePanel />
       </SettingsSection>
     </div>
   );

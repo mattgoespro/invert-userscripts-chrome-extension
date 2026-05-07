@@ -27,7 +27,7 @@ export function registerImportIntelligence(
 
         // Check if we're in an import statement
         const importMatch = textUntilPosition.match(
-          /import\s+(?:{[^}]*}|\*\s+as\s+\w+|\w+)\s+from\s+["']shared\/(.*?)$/
+          /import\s+(?:type\s+)?(?:{[^}]*}|\*\s+as\s+\w+|\w+)\s+from\s+["']shared\/(.*?)$/
         );
 
         if (!importMatch) {
@@ -93,17 +93,21 @@ export function registerImportIntelligence(
 
         // Check if we're in the destructuring part of an import
         const importMatch = textUntilPosition.match(
-          /import\s+{([^}]*)}\s+from\s+["']shared\/(\w+)["']$/
+          /import\s+(?:type\s+)?{([^}]*)}\s+from\s+["']shared\/([^"']+)["']$/
         );
 
         if (!importMatch) {
           // Handle case where user is typing inside the braces
-          const inBracesMatch = textUntilPosition.match(/import\s+{([^}]*)$/);
+          const inBracesMatch = textUntilPosition.match(
+            /import\s+(?:type\s+)?{([^}]*)$/
+          );
 
           if (inBracesMatch) {
             // Find the module name from earlier in the file
             const lineText = model.getLineContent(position.lineNumber);
-            const moduleMatch = lineText.match(/from\s+["']shared\/(\w+)["']/);
+            const moduleMatch = lineText.match(
+              /from\s+["']shared\/([^"']+)["']/
+            );
 
             if (!moduleMatch) {
               return { suggestions: [] };
@@ -119,7 +123,7 @@ export function registerImportIntelligence(
               return { suggestions: [] };
             }
 
-            const exports = extractExports(script.sourceCode);
+            const exports = extractExports(script);
             const suggestions: monaco.languages.CompletionItem[] = exports.map(
               (exp) => ({
                 label: exp.name,
@@ -149,7 +153,7 @@ export function registerImportIntelligence(
           return { suggestions: [] };
         }
 
-        const exports = extractExports(script.sourceCode);
+        const exports = extractExports(script);
         const suggestions: monaco.languages.CompletionItem[] = exports.map(
           (exp) => ({
             label: exp.name,
@@ -185,7 +189,7 @@ export function registerImportIntelligence(
           .getValue()
           .match(
             new RegExp(
-              `import\\s+{[^}]*\\b${word.word}\\b[^}]*}\\s+from\\s+["']shared\\/(\\w+)["']`,
+              `import\\s+(?:type\\s+)?{[^}]*\\b${escapeRegExp(word.word)}\\b[^}]*}\\s+from\\s+["']shared\\/([^"']+)["']`,
               "m"
             )
           );
@@ -202,7 +206,7 @@ export function registerImportIntelligence(
           return null;
         }
 
-        const exports = extractExports(script.sourceCode);
+        const exports = extractExports(script);
         const exportInfo = exports.find((exp) => exp.name === word.word);
 
         if (!exportInfo) {
@@ -236,40 +240,56 @@ export function registerImportIntelligence(
  * Extract export information from TypeScript source code
  */
 function extractExports(
-  sourceCode: string
+  sharedScript: SharedScriptInfo
 ): Array<{ name: string; type: string }> {
-  const exports: Array<{ name: string; type: string }> = [];
+  const exports = new Map<string, { name: string; type: string }>();
 
+  collectSourceExports(exports, sharedScript.sourceCode);
+  collectTypeDefinitionExports(exports, sharedScript.typeDefinitions);
+
+  return Array.from(exports.values());
+}
+
+function collectSourceExports(
+  exports: Map<string, { name: string; type: string }>,
+  sourceCode: string
+): void {
   // Match: export function name
   const functionMatches = sourceCode.matchAll(
     /export\s+(?:async\s+)?function\s+(\w+)/g
   );
   for (const match of functionMatches) {
-    exports.push({ name: match[1], type: "function" });
+    exports.set(match[1], { name: match[1], type: "function" });
   }
 
   // Match: export const name
   const constMatches = sourceCode.matchAll(/export\s+const\s+(\w+)/g);
   for (const match of constMatches) {
-    exports.push({ name: match[1], type: "const" });
+    exports.set(match[1], { name: match[1], type: "const" });
   }
 
   // Match: export class name
   const classMatches = sourceCode.matchAll(/export\s+class\s+(\w+)/g);
   for (const match of classMatches) {
-    exports.push({ name: match[1], type: "class" });
+    exports.set(match[1], { name: match[1], type: "class" });
   }
 
   // Match: export interface name
   const interfaceMatches = sourceCode.matchAll(/export\s+interface\s+(\w+)/g);
   for (const match of interfaceMatches) {
-    exports.push({ name: match[1], type: "interface" });
+    exports.set(match[1], { name: match[1], type: "interface" });
   }
 
   // Match: export type name
   const typeMatches = sourceCode.matchAll(/export\s+type\s+(\w+)/g);
   for (const match of typeMatches) {
-    exports.push({ name: match[1], type: "type" });
+    exports.set(match[1], { name: match[1], type: "type" });
+  }
+
+  // Match: export enum name
+  const enumMatches = sourceCode.matchAll(/export\s+enum\s+(\w+)/g);
+  for (const match of enumMatches) {
+    exports.set(match[1], { name: match[1], type: "enum" });
   }
 
   // Match: export { name1, name2 }
@@ -277,14 +297,47 @@ function extractExports(
   for (const match of namedExportMatches) {
     const names = match[1]
       .split(",")
-      .map((n) => n.trim())
+      .map((n) => {
+        const parts = n.trim().split(/\s+as\s+/);
+        return parts[parts.length - 1]?.trim() ?? "";
+      })
       .filter(Boolean);
     for (const name of names) {
-      exports.push({ name, type: "export" });
+      exports.set(name, { name, type: "export" });
     }
   }
+}
 
-  return exports;
+function collectTypeDefinitionExports(
+  exports: Map<string, { name: string; type: string }>,
+  typeDefinitions: string
+): void {
+  if (!typeDefinitions.trim()) {
+    return;
+  }
+
+  addMatches(exports, typeDefinitions, /^\s*(?:declare\s+)?function\s+(\w+)/gm, "function");
+  addMatches(exports, typeDefinitions, /^\s*(?:declare\s+)?(?:const|let|var)\s+(\w+)/gm, "const");
+  addMatches(exports, typeDefinitions, /^\s*(?:declare\s+)?class\s+(\w+)/gm, "class");
+  addMatches(exports, typeDefinitions, /^\s*interface\s+(\w+)/gm, "interface");
+  addMatches(exports, typeDefinitions, /^\s*type\s+(\w+)/gm, "type");
+  addMatches(exports, typeDefinitions, /^\s*(?:declare\s+)?enum\s+(\w+)/gm, "enum");
+  addMatches(exports, typeDefinitions, /^\s*(?:declare\s+)?namespace\s+(\w+)/gm, "namespace");
+}
+
+function addMatches(
+  exports: Map<string, { name: string; type: string }>,
+  source: string,
+  pattern: RegExp,
+  type: string
+): void {
+  for (const match of source.matchAll(pattern)) {
+    exports.set(match[1], { name: match[1], type });
+  }
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 /**

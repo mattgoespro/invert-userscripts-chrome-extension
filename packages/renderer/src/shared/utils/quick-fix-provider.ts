@@ -49,6 +49,10 @@ export function registerTypeScriptQuickFixProvider(
                   missingIdentifierName
                 )
               ) {
+                const importKeyword = model.uri.path.endsWith(".d.ts")
+                  ? "import type"
+                  : "import";
+
                 actions.push({
                   title: `Import '${missingIdentifierName}' from "${sharedScript.moduleName}"`,
                   kind: "quickfix",
@@ -64,7 +68,7 @@ export function registerTypeScriptQuickFixProvider(
                             endLineNumber: 1,
                             endColumn: 1,
                           },
-                          text: `import { ${missingIdentifierName} } from "shared/${sharedScript.moduleName}";\n`,
+                          text: `${importKeyword} { ${missingIdentifierName} } from "shared/${sharedScript.moduleName}";\n`,
                         },
                         versionId: model.getVersionId(),
                       },
@@ -237,23 +241,92 @@ export function registerTypeScriptQuickFixProvider(
     sharedScript: SharedScriptInfo,
     missingIdentifierName: string
   ) {
-    const exportCandidateTypes = [
-      "function",
-      "const",
-      "class",
-      "type",
-      "interface",
-      "enum",
-      "namespace",
-    ] as const;
-
     return (
-      sharedScript.sourceCode.includes(`export ${missingIdentifierName}`) ||
-      exportCandidateTypes.some((keyword) =>
-        sharedScript.sourceCode.includes(
-          `export ${keyword} ${missingIdentifierName}`
-        )
+      doesSourceExportIdentifier(sharedScript.sourceCode, missingIdentifierName) ||
+      doesTypeDefinitionExposeIdentifier(
+        sharedScript.typeDefinitions,
+        missingIdentifierName
       )
     );
+  }
+
+  function doesSourceExportIdentifier(
+    sourceCode: string,
+    identifierName: string
+  ): boolean {
+    const escapedIdentifier = escapeRegExp(identifierName);
+    const exportPatterns = [
+      new RegExp(
+        `(^|\\n)\\s*export\\s+(?:async\\s+)?function\\s+${escapedIdentifier}\\b`,
+        "m"
+      ),
+      new RegExp(
+        `(^|\\n)\\s*export\\s+(?:const|let|var)\\s+${escapedIdentifier}\\b`,
+        "m"
+      ),
+      new RegExp(
+        `(^|\\n)\\s*export\\s+class\\s+${escapedIdentifier}\\b`,
+        "m"
+      ),
+      new RegExp(
+        `(^|\\n)\\s*export\\s+interface\\s+${escapedIdentifier}\\b`,
+        "m"
+      ),
+      new RegExp(
+        `(^|\\n)\\s*export\\s+type\\s+${escapedIdentifier}\\b`,
+        "m"
+      ),
+      new RegExp(
+        `(^|\\n)\\s*export\\s+enum\\s+${escapedIdentifier}\\b`,
+        "m"
+      ),
+      new RegExp(
+        `(^|\\n)\\s*export\\s*\\{[^}]*\\b${escapedIdentifier}\\b(?:\\s+as\\s+\\w+)?[^}]*\\}`,
+        "m"
+      ),
+    ];
+
+    return exportPatterns.some((pattern) => pattern.test(sourceCode));
+  }
+
+  function doesTypeDefinitionExposeIdentifier(
+    typeDefinitions: string,
+    identifierName: string
+  ): boolean {
+    if (!typeDefinitions.trim()) {
+      return false;
+    }
+
+    const escapedIdentifier = escapeRegExp(identifierName);
+    const declarationPatterns = [
+      new RegExp(
+        `^\\s*(?:declare\\s+)?function\\s+${escapedIdentifier}\\b`,
+        "gm"
+      ),
+      new RegExp(
+        `^\\s*(?:declare\\s+)?(?:const|let|var)\\s+${escapedIdentifier}\\b`,
+        "gm"
+      ),
+      new RegExp(
+        `^\\s*(?:declare\\s+)?class\\s+${escapedIdentifier}\\b`,
+        "gm"
+      ),
+      new RegExp(`^\\s*interface\\s+${escapedIdentifier}\\b`, "gm"),
+      new RegExp(`^\\s*type\\s+${escapedIdentifier}\\b`, "gm"),
+      new RegExp(
+        `^\\s*(?:declare\\s+)?enum\\s+${escapedIdentifier}\\b`,
+        "gm"
+      ),
+      new RegExp(
+        `^\\s*(?:declare\\s+)?namespace\\s+${escapedIdentifier}\\b`,
+        "gm"
+      ),
+    ];
+
+    return declarationPatterns.some((pattern) => pattern.test(typeDefinitions));
+  }
+
+  function escapeRegExp(value: string): string {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   }
 }

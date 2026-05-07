@@ -77,6 +77,10 @@ interface SharedLibEntry {
 }
 const sharedLibEntries = new Map<string, SharedLibEntry>();
 
+function buildSharedLibSourceHash(shared: SharedScriptInfo): string {
+  return JSON.stringify([shared.sourceCode, shared.typeDefinitions]);
+}
+
 interface AmbientTypeDefinitionLibInfo {
   id: string;
   filePath: string;
@@ -121,9 +125,10 @@ export function syncSharedScriptLibs(sharedScripts: SharedScriptInfo[]): void {
     }
 
     const existing = sharedLibEntries.get(shared.id);
+    const sourceHash = buildSharedLibSourceHash(shared);
 
     // Skip if the source code hasn't changed
-    if (existing && existing.sourceHash === shared.sourceCode) {
+    if (existing && existing.sourceHash === sourceHash) {
       continue;
     }
 
@@ -134,14 +139,15 @@ export function syncSharedScriptLibs(sharedScripts: SharedScriptInfo[]): void {
 
     const declaration = generateSharedScriptDeclaration(
       shared.moduleName,
-      shared.sourceCode
+      shared.sourceCode,
+      shared.typeDefinitions
     );
 
     const disposable = addSharedScriptExtraLib(declaration, shared.moduleName);
 
     sharedLibEntries.set(shared.id, {
       disposable,
-      sourceHash: shared.sourceCode,
+      sourceHash,
     });
   }
 }

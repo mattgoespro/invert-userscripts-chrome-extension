@@ -1,6 +1,7 @@
 {
   "include": ["userscripts/**/*.ts"],
   "compilerOptions": {
-    "lib": ["dom", "dom.iterable"]
+    "lib": ["es2022", "dom", "dom.iterable"],
+    "strict": false
   }
 }

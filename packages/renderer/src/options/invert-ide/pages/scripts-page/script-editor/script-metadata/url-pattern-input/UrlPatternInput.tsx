@@ -71,8 +71,8 @@ export function UrlPatternInput({
         setExpanded(false);
       }
     }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
   }, [expanded]);
 
   /** Close on Escape */
@@ -187,7 +187,7 @@ export function UrlPatternInput({
   }, [patterns, count]);
 
   return (
-    <div className={clsx("relative", className)} ref={wrapperRef}>
+    <div className={clsx("relative min-w-0", className)} ref={wrapperRef}>
       {/* Toggle bar */}
       <button
         type="button"

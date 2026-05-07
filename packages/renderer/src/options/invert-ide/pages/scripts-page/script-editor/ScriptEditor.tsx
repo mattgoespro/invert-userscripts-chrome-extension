@@ -170,7 +170,7 @@ export function ScriptEditor() {
 
   return (
     <div className="flex h-full min-w-0 flex-col overflow-hidden">
-      <div className="flex items-center gap-sm border-b border-border bg-surface-raised p-sm px-md">
+      <div className="flex min-w-0 items-center gap-sm border-b border-border bg-surface-raised p-sm px-md">
         <ScriptMetadata key={script.id} script={script} />
       </div>
       <div className="min-h-0 min-w-0 flex-1 overflow-hidden">
@@ -250,7 +250,7 @@ export function ScriptEditor() {
                             // script.ts
                           </Typography>
                         </div>
-                        <div className="min-h-0 flex-1">
+                        <div className="min-h-0 min-w-0 flex-1">
                           <TypeScriptCodeEditor
                             modelId={`scripts/${script.id}/main`}
                             scriptId={script.id}
@@ -278,7 +278,7 @@ export function ScriptEditor() {
                             // types.d.ts
                           </Typography>
                         </div>
-                        <div className="min-h-0 flex-1">
+                        <div className="min-h-0 min-w-0 flex-1">
                           <TypeDefinitionCodeEditor
                             modelId={`scripts/${script.id}/types.d`}
                             scriptId={script.id}
@@ -307,7 +307,7 @@ export function ScriptEditor() {
                         // styles.scss
                       </Typography>
                     </div>
-                    <div className="min-h-0 flex-1">
+                    <div className="min-h-0 min-w-0 flex-1">
                       <CodeEditor
                         modelId={`scripts/${script.id}/styles`}
                         scriptId={script.id}

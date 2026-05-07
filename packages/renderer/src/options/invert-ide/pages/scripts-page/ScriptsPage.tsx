@@ -1,31 +1,108 @@
 import { CodeComment } from "@/shared/components/code-comment/CodeComment";
 import { IconButton } from "@/shared/components/icon-button/IconButton";
 import { ResizeHandle } from "@/shared/components/resize-handle/ResizeHandle";
+import { useToast } from "@/shared/components/toast/ToastProvider";
 import { Typography } from "@/shared/components/typography/Typography";
 import { useAppDispatch, useAppSelector } from "@/shared/store/hooks";
 import {
   selectAllUserscripts,
   setCurrentUserscript,
 } from "@/shared/store/slices/userscripts";
+import {
+  buildUserscriptsTransferFile,
+  stringifyUserscriptsTransferFile,
+  UserscriptsTransferFile,
+} from "@/shared/store/slices/userscripts/transfer.userscripts";
 import { useGlobalState } from "@/options/invert-ide/contexts/global-state.context";
-import { PlusIcon } from "lucide-react";
-import { useEffect } from "react";
+import { LoaderCircleIcon, PlusIcon } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import { Group, Panel } from "react-resizable-panels";
 import { ScriptEditor } from "./script-editor/ScriptEditor";
 import { ScriptList } from "@/shared/components/script-list/ScriptList";
-import { createUserscript } from "@/shared/store/slices/userscripts/thunks.userscripts";
+import {
+  createUserscript,
+  importUserscripts,
+} from "@/shared/store/slices/userscripts/thunks.userscripts";
+import { ImportUserscriptsDialog } from "./import-userscripts-dialog/ImportUserscriptsDialog";
+import { ScriptsActionsMenu } from "./scripts-actions-menu/ScriptsActionsMenu";
+
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : "Unknown error";
+}
 
 export function ScriptsPage() {
   const dispatch = useAppDispatch();
+  const { toast } = useToast();
   const scripts = useAppSelector(selectAllUserscripts);
   const selectedScript = useAppSelector(
     (state) => state.userscripts.currentUserscript
   );
   const { globalState, updateGlobalState, updatePanelSizes } = useGlobalState();
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
 
   const onCreateScript = async () => {
     dispatch(createUserscript());
   };
+
+  const onExportScripts = useCallback(() => {
+    try {
+      const transferFile = buildUserscriptsTransferFile(scripts);
+      const contents = stringifyUserscriptsTransferFile(transferFile);
+      const blob = new Blob([contents], { type: "application/json" });
+      const downloadUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+
+      link.href = downloadUrl;
+      link.download = `invert-userscripts-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(downloadUrl);
+
+      toast({
+        variant: "info",
+        message: `Exported ${transferFile.userscripts.length} userscript${transferFile.userscripts.length === 1 ? "" : "s"}.`,
+      });
+    } catch (error) {
+      toast({
+        variant: "error",
+        message: `Failed to export userscripts: ${getErrorMessage(error)}`,
+      });
+    }
+  }, [scripts, toast]);
+
+  const onImportScripts = useCallback(
+    async (file: UserscriptsTransferFile) => {
+      setIsImporting(true);
+
+      try {
+        const importedScripts = await dispatch(
+          importUserscripts(file)
+        ).unwrap();
+
+        toast({
+          variant: "info",
+          message:
+            importedScripts.length === 0
+              ? "The selected file did not contain any userscripts to import."
+              : `Imported ${importedScripts.length} userscript${importedScripts.length === 1 ? "" : "s"}.`,
+        });
+      } catch (error) {
+        const message = `Failed to import userscripts: ${getErrorMessage(error)}`;
+
+        toast({
+          variant: "error",
+          message,
+        });
+
+        throw error;
+      } finally {
+        setIsImporting(false);
+      }
+    },
+    [dispatch, toast]
+  );
 
   // On first load, restore the previously selected script from UI state.
   useEffect(() => {
@@ -75,14 +152,36 @@ export function ScriptsPage() {
               </span>
               Scripts
             </Typography>
-            <IconButton
-              icon={PlusIcon}
-              size="sm"
-              onClick={onCreateScript}
-              title="Create new script"
-            ></IconButton>
+            <div className="flex items-center gap-2xs">
+              <ScriptsActionsMenu
+                onImportClick={() => setImportDialogOpen(true)}
+                onExportClick={onExportScripts}
+              />
+              <IconButton
+                icon={PlusIcon}
+                variant="ghost"
+                size="sm"
+                onClick={onCreateScript}
+                title="Create new script"
+              />
+            </div>
           </div>
-          <ScriptList onScriptSelected={onScriptSelected} />
+          <div className="relative min-h-0 flex-1">
+            <div className="flex h-full flex-col">
+              <ScriptList onScriptSelected={onScriptSelected} />
+            </div>
+            {isImporting && (
+              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-sm bg-[rgba(12,14,18,0.88)]">
+                <LoaderCircleIcon
+                  size={20}
+                  className="animate-spin text-accent"
+                />
+                <span className="font-mono text-xs text-text-muted-strong uppercase">
+                  Importing scripts...
+                </span>
+              </div>
+            )}
+          </div>
         </div>
       </Panel>
       <ResizeHandle direction="horizontal" />
@@ -95,6 +194,12 @@ export function ScriptsPage() {
           </CodeComment>
         )}
       </Panel>
+      <ImportUserscriptsDialog
+        open={importDialogOpen}
+        importing={isImporting}
+        onClose={() => setImportDialogOpen(false)}
+        onImport={onImportScripts}
+      />
     </Group>
   );
 }

@@ -98,12 +98,12 @@ export function InvertIde() {
 
   return (
     <div className="relative flex h-full flex-col overflow-hidden bg-surface-base">
-      <div className="relative flex flex-1">
+      <div className="relative flex min-w-0 flex-1">
         <Sidebar
           active={globalState.activeSidebarTab}
           onNavigate={onNavigate}
         />
-        <div className="relative flex flex-1 *:animate-page-reveal">
+        <div className="relative flex min-w-0 flex-1 *:animate-page-reveal">
           {globalState.activeSidebarTab === "scripts" && <ScriptsPage />}
           {globalState.activeSidebarTab === "modules" && <ModulesPage />}
           {globalState.activeSidebarTab === "settings" && <Settings />}

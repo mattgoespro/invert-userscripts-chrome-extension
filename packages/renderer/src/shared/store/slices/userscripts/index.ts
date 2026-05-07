@@ -2,6 +2,7 @@ import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import {
   createUserscript,
   deleteUserscript,
+  importUserscripts,
   loadUserscripts,
   rebuildCompiledUserscripts,
   toggleUserscript,
@@ -126,6 +127,11 @@ const userscriptsSlice = createSlice({
           if (state.currentUserscript?.id === script.id) {
             state.currentUserscript = script;
           }
+        }
+      })
+      .addCase(importUserscripts.fulfilled, (state, action) => {
+        for (const script of action.payload) {
+          state.scripts[script.id] = script;
         }
       });
   },

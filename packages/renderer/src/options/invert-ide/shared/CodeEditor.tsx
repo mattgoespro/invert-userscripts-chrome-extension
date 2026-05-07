@@ -72,6 +72,7 @@ export function CodeEditor(props: CodeEditorProps) {
   const editorRootRef = useRef<HTMLDivElement>(null);
   const editorInstanceRef = useRef<monaco.editor.IStandaloneCodeEditor>(null);
   const onCodeModifiedRef = useRef(onCodeModified);
+  const onEditorReadyRef = useRef(onEditorReady);
   // When true, the model content change listener is muted. Used to prevent
   // programmatic setValue calls (e.g. post-save formatter apply) from being
   // misinterpreted as user edits and re-dispatching markUserscriptModified.
@@ -115,9 +116,6 @@ export function CodeEditor(props: CodeEditorProps) {
 
     editorInstanceRef.current = editorInstance;
 
-    // Notify parent that editor is ready
-    onEditorReady?.(editorInstance);
-
     return () => {
       // Dispose the editor's model for read-only previews to prevent unbounded model accumulation.
       // Editable models are kept alive in the cache so undo history and cursor positions survive tab switches.
@@ -139,6 +137,10 @@ export function CodeEditor(props: CodeEditorProps) {
   useEffect(() => {
     onCodeModifiedRef.current = onCodeModified;
   }, [onCodeModified]);
+
+  useEffect(() => {
+    onEditorReadyRef.current = onEditorReady;
+  }, [onEditorReady]);
 
   // Update theme dynamically without recreating the editor
   useEffect(() => {
@@ -165,6 +167,8 @@ export function CodeEditor(props: CodeEditorProps) {
     if (currentModel !== model) {
       editorInstance.setModel(model);
     }
+
+    onEditorReadyRef.current?.(editorInstance);
 
     if (!onCodeModifiedRef.current) {
       return;
@@ -269,13 +273,5 @@ export function CodeEditor(props: CodeEditorProps) {
       editorRootRef.current?.removeEventListener("keydown", handleKeyDown);
   }, [editable, scriptId, settings?.autoFormat, language, dispatch, onSave]);
 
-  return (
-    <div
-      ref={editorRootRef}
-      style={{
-        width: "100%",
-        height: "100%",
-      }}
-    ></div>
-  );
+  return <div ref={editorRootRef} className="h-full w-full min-w-0"></div>;
 }

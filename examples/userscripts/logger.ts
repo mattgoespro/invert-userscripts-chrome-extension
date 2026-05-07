@@ -7,10 +7,6 @@ const levelsPriority: LevelsPriority = {
   error: 3,
 } as const;
 
-function shouldLogDebug(): boolean {
-  return process.env.NODE_ENV === "development";
-}
-
 /**
  * Determines whether a message with the specified log level should be logged
  * based on the current log level setting.
@@ -25,10 +21,6 @@ function shouldLogLevel(
   currentLevel: LogLevel,
   messageLevel: LogLevel
 ): boolean {
-  if (messageLevel === "debug") {
-    return shouldLogDebug();
-  }
-
   return levelsPriority[messageLevel] >= levelsPriority[currentLevel];
 }
 
@@ -190,11 +182,6 @@ function createLogger(name: string, options: LoggerOptions): Logger {
     name,
     options: coercedOptions,
     debug: (...messageArgs: LogMessage[]) => {
-      // Only log debug messages in development mode, regardless of the log level setting
-      if (process.env.NODE_ENV !== "development") {
-        return;
-      }
-
       console.debug(
         `${messageArgs.map((arg) => createLogMessage(arg, { level: "debug", addPrefix: coercedOptions.prefix })).join(" ")}`
       );

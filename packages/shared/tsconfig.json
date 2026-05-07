@@ -4,6 +4,7 @@
   "compilerOptions": {
     "composite": true,
     "lib": ["dom", "dom.iterable"],
+    "types": ["chrome"],
     "outDir": "dist/packages/shared",
     "paths": {
       "@packages/monaco": ["../monaco/src/index.ts"]

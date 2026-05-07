@@ -15,8 +15,8 @@
     "forceConsistentCasingInFileNames": true,
     "noImplicitThis": true,
     "paths": {
-      "@shared/*": ["packages/shared/src/*"],
-      "@monaco/*": ["packages/monaco/src/*"]
+      "@shared/*": ["./packages/shared/src/*"],
+      "@monaco/*": ["./packages/monaco/src/*"]
     }
   },
   "references": [

@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-unused-vars -- global API */
-/* global createLogger,WebFont */
 const log = createLogger("DOM Utils | Utility");
 
 /**

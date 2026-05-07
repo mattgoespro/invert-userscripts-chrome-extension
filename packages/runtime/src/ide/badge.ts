@@ -28,7 +28,7 @@ export async function updateBadgeForTab(
 
     await chrome.action.setBadgeBackgroundColor({
       tabId,
-      color: "#f0f0f0",
+      color: "#FBBF24",
     });
   } catch (error) {
     console.error("Error updating badge for tab:", error);
