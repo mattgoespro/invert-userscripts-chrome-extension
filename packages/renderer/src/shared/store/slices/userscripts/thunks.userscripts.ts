@@ -12,6 +12,7 @@ import {
   UserscriptSourceLanguage,
 } from "@shared/model";
 import type { RuntimePortMessageEvent } from "@shared/messages";
+import { getSharedImportModuleNames } from "@shared/compiled-output";
 import { ChromeSyncStorage, CompiledCodeStorage } from "@shared/storage";
 import { RootState } from "../../store";
 import { uuid } from "@/shared/utils";
@@ -39,6 +40,56 @@ function buildStorageSafeScript(script: Userscript): Userscript {
 
 function getBuildOptions(state: RootState) {
   return getCompiledOutputBuildOptions(state.settings.editorSettings);
+}
+
+function resolveSharedScriptIdsFromSourceOrThrow(
+  script: Userscript,
+  scriptsMap: Record<string, Userscript>,
+  sourceCode: string
+): string[] {
+  const moduleNames = getSharedImportModuleNames(sourceCode);
+
+  if (moduleNames.length === 0) {
+    return [];
+  }
+
+  const sharedByModuleName = new Map<string, string>();
+
+  for (const candidate of Object.values(scriptsMap).map(normalizeUserscript)) {
+    const moduleName = candidate.moduleName.trim();
+
+    if (!candidate.shared || moduleName.length === 0) {
+      continue;
+    }
+
+    const existingScriptId = sharedByModuleName.get(moduleName);
+
+    if (existingScriptId && existingScriptId !== candidate.id) {
+      throw new Error(
+        `Shared module "${moduleName}" is defined by more than one script.`
+      );
+    }
+
+    sharedByModuleName.set(moduleName, candidate.id);
+  }
+
+  return moduleNames.map((moduleName) => {
+    const sharedScriptId = sharedByModuleName.get(moduleName);
+
+    if (!sharedScriptId) {
+      throw new Error(
+        `Unknown shared module import "shared/${moduleName}" in script "${script.name}".`
+      );
+    }
+
+    if (sharedScriptId === script.id) {
+      throw new Error(
+        `Script "${script.name}" cannot import itself from "shared/${moduleName}".`
+      );
+    }
+
+    return sharedScriptId;
+  });
 }
 
 function hasSharedJavascriptConfigChanged(
@@ -325,6 +376,11 @@ export const updateUserscriptCode = createAsyncThunk<
 
     if (language === "typescript") {
       script.code.source.typescript = code;
+      script.sharedScripts = resolveSharedScriptIdsFromSourceOrThrow(
+        script,
+        scriptsMap,
+        code
+      );
     } else if (language === "scss") {
       script.code.source.scss = code;
     }
@@ -396,11 +452,9 @@ export const importUserscripts = createAsyncThunk<
   UserscriptsTransferFile,
   { state: RootState }
 >("userscripts/importUserscripts", async (file, { getState }) => {
-  const [existingScriptsMap, globalModules] = await Promise.all([
-    ChromeSyncStorage.getAllScripts(),
-    ChromeSyncStorage.getAllModules(),
-  ]);
   const state = getState();
+  const existingScriptsMap = await ChromeSyncStorage.getAllScripts();
+  const globalModules = state.modules.modules;
   const timestampBase = Date.now();
   const existingSharedByModuleName = new Map(
     Object.values(existingScriptsMap)
@@ -448,22 +502,24 @@ export const importUserscripts = createAsyncThunk<
   );
 
   for (const [index, entry] of file.userscripts.entries()) {
-    importedScripts[index].sharedScripts = entry.sharedImports.map(
-      (moduleName) => {
-        const trimmedModuleName = moduleName.trim();
-        const sharedScriptId =
-          importedSharedByModuleName.get(trimmedModuleName) ??
-          existingSharedByModuleName.get(trimmedModuleName);
+    const sharedImports = getSharedImportModuleNames(entry.sources.typescript);
+    const resolvedImports =
+      sharedImports.length > 0 ? sharedImports : entry.sharedImports;
 
-        if (!sharedScriptId) {
-          throw new Error(
-            `Script \"${entry.name}\" references unknown shared module \"${trimmedModuleName}\".`
-          );
-        }
+    importedScripts[index].sharedScripts = resolvedImports.map((moduleName) => {
+      const trimmedModuleName = moduleName.trim();
+      const sharedScriptId =
+        importedSharedByModuleName.get(trimmedModuleName) ??
+        existingSharedByModuleName.get(trimmedModuleName);
 
-        return sharedScriptId;
+      if (!sharedScriptId) {
+        throw new Error(
+          `Script \"${entry.name}\" references unknown shared module \"${trimmedModuleName}\".`
+        );
       }
-    );
+
+      return sharedScriptId;
+    });
   }
 
   const compiledEntries = await Promise.all(

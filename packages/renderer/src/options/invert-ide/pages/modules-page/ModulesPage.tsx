@@ -1,43 +1,49 @@
-import { GlobalModule, GlobalModules } from "@shared/model";
-import { ChromeSyncStorage } from "@shared/storage";
-import { useCallback, useEffect, useState } from "react";
+import { GlobalModule } from "@shared/model";
+import { useCallback } from "react";
+import { useAppDispatch, useAppSelector } from "@/shared/store/hooks";
+import {
+  addModule,
+  deleteModule,
+  selectModules,
+  updateModule,
+} from "@/shared/store/slices/modules";
 import { Button } from "@/shared/components/button/Button";
 import { CodeComment } from "@/shared/components/code-comment/CodeComment";
 import { CodeLine } from "@/shared/components/code-line/CodeLine";
 import { ModuleCard } from "./ModuleCard";
 import { AddModuleDialog } from "./add-module-dialog/AddModuleDialog";
+import { useState } from "react";
 
 export function ModulesPage() {
-  const [modules, setModules] = useState<GlobalModules>({});
+  const dispatch = useAppDispatch();
+  const modules = useAppSelector(selectModules);
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  const loadData = useCallback(async () => {
-    const loadedModules = await ChromeSyncStorage.getAllModules();
-    setModules(loadedModules);
-  }, []);
+  const handleAddModule = useCallback(
+    async (module: GlobalModule) => {
+      await dispatch(addModule(module)).unwrap();
+      setDialogOpen(false);
+    },
+    [dispatch]
+  );
 
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+  const handleDeleteModule = useCallback(
+    async (moduleId: string) => {
+      if (confirm("Delete this module?")) {
+        await dispatch(deleteModule(moduleId)).unwrap();
+      }
+    },
+    [dispatch]
+  );
 
-  const handleAddModule = async (module: GlobalModule) => {
-    await ChromeSyncStorage.saveModule(module);
-    await loadData();
-    setDialogOpen(false);
-  };
-
-  const handleDeleteModule = async (moduleId: string) => {
-    if (confirm("Delete this module?")) {
-      await ChromeSyncStorage.deleteModule(moduleId);
-      await loadData();
-    }
-  };
-
-  const handleToggleModule = async (module: GlobalModule) => {
-    const updated = { ...module, enabled: !module.enabled };
-    await ChromeSyncStorage.saveModule(updated);
-    await loadData();
-  };
+  const handleToggleModule = useCallback(
+    async (module: GlobalModule) => {
+      await dispatch(
+        updateModule({ ...module, enabled: !module.enabled })
+      ).unwrap();
+    },
+    [dispatch]
+  );
 
   return (
     <div className="flex-1 p-(--page-padding)">

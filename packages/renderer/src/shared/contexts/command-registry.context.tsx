@@ -1,4 +1,4 @@
-import { Command } from "@shared/command-palette";
+import { Command } from "@/shared/command-palette/command.types";
 import React, {
   createContext,
   useCallback,

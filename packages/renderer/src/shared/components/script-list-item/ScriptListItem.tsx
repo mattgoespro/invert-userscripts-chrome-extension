@@ -1,6 +1,5 @@
 import { Switch } from "@/shared/components/switch/Switch";
 import { useAppDispatch } from "@/shared/store/hooks";
-import { setCurrentUserscript } from "@/shared/store/slices/userscripts";
 import { Userscript } from "@shared/model";
 import { PackageIcon } from "lucide-react";
 import { toggleUserscript } from "@/shared/store/slices/userscripts/thunks.userscripts";
@@ -24,7 +23,6 @@ export function ScriptListItem({
       return;
     }
 
-    dispatch(setCurrentUserscript(script.id));
     onScriptSelected(script.id);
   };
 

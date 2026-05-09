@@ -1,4 +1,4 @@
-import type { EditorThemeName } from "@packages/monaco";
+import type { EditorThemeName } from "./editor-theme";
 
 export type AppThemeName =
   | "graphite"
@@ -59,7 +59,6 @@ export interface EditorSettings {
   fontSize?: number;
   tabSize?: number;
   autoFormat?: boolean;
-  autoSave?: boolean;
   minifyCompiledOutput?: boolean;
 }
 

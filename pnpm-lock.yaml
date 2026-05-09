@@ -102,6 +102,9 @@ importers:
       '@types/fs-extra':
         specifier: ^11.0.4
         version: 11.0.4
+      '@types/node':
+        specifier: ^25.6.2
+        version: 25.6.2
       '@types/react':
         specifier: ^19.2.9
         version: 19.2.14
@@ -164,7 +167,7 @@ importers:
         version: 9.5.7(typescript@5.9.3)(webpack@5.106.2)
       ts-node:
         specifier: ^10.9.2
-        version: 10.9.2(@types/node@25.6.0)(typescript@5.9.3)
+        version: 10.9.2(@types/node@25.6.2)(typescript@5.9.3)
       tsconfig-paths-webpack-plugin:
         specifier: ^4.2.0
         version: 4.2.0
@@ -867,8 +870,8 @@ packages:
   '@types/mdast@4.0.4':
     resolution: {integrity: sha512-kGaNbPh1k7AFzgpud/gMdvIm5xuECykRR+JnWKQno9TAXVa6WIVCGTPvYGekIDL4uwCZQSYbUxNBSb1aUo79oA==}
 
-  '@types/node@25.6.0':
-    resolution: {integrity: sha512-+qIYRKdNYJwY3vRCZMdJbPLJAtGjQBudzZzdzwQYkEPQd+PJGixUL5QfvCLDaULoLv+RhT3LDkwEfKaAkgSmNQ==}
+  '@types/node@25.6.2':
+    resolution: {integrity: sha512-sokuT28dxf9JT5Kady1fsXOvI4HVpjZa95NKT5y9PNTIrs2AsobR4GFAA90ZG8M+nxVRLysCXsVj6eGC7Vbrlw==}
 
   '@types/react-dom@19.2.3':
     resolution: {integrity: sha512-jp2L/eY6fn+KgVVQAOqYItbF0VY/YApe5Mz2F0aykSO8gx31bYCZyvSeYxCHKvzHG5eZjc+zyaS5BrBWya2+kQ==}
@@ -3589,7 +3592,7 @@ snapshots:
   '@types/fs-extra@11.0.4':
     dependencies:
       '@types/jsonfile': 6.1.4
-      '@types/node': 25.6.0
+      '@types/node': 25.6.2
 
   '@types/har-format@1.2.16': {}
 
@@ -3603,13 +3606,13 @@ snapshots:
 
   '@types/jsonfile@6.1.4':
     dependencies:
-      '@types/node': 25.6.0
+      '@types/node': 25.6.2
 
   '@types/mdast@4.0.4':
     dependencies:
       '@types/unist': 3.0.3
 
-  '@types/node@25.6.0':
+  '@types/node@25.6.2':
     dependencies:
       undici-types: 7.19.2
 
@@ -3634,7 +3637,7 @@ snapshots:
 
   '@types/ws@8.18.1':
     dependencies:
-      '@types/node': 25.6.0
+      '@types/node': 25.6.2
 
   '@typescript-eslint/eslint-plugin@8.59.1(@typescript-eslint/parser@8.59.1(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3)':
     dependencies:
@@ -4907,7 +4910,7 @@ snapshots:
 
   jest-worker@27.5.1:
     dependencies:
-      '@types/node': 25.6.0
+      '@types/node': 25.6.2
       merge-stream: 2.0.0
       supports-color: 8.1.1
 
@@ -5765,14 +5768,14 @@ snapshots:
       typescript: 5.9.3
       webpack: 5.106.2(webpack-cli@6.0.1)
 
-  ts-node@10.9.2(@types/node@25.6.0)(typescript@5.9.3):
+  ts-node@10.9.2(@types/node@25.6.2)(typescript@5.9.3):
     dependencies:
       '@cspotcode/source-map-support': 0.8.1
       '@tsconfig/node10': 1.0.12
       '@tsconfig/node12': 1.0.11
       '@tsconfig/node14': 1.0.3
       '@tsconfig/node16': 1.0.4
-      '@types/node': 25.6.0
+      '@types/node': 25.6.2
       acorn: 8.16.0
       acorn-walk: 8.3.5
       arg: 4.1.3

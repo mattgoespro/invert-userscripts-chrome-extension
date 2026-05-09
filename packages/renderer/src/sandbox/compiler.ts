@@ -93,7 +93,7 @@ async function minifyCompiledJavascript(
 }
 
 export async function buildUserscriptJavascript(
-  script: Pick<Userscript, "shared" | "moduleName" | "sharedScripts">,
+  script: Pick<Userscript, "shared" | "moduleName">,
   sourceCode: string,
   options: CompiledOutputBuildOptions
 ): Promise<UserscriptCompileResult> {
@@ -106,7 +106,6 @@ export async function buildUserscriptJavascript(
   let code = prepareCompiledJavascript(compiled.code ?? "", {
     shared: script.shared,
     moduleName: script.moduleName,
-    sharedScripts: script.sharedScripts,
   });
 
   if (!options.minifyCompiledOutput) {

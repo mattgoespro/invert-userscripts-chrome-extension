@@ -39,23 +39,56 @@ export function GlobalStateProvider({
   );
   const [isLoaded, setIsLoaded] = useState(false);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout>>(null);
+  const latestStateRef = useRef<GlobalState>(GlobalStateManager.defaultState);
 
   useEffect(() => {
     GlobalStateManager.get().then((state) => {
+      latestStateRef.current = state;
       setGlobalState(state);
       setIsLoaded(true);
     });
   }, []);
 
+  const flushSave = useCallback((state?: GlobalState) => {
+    const nextState = state ?? latestStateRef.current;
+
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = null;
+    }
+
+    void GlobalStateManager.save(nextState);
+  }, []);
+
   const scheduleSave = useCallback((state: GlobalState) => {
+    latestStateRef.current = state;
+
     if (saveTimerRef.current) {
       clearTimeout(saveTimerRef.current);
     }
 
     saveTimerRef.current = setTimeout(() => {
-      GlobalStateManager.save(state);
+      saveTimerRef.current = null;
+      void GlobalStateManager.save(state);
     }, SAVE_DEBOUNCE_MS);
   }, []);
+
+  useEffect(() => {
+    if (!isLoaded) {
+      return;
+    }
+
+    const handlePageHide = () => {
+      flushSave();
+    };
+
+    window.addEventListener("pagehide", handlePageHide);
+
+    return () => {
+      window.removeEventListener("pagehide", handlePageHide);
+      flushSave();
+    };
+  }, [flushSave, isLoaded]);
 
   const updateGlobalState = useCallback(
     (partial: Partial<GlobalState>) => {

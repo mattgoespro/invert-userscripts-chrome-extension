@@ -23,7 +23,6 @@ export default (
         import: "./packages/runtime/src/background.ts",
         filename: "background.js",
       },
-      // Popup entry
       popup: {
         import: "./packages/renderer/src/popup/index.tsx",
         filename: "popup.js",
@@ -49,74 +48,78 @@ export default (
     module: {
       rules: [
         {
-          test: /\.ts$/,
-          use: {
-            loader: "esbuild-loader",
-            options: {
-              target: "esnext",
-              tsconfig: path.join(
-                __dirname,
-                "packages",
-                "shared",
-                "tsconfig.json"
-              ),
+          oneOf: [
+            {
+              test: /\.ts$/,
+              use: {
+                loader: "esbuild-loader",
+                options: {
+                  target: "esnext",
+                  tsconfig: path.join(
+                    __dirname,
+                    "packages",
+                    "shared",
+                    "tsconfig.json"
+                  ),
+                },
+              },
+              include: /packages[\\/]shared[\\/]src/,
+              exclude: /node_modules/,
             },
-          },
-          include: /packages\/shared\/src/,
-          exclude: /node_modules/,
-        },
-        {
-          test: /\.ts$/,
-          use: {
-            loader: "esbuild-loader",
-            options: {
-              target: "esnext",
-              tsconfig: path.join(
-                __dirname,
-                "packages",
-                "monaco",
-                "tsconfig.json"
-              ),
+            {
+              test: /\.ts$/,
+              use: {
+                loader: "esbuild-loader",
+                options: {
+                  target: "esnext",
+                  tsconfig: path.join(
+                    __dirname,
+                    "packages",
+                    "monaco",
+                    "tsconfig.json"
+                  ),
+                },
+              },
+              include: /packages[\\/]monaco[\\/]src/,
+              exclude: /node_modules/,
             },
-          },
-          include: /packages\/monaco\/src/,
-          exclude: /node_modules/,
-        },
-        {
-          test: /\.ts$/,
-          use: {
-            loader: "esbuild-loader",
-            options: {
-              target: "esnext",
-              tsconfig: path.join(
-                __dirname,
-                "packages",
-                "runtime",
-                "tsconfig.json"
-              ),
+            {
+              test: /\.ts$/,
+              use: {
+                loader: "esbuild-loader",
+                options: {
+                  target: "esnext",
+                  tsconfig: path.join(
+                    __dirname,
+                    "packages",
+                    "runtime",
+                    "tsconfig.json"
+                  ),
+                },
+              },
+              include: /packages[\\/]runtime[\\/]src/,
+              exclude: /node_modules/,
             },
-          },
-          include: /packages/,
-          exclude: /node_modules/,
-        },
-        {
-          test: /\.tsx?$/,
-          use: {
-            loader: "esbuild-loader",
-            options: {
-              target: "esnext",
-              loader: "tsx",
-              tsconfig: path.join(
-                __dirname,
-                "packages",
-                "renderer",
-                "tsconfig.json"
-              ),
-              jsx: "automatic",
+            {
+              test: /\.tsx?$/,
+              use: {
+                loader: "esbuild-loader",
+                options: {
+                  target: "esnext",
+                  loader: "tsx",
+                  tsconfig: path.join(
+                    __dirname,
+                    "packages",
+                    "renderer",
+                    "tsconfig.json"
+                  ),
+                  jsx: "automatic",
+                },
+              },
+              include: /packages[\\/]renderer[\\/]src/,
+              exclude: /node_modules/,
             },
-          },
-          include: /packages/,
-          exclude: /node_modules/,
+          ],
         },
         {
           test: /\.css$/,

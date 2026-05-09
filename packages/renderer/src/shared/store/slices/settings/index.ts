@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import type { EditorThemeName } from "@shared/editor-theme";
 import { AppThemeName } from "@shared/model";
-import type { EditorThemeName } from "@packages/monaco";
 import { loadSettings, updateSettings } from "./thunks.settings";
 import { initialState, SettingsState } from "./state.settings";
 import { ChromeSyncStorage } from "@shared/storage";
@@ -29,9 +29,6 @@ const settingsSlice = createSlice({
     setAutoFormat: (state, action: PayloadAction<boolean>) => {
       state.editorSettings.autoFormat = action.payload;
     },
-    setAutoSave: (state, action: PayloadAction<boolean>) => {
-      state.editorSettings.autoSave = action.payload;
-    },
     setAppTheme: (state, action: PayloadAction<AppThemeName>) => {
       state.editorSettings.appTheme = action.payload;
     },
@@ -57,14 +54,8 @@ const settingsSlice = createSlice({
   },
 });
 
-export const {
-  setTheme,
-  setFontSize,
-  setTabSize,
-  setAutoFormat,
-  setAutoSave,
-  setAppTheme,
-} = settingsSlice.actions;
+export const { setTheme, setFontSize, setTabSize, setAutoFormat, setAppTheme } =
+  settingsSlice.actions;
 
 export const { selectEditorSettings, selectIsLoading } =
   settingsSlice.selectors;

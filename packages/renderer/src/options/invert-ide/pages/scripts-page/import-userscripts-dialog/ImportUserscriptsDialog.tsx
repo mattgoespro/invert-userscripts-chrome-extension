@@ -2,12 +2,12 @@ import { Button } from "@/shared/components/button/Button";
 import { Dialog } from "@/shared/components/dialog/Dialog";
 import { Input } from "@/shared/components/input/Input";
 import { useAppSelector } from "@/shared/store/hooks";
+import { selectModules } from "@/shared/store/slices/modules";
 import { selectSharedUserscripts } from "@/shared/store/slices/userscripts";
 import {
   UserscriptsTransferFile,
   validateUserscriptsTransferFile,
 } from "@/shared/store/slices/userscripts/transfer.userscripts";
-import { ChromeSyncStorage } from "@shared/storage";
 import { LoaderCircleIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import clsx from "clsx";
@@ -26,6 +26,7 @@ export function ImportUserscriptsDialog({
   onImport,
 }: ImportUserscriptsDialogProps) {
   const sharedScripts = useAppSelector(selectSharedUserscripts);
+  const modulesMap = useAppSelector(selectModules);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedPath, setSelectedPath] = useState("");
   const [validatedFile, setValidatedFile] = useState<UserscriptsTransferFile>();
@@ -94,10 +95,8 @@ export function ImportUserscriptsDialog({
       setValidating(true);
 
       try {
-        const [contents, globalModules] = await Promise.all([
-          file.text(),
-          ChromeSyncStorage.getAllModules(),
-        ]);
+        const contents = await file.text();
+        const globalModules = modulesMap;
 
         let parsedFile: unknown;
 

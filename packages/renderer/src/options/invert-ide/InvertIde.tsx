@@ -5,6 +5,7 @@ import { useAppDispatch, useAppSelector } from "@/shared/store/hooks";
 import { initializeMonaco } from "@/shared/store/slices/code-editor/thunks.code-editor";
 import { selectEditorSettings } from "@/shared/store/slices/settings";
 import { loadSettings } from "@/shared/store/slices/settings/thunks.settings";
+import { loadModules } from "@/shared/store/slices/modules";
 import {
   loadUserscripts,
   rebuildCompiledUserscripts,
@@ -52,6 +53,7 @@ export function InvertIde() {
         await Promise.all([
           dispatch(loadUserscripts()).unwrap(),
           dispatch(loadSettings()).unwrap(),
+          dispatch(loadModules()).unwrap(),
         ]);
 
         await dispatch(rebuildCompiledUserscripts({ scope: "stale" })).unwrap();

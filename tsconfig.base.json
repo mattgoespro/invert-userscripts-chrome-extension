@@ -1,4 +1,5 @@
 {
+  "files": ["webpack.config.ts"],
   "include": [],
   "exclude": ["node_modules", "dist", "examples"],
   "compilerOptions": {
@@ -6,6 +7,7 @@
     "moduleResolution": "bundler",
     "target": "es2020",
     "lib": ["es2020"],
+    "types": ["node", "chrome"],
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,

@@ -21,6 +21,7 @@
     "dev": "webpack --mode development --watch",
     "clean": "rm -rf dist && rm -rf node_modules/.cache",
     "lint": "eslint packages plugins examples",
+    "test": "node --loader ts-node/esm --test tests/*.test.mjs",
     "format": "prettier --write ."
   },
   "dependencies": {
@@ -57,6 +58,7 @@
     "@html-eslint/eslint-plugin": "^0.53.0",
     "@types/chrome": "^0.1.36",
     "@types/fs-extra": "^11.0.4",
+    "@types/node": "^25.6.2",
     "@types/react": "^19.2.9",
     "@types/react-dom": "^19.2.3",
     "@types/ws": "^8.18.1",

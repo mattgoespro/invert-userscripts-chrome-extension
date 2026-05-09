@@ -61,7 +61,6 @@ export class ChromeSyncStorage {
     fontSize: 11,
     tabSize: 2,
     autoFormat: true,
-    autoSave: true,
     minifyCompiledOutput: false,
   };
 
@@ -570,7 +569,9 @@ export class ChromeSyncStorage {
       }
 
       bytes = await this.readStreamBytes(
-        new Blob([bytes]).stream().pipeThrough(new DecompressionStream("gzip"))
+        new Blob([this.toArrayBuffer(bytes)])
+          .stream()
+          .pipeThrough(new DecompressionStream("gzip"))
       );
     }
 
@@ -582,6 +583,10 @@ export class ChromeSyncStorage {
   ): Promise<Uint8Array> {
     const buffer = await new Response(stream).arrayBuffer();
     return new Uint8Array(buffer);
+  }
+
+  private static toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
+    return new Uint8Array(bytes).buffer;
   }
 
   private static bytesToBase64(bytes: Uint8Array): string {

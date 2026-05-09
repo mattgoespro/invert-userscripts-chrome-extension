@@ -37,14 +37,6 @@ export function ScriptMetadata({ script }: ScriptMetadataProps) {
     dispatch(deleteUserscript(script.id));
   };
 
-  const onToggleSharedScript = (sharedScriptId: string, selected: boolean) => {
-    const currentShared = script.sharedScripts ?? [];
-    const updatedShared = selected
-      ? [...currentShared, sharedScriptId]
-      : currentShared.filter((id) => id !== sharedScriptId);
-    onUpdateScriptMeta({ sharedScripts: updatedShared });
-  };
-
   const onToggleModule = (moduleId: string, selected: boolean) => {
     const currentModules = script.globalModules ?? [];
     const updatedModules = selected
@@ -86,7 +78,6 @@ export function ScriptMetadata({ script }: ScriptMetadataProps) {
           selectedModuleIds={script.globalModules ?? []}
           onModuleNameChange={onModuleNameChange}
           onToggleModule={onToggleModule}
-          onToggleSharedScript={onToggleSharedScript}
           onDelete={onDeleteScript}
         />
       </div>

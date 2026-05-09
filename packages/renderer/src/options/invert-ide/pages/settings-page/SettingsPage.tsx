@@ -3,21 +3,18 @@ import { useToast } from "@/shared/components/toast/ToastProvider";
 import { Input } from "@/shared/components/input/Input";
 import { Select } from "@/shared/components/select/Select";
 import { Typography } from "@/shared/components/typography/Typography";
+import type { EditorThemeName } from "@shared/editor-theme";
 import { useAppDispatch, useAppSelector } from "@/shared/store/hooks";
 import { selectMonacoReady } from "@/shared/store/slices/code-editor";
 import {
   selectEditorSettings,
   selectIsLoading,
 } from "@/shared/store/slices/settings";
-import {
-  loadSettings,
-  updateSettings,
-} from "@/shared/store/slices/settings/thunks.settings";
+import { updateSettings } from "@/shared/store/slices/settings/thunks.settings";
 import { rebuildCompiledUserscripts } from "@/shared/store/slices/userscripts/thunks.userscripts";
-import { EditorThemeName, getEditorThemes } from "@packages/monaco";
+import { getEditorThemes } from "@packages/monaco";
 import { AppThemes } from "@shared/constants";
 import { AppThemeName } from "@shared/model";
-import { useEffect } from "react";
 import { SettingsSection } from "./SettingsSection";
 import { StorageUsagePanel } from "./StorageUsagePanel";
 import { ThemePreview } from "./theme-preview/ThemePreview";
@@ -28,10 +25,6 @@ export function Settings() {
   const settings = useAppSelector(selectEditorSettings);
   const isLoading = useAppSelector(selectIsLoading);
   const monacoReady = useAppSelector(selectMonacoReady);
-
-  useEffect(() => {
-    dispatch(loadSettings());
-  }, [dispatch]);
 
   const handleThemeChange = (theme: EditorThemeName) => {
     dispatch(updateSettings({ theme }));

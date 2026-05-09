@@ -1,5 +1,5 @@
-import { EditorThemeName } from "@packages/monaco";
 import { CodeEditor } from "@/options/invert-ide/shared/CodeEditor";
+import type { EditorThemeName } from "@shared/editor-theme";
 
 type ThemePreviewProps = {
   theme: EditorThemeName;

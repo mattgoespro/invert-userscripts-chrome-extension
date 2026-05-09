@@ -1,9 +1,11 @@
 {
   "extends": "../../tsconfig.base.json",
+  "files": [],
   "include": ["src/**/*.ts"],
   "compilerOptions": {
     "composite": true,
     "lib": ["es2020", "dom", "dom.iterable"],
+    "types": [],
     "outDir": "dist/packages/monaco",
     "paths": {
       "@shared/*": ["../../packages/shared/src/*"]

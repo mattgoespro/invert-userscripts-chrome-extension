@@ -100,6 +100,10 @@ export function CodeEditor(props: CodeEditorProps) {
       padding: { top: 25, bottom: 10 },
       readOnly: !editable,
       renderLineHighlight: editable ? "gutter" : "none",
+      bracketPairColorization: {
+        enabled: true,
+      },
+      stickyScroll: { enabled: false },
       scrollbar: {
         vertical: "hidden",
         horizontal: "hidden",

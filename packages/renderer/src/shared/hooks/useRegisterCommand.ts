@@ -1,4 +1,4 @@
-import { Command } from "@shared/command-palette";
+import { Command } from "@/shared/command-palette/command.types";
 import { useEffect } from "react";
 import { useCommandRegistry } from "../contexts/command-registry.context";
 

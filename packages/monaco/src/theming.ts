@@ -1,8 +1,6 @@
 import { type ThemeRegistration } from "@shikijs/core";
+import type { EditorThemeName } from "@shared/editor-theme";
 import * as themes from "./themes";
-import { CamelToKebabCase } from "./utils";
-
-export type EditorThemeName = CamelToKebabCase<keyof typeof themes>;
 
 /**
  * Raw TextMate theme definitions for all editor themes. All themes are statically imported and

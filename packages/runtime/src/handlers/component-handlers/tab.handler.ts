@@ -1,5 +1,8 @@
 import { updateBadgeForTab } from "../../ide/badge";
-import { injectMatchingScripts } from "../../ide/scripts";
+import {
+  injectMatchingScripts,
+  loadRuntimeInjectionState,
+} from "../../ide/scripts";
 
 export const onTabUpdated = async (
   tabId: number,
@@ -7,8 +10,14 @@ export const onTabUpdated = async (
   tab: chrome.tabs.Tab
 ): Promise<void> => {
   if (changeInfo.status === "loading" && tab.url) {
-    await injectMatchingScripts(tabId, tab.url, "beforePageLoad");
-    await updateBadgeForTab(tabId, tab.url);
+    const injectionState = await loadRuntimeInjectionState();
+    await injectMatchingScripts(
+      tabId,
+      tab.url,
+      "beforePageLoad",
+      injectionState
+    );
+    await updateBadgeForTab(tabId, tab.url, injectionState.scriptsMap);
   }
 };
 

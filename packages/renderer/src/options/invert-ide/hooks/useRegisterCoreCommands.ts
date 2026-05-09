@@ -1,9 +1,12 @@
 import { useGlobalState } from "@/options/invert-ide/contexts/global-state.context";
+import { Command } from "@/shared/command-palette/command.types";
 import { useRegisterCommands } from "@/shared/hooks/useRegisterCommand";
 import { useAppDispatch, useAppSelector } from "@/shared/store/hooks";
+import {
+  setCurrentUserscript,
+  selectAllUserscripts,
+} from "@/shared/store/slices/userscripts";
 import { createUserscript } from "@/shared/store/slices/userscripts/thunks.userscripts";
-import { selectAllUserscripts } from "@/shared/store/slices/userscripts";
-import { Command } from "@shared/command-palette";
 import { FileCode2, PackageIcon, PlusIcon, Settings2Icon } from "lucide-react";
 import { useMemo } from "react";
 
@@ -81,8 +84,11 @@ export function useRegisterCoreCommands({
       keywords: ["script", "open", script.name],
       description: `Open ${script.name}`,
       action: () => {
-        updateGlobalState({ activeSidebarTab: "scripts" });
-        // TODO: Set selected script
+        dispatch(setCurrentUserscript(script.id));
+        updateGlobalState({
+          activeSidebarTab: "scripts",
+          selectedScriptId: script.id,
+        });
       },
     }));
 

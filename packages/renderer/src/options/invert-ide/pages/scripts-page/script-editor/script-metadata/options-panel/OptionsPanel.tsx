@@ -9,9 +9,9 @@ import {
   PanelSection,
 } from "@/shared/components/panel/Panel";
 import { useAppSelector } from "@/shared/store/hooks";
+import { selectEnabledModules } from "@/shared/store/slices/modules";
 import { selectSharedUserscripts } from "@/shared/store/slices/userscripts";
-import { GlobalModule, Userscript } from "@shared/model";
-import { ChromeSyncStorage } from "@shared/storage";
+import { Userscript } from "@shared/model";
 import {
   EllipsisVerticalIcon,
   GitForkIcon,
@@ -60,7 +60,6 @@ type OptionsPanelProps = {
   selectedModuleIds: string[];
   onModuleNameChange: (value: string) => void;
   onToggleModule: (moduleId: string, selected: boolean) => void;
-  onToggleSharedScript: (sharedScriptId: string, selected: boolean) => void;
   onDelete: () => void;
 };
 
@@ -71,11 +70,10 @@ export function OptionsPanel({
   selectedModuleIds,
   onModuleNameChange,
   onToggleModule,
-  onToggleSharedScript,
   onDelete,
 }: OptionsPanelProps) {
   const [open, setOpen] = useState(false);
-  const [globalModules, setGlobalModules] = useState<GlobalModule[]>([]);
+  const globalModules = useAppSelector(selectEnabledModules);
   const sharedScripts = useAppSelector(selectSharedUserscripts);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const moduleInputRef = useRef<HTMLInputElement>(null);
@@ -95,9 +93,6 @@ export function OptionsPanel({
   useEffect(() => {
     if (open) {
       document.addEventListener("mousedown", handleClickOutside);
-      ChromeSyncStorage.getAllModules().then((modules) => {
-        setGlobalModules(Object.values(modules).filter((m) => m.enabled));
-      });
     }
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [open, handleClickOutside]);
@@ -114,6 +109,10 @@ export function OptionsPanel({
       onModuleNameChange(sanitized);
     }
   };
+
+  const currentSharedDependencies = sharedScripts.filter((sharedScript) =>
+    (script.sharedScripts ?? []).includes(sharedScript.id)
+  );
 
   return (
     <div className="relative shrink-0" ref={wrapperRef}>
@@ -157,25 +156,28 @@ export function OptionsPanel({
             Shared Scripts
           </PanelHeader>
           <PanelSection>
-            {sharedScripts.filter((s) => s.id !== script.id).length > 0 ? (
+            <span className="font-body text-xs leading-[1.4] text-text-muted">
+              Shared imports are derived from <code>import</code> statements
+              that reference <code>shared/&lt;module-name&gt;</code> in the
+              TypeScript source.
+            </span>
+            {currentSharedDependencies.length > 0 ? (
               <div className="flex flex-col gap-sm">
-                {sharedScripts
-                  .filter((s) => s.id !== script.id)
-                  .map((shared) => (
-                    <Checkbox
-                      key={shared.id}
-                      label={shared.name}
-                      checked={(script.sharedScripts ?? []).includes(shared.id)}
-                      onChange={(checked) =>
-                        onToggleSharedScript(shared.id, checked)
-                      }
-                    />
-                  ))}
+                {currentSharedDependencies.map((shared) => (
+                  <div
+                    key={shared.id}
+                    className="flex items-center justify-between gap-sm rounded-default border border-border bg-surface-input px-sm py-xs font-mono text-xs text-text-muted-strong"
+                  >
+                    <span className="truncate">{shared.name}</span>
+                    <span className="shrink-0 text-text-muted-faint">
+                      shared/{shared.moduleName}
+                    </span>
+                  </div>
+                ))}
               </div>
             ) : (
               <span className="font-body text-xs leading-[1.4] text-text-muted italic">
-                No shared scripts available. Set a module name on a script to
-                share it.
+                No runtime shared imports detected in this script.
               </span>
             )}
           </PanelSection>

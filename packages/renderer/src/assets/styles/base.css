@@ -313,6 +313,47 @@
   --base-switch-bg: #212121;
 }
 
+[data-theme="obsidian-ember"] {
+  --base-white: #c8bcb8;
+  --base-grey: #756864;
+  --base-blue: #d4785a;
+  --base-gold: #d4785a;
+  --base-red: #cf6a4c;
+  --base-surface-base: #151211;
+  --base-surface-raised: #1d1817;
+  --base-surface-overlay: #261f1d;
+  --base-surface-panel: #110e0d;
+  --base-surface-input: #120f0e;
+  --base-border: #352b28;
+  --base-border-subtle: #2a211f;
+  --base-text-muted: #978782;
+  --base-text-muted-faint: #4a403d;
+  --base-text-muted-strong: #756864;
+  --base-accent: #d4785a;
+  --base-accent-hover: #de8c70;
+  --base-accent-muted: #d4785a25;
+  --base-accent-subtle: #d4785a12;
+  --base-accent-border: #d4785a50;
+  --base-danger: #cf6a4c;
+  --base-hover-overlay: rgba(255, 245, 240, 0.03);
+  --base-active-overlay: rgba(255, 245, 240, 0.06);
+  --base-error-accent: #df7a62;
+  --base-error-accent-soft: rgba(223, 122, 98, 0.2);
+  --base-error-glow: rgba(207, 106, 76, 0.12);
+  --base-error-surface: #241917;
+  --base-error-surface-dark: #1a1211;
+  --base-error-text-muted: #756864;
+  --base-error-border: #4c2f29;
+  --base-syntax-keyword: #c792ea;
+  --base-syntax-function: #d4785a;
+  --base-syntax-param: #f2c38f;
+  --base-syntax-type: #78b0a0;
+  --base-syntax-punctuation: #c8bcb899;
+  --base-syntax-comment: #5d504c;
+  --base-switch-fg: #756864;
+  --base-switch-bg: #2a211f;
+}
+
 [data-theme="obsidian-frost"] {
   --base-white: #c4c8cc;
   --base-grey: #687078;

@@ -1,3 +1,4 @@
+import { getSharedImportModuleNames } from "@shared/compiled-output";
 import { GlobalModules, Userscript, Userscripts } from "@shared/model";
 
 const TRANSFER_SCHEMA_URL = "https://json-schema.org/draft/2020-12/schema";
@@ -206,6 +207,20 @@ function dedupeAndSort(values: Iterable<string>): string[] {
   return [...new Set(values)].sort((left, right) => left.localeCompare(right));
 }
 
+export function getEffectiveTransferSharedImports(
+  entry: Pick<UserscriptImportEntry, "sharedImports" | "sources">
+): string[] {
+  const derivedImports = getSharedImportModuleNames(entry.sources.typescript);
+
+  if (derivedImports.length > 0) {
+    return dedupeAndSort(derivedImports);
+  }
+
+  return dedupeAndSort(
+    entry.sharedImports.map((moduleName) => moduleName.trim())
+  );
+}
+
 function getImportedSharedModuleNames(
   file: UserscriptsTransferFile
 ): Set<string> {
@@ -279,7 +294,7 @@ export function validateUserscriptsTransferFile(
   ]);
 
   for (const script of file.userscripts) {
-    for (const sharedImport of script.sharedImports) {
+    for (const sharedImport of getEffectiveTransferSharedImports(script)) {
       if (resolvableSharedModuleNames.has(sharedImport)) {
         continue;
       }
@@ -328,23 +343,7 @@ export function buildUserscriptsTransferFile(
         "typescript-declarations": script.typeDefinitions,
         scss: script.code.source.scss,
       },
-      sharedImports: (script.sharedScripts ?? []).map((sharedScriptId) => {
-        const sharedScript = scriptsMap[sharedScriptId];
-
-        if (!sharedScript) {
-          throw new Error(
-            `Script \"${script.name}\" references missing shared script \"${sharedScriptId}\".`
-          );
-        }
-
-        if (!sharedScript.moduleName.trim()) {
-          throw new Error(
-            `Shared script \"${sharedScript.name}\" is missing a module name.`
-          );
-        }
-
-        return sharedScript.moduleName;
-      }),
+      sharedImports: getSharedImportModuleNames(script.code.source.typescript),
       globalModuleImports: [...(script.globalModules ?? [])],
     })),
   };

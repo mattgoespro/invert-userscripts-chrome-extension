@@ -1,4 +1,4 @@
-import { Command } from "@shared/command-palette";
+import { Command } from "@/shared/command-palette/command.types";
 import { CommandPaletteStorage } from "@shared/storage";
 import fuzzysort from "fuzzysort";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";

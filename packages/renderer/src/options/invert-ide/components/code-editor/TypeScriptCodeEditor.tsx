@@ -1,4 +1,5 @@
 import { useAppSelector } from "@/shared/store/hooks";
+import { selectModules } from "@/shared/store/slices/modules";
 import {
   selectGlobalModuleIdsForUserscript,
   selectSharedScriptsForUserscript,
@@ -10,8 +11,7 @@ import {
   syncSharedScriptLibs,
 } from "@packages/monaco";
 import type { CdnModuleInfo } from "@packages/monaco";
-import { ChromeSyncStorage } from "@shared/storage";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { CodeEditor, CodeEditorProps } from "../../shared/CodeEditor";
 import { registerTypeScriptQuickFixProvider } from "@/shared/utils/quick-fix-provider";
 import { registerImportIntelligence } from "@/shared/utils/import-intelligence";
@@ -33,23 +33,18 @@ export function TypeScriptCodeEditor(
   const globalModuleIds = useAppSelector(
     useMemo(() => selectGlobalModuleIdsForUserscript(scriptId), [scriptId])
   );
-  const [cdnModules, setCdnModules] = useState<CdnModuleInfo[]>([]);
+  const modulesMap = useAppSelector(selectModules);
 
-  // Resolve global module IDs to CdnModuleInfo by loading from storage
-  useEffect(() => {
+  const cdnModules = useMemo<CdnModuleInfo[]>(() => {
     if (!globalModuleIds?.length) {
-      setCdnModules([]);
-      return;
+      return [];
     }
 
-    ChromeSyncStorage.getAllModules().then((modulesMap) => {
-      const resolved: CdnModuleInfo[] = globalModuleIds
-        .map((id) => modulesMap[id])
-        .filter((m) => m?.packageName)
-        .map((m) => ({ id: m.id, packageName: m.packageName! }));
-      setCdnModules(resolved);
-    });
-  }, [globalModuleIds]);
+    return globalModuleIds
+      .map((id) => modulesMap[id])
+      .filter((m) => m?.packageName)
+      .map((m) => ({ id: m.id, packageName: m.packageName! }));
+  }, [globalModuleIds, modulesMap]);
 
   // Configure the TypeScript language service defaults once, then sync shared
   // script type declarations whenever the dependency list changes.

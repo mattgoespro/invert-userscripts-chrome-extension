@@ -1,4 +1,4 @@
-import { Command } from "@shared/command-palette";
+import { Command } from "@/shared/command-palette/command.types";
 import clsx from "clsx";
 import { useEffect, useRef } from "react";
 

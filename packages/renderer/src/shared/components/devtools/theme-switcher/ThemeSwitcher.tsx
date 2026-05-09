@@ -43,6 +43,13 @@ const Themes: ThemeOption[] = [
     group: "obsidian variants",
   },
   {
+    id: "obsidian-ember",
+    label: "Obsidian Ember",
+    accent: "#d4785a",
+    surface: "#151211",
+    group: "obsidian variants",
+  },
+  {
     id: "obsidian-frost",
     label: "Obsidian Frost",
     accent: "#8aacc8",

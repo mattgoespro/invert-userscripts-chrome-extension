@@ -1,18 +1,122 @@
-import { GlobalModule, Userscript } from "@shared/model";
+import {
+  CompiledCodeEntry,
+  GlobalModule,
+  GlobalModules,
+  Userscript,
+  Userscripts,
+} from "@shared/model";
 import { ChromeSyncStorage, CompiledCodeStorage } from "@shared/storage";
 import { matchesUrlPattern } from "@shared/url-matching";
+
+const INLINE_EXECUTION_STATE_KEY = "__INVERT_INLINE_EXECUTION__";
+
+export interface RuntimeInjectionState {
+  scriptsMap: Userscripts;
+  compiledCodeMap: Record<string, CompiledCodeEntry>;
+  modulesMap?: GlobalModules;
+}
+
+export async function loadRuntimeInjectionState(
+  includeModules = false
+): Promise<RuntimeInjectionState> {
+  const [scriptsMap, compiledCodeMap, modulesMap] = await Promise.all([
+    ChromeSyncStorage.getAllScripts(),
+    CompiledCodeStorage.getAllCompiledCode(),
+    includeModules
+      ? ChromeSyncStorage.getAllModules()
+      : Promise.resolve(undefined),
+  ]);
+
+  return {
+    scriptsMap,
+    compiledCodeMap,
+    modulesMap,
+  };
+}
+
+function mergeCompiledCode(
+  script: Userscript,
+  compiledCodeMap: Record<string, CompiledCodeEntry>
+): Userscript {
+  const compiled = compiledCodeMap[script.id];
+
+  if (!compiled) {
+    return script;
+  }
+
+  return {
+    ...script,
+    code: {
+      ...script.code,
+      compiled: {
+        javascript: compiled.javascript || script.code.compiled.javascript,
+        css: compiled.css || script.code.compiled.css,
+      },
+    },
+  };
+}
+
+async function executeInlineMainWorldScript(
+  tabId: number,
+  code: string,
+  label: string
+): Promise<void> {
+  if (!code.trim()) {
+    return;
+  }
+
+  const executionKey = `${label}:${crypto.randomUUID()}`;
+  const instrumentedCode = [
+    code,
+    `window.${INLINE_EXECUTION_STATE_KEY}[${JSON.stringify(executionKey)}]=true;`,
+  ].join("\n");
+
+  await chrome.scripting.executeScript({
+    target: { tabId },
+    func: (payload: string, key: string, stateKey: string) => {
+      const globalWindow = window as unknown as Window &
+        Record<string, Record<string, boolean> | undefined>;
+      const container =
+        document.head ?? document.documentElement ?? document.body;
+
+      if (!container) {
+        throw new Error(
+          "No document container available for script injection."
+        );
+      }
+
+      const executionState = globalWindow[stateKey] ?? {};
+      executionState[key] = false;
+      globalWindow[stateKey] = executionState;
+
+      const scriptEl = document.createElement("script");
+      scriptEl.textContent = payload;
+      container.appendChild(scriptEl);
+      scriptEl.remove();
+
+      const didComplete = Boolean(globalWindow[stateKey]?.[key]);
+      delete executionState[key];
+
+      if (!didComplete) {
+        throw new Error(
+          "Injected inline script did not complete. The page may have blocked it or it threw during evaluation."
+        );
+      }
+    },
+    args: [instrumentedCode, executionKey, INLINE_EXECUTION_STATE_KEY],
+    world: "MAIN",
+  });
+}
 
 export async function injectMatchingScripts(
   tabId: number,
   url: string,
-  timing: "beforePageLoad" | "afterPageLoad"
+  timing: "beforePageLoad" | "afterPageLoad",
+  injectionState?: RuntimeInjectionState
 ): Promise<void> {
   try {
-    // Parallelize independent storage reads
-    const [scriptsMap, compiledCodeMap] = await Promise.all([
-      ChromeSyncStorage.getAllScripts(),
-      CompiledCodeStorage.getAllCompiledCode(),
-    ]);
+    const state = injectionState ?? (await loadRuntimeInjectionState());
+    const { compiledCodeMap, scriptsMap } = state;
 
     const allScripts = Object.values(scriptsMap);
 
@@ -28,26 +132,9 @@ export async function injectMatchingScripts(
       return;
     }
 
-    // Merge compiled code only for scripts that will actually be injected
-    const mergeCompiled = (script: Userscript): Userscript => {
-      const compiled = compiledCodeMap[script.id];
-      if (compiled) {
-        return {
-          ...script,
-          code: {
-            ...script.code,
-            compiled: {
-              javascript:
-                compiled.javascript || script.code.compiled.javascript,
-              css: compiled.css || script.code.compiled.css,
-            },
-          },
-        };
-      }
-      return script;
-    };
-
-    const resolvedScripts = matchingScripts.map(mergeCompiled);
+    const resolvedScripts = matchingScripts.map((script) =>
+      mergeCompiledCode(script, compiledCodeMap)
+    );
 
     // Build a lookup map for shared script resolution (O(1) vs O(n) per lookup)
     const scriptById = new Map(allScripts.map((s) => [s.id, s]));
@@ -56,9 +143,10 @@ export async function injectMatchingScripts(
     const needsCdnModules = resolvedScripts.some(
       (s) => s.globalModules?.length > 0
     );
+    let modulesMap = state.modulesMap;
 
     if (needsCdnModules) {
-      const modulesMap = await ChromeSyncStorage.getAllModules();
+      modulesMap = modulesMap ?? (await ChromeSyncStorage.getAllModules());
       const injectedModules = new Set<string>();
 
       for (const script of resolvedScripts) {
@@ -88,7 +176,7 @@ export async function injectMatchingScripts(
           const shared = scriptById.get(sharedId);
 
           if (shared?.shared && shared?.moduleName) {
-            const resolvedShared = mergeCompiled(shared);
+            const resolvedShared = mergeCompiledCode(shared, compiledCodeMap);
             if (resolvedShared.code?.compiled?.javascript) {
               await injectSharedScript(tabId, resolvedShared);
               injectedShared.add(sharedId);
@@ -97,6 +185,9 @@ export async function injectMatchingScripts(
         }
       }
       await injectScript(tabId, script);
+    }
+
+    for (const script of resolvedScripts) {
       await injectStylesheet(tabId, script);
     }
   } catch (error) {
@@ -111,21 +202,11 @@ export async function injectScript(
   try {
     const jsCode = script.code?.compiled?.javascript ?? "";
 
-    await chrome.scripting.executeScript({
-      target: { tabId },
-      func: (code: string) => {
-        try {
-          const scriptEl = document.createElement("script");
-          scriptEl.textContent = code;
-          document.head.appendChild(scriptEl);
-          scriptEl.remove();
-        } catch (error) {
-          console.error("Error executing userscript: ", error);
-        }
-      },
-      args: [jsCode],
-      world: "MAIN",
-    });
+    await executeInlineMainWorldScript(
+      tabId,
+      jsCode,
+      `userscript:${script.id}`
+    );
     console.log(`Injected script: ${script.name} into tab ${tabId}`);
   } catch (error) {
     console.error(`Error injecting script ${script.name}:`, error);
@@ -137,21 +218,11 @@ async function injectSharedScript(
   script: Userscript
 ): Promise<void> {
   try {
-    await chrome.scripting.executeScript({
-      target: { tabId },
-      func: (code: string) => {
-        try {
-          const scriptEl = document.createElement("script");
-          scriptEl.textContent = code;
-          document.head.appendChild(scriptEl);
-          scriptEl.remove();
-        } catch (error) {
-          console.error("Error executing shared script: ", error);
-        }
-      },
-      args: [script.code.compiled.javascript],
-      world: "MAIN",
-    });
+    await executeInlineMainWorldScript(
+      tabId,
+      script.code.compiled.javascript,
+      `shared:${script.id}`
+    );
     console.log(`Injected shared script: ${script.name} into tab ${tabId}`);
   } catch (error) {
     console.error(`Error injecting shared script ${script.name}:`, error);
@@ -171,15 +242,28 @@ async function injectCdnModule(
     await chrome.scripting.executeScript({
       target: { tabId },
       func: (url: string) => {
-        return new Promise<void>((resolve) => {
+        return new Promise<void>((resolve, reject) => {
+          const container =
+            document.head ?? document.documentElement ?? document.body;
+
+          if (!container) {
+            reject(
+              new Error("No document container available for module injection.")
+            );
+            return;
+          }
+
           const scriptEl = document.createElement("script");
           scriptEl.src = url;
-          scriptEl.onload = () => resolve();
-          scriptEl.onerror = () => {
-            console.warn(`Failed to load CDN module: ${url}`);
+          scriptEl.onload = () => {
+            scriptEl.remove();
             resolve();
           };
-          document.head.appendChild(scriptEl);
+          scriptEl.onerror = () => {
+            scriptEl.remove();
+            reject(new Error(`Failed to load CDN module: ${url}`));
+          };
+          container.appendChild(scriptEl);
         });
       },
       args: [module.url],

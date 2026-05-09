@@ -1,5 +1,15 @@
+import { Userscripts } from "@shared/model";
 import { ChromeSyncStorage } from "@shared/storage";
 import { matchesUrlPattern } from "@shared/url-matching";
+
+export function countMatchingScripts(
+  url: string,
+  scriptsMap: Userscripts
+): number {
+  return Object.values(scriptsMap).filter((script) =>
+    matchesUrlPattern(url, script.urlPatterns)
+  ).length;
+}
 
 /**
  * Updates the extension badge text and color for a specific tab based on
@@ -11,15 +21,13 @@ import { matchesUrlPattern } from "@shared/url-matching";
  */
 export async function updateBadgeForTab(
   tabId: number,
-  url: string
+  url: string,
+  scriptsMap?: Userscripts
 ): Promise<void> {
   try {
-    const scriptsMap = await ChromeSyncStorage.getAllScripts();
-    const allScripts = Object.values(scriptsMap);
-
-    const matchingCount = allScripts.filter((script) =>
-      matchesUrlPattern(url, script.urlPatterns)
-    ).length;
+    const resolvedScriptsMap =
+      scriptsMap ?? (await ChromeSyncStorage.getAllScripts());
+    const matchingCount = countMatchingScripts(url, resolvedScriptsMap);
 
     await chrome.action.setBadgeText({
       tabId,
