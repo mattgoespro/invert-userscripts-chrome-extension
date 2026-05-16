@@ -31,7 +31,7 @@
     "agent": "always",
     "ask": "always"
   },
-  "chat.planAgent.defaultModel": "Claude Opus 4.6 (copilotcli)",
+  "chat.planAgent.defaultModel": "GPT-5.3-Codex (copilotcli)",
   "chat.tools.terminal.autoApprove": {
     "/.*/": true
   },
@@ -74,7 +74,6 @@
   },
   "github.copilot.chat.agent.autoFix": true,
   "github.copilot.chat.completionsFetcher": "electron-fetch",
-  "github.copilot.chat.copilotMemory.enabled": true,
   "github.copilot.chat.exploreAgent.model": "Claude Opus 4.6 (copilotcli)",
   "github.copilot.chat.githubMcpServer.enabled": true,
   "github.copilot.chat.implementAgent.model": "Claude Opus 4.6 (copilotcli)",
@@ -87,7 +86,6 @@
     "*": true
   },
   "github.copilot.nextEditSuggestions.enabled": true,
-  "inlineChat.enableV2": true,
   "js/ts.format.enabled": false,
   "js/ts.preferences.importModuleSpecifier": "shortest",
   "js/ts.preferences.useAliasesForRenames": false,
