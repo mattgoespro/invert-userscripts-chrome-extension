@@ -134,7 +134,10 @@ export default (
           },
         },
       ],
-      noParse: [/node_modules[\\/]typescript[\\/]lib[\\/]typescript\.js/],
+      noParse: [
+        /node_modules[\\/]typescript[\\/]lib[\\/]typescript\.js/,
+        /node_modules[\\/]sass[\\/]sass\.dart\.js/,
+      ],
     },
     resolve: {
       extensions: [".tsx", ".ts", ".js", ".css"],
