@@ -4,6 +4,7 @@ import {
   selectGlobalModuleIdsForUserscript,
   selectSharedScriptsForUserscript,
 } from "@/shared/store/slices/code-editor";
+import { selectUserscriptById } from "@/shared/store/slices/userscripts";
 import {
   ensureTypescriptDefaults,
   syncAmbientTypeDefinitionLibs,
@@ -11,6 +12,7 @@ import {
   syncSharedScriptLibs,
 } from "@packages/monaco";
 import type { CdnModuleInfo } from "@packages/monaco";
+import { buildScriptTypeSlug } from "./model-cache";
 import { useEffect, useMemo } from "react";
 import { CodeEditor, CodeEditorProps } from "../../shared/CodeEditor";
 import { registerTypeScriptQuickFixProvider } from "@/shared/utils/quick-fix-provider";
@@ -29,6 +31,12 @@ export function TypeScriptCodeEditor(
   const { scriptId, ambientTypeDefinitions = "", ...rest } = props;
   const sharedScripts = useAppSelector(
     useMemo(() => selectSharedScriptsForUserscript(scriptId), [scriptId])
+  );
+  const scriptName = useAppSelector(
+    useMemo(
+      () => (state) => selectUserscriptById(state, scriptId)?.name ?? "",
+      [scriptId]
+    )
   );
   const globalModuleIds = useAppSelector(
     useMemo(() => selectGlobalModuleIdsForUserscript(scriptId), [scriptId])
@@ -75,20 +83,20 @@ export function TypeScriptCodeEditor(
     const ambientLibs = [
       {
         id: `script:${scriptId}:ambient-types`,
-        filePath: `file:///scripts/${scriptId}/types.d.ts`,
-        contents: stripExportsForAmbientLib(ambientTypeDefinitions),
+        filePath: `file:///node_modules/userscripts/${buildScriptTypeSlug(scriptName, scriptId)}/types.d.ts`,
+        contents: ambientTypeDefinitions,
       },
       ...(sharedScripts ?? [])
         .filter((shared) => shared.typeDefinitions.trim())
         .map((shared) => ({
           id: `shared:${scriptId}:${shared.id}`,
-          filePath: `file:///userscripts/${scriptId}/shared/${shared.id}.d.ts`,
-          contents: stripExportsForAmbientLib(shared.typeDefinitions),
+          filePath: `file:///node_modules/userscripts/${buildScriptTypeSlug(shared.name, shared.id)}/types.d.ts`,
+          contents: shared.typeDefinitions,
         })),
     ].filter((lib) => lib.contents.trim());
 
     syncAmbientTypeDefinitionLibs(ambientLibs);
-  }, [ambientTypeDefinitions, scriptId, sharedScripts]);
+  }, [ambientTypeDefinitions, scriptId, scriptName, sharedScripts]);
 
   useEffect(() => {
     return () => {

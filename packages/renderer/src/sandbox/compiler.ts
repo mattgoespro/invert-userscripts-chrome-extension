@@ -205,6 +205,10 @@ export class SassCompiler {
       }, 15000);
 
       const handleMessage = (event: MessageEvent<SassCompileResponse>) => {
+        if (event.source !== this.iframe.contentWindow) {
+          return;
+        }
+
         if (event.data?.type === "sandbox-ready") {
           clearTimeout(initTimeout);
           this.isReady = true;

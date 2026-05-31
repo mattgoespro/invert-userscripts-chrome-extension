@@ -31,6 +31,7 @@
     "ask": "always"
   },
   "chat.planAgent.defaultModel": "Claude Sonnet 4.6 (copilot)",
+  "chat.sessionSync.enabled": true,
   "chat.tools.terminal.autoApprove": {
     "/.*/": true
   },
@@ -39,7 +40,7 @@
     "http://*": true,
     "https://*": true
   },
-  "chat.viewSessions.orientation": "stacked",
+  "chat.viewSessions.orientation": "sideBySide",
   "css.customData": [".vscode/tailwindcss.data.json"],
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "always",
@@ -49,7 +50,7 @@
   },
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.fontFamily": "'Fira Code', 'Source Code Pro', 'Ubuntu Mono', monospace, 'Droid Sans Mono', 'Courier New'",
-  "editor.fontSize": 13,
+  "editor.fontSize": 11,
   "editor.formatOnPaste": true,
   "editor.formatOnSave": true,
   "editor.letterSpacing": -0.5,
@@ -83,6 +84,11 @@
     "**/dist/**": true,
     "**/node_modules/**": true
   },
+  "git.autofetch": true,
+  "git.confirmSync": false,
+  "git.openRepositoryInParentFolders": "never",
+  "gitProjectManager.baseProjectsFolders": ["%USERPROFILE%\\Desktop\\Code"],
+  "gitProjectManager.openInNewWindow": true,
   "github.copilot.chat.agent.autoFix": true,
   "github.copilot.chat.completionsFetcher": "electron-fetch",
   "github.copilot.chat.exploreAgent.model": "Claude Sonnet 4.6 (copilot)",
@@ -92,6 +98,7 @@
   "github.copilot.chat.languageContext.inline.typescript.enabled": true,
   "github.copilot.chat.languageContext.typescript.enabled": true,
   "github.copilot.chat.languageContext.typescript.includeDocumentation": true,
+  "github.copilot.chat.localIndex.enabled": true,
   "github.copilot.chat.switchAgent.enabled": true,
   "github.copilot.enable": {
     "*": true
@@ -99,6 +106,7 @@
   "github.copilot.nextEditSuggestions.enabled": true,
   "js/ts.format.enabled": false,
   "js/ts.preferences.importModuleSpecifier": "shortest",
+  "js/ts.preferences.renameMatchingJsxTags": true,
   "js/ts.preferences.useAliasesForRenames": false,
   "js/ts.tsc.autoDetect": "off",
   "js/ts.tsdk.path": "node_modules\\typescript\\lib",
@@ -134,8 +142,9 @@
   },
   "terminal.integrated.defaultProfile.windows": "bash-node",
   "terminal.integrated.enableMultiLinePasteWarning": "never",
-  "terminal.integrated.fontFamily": "JetBrains Mono, Ubuntu Mono, 'Fira Code'",
-  "terminal.integrated.fontSize": 12,
+  "terminal.integrated.fontFamily": "Hack, Fira Code, Ubuntu Mono, monospace",
+  "terminal.integrated.fontSize": 11,
+  "terminal.integrated.gpuAcceleration": "off",
   "terminal.integrated.lineHeight": 1.2,
   "terminal.integrated.mouseWheelScrollSensitivity": 3,
   "terminal.integrated.profiles.windows": {

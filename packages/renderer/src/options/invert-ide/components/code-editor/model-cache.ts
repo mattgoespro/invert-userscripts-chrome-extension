@@ -49,6 +49,23 @@ export function buildModelUri(
   return `file:///${modelId}.${ext}`;
 }
 
+/**
+ * Derives a stable, human-readable slug for a script's virtual type declaration
+ * path in Monaco's TypeScript virtual filesystem. The slug is composed of a
+ * name-derived prefix and the first 8 characters of the script ID to guarantee
+ * uniqueness even when two scripts share the same name.
+ *
+ * Example: name="My Utils", id="a1b2c3d4-..." → "my-utils-a1b2c3d4"
+ */
+export function buildScriptTypeSlug(name: string, id: string): string {
+  const slug =
+    name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "") || "script";
+  return `${slug}-${id.slice(0, 8)}`;
+}
+
 export function getOrCreateModel(
   uri: string,
   language: UserscriptSourceLanguage,

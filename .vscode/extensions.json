@@ -10,7 +10,6 @@
     "felipecaputo.git-project-manager",
     "esbenp.prettier-vscode",
     "richie5um2.vscode-sort-json",
-    "dsznajder.es7-react-js-snippets",
     "formulahendry.auto-rename-tag",
     "nyxb.vscode-styled-colors",
     "meganrogge.template-string-converter",
@@ -24,6 +23,7 @@
     "bradlc.vscode-tailwindcss",
     "darkriszty.markdown-table-prettify",
     "eamodio.gitlens",
-    "ibm.output-colorizer"
+    "ibm.output-colorizer",
+    "ms-playwright.playwright"
   ]
 }

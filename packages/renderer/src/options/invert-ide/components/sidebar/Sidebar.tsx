@@ -17,16 +17,19 @@ export function Sidebar({ active, onNavigate }: SidebarProps) {
         icon={ClipboardPenIcon}
         active={active === "scripts"}
         onClick={() => onNavigate("scripts")}
+        title="Scripts"
       ></SidebarNavButton>
       <SidebarNavButton
         icon={PackageIcon}
         active={active === "modules"}
         onClick={() => onNavigate("modules")}
+        title="Modules"
       ></SidebarNavButton>
       <SidebarNavButton
         icon={SettingsIcon}
         active={active === "settings"}
         onClick={() => onNavigate("settings")}
+        title="Settings"
       ></SidebarNavButton>
     </div>
   );

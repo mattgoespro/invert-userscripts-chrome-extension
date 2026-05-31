@@ -22,15 +22,17 @@ type SidebarNavButtonProps = {
   icon: LucideIcon;
   onClick: () => void;
   active?: boolean;
+  title?: string;
 };
 
 export function SidebarNavButton({
   icon,
   onClick,
   active = false,
+  title,
 }: SidebarNavButtonProps) {
   return (
-    <button className={sidebarNavButtonVariants({ active })} onClick={onClick}>
+    <button className={sidebarNavButtonVariants({ active })} onClick={onClick} title={title}>
       {createElement(icon as React.ElementType, { size: 20 })}
     </button>
   );

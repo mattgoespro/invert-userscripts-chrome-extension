@@ -12,16 +12,14 @@ const INLINE_EXECUTION_STATE_KEY = "__INVERT_INLINE_EXECUTION__";
 
 export interface RuntimeInjectionState {
   scriptsMap: Userscripts;
-  compiledCodeMap: Record<string, CompiledCodeEntry>;
   modulesMap?: GlobalModules;
 }
 
 export async function loadRuntimeInjectionState(
   includeModules = false
 ): Promise<RuntimeInjectionState> {
-  const [scriptsMap, compiledCodeMap, modulesMap] = await Promise.all([
+  const [scriptsMap, modulesMap] = await Promise.all([
     ChromeSyncStorage.getAllScripts(),
-    CompiledCodeStorage.getAllCompiledCode(),
     includeModules
       ? ChromeSyncStorage.getAllModules()
       : Promise.resolve(undefined),
@@ -29,7 +27,6 @@ export async function loadRuntimeInjectionState(
 
   return {
     scriptsMap,
-    compiledCodeMap,
     modulesMap,
   };
 }
@@ -116,7 +113,7 @@ export async function injectMatchingScripts(
 ): Promise<void> {
   try {
     const state = injectionState ?? (await loadRuntimeInjectionState());
-    const { compiledCodeMap, scriptsMap } = state;
+    const { scriptsMap } = state;
 
     const allScripts = Object.values(scriptsMap);
 
@@ -131,6 +128,19 @@ export async function injectMatchingScripts(
     if (matchingScripts.length === 0) {
       return;
     }
+
+    const scriptIdsToFetch = new Set<string>(matchingScripts.map((s) => s.id));
+    for (const script of matchingScripts) {
+      if (script.sharedScripts?.length > 0) {
+        for (const sharedId of script.sharedScripts) {
+          scriptIdsToFetch.add(sharedId);
+        }
+      }
+    }
+
+    const compiledCodeMap = await CompiledCodeStorage.getCompiledCodeForScripts(
+      Array.from(scriptIdsToFetch)
+    );
 
     const resolvedScripts = matchingScripts.map((script) =>
       mergeCompiledCode(script, compiledCodeMap)

@@ -2,6 +2,7 @@ node_modules/
 dist/
 build/
 temp/
+e2e/report/
 .cache/
 *.ini
 *.log
