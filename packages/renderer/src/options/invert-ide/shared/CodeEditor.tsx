@@ -207,6 +207,12 @@ export function CodeEditor(props: CodeEditorProps) {
       return;
     }
 
+    // Capture the element reference now so the cleanup closure can call
+    // removeEventListener even if React sets editorRootRef.current to null
+    // before the cleanup runs (which React 18+ Strict Mode does during its
+    // simulated unmount/remount cycle).
+    const editorElement = editorRootRef.current;
+
     const handleKeyDown = async (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === "s") {
         e.preventDefault();
@@ -271,10 +277,9 @@ export function CodeEditor(props: CodeEditorProps) {
       }
     };
 
-    editorRootRef.current.addEventListener("keydown", handleKeyDown);
+    editorElement.addEventListener("keydown", handleKeyDown);
 
-    return () =>
-      editorRootRef.current?.removeEventListener("keydown", handleKeyDown);
+    return () => editorElement.removeEventListener("keydown", handleKeyDown);
   }, [editable, scriptId, settings?.autoFormat, language, dispatch, onSave]);
 
   return <div ref={editorRootRef} className="h-full w-full min-w-0"></div>;

@@ -35,7 +35,9 @@ export function ScriptEditor() {
 
   const [liveJs, setLiveJs] = useState("");
   const [liveCss, setLiveCss] = useState("");
-  const [liveTypeDefinitions, setLiveTypeDefinitions] = useState("");
+  const [liveTypeDefinitions, setLiveTypeDefinitions] = useState(
+    script.typeDefinitions
+  );
   const [liveTypescriptSource, setLiveTypescriptSource] = useState(
     script.code.source.typescript
   );

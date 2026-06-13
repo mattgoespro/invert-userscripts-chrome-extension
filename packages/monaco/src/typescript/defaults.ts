@@ -73,12 +73,39 @@ export function addSharedScriptExtraLib(
 // Module-level disposable tracking — non-serializable, kept outside Redux state.
 interface SharedLibEntry {
   disposable: { dispose(): void };
+  packageJsonDisposable: { dispose(): void };
   sourceHash: string;
 }
 const sharedLibEntries = new Map<string, SharedLibEntry>();
 
+/**
+ * Includes `moduleName` so a rename triggers re-registration at the new path.
+ */
 function buildSharedLibSourceHash(shared: SharedScriptInfo): string {
-  return JSON.stringify([shared.sourceCode, shared.typeDefinitions]);
+  return JSON.stringify([
+    shared.moduleName,
+    shared.sourceCode,
+    shared.typeDefinitions,
+  ]);
+}
+
+/**
+ * Registers a minimal `package.json` at the conventional
+ * `node_modules/shared/<moduleName>/package.json` virtual path so that
+ * TypeScript's auto-import path computation can determine the package name and
+ * suggest `import { X } from "shared/<moduleName>"` instead of a relative path.
+ *
+ * Without this entry, TypeScript has no way to map the extra-lib declaration
+ * file back to a named package — it falls back to a relative path that
+ * references the raw model URI (`../<uuid>/main`).
+ */
+function addSharedScriptPackageJson(moduleName: string): monaco.IDisposable {
+  const packageJson = JSON.stringify({
+    name: `shared/${moduleName}`,
+    types: "./index.d.ts",
+  });
+  const filePath = `file:///node_modules/shared/${moduleName}/package.json`;
+  return tsContribution.typescriptDefaults.addExtraLib(packageJson, filePath);
 }
 
 interface AmbientTypeDefinitionLibInfo {
@@ -111,6 +138,7 @@ export function syncSharedScriptLibs(sharedScripts: SharedScriptInfo[]): void {
   for (const [id, entry] of sharedLibEntries) {
     if (!currentIds.has(id)) {
       entry.disposable.dispose();
+      entry.packageJsonDisposable.dispose();
       sharedLibEntries.delete(id);
     }
   }
@@ -135,6 +163,7 @@ export function syncSharedScriptLibs(sharedScripts: SharedScriptInfo[]): void {
     // Dispose the previous registration if updating
     if (existing) {
       existing.disposable.dispose();
+      existing.packageJsonDisposable.dispose();
     }
 
     const declaration = generateSharedScriptDeclaration(
@@ -144,9 +173,11 @@ export function syncSharedScriptLibs(sharedScripts: SharedScriptInfo[]): void {
     );
 
     const disposable = addSharedScriptExtraLib(declaration, shared.moduleName);
+    const packageJsonDisposable = addSharedScriptPackageJson(shared.moduleName);
 
     sharedLibEntries.set(shared.id, {
       disposable,
+      packageJsonDisposable,
       sourceHash,
     });
   }

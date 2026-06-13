@@ -189,13 +189,24 @@ export class SassCompiler {
       return this.readyPromise;
     }
 
-    this.readyPromise = new Promise((resolve) => {
+    this.readyPromise = new Promise((resolve, reject) => {
       this.iframe = document.createElement("iframe");
       this.iframe.src = "/sass-sandbox.html";
       this.iframe.style.display = "none";
 
+      // Reject initialization if the sandbox doesn't respond within 15 seconds.
+      // Without this guard, any compile() call would hang indefinitely if the
+      // sandbox page fails to load (404, CSP violation, JS error, etc.).
+      const initTimeout = setTimeout(() => {
+        this.readyPromise = null;
+        reject(
+          new Error("SCSS sandbox failed to initialize within 15 seconds.")
+        );
+      }, 15000);
+
       const handleMessage = (event: MessageEvent<SassCompileResponse>) => {
         if (event.data?.type === "sandbox-ready") {
+          clearTimeout(initTimeout);
           this.isReady = true;
           resolve();
           return;
@@ -239,7 +250,17 @@ export class SassCompiler {
     options: { minify?: boolean } = {}
   ): Promise<UserscriptCompileResult> {
     if (!this.isReady || !this.iframe?.contentWindow) {
-      await this.initialize();
+      try {
+        await this.initialize();
+      } catch (error) {
+        return {
+          success: false,
+          error:
+            error instanceof Error
+              ? error
+              : new Error("SCSS sandbox initialization failed."),
+        };
+      }
     }
 
     return new Promise((resolve) => {

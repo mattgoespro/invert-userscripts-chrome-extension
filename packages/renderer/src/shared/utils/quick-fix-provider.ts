@@ -242,7 +242,10 @@ export function registerTypeScriptQuickFixProvider(
     missingIdentifierName: string
   ) {
     return (
-      doesSourceExportIdentifier(sharedScript.sourceCode, missingIdentifierName) ||
+      doesSourceExportIdentifier(
+        sharedScript.sourceCode,
+        missingIdentifierName
+      ) ||
       doesTypeDefinitionExposeIdentifier(
         sharedScript.typeDefinitions,
         missingIdentifierName
@@ -264,22 +267,13 @@ export function registerTypeScriptQuickFixProvider(
         `(^|\\n)\\s*export\\s+(?:const|let|var)\\s+${escapedIdentifier}\\b`,
         "m"
       ),
-      new RegExp(
-        `(^|\\n)\\s*export\\s+class\\s+${escapedIdentifier}\\b`,
-        "m"
-      ),
+      new RegExp(`(^|\\n)\\s*export\\s+class\\s+${escapedIdentifier}\\b`, "m"),
       new RegExp(
         `(^|\\n)\\s*export\\s+interface\\s+${escapedIdentifier}\\b`,
         "m"
       ),
-      new RegExp(
-        `(^|\\n)\\s*export\\s+type\\s+${escapedIdentifier}\\b`,
-        "m"
-      ),
-      new RegExp(
-        `(^|\\n)\\s*export\\s+enum\\s+${escapedIdentifier}\\b`,
-        "m"
-      ),
+      new RegExp(`(^|\\n)\\s*export\\s+type\\s+${escapedIdentifier}\\b`, "m"),
+      new RegExp(`(^|\\n)\\s*export\\s+enum\\s+${escapedIdentifier}\\b`, "m"),
       new RegExp(
         `(^|\\n)\\s*export\\s*\\{[^}]*\\b${escapedIdentifier}\\b(?:\\s+as\\s+\\w+)?[^}]*\\}`,
         "m"
@@ -300,25 +294,28 @@ export function registerTypeScriptQuickFixProvider(
     const escapedIdentifier = escapeRegExp(identifierName);
     const declarationPatterns = [
       new RegExp(
-        `^\\s*(?:declare\\s+)?function\\s+${escapedIdentifier}\\b`,
+        `^\\s*(?:export\\s+)?(?:declare\\s+)?function\\s+${escapedIdentifier}\\b`,
         "gm"
       ),
       new RegExp(
-        `^\\s*(?:declare\\s+)?(?:const|let|var)\\s+${escapedIdentifier}\\b`,
+        `^\\s*(?:export\\s+)?(?:declare\\s+)?(?:const|let|var)\\s+${escapedIdentifier}\\b`,
         "gm"
       ),
       new RegExp(
-        `^\\s*(?:declare\\s+)?class\\s+${escapedIdentifier}\\b`,
-        "gm"
-      ),
-      new RegExp(`^\\s*interface\\s+${escapedIdentifier}\\b`, "gm"),
-      new RegExp(`^\\s*type\\s+${escapedIdentifier}\\b`, "gm"),
-      new RegExp(
-        `^\\s*(?:declare\\s+)?enum\\s+${escapedIdentifier}\\b`,
+        `^\\s*(?:export\\s+)?(?:declare\\s+)?class\\s+${escapedIdentifier}\\b`,
         "gm"
       ),
       new RegExp(
-        `^\\s*(?:declare\\s+)?namespace\\s+${escapedIdentifier}\\b`,
+        `^\\s*(?:export\\s+)?interface\\s+${escapedIdentifier}\\b`,
+        "gm"
+      ),
+      new RegExp(`^\\s*(?:export\\s+)?type\\s+${escapedIdentifier}\\b`, "gm"),
+      new RegExp(
+        `^\\s*(?:export\\s+)?(?:declare\\s+)?enum\\s+${escapedIdentifier}\\b`,
+        "gm"
+      ),
+      new RegExp(
+        `^\\s*(?:export\\s+)?(?:declare\\s+)?namespace\\s+${escapedIdentifier}\\b`,
         "gm"
       ),
     ];

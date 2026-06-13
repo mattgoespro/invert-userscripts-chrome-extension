@@ -76,14 +76,14 @@ export function TypeScriptCodeEditor(
       {
         id: `script:${scriptId}:ambient-types`,
         filePath: `file:///scripts/${scriptId}/types.d.ts`,
-        contents: ambientTypeDefinitions,
+        contents: stripExportsForAmbientLib(ambientTypeDefinitions),
       },
       ...(sharedScripts ?? [])
         .filter((shared) => shared.typeDefinitions.trim())
         .map((shared) => ({
           id: `shared:${scriptId}:${shared.id}`,
           filePath: `file:///userscripts/${scriptId}/shared/${shared.id}.d.ts`,
-          contents: shared.typeDefinitions,
+          contents: stripExportsForAmbientLib(shared.typeDefinitions),
         })),
     ].filter((lib) => lib.contents.trim());
 
@@ -102,4 +102,42 @@ export function TypeScriptCodeEditor(
   }, [cdnModules]);
 
   return <CodeEditor {...rest} scriptId={scriptId} language="typescript" />;
+}
+
+/**
+ * Strips top-level `export` keywords from type definition content before
+ * registering it as an ambient (globally-visible) extra lib.
+ *
+ * A `.d.ts` file containing any top-level `export` keyword is treated by
+ * TypeScript as a module declaration file — all declarations become
+ * module-scoped and require an explicit `import` to access. Stripping the
+ * keyword keeps declarations globally visible regardless of whether the user
+ * has also exported them for use by other scripts.
+ *
+ * Exports are preserved in the source that flows through
+ * `generateSharedScriptDeclaration`, so `import { X } from "shared/..."` still
+ * resolves correctly.
+ */
+function stripExportsForAmbientLib(typeDefinitions: string): string {
+  return (
+    typeDefinitions
+      // Strip `export` from named declarations: `export type X` → `type X`.
+      // The negative lookahead prevents `export type { X }` from being matched
+      // here; that form is a re-export and is removed by the next rule.
+      .replace(
+        /^export\s+(type(?!\s*\{)|interface|const|let|var|function|class|enum|declare|abstract)\b/gm,
+        "$1"
+      )
+      // Remove named re-exports: `export { X }`, `export type { X }`,
+      // `export { X } from '...'`, `export type { X } from '...'`.
+      .replace(
+        /^export\s*(?:type\s+)?\{[^}]*\}(?:\s*from\s*["'][^"']*["'])?\s*;?\s*$/gm,
+        ""
+      )
+      // Remove namespace re-exports: `export * from '...'`, `export * as X from '...'`.
+      .replace(
+        /^export\s*\*(?:\s*as\s+\w+)?\s*from\s*["'][^"']*["']\s*;?\s*$/gm,
+        ""
+      )
+  );
 }
