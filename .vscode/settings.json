@@ -49,12 +49,11 @@
     "source.removeUnusedImports": "never"
   },
   "editor.defaultFormatter": "esbenp.prettier-vscode",
-  "editor.fontFamily": "'Fira Code', 'Source Code Pro', 'Ubuntu Mono', monospace, 'Droid Sans Mono', 'Courier New'",
+  "editor.fontFamily": "'Reddit Mono', 'Fira Code', 'Ubuntu Mono', monospace",
   "editor.fontSize": 11,
   "editor.formatOnPaste": true,
   "editor.formatOnSave": true,
   "editor.letterSpacing": -0.5,
-  "editor.lineHeight": 1.4,
   "editor.linkedEditing": true,
   "editor.minimap.autohide": "mouseover",
   "editor.minimap.maxColumn": 150,
