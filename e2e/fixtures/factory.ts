@@ -3,6 +3,7 @@ import type {
   GlobalModule,
   EditorSettings,
 } from "../../packages/shared/src/model";
+import { sanitizeModuleName } from "../../packages/shared/src/model";
 import { v4 as uuid } from "uuid";
 
 export function buildUserscript(
@@ -16,8 +17,8 @@ export function buildUserscript(
     name: "Test Script",
     enabled: true,
     status: "saved",
-    shared: false,
-    moduleName: "",
+    shared: true,
+    moduleName: sanitizeModuleName("Test Script"),
     sharedScripts: [],
     globalModules: [],
     typeDefinitions: "",

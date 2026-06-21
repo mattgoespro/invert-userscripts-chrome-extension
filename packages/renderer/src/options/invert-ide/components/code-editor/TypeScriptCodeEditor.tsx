@@ -12,7 +12,11 @@ import {
   syncSharedScriptLibs,
 } from "@packages/monaco";
 import type { CdnModuleInfo } from "@packages/monaco";
-import { buildScriptTypeSlug } from "./model-cache";
+import {
+  buildScriptTypeSlug,
+  buildModelUri,
+  setSuppressedModelUris,
+} from "./model-cache";
 import { useEffect, useMemo } from "react";
 import { CodeEditor, CodeEditorProps } from "../../shared/CodeEditor";
 import { registerTypeScriptQuickFixProvider } from "@/shared/utils/quick-fix-provider";
@@ -73,9 +77,21 @@ export function TypeScriptCodeEditor(
       syncSharedScriptLibs(sharedScripts);
     }
 
+    // Shared script source models (`scripts/<id>/main.ts`) would make
+    // TypeScript's auto-import emit a relative path to the in-memory model
+    // instead of the canonical "shared/<moduleName>" specifier from the extra
+    // lib. Suppress those models for the duration of this editor; the cache
+    // owns a single global listener that disposes them on creation.
+    const sharedModelUris = (sharedScripts ?? []).map((s) =>
+      buildModelUri(`scripts/${s.id}/main`, "typescript")
+    );
+
+    setSuppressedModelUris(sharedModelUris);
+
     return () => {
       quickFixDisposable.dispose();
       importIntelligenceDisposables.forEach((d) => d.dispose());
+      setSuppressedModelUris([]);
     };
   }, [sharedScripts]);
 

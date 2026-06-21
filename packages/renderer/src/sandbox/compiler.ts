@@ -103,10 +103,22 @@ export async function buildUserscriptJavascript(
     return compiled;
   }
 
-  let code = prepareCompiledJavascript(compiled.code ?? "", {
-    shared: script.shared,
-    moduleName: script.moduleName,
-  });
+  let code: string;
+  try {
+    // prepareCompiledJavascript can throw for unsupported shared-module
+    // constructs (e.g. re-exports). Convert that into the result-object
+    // contract so callers — including the live-preview effect that only
+    // inspects `result.success` — don't see an unhandled rejection.
+    code = prepareCompiledJavascript(compiled.code ?? "", {
+      shared: script.shared,
+      moduleName: script.moduleName,
+    });
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error : new Error(String(error)),
+    };
+  }
 
   if (!options.minifyCompiledOutput) {
     return {

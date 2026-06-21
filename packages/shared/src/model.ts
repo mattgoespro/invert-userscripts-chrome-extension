@@ -89,3 +89,15 @@ export interface SharedScriptInfo {
   sourceCode: string;
   typeDefinitions: string;
 }
+
+/**
+ * Sanitizes a userscript name into a valid kebab-case module name.
+ * Lowercases, replaces non-alphanumeric character runs with a single hyphen,
+ * and trims leading/trailing hyphens.
+ */
+export function sanitizeModuleName(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}

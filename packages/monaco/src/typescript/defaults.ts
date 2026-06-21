@@ -43,8 +43,27 @@ export function ensureTypescriptDefaults(): void {
     // Each userscript editor model should type-check as an isolated module, even
     // when Monaco keeps other script models alive for tab switching.
     moduleDetection: ts.ModuleDetectionKind.Force,
+    // Allow `import { x } from "shared/moduleName"` to resolve to the extra lib
+    // registered at `node_modules/shared/<moduleName>/index.d.ts`, and ensure
+    // TypeScript's auto-import generates the `shared/*` specifier rather than a
+    // relative path to a physical model file.
+    //
+    // baseUrl must be "file:///" (the virtual FS root) so that the paths entries
+    // below resolve against the correct virtual directory. Using "." would resolve
+    // relative to each individual file's directory, causing node_modules lookups
+    // to fail silently.
+    baseUrl: "file:///",
+    paths: {
+      "shared/*": ["node_modules/shared/*/index.d.ts"],
+    },
   });
 
+  // Re-enable eager model sync so the TypeScript worker is notified whenever a
+  // model is disposed. This is essential for the shared-script model disposal in
+  // TypeScriptCodeEditor to take effect: when model.dispose() is called, Monaco
+  // fires onWillDisposeModel which the worker uses to remove that file from its
+  // program. Without this, the worker retains a stale copy of the shared script
+  // and continues to offer relative-UUID import paths.
   tsContribution.typescriptDefaults.setEagerModelSync(true);
 }
 

@@ -17,6 +17,7 @@ import { ChromeSyncStorage, CompiledCodeStorage } from "@shared/storage";
 import { RootState } from "../../store";
 import { uuid } from "@/shared/utils";
 import { UserscriptsTransferFile } from "./transfer.userscripts";
+import { DefaultNewUserscriptName } from "./state.userscripts";
 
 function normalizeUserscript(script: Userscript): Userscript {
   return {
@@ -216,7 +217,7 @@ export const createUserscript = createAsyncThunk(
     const timestamp = Date.now();
     const script: Userscript = {
       id: uuid(),
-      name: "New Script",
+      name: DefaultNewUserscriptName,
       enabled: false,
       status: "modified",
       shared: false,

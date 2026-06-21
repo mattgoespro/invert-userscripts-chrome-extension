@@ -1,5 +1,5 @@
 import { Input } from "@/shared/components/input/Input";
-import { Userscript } from "@shared/model";
+import { sanitizeModuleName, Userscript } from "@shared/model";
 import { useAppDispatch } from "@/shared/store/hooks";
 import { AppDispatch } from "@/shared/store/store";
 import {
@@ -34,6 +34,7 @@ export function ScriptMetadata({ script }: ScriptMetadataProps) {
     if (!confirm("Are you sure you want to delete this script?")) {
       return;
     }
+
     dispatch(deleteUserscript(script.id));
   };
 
@@ -56,7 +57,17 @@ export function ScriptMetadata({ script }: ScriptMetadataProps) {
           required
           defaultValue={script.name}
           placeholder="Script name..."
-          onChange={(event) => onUpdateScriptMeta({ name: event.target.value })}
+          onChange={(event) => {
+            const newName = event.target.value;
+            const updates: Partial<Userscript> = { name: newName };
+
+            if (script.moduleName === sanitizeModuleName(script.name)) {
+              updates.moduleName = sanitizeModuleName(newName);
+              updates.shared = true;
+            }
+
+            onUpdateScriptMeta(updates);
+          }}
         />
         <UrlPatternInput
           className="min-w-0 flex-1"
@@ -72,7 +83,6 @@ export function ScriptMetadata({ script }: ScriptMetadataProps) {
         />
         <OptionsPanel
           script={script}
-          shared={script.shared ?? false}
           scriptName={script.name}
           moduleName={script.moduleName ?? ""}
           selectedModuleIds={script.globalModules ?? []}

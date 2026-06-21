@@ -43,18 +43,28 @@ export function registerTypeScriptQuickFixProvider(
               //
               // TODO: If performance becomes an issue, we could consider storing an index of exported identifiers for each shared script.
               //
-              if (
-                doesExportMatchingIdentifier(
-                  sharedScript,
+              const inSource = doesSourceExportIdentifier(
+                sharedScript.sourceCode,
+                missingIdentifierName
+              );
+              const inTypeDefinitions =
+                !inSource &&
+                doesTypeDefinitionExposeIdentifier(
+                  sharedScript.typeDefinitions,
                   missingIdentifierName
-                )
-              ) {
-                const importKeyword = model.uri.path.endsWith(".d.ts")
+                );
+
+              if (inSource || inTypeDefinitions) {
+                // generateSharedScriptDeclaration merges typeDefinitions into
+                // the root `shared/<moduleName>` extra lib, so type-only and
+                // value identifiers both resolve from the same module path.
+                const importPath = `shared/${sharedScript.moduleName}`;
+                const importKeyword = inTypeDefinitions
                   ? "import type"
                   : "import";
 
                 actions.push({
-                  title: `Import '${missingIdentifierName}' from "${sharedScript.moduleName}"`,
+                  title: `Import '${missingIdentifierName}' from "${importPath}"`,
                   kind: "quickfix",
                   isPreferred: true,
                   edit: {
@@ -68,7 +78,7 @@ export function registerTypeScriptQuickFixProvider(
                             endLineNumber: 1,
                             endColumn: 1,
                           },
-                          text: `${importKeyword} { ${missingIdentifierName} } from "shared/${sharedScript.moduleName}";\n`,
+                          text: `${importKeyword} { ${missingIdentifierName} } from "${importPath}";\n`,
                         },
                         versionId: model.getVersionId(),
                       },
@@ -237,22 +247,6 @@ export function registerTypeScriptQuickFixProvider(
     },
   });
 
-  function doesExportMatchingIdentifier(
-    sharedScript: SharedScriptInfo,
-    missingIdentifierName: string
-  ) {
-    return (
-      doesSourceExportIdentifier(
-        sharedScript.sourceCode,
-        missingIdentifierName
-      ) ||
-      doesTypeDefinitionExposeIdentifier(
-        sharedScript.typeDefinitions,
-        missingIdentifierName
-      )
-    );
-  }
-
   function doesSourceExportIdentifier(
     sourceCode: string,
     identifierName: string
@@ -301,10 +295,10 @@ export function registerTypeScriptQuickFixProvider(
         `^\\s*(?:export\\s+)?(?:declare\\s+)?(?:const|let|var)\\s+${escapedIdentifier}\\b`,
         "gm"
       ),
-      new RegExp(
-        `^\\s*(?:export\\s+)?(?:declare\\s+)?class\\s+${escapedIdentifier}\\b`,
-        "gm"
-      ),
+      new RegExp(`^\\s*(?:declare\\s+)?class\\s+${escapedIdentifier}\\b`, "gm"),
+      new RegExp(`^\\s*interface\\s+${escapedIdentifier}\\b`, "gm"),
+      new RegExp(`^\\s*type\\s+${escapedIdentifier}\\b`, "gm"),
+      new RegExp(`^\\s*(?:declare\\s+)?enum\\s+${escapedIdentifier}\\b`, "gm"),
       new RegExp(
         `^\\s*(?:export\\s+)?interface\\s+${escapedIdentifier}\\b`,
         "gm"

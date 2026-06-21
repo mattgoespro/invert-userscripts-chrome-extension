@@ -115,6 +115,11 @@ export function useEditorErrorTracking(
 
     return () => {
       disposable.dispose();
+      if (isTypescriptModel && !model.isDisposed()) {
+        // Drop any hint-promotion markers so they don't linger on cached models
+        // after the editor unmounts.
+        monaco.editor.setModelMarkers(model, "invert-ide", []);
+      }
     };
   }, [scriptId, model, language, dispatch]);
 }

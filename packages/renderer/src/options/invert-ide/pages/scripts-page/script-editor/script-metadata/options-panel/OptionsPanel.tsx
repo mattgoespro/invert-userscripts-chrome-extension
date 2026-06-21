@@ -11,7 +11,7 @@ import {
 import { useAppSelector } from "@/shared/store/hooks";
 import { selectEnabledModules } from "@/shared/store/slices/modules";
 import { selectSharedUserscripts } from "@/shared/store/slices/userscripts";
-import { Userscript } from "@shared/model";
+import { sanitizeModuleName, Userscript } from "@shared/model";
 import {
   EllipsisVerticalIcon,
   GitForkIcon,
@@ -39,22 +39,8 @@ const optionsTriggerVariants = cva(
   }
 );
 
-/**
- * Sanitizes a script name into a valid kebab-case module name.
- * Lowercases, replaces non-alphanumeric characters with hyphens, collapses
- * consecutive hyphens, and trims leading/trailing hyphens.
- */
-function sanitizeModuleName(name: string): string {
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "");
-}
-
 type OptionsPanelProps = {
   script: Userscript;
-  shared: boolean;
   scriptName: string;
   moduleName: string;
   selectedModuleIds: string[];

@@ -160,16 +160,56 @@ export function wrapSharedScriptForInjection(
   const assignments: string[] = [];
   let defaultCounter = 0;
 
+  // Returns the source range covering the `export` keyword (and an optional
+  // trailing `default` keyword) plus any whitespace up to the declaration
+  // keyword, so the modifiers can be stripped without leaving stray spaces.
+  // `export` is always the first modifier on a declaration, so its start is the
+  // start of the range; modifiers that follow (e.g. `async`) are preserved.
+  const stripExportRange = (
+    exportModifier: ts.Modifier,
+    trailingModifier?: ts.Modifier
+  ): { start: number; end: number } => {
+    const lastStripped = trailingModifier ?? exportModifier;
+    let end = lastStripped.getEnd();
+
+    while (end < compiledJs.length && /\s/.test(compiledJs[end])) {
+      end++;
+    }
+
+    return { start: exportModifier.getStart(sourceFile), end };
+  };
+
   for (const statement of sourceFile.statements) {
     if (ts.isExportDeclaration(statement)) {
-      if (!statement.exportClause || !ts.isNamedExports(statement.exportClause)) {
+      // `export * from "mod"` and `export { x } from "mod"` reach this code
+      // only if the upstream import resolver left them in place. Bailing
+      // out loudly is preferable to silently emitting broken JS that would
+      // throw a SyntaxError or ReferenceError at runtime.
+      if (statement.moduleSpecifier) {
+        throw new Error(
+          `Shared module "${moduleName}" contains a re-export from ` +
+            `"${(statement.moduleSpecifier as ts.StringLiteral).text}", ` +
+            `which is not supported in shared scripts.`
+        );
+      }
+
+      if (
+        !statement.exportClause ||
+        !ts.isNamedExports(statement.exportClause)
+      ) {
         continue;
       }
+
       for (const element of statement.exportClause.elements) {
-        const localName = (element.propertyName || element.name).getText(sourceFile);
+        const localName = (element.propertyName || element.name).getText(
+          sourceFile
+        );
         const exportedName = element.name.getText(sourceFile);
-        assignments.push(`__ns__[${JSON.stringify(exportedName)}]=${localName}`);
+        assignments.push(
+          `__ns__[${JSON.stringify(exportedName)}]=${localName}`
+        );
       }
+
       replacements.push({
         start: statement.getStart(sourceFile),
         end: statement.getEnd(),
@@ -190,11 +230,19 @@ export function wrapSharedScriptForInjection(
       continue;
     }
 
-    const modifiers = ts.canHaveModifiers(statement) ? ts.getModifiers(statement) : undefined;
-    const exportModifier = modifiers?.find((m: ts.Modifier) => m.kind === ts.SyntaxKind.ExportKeyword);
-    if (!exportModifier) continue;
+    const modifiers = ts.canHaveModifiers(statement)
+      ? ts.getModifiers(statement)
+      : undefined;
+    const exportModifier = modifiers?.find(
+      (m) => m.kind === ts.SyntaxKind.ExportKeyword
+    );
+    if (!exportModifier) {
+      continue;
+    }
 
-    const defaultModifier = modifiers?.find((m: ts.Modifier) => m.kind === ts.SyntaxKind.DefaultKeyword);
+    const defaultModifier = modifiers?.find(
+      (m) => m.kind === ts.SyntaxKind.DefaultKeyword
+    );
 
     if (ts.isVariableStatement(statement)) {
       for (const decl of statement.declarationList.declarations) {
@@ -203,61 +251,59 @@ export function wrapSharedScriptForInjection(
           assignments.push(`__ns__[${JSON.stringify(name)}]=${name}`);
         }
       }
-      
-      let end = exportModifier.getEnd();
-      if (compiledJs[end] === " ") end++;
 
-      replacements.push({
-        start: exportModifier.getStart(sourceFile),
-        end,
-        text: "", 
-      });
-    } else if (ts.isFunctionDeclaration(statement) || ts.isClassDeclaration(statement)) {
+      const { start, end } = stripExportRange(exportModifier);
+      replacements.push({ start, end, text: "" });
+      continue;
+    }
+
+    if (
+      ts.isFunctionDeclaration(statement) ||
+      ts.isClassDeclaration(statement)
+    ) {
       const nameNode = statement.name;
+
       if (defaultModifier) {
         if (nameNode) {
           const name = nameNode.getText(sourceFile);
           assignments.push(`__ns__["default"]=${name}`);
-          
-          let end = defaultModifier.getEnd();
-          if (compiledJs[end] === " ") end++;
-          replacements.push({
-            start: exportModifier.getStart(sourceFile),
-            end,
-            text: "",
-          });
+          const { start, end } = stripExportRange(
+            exportModifier,
+            defaultModifier
+          );
+          replacements.push({ start, end, text: "" });
         } else {
           const defName = `__default_${defaultCounter++}__`;
           assignments.push(`__ns__["default"]=${defName}`);
-          
-          let end = defaultModifier.getEnd();
-          if (compiledJs[end] === " ") end++;
+          const { start, end } = stripExportRange(
+            exportModifier,
+            defaultModifier
+          );
           replacements.push({
-            start: exportModifier.getStart(sourceFile),
+            start,
             end,
             text: `const ${defName} = `,
           });
         }
-      } else {
-        if (nameNode) {
-          const name = nameNode.getText(sourceFile);
-          assignments.push(`__ns__[${JSON.stringify(name)}]=${name}`);
-        }
-        
-        let end = exportModifier.getEnd();
-        if (compiledJs[end] === " ") end++;
-        replacements.push({
-          start: exportModifier.getStart(sourceFile),
-          end,
-          text: "",
-        });
+        continue;
       }
+
+      if (nameNode) {
+        const name = nameNode.getText(sourceFile);
+        assignments.push(`__ns__[${JSON.stringify(name)}]=${name}`);
+      }
+
+      const { start, end } = stripExportRange(exportModifier);
+      replacements.push({ start, end, text: "" });
     }
   }
 
   let code = compiledJs;
   for (const replacement of replacements.reverse()) {
-    code = code.slice(0, replacement.start) + replacement.text + code.slice(replacement.end);
+    code =
+      code.slice(0, replacement.start) +
+      replacement.text +
+      code.slice(replacement.end);
   }
 
   const assignmentsCode = assignments.join(";");
