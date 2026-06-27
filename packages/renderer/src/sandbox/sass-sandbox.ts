@@ -24,6 +24,10 @@ interface SassCompileResponse {
 window.addEventListener(
   "message",
   (event: MessageEvent<SassCompileRequest>) => {
+    if (event.source !== window.parent) {
+      return;
+    }
+
     if (event.data?.type !== "compile") {
       return;
     }

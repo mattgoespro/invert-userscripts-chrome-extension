@@ -1,0 +1,8 @@
+packages:
+  - "packages/*"
+  - "plugins"
+  - "examples/*"
+allowBuilds:
+  "@parcel/watcher": true
+  esbuild: true
+  sharp: true

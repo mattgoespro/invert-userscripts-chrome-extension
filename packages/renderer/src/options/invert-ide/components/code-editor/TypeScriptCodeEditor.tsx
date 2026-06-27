@@ -4,6 +4,7 @@ import {
   selectGlobalModuleIdsForUserscript,
   selectSharedScriptsForUserscript,
 } from "@/shared/store/slices/code-editor";
+import { selectUserscriptById } from "@/shared/store/slices/userscripts";
 import {
   ensureTypescriptDefaults,
   syncAmbientTypeDefinitionLibs,
@@ -11,6 +12,11 @@ import {
   syncSharedScriptLibs,
 } from "@packages/monaco";
 import type { CdnModuleInfo } from "@packages/monaco";
+import {
+  buildScriptTypeSlug,
+  buildModelUri,
+  setSuppressedModelUris,
+} from "./model-cache";
 import { useEffect, useMemo } from "react";
 import { CodeEditor, CodeEditorProps } from "../../shared/CodeEditor";
 import { registerTypeScriptQuickFixProvider } from "@/shared/utils/quick-fix-provider";
@@ -29,6 +35,12 @@ export function TypeScriptCodeEditor(
   const { scriptId, ambientTypeDefinitions = "", ...rest } = props;
   const sharedScripts = useAppSelector(
     useMemo(() => selectSharedScriptsForUserscript(scriptId), [scriptId])
+  );
+  const scriptName = useAppSelector(
+    useMemo(
+      () => (state) => selectUserscriptById(state, scriptId)?.name ?? "",
+      [scriptId]
+    )
   );
   const globalModuleIds = useAppSelector(
     useMemo(() => selectGlobalModuleIdsForUserscript(scriptId), [scriptId])
@@ -65,9 +77,21 @@ export function TypeScriptCodeEditor(
       syncSharedScriptLibs(sharedScripts);
     }
 
+    // Shared script source models (`scripts/<id>/main.ts`) would make
+    // TypeScript's auto-import emit a relative path to the in-memory model
+    // instead of the canonical "shared/<moduleName>" specifier from the extra
+    // lib. Suppress those models for the duration of this editor; the cache
+    // owns a single global listener that disposes them on creation.
+    const sharedModelUris = (sharedScripts ?? []).map((s) =>
+      buildModelUri(`scripts/${s.id}/main`, "typescript")
+    );
+
+    setSuppressedModelUris(sharedModelUris);
+
     return () => {
       quickFixDisposable.dispose();
       importIntelligenceDisposables.forEach((d) => d.dispose());
+      setSuppressedModelUris([]);
     };
   }, [sharedScripts]);
 
@@ -75,20 +99,20 @@ export function TypeScriptCodeEditor(
     const ambientLibs = [
       {
         id: `script:${scriptId}:ambient-types`,
-        filePath: `file:///scripts/${scriptId}/types.d.ts`,
+        filePath: `file:///node_modules/userscripts/${buildScriptTypeSlug(scriptName, scriptId)}/types.d.ts`,
         contents: stripExportsForAmbientLib(ambientTypeDefinitions),
       },
       ...(sharedScripts ?? [])
         .filter((shared) => shared.typeDefinitions.trim())
         .map((shared) => ({
           id: `shared:${scriptId}:${shared.id}`,
-          filePath: `file:///userscripts/${scriptId}/shared/${shared.id}.d.ts`,
+          filePath: `file:///node_modules/userscripts/${buildScriptTypeSlug(shared.name, shared.id)}/types.d.ts`,
           contents: stripExportsForAmbientLib(shared.typeDefinitions),
         })),
     ].filter((lib) => lib.contents.trim());
 
     syncAmbientTypeDefinitionLibs(ambientLibs);
-  }, [ambientTypeDefinitions, scriptId, sharedScripts]);
+  }, [ambientTypeDefinitions, scriptId, scriptName, sharedScripts]);
 
   useEffect(() => {
     return () => {

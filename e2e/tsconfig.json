@@ -1,0 +1,14 @@
+{
+  "extends": "../tsconfig.base.json",
+  "include": ["**/*.ts"],
+  "exclude": ["report"],
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["es2020", "dom"],
+    "types": ["@playwright/test", "node", "chrome"],
+    "noEmit": true,
+    "strict": false,
+    "noImplicitAny": true
+  }
+}

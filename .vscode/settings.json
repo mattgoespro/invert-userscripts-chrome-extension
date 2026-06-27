@@ -31,6 +31,7 @@
     "ask": "always"
   },
   "chat.planAgent.defaultModel": "Claude Sonnet 4.6 (copilot)",
+  "chat.sessionSync.enabled": true,
   "chat.tools.terminal.autoApprove": {
     "/.*/": true
   },
@@ -48,12 +49,11 @@
     "source.removeUnusedImports": "never"
   },
   "editor.defaultFormatter": "esbenp.prettier-vscode",
-  "editor.fontFamily": "'Fira Code', 'Source Code Pro', 'Ubuntu Mono', monospace, 'Droid Sans Mono', 'Courier New'",
-  "editor.fontSize": 13,
+  "editor.fontFamily": "'Reddit Mono', 'Fira Code', 'Ubuntu Mono', monospace",
+  "editor.fontSize": 12,
   "editor.formatOnPaste": true,
   "editor.formatOnSave": true,
   "editor.letterSpacing": -0.5,
-  "editor.lineHeight": 1.4,
   "editor.linkedEditing": true,
   "editor.minimap.autohide": "mouseover",
   "editor.minimap.maxColumn": 150,
@@ -83,6 +83,11 @@
     "**/dist/**": true,
     "**/node_modules/**": true
   },
+  "git.autofetch": true,
+  "git.confirmSync": false,
+  "git.openRepositoryInParentFolders": "never",
+  "gitProjectManager.baseProjectsFolders": ["%USERPROFILE%\\Desktop\\Code"],
+  "gitProjectManager.openInNewWindow": true,
   "github.copilot.chat.agent.autoFix": true,
   "github.copilot.chat.completionsFetcher": "electron-fetch",
   "github.copilot.chat.exploreAgent.model": "Claude Sonnet 4.6 (copilot)",
@@ -92,6 +97,7 @@
   "github.copilot.chat.languageContext.inline.typescript.enabled": true,
   "github.copilot.chat.languageContext.typescript.enabled": true,
   "github.copilot.chat.languageContext.typescript.includeDocumentation": true,
+  "github.copilot.chat.localIndex.enabled": true,
   "github.copilot.chat.switchAgent.enabled": true,
   "github.copilot.enable": {
     "*": true
@@ -99,6 +105,7 @@
   "github.copilot.nextEditSuggestions.enabled": true,
   "js/ts.format.enabled": false,
   "js/ts.preferences.importModuleSpecifier": "shortest",
+  "js/ts.preferences.renameMatchingJsxTags": true,
   "js/ts.preferences.useAliasesForRenames": false,
   "js/ts.tsc.autoDetect": "off",
   "js/ts.tsdk.path": "node_modules\\typescript\\lib",
@@ -134,8 +141,9 @@
   },
   "terminal.integrated.defaultProfile.windows": "bash-node",
   "terminal.integrated.enableMultiLinePasteWarning": "never",
-  "terminal.integrated.fontFamily": "JetBrains Mono, Ubuntu Mono, 'Fira Code'",
-  "terminal.integrated.fontSize": 12,
+  "terminal.integrated.fontFamily": "'Ubuntu Mono', monospace",
+  "terminal.integrated.fontSize": 11,
+  "terminal.integrated.gpuAcceleration": "off",
   "terminal.integrated.lineHeight": 1.2,
   "terminal.integrated.mouseWheelScrollSensitivity": 3,
   "terminal.integrated.profiles.windows": {
@@ -159,5 +167,6 @@
   "workbench.colorTheme": "Dark Modern",
   "workbench.editor.closeOnFileDelete": true,
   "workbench.iconTheme": "vscode-icons",
-  "workbench.tree.indent": 10
+  "workbench.tree.indent": 10,
+  "workbench.settings.enableNaturalLanguageSearch": true
 }

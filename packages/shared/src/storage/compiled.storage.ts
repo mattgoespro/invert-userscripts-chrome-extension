@@ -39,6 +39,32 @@ export class CompiledCodeStorage {
   }
 
   /**
+   * Retrieves compiled code entries for multiple userscripts efficiently.
+   * @param scriptIds - Array of userscript IDs
+   * @returns A record mapping script IDs to their compiled code
+   */
+  static async getCompiledCodeForScripts(
+    scriptIds: string[]
+  ): Promise<Record<string, CompiledCodeEntry>> {
+    if (scriptIds.length === 0) {
+      return {};
+    }
+
+    const keys = scriptIds.map((id) => `${COMPILED_KEY_PREFIX}${id}`);
+    const result = await chrome.storage.local.get(keys);
+    const entries: Record<string, CompiledCodeEntry> = {};
+
+    for (const [key, value] of Object.entries(result)) {
+      if (key.startsWith(COMPILED_KEY_PREFIX)) {
+        const scriptId = key.slice(COMPILED_KEY_PREFIX.length);
+        entries[scriptId] = value as CompiledCodeEntry;
+      }
+    }
+
+    return entries;
+  }
+
+  /**
    * Retrieves all compiled code entries, keyed by script ID.
    * @returns A record mapping script IDs to their compiled code
    */

@@ -1,5 +1,5 @@
 {
-  "files": ["webpack.config.ts"],
+  "files": ["webpack.config.ts", "playwright.config.ts"],
   "include": [],
   "exclude": ["node_modules", "dist", "examples"],
   "compilerOptions": {

@@ -1,0 +1,18 @@
+{
+  "userscripts": [
+    {
+      "name": "FixtureScript",
+      "enabled": true,
+      "urlPatterns": ["https://example.com/*"],
+      "runAt": "afterPageLoad",
+      "moduleName": "",
+      "sources": {
+        "typescript": "console.log('hello from FixtureScript');",
+        "typescript-declarations": "",
+        "scss": ""
+      },
+      "sharedImports": [],
+      "globalModuleImports": []
+    }
+  ]
+}

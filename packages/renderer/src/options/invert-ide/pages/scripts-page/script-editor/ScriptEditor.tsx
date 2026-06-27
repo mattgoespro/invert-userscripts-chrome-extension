@@ -1,6 +1,7 @@
 import { CodeEditor } from "@/options/invert-ide/shared/CodeEditor";
 import { TypeDefinitionCodeEditor } from "@/options/invert-ide/components/code-editor/TypeDefinitionCodeEditor";
 import { TypeScriptCodeEditor } from "@/options/invert-ide/components/code-editor/TypeScriptCodeEditor";
+import { buildScriptTypeSlug } from "@/options/invert-ide/components/code-editor/model-cache";
 import {
   buildUserscriptJavascript,
   buildUserscriptStylesheet,
@@ -282,7 +283,7 @@ export function ScriptEditor() {
                         </div>
                         <div className="min-h-0 min-w-0 flex-1">
                           <TypeDefinitionCodeEditor
-                            modelId={`scripts/${script.id}/types.d`}
+                            modelId={`node_modules/userscripts/${buildScriptTypeSlug(script.name, script.id)}/types.d`}
                             scriptId={script.id}
                             contents={script.typeDefinitions}
                             onCodeModified={(code) =>

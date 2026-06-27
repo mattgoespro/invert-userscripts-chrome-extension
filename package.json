@@ -22,7 +22,9 @@
     "clean": "rm -rf dist && rm -rf node_modules/.cache",
     "lint": "eslint packages plugins examples",
     "test": "node --loader ts-node/esm --test tests/*.test.mjs",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "e2e": "playwright test",
+    "e2e:headless": "HEADLESS=true playwright test"
   },
   "dependencies": {
     "@reduxjs/toolkit": "^2.11.2",
@@ -56,6 +58,7 @@
   },
   "devDependencies": {
     "@html-eslint/eslint-plugin": "^0.53.0",
+    "@playwright/test": "^1.60.0",
     "@types/chrome": "^0.1.36",
     "@types/fs-extra": "^11.0.4",
     "@types/node": "^25.6.2",
