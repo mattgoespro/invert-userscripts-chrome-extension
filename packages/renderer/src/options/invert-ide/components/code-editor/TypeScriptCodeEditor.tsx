@@ -100,14 +100,14 @@ export function TypeScriptCodeEditor(
       {
         id: `script:${scriptId}:ambient-types`,
         filePath: `file:///node_modules/userscripts/${buildScriptTypeSlug(scriptName, scriptId)}/types.d.ts`,
-        contents: ambientTypeDefinitions,
+        contents: stripExportsForAmbientLib(ambientTypeDefinitions),
       },
       ...(sharedScripts ?? [])
         .filter((shared) => shared.typeDefinitions.trim())
         .map((shared) => ({
           id: `shared:${scriptId}:${shared.id}`,
           filePath: `file:///node_modules/userscripts/${buildScriptTypeSlug(shared.name, shared.id)}/types.d.ts`,
-          contents: shared.typeDefinitions,
+          contents: stripExportsForAmbientLib(shared.typeDefinitions),
         })),
     ].filter((lib) => lib.contents.trim());
 
