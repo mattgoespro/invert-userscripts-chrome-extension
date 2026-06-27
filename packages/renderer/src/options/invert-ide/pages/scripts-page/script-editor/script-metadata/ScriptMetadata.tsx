@@ -62,8 +62,9 @@ export function ScriptMetadata({ script }: ScriptMetadataProps) {
             const updates: Partial<Userscript> = { name: newName };
 
             if (script.moduleName === sanitizeModuleName(script.name)) {
-              updates.moduleName = sanitizeModuleName(newName);
-              updates.shared = true;
+              const sanitized = sanitizeModuleName(newName);
+              updates.moduleName = sanitized;
+              updates.shared = sanitized.length > 0;
             }
 
             onUpdateScriptMeta(updates);
