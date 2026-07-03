@@ -1,7 +1,11 @@
 {
   "include": ["userscripts/**/*.ts"],
   "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
     "lib": ["es2022", "dom", "dom.iterable"],
-    "strict": false
+    "strict": false,
+    "outDir": "./out",
+    "rootDir": "userscripts"
   }
 }

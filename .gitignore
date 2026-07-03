@@ -3,6 +3,7 @@ dist/
 build/
 temp/
 e2e/report/
+examples/out/
 .cache/
 *.ini
 *.log

@@ -142,7 +142,7 @@
   "terminal.integrated.defaultProfile.windows": "bash-node",
   "terminal.integrated.enableMultiLinePasteWarning": "never",
   "terminal.integrated.fontFamily": "'Ubuntu Mono', monospace",
-  "terminal.integrated.fontSize": 11,
+  "terminal.integrated.fontSize": 12,
   "terminal.integrated.gpuAcceleration": "off",
   "terminal.integrated.lineHeight": 1.2,
   "terminal.integrated.mouseWheelScrollSensitivity": 3,
@@ -163,10 +163,11 @@
   "terminal.integrated.smoothScrolling": true,
   "terminal.integrated.stickyScroll.enabled": true,
   "vsicons.dontShowNewVersionMessage": true,
+  "workbench.activityBar.orientation": "vertical",
   "workbench.browser.enableChatTools": true,
   "workbench.colorTheme": "Dark Modern",
   "workbench.editor.closeOnFileDelete": true,
   "workbench.iconTheme": "vscode-icons",
-  "workbench.tree.indent": 10,
-  "workbench.settings.enableNaturalLanguageSearch": true
+  "workbench.settings.enableNaturalLanguageSearch": true,
+  "workbench.tree.indent": 10
 }

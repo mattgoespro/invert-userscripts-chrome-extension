@@ -16,6 +16,7 @@ import { getSharedImportModuleNames } from "@shared/compiled-output";
 import { ChromeSyncStorage, CompiledCodeStorage } from "@shared/storage";
 import { RootState } from "../../store";
 import { uuid } from "@/shared/utils";
+import { syncAllSharedScriptLibsFromUserscripts } from "@packages/monaco";
 import { UserscriptsTransferFile } from "./transfer.userscripts";
 import { DefaultNewUserscriptName } from "./state.userscripts";
 
@@ -542,6 +543,11 @@ export const importUserscripts = createAsyncThunk<
   );
 
   sendRefreshTabsMessage();
+
+  syncAllSharedScriptLibsFromUserscripts([
+    ...Object.values(getState().userscripts.scripts),
+    ...importedScripts,
+  ]);
 
   return importedScripts;
 });

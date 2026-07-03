@@ -1,6 +1,7 @@
 import { useAppSelector } from "@/shared/store/hooks";
 import { selectModules } from "@/shared/store/slices/modules";
 import {
+  selectAllSharedScriptInfos,
   selectGlobalModuleIdsForUserscript,
   selectSharedScriptsForUserscript,
 } from "@/shared/store/slices/code-editor";
@@ -17,7 +18,7 @@ import {
   buildModelUri,
   setSuppressedModelUris,
 } from "./model-cache";
-import { useEffect, useMemo } from "react";
+import { useEffect, useLayoutEffect, useMemo } from "react";
 import { CodeEditor, CodeEditorProps } from "../../shared/CodeEditor";
 import { registerTypeScriptQuickFixProvider } from "@/shared/utils/quick-fix-provider";
 import { registerImportIntelligence } from "@/shared/utils/import-intelligence";
@@ -33,6 +34,7 @@ export function TypeScriptCodeEditor(
   }
 ) {
   const { scriptId, ambientTypeDefinitions = "", ...rest } = props;
+  const allSharedScripts = useAppSelector(selectAllSharedScriptInfos);
   const sharedScripts = useAppSelector(
     useMemo(() => selectSharedScriptsForUserscript(scriptId), [scriptId])
   );
@@ -58,11 +60,15 @@ export function TypeScriptCodeEditor(
       .map((m) => ({ id: m.id, packageName: m.packageName! }));
   }, [globalModuleIds, modulesMap]);
 
-  // Configure the TypeScript language service defaults once, then sync shared
-  // script type declarations whenever the dependency list changes.
-  useEffect(() => {
+  // Register every shared script's extra lib before the child CodeEditor
+  // useEffect creates a model and triggers the first TypeScript diagnostic pass.
+  // useLayoutEffect runs after DOM updates but before child passive effects.
+  useLayoutEffect(() => {
     ensureTypescriptDefaults();
+    syncSharedScriptLibs(allSharedScripts);
+  }, [allSharedScripts]);
 
+  useEffect(() => {
     // Register Quick Fix provider
     const quickFixDisposable = registerTypeScriptQuickFixProvider(
       () => sharedScripts ?? []
@@ -72,10 +78,6 @@ export function TypeScriptCodeEditor(
     const importIntelligenceDisposables = registerImportIntelligence(
       () => sharedScripts ?? []
     );
-
-    if (sharedScripts) {
-      syncSharedScriptLibs(sharedScripts);
-    }
 
     // Shared script source models (`scripts/<id>/main.ts`) would make
     // TypeScript's auto-import emit a relative path to the in-memory model

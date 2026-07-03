@@ -10,6 +10,7 @@ import {
   loadUserscripts,
   rebuildCompiledUserscripts,
 } from "@/shared/store/slices/userscripts/thunks.userscripts";
+import { syncAllSharedScriptLibsFromUserscripts } from "@packages/monaco";
 import { useCallback, useEffect, useState } from "react";
 import { Sidebar, SidebarButton } from "./components/sidebar/Sidebar";
 import { ModulesPage } from "./pages/modules-page/ModulesPage";
@@ -50,11 +51,13 @@ export function InvertIde() {
 
     void (async () => {
       try {
-        await Promise.all([
+        const [scripts] = await Promise.all([
           dispatch(loadUserscripts()).unwrap(),
           dispatch(loadSettings()).unwrap(),
           dispatch(loadModules()).unwrap(),
-        ]);
+        ] as const);
+
+        syncAllSharedScriptLibsFromUserscripts(scripts);
 
         await dispatch(rebuildCompiledUserscripts({ scope: "stale" })).unwrap();
       } catch (error) {

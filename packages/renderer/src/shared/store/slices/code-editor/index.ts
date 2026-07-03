@@ -1,5 +1,6 @@
 import { createSelector, createSlice } from "@reduxjs/toolkit";
 import { SharedScriptInfo } from "@shared/model";
+import { toSharedScriptInfo } from "@packages/monaco";
 import type { RootState } from "../../store";
 import { initializeMonaco, saveEditorCode } from "./thunks.code-editor";
 import { initialState, MonacoEditorState } from "./state.code-editor";
@@ -44,6 +45,18 @@ const codeEditorSlice = createSlice({
 export const { selectMonacoReady, selectIsSaving } = codeEditorSlice.selectors;
 
 // ── Parameterized Selectors ───────────────────────────────────────────────────
+
+/**
+ * Returns {@link SharedScriptInfo} for every userscript marked as a shared module.
+ * Used to eagerly register Monaco extra libs before any TypeScript editor mounts.
+ */
+export const selectAllSharedScriptInfos = createSelector(
+  (state: RootState) => state.userscripts.scripts,
+  (scripts): SharedScriptInfo[] =>
+    Object.values(scripts)
+      .map((script) => toSharedScriptInfo(script))
+      .filter((info): info is SharedScriptInfo => info != null)
+);
 
 /**
  * Returns SharedScriptInfo[] for the given script ID's shared script dependencies.

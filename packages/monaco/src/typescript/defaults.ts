@@ -1,4 +1,4 @@
-import { SharedScriptInfo } from "@shared/model";
+import { SharedScriptInfo, Userscript } from "@shared/model";
 import { TypeScriptCompilerOptions } from "@shared/typescript";
 import monaco from "monaco-editor";
 import ts from "typescript";
@@ -143,6 +143,45 @@ const ambientTypeDefinitionEntries = new Map<
   string,
   AmbientTypeDefinitionEntry
 >();
+
+export function toSharedScriptInfo(script: Userscript): SharedScriptInfo | null {
+  const moduleName = script.moduleName.trim();
+
+  if (!script.shared || moduleName.length === 0) {
+    return null;
+  }
+
+  return {
+    id: script.id,
+    name: script.name,
+    moduleName,
+    sourceCode: script.code.source.typescript,
+    typeDefinitions: script.typeDefinitions ?? "",
+  };
+}
+
+/**
+ * Registers extra libs for every shared userscript so the TypeScript worker can
+ * resolve `import { … } from "shared/…"` before any editor model is created.
+ * Call after userscripts load and whenever shared script sources change.
+ */
+export function syncAllSharedScriptLibsFromUserscripts(
+  scripts: Iterable<Userscript>
+): void {
+  ensureTypescriptDefaults();
+
+  const sharedScripts: SharedScriptInfo[] = [];
+
+  for (const script of scripts) {
+    const info = toSharedScriptInfo(script);
+
+    if (info) {
+      sharedScripts.push(info);
+    }
+  }
+
+  syncSharedScriptLibs(sharedScripts);
+}
 
 /**
  * Syncs shared-script extra lib registrations with the provided list. Disposes
