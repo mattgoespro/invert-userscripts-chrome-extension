@@ -1,13 +1,6 @@
-/**
- * Refactored variant of `view-video-source-global.ts` with the same runtime
- * behavior and fewer moving parts. Use one or the other — not both on the same page.
- *
- * @see view-video-source-global.ts — original reference implementation
- * @see index.json — example userscript registry and global dependency list
- */
 console.log.bind(window);
 
-window.log = createLogger("Global | Open Video Source");
+window.log = createLogger("Global | View Video Source");
 window.toaster = null;
 
 const VIDEO_SELECTOR_RETRY_LIMIT = 500;
@@ -42,8 +35,7 @@ const [copySourceButton, updateCopySourceButton] = useButton("Copy URL", {
     navigator.clipboard.writeText(
       getDataAttributeObject(viewSourceButton).src as string
     );
-    window.log.info("Copied video source URL to clipboard.");
-    window.toaster?.showToast("info", "Copied video source URL to clipboard.");
+    window.toaster.showToast("info", "Copied video source URL to clipboard.");
   },
 });
 
@@ -158,18 +150,25 @@ function applyVideoDetailsToBanner(
     window.log.info("Parent frame updating banner...");
   }
 
-  updateViewSourceButton.next({
+  const sharedData = { src: details.src, dpi: details.dpi };
+
+  updateViewSourceButton({
     updateText: (button) => getUpdateButtonDpiText(button, details.dpi),
     onClickFn: onOpenVideoSourceClick(details.src),
     disabled: false,
-    data: { src: details.src, dpi: details.dpi },
+    data: sharedData,
   });
 
-  updateOpenPreviewBoxButton.next({
+  updateCopySourceButton({
+    disabled: false,
+    data: sharedData,
+  });
+
+  updateOpenPreviewBoxButton({
     disabled: false,
     onClickFn: () => {
       document.body.appendChild(createVideoPreview(details.src));
-      updateOpenPreviewBoxButton.next({ disabled: true });
+      updateOpenPreviewBoxButton({ disabled: true });
     },
   });
 }
@@ -193,7 +192,7 @@ function handleQualityObserverUpdate(
   { details, checkCount, stop }: QualityObserverUpdate
 ) {
   if (videoElement.error != null) {
-    window.toaster?.showToast(
+    window.toaster.showToast(
       "error",
       "Video player encountered an error, stopping quality observer."
     );
@@ -227,14 +226,14 @@ function handleQualityObserverUpdate(
 async function runLocalVideoResolver() {
   const videoElement = findVideoElementInDocument();
 
-  updateLogVideoElementButton.next({
+  updateLogVideoElementButton({
     onClickFn: () => console.dir(videoElement),
     disabled: false,
   });
 
   if (videoElement == null) {
     window.log.warn("Unable to find video in page.");
-    window.toaster?.showToast("warn", "Unable to find video in page.");
+    window.toaster.showToast("warn", "Unable to find video in page.");
     return;
   }
 
@@ -313,14 +312,6 @@ function createBanner() {
   window.toaster = createToaster(banner);
 }
 
-function wireCopyButtonFromViewSource() {
-  updateViewSourceButton.subscribe(({ disabled, data }) => {
-    if (!disabled) {
-      updateCopySourceButton.next({ disabled: false, data });
-    }
-  });
-}
-
 function listenForEmbeddedVideoDetails() {
   window.addEventListener("message", (msgEvent) => {
     if (msgEvent.data?.source !== EMBEDDED_FRAME_MESSAGE_SOURCE) {
@@ -350,8 +341,6 @@ function getFrameRole(): FrameRole | null {
 }
 
 async function init() {
-  wireCopyButtonFromViewSource();
-
   const role = getFrameRole();
 
   if (role === "parent-with-embed" || role === "parent-standalone") {

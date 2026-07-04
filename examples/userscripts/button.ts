@@ -14,10 +14,36 @@ window.log = createLogger("Button | DOM Components");
  *		- `href`: (optional) the target url of a link button
  *    - `classes`: (optional) list of additional css classes to apply
  */
+function applyButtonUpdate(
+  button: HTMLButtonElement,
+  updateData: UseButtonUpdateData
+) {
+  const {
+    data: updateEventData,
+    updateText,
+    onClickFn: updateEventOnClickFn,
+    disabled: updateEventDisabled,
+  } = updateData;
+  button.disabled = updateEventDisabled ?? false;
+
+  if (updateText != null) {
+    button.innerText = updateText(button);
+  }
+
+  button.onclick =
+    updateEventOnClickFn != null
+      ? updateEventOnClickFn.bind(button)
+      : button.onclick;
+
+  const currentData = getDataAttributeObject(button);
+  const updatedData = { ...currentData, ...updateEventData };
+  setDataAttributeObject(button, updatedData);
+}
+
 function useButton(
   text: string,
   { onClickFn, classes, disabled, data }: UseButtonOptions
-): [HTMLButtonElement, rxjs.Subject<UseButtonUpdateData>] {
+): [HTMLButtonElement, UseButtonUpdateFn] {
   const button = document.createElement("button");
   const buttonCustomDataAttr = document.createAttribute("data");
   button.setAttributeNode(buttonCustomDataAttr);
@@ -50,36 +76,11 @@ function useButton(
   // 	button.addEventListener('click', onClick.bind(button));
   // }
 
-  /**
-   * Create the update event emitter used by the consumer
-   * to update the button data.
-   */
-  const buttonUpdateEventEmitter$ = new rxjs.Subject<UseButtonUpdateData>();
+  const updateButton = (updateData: UseButtonUpdateData) => {
+    applyButtonUpdate(button, updateData);
+  };
 
-  buttonUpdateEventEmitter$.subscribe((updateData) => {
-    const {
-      data: updateEventData,
-      updateText,
-      onClickFn: updateEventOnClickFn,
-      disabled: updateEventDisabled,
-    } = updateData;
-    button.disabled = updateEventDisabled ?? false;
-
-    if (updateText != null) {
-      button.innerText = updateText(button);
-    }
-
-    button.onclick =
-      updateEventOnClickFn != null
-        ? updateEventOnClickFn.bind(button)
-        : button.onclick;
-
-    const currentData = getDataAttributeObject(button);
-    const updatedData = { ...currentData, ...updateEventData };
-    setDataAttributeObject(button, updatedData);
-  });
-
-  return [button, buttonUpdateEventEmitter$];
+  return [button, updateButton];
 }
 
 /**

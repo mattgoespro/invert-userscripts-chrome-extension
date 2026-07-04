@@ -19,10 +19,12 @@ declare global {
     disabled?: boolean;
   }
 
+  type UseButtonUpdateFn = (update: UseButtonUpdateData) => void;
+
   function useButton(
     text: string,
     options: UseButtonOptions
-  ): [HTMLButtonElement, rxjs.Subject<UseButtonUpdateData>];
+  ): [HTMLButtonElement, UseButtonUpdateFn];
 
   function getDataAttributeObject(
     element: HTMLElement
