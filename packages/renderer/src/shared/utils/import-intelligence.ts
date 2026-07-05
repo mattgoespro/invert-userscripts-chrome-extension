@@ -3,7 +3,7 @@ import { SharedScriptInfo } from "@shared/model";
 
 const SCRIPT_IMPORT_PATTERN =
   /import\s+(?:type\s+)?(?:{[^}]*}|\*\s+as\s+\w+|\w+)\s+from\s+["']scripts\/([^/"']+)\/(main|types)["']$/;
-const SCRIPT_MODULE_PREFIX_PATTERN = /["']scripts\/([^/"']*)\/?$/;
+const SCRIPT_MODULE_PREFIX_PATTERN = /["']scripts\/([^"']*)$/;
 
 /**
  * Registers Import Intelligence providers for shared scripts:
