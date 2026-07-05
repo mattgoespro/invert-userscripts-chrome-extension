@@ -1,4 +1,8 @@
-import { SharedScriptInfo, Userscript, getScriptModulePath } from "@shared/model";
+import {
+  SharedScriptInfo,
+  Userscript,
+  getScriptModulePath,
+} from "@shared/model";
 import { TypeScriptCompilerOptions } from "@shared/typescript";
 import monaco from "monaco-editor";
 import ts from "typescript";
@@ -49,19 +53,10 @@ export function ensureTypescriptDefaults(): void {
     moduleDetection: ts.ModuleDetectionKind.Force,
     // Allow `import { x } from "scripts/<module>/main"` to resolve to the extra
     // libs registered at `scripts/<module>/main.ts` and `scripts/<module>/types.d.ts`,
-    // and ensure TypeScript auto-import generates those specifiers rather than a
-    // relative path to a physical model file.
-    //
-    // baseUrl must be "file:///" (the virtual FS root) so that the paths entries
-    // below resolve against the correct virtual directory. Using "." would resolve
-    // relative to each individual file's directory, causing node_modules lookups
-    // to fail silently.
+    // using a "file:///" (the virtual FS root) `baseUrl` and `paths` entries so that the
+    // `paths` entries resolve against the correct virtual directory.
     baseUrl: "file:///",
-    paths: {
-      "scripts/*/*": ["scripts/*/*"],
-      // Legacy import path — kept during transition.
-      "shared/*": ["node_modules/shared/*/index.d.ts"],
-    },
+    paths: { "scripts/*/*": ["scripts/*/*"] },
   });
 
   // Re-enable eager model sync so the TypeScript worker is notified whenever a
@@ -186,7 +181,9 @@ const ambientTypeDefinitionEntries = new Map<
   AmbientTypeDefinitionEntry
 >();
 
-export function toSharedScriptInfo(script: Userscript): SharedScriptInfo | null {
+export function toSharedScriptInfo(
+  script: Userscript
+): SharedScriptInfo | null {
   if (!script.shared) {
     return null;
   }
