@@ -192,7 +192,7 @@ function handleQualityObserverUpdate(
   { details, checkCount, stop }: QualityObserverUpdate
 ) {
   if (videoElement.error != null) {
-    window.toaster.showToast(
+    window.toaster?.showToast(
       "error",
       "Video player encountered an error, stopping quality observer."
     );
