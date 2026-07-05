@@ -233,7 +233,7 @@ async function runLocalVideoResolver() {
 
   if (videoElement == null) {
     window.log.warn("Unable to find video in page.");
-    window.toaster.showToast("warn", "Unable to find video in page.");
+    window.toaster?.showToast("warn", "Unable to find video in page.");
     return;
   }
 
