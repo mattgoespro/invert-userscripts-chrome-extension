@@ -305,11 +305,13 @@ export const updateUserscript = createAsyncThunk<
 >("userscripts/updateUserscript", async ({ id, updates }, { getState }) => {
   const state = getState();
   const previousScriptsMap = await ChromeSyncStorage.getAllScripts();
-  const storedScript = normalizeUserscript(previousScriptsMap[id]);
+  const storedEntry = previousScriptsMap[id];
 
-  if (!storedScript) {
+  if (!storedEntry) {
     throw new Error(`Userscript not found: ${id}`);
   }
+
+  const storedScript = normalizeUserscript(storedEntry);
 
   const metadataUpdates = extractUserscriptMetadataUpdates(updates);
   const draftSource = getDraftOrSavedSource(state, id);
