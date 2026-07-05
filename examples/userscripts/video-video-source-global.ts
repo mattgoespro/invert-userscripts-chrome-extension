@@ -35,7 +35,7 @@ const [copySourceButton, updateCopySourceButton] = useButton("Copy URL", {
     navigator.clipboard.writeText(
       getDataAttributeObject(viewSourceButton).src as string
     );
-    window.toaster.showToast("info", "Copied video source URL to clipboard.");
+    window.toaster?.showToast("info", "Copied video source URL to clipboard.");
   },
 });
 
