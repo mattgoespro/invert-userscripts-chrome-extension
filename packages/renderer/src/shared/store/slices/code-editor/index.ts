@@ -2,7 +2,11 @@ import { createSelector, createSlice } from "@reduxjs/toolkit";
 import { SharedScriptInfo } from "@shared/model";
 import { toSharedScriptInfo } from "@packages/monaco";
 import type { RootState } from "../../store";
-import { initializeMonaco, saveEditorCode } from "./thunks.code-editor";
+import {
+  initializeMonaco,
+  saveEditorCode,
+  setIdeReady,
+} from "./thunks.code-editor";
 import { initialState, MonacoEditorState } from "./state.code-editor";
 
 const codeEditorSlice = createSlice({
@@ -11,6 +15,9 @@ const codeEditorSlice = createSlice({
   selectors: {
     selectMonacoReady(state: MonacoEditorState) {
       return state.monacoReady;
+    },
+    selectIdeReady(state: MonacoEditorState) {
+      return state.ideReady;
     },
     selectIsSaving(state: MonacoEditorState) {
       return state.isSaving;
@@ -29,6 +36,9 @@ const codeEditorSlice = createSlice({
         // remain active as a fallback since they are only blocked after Shiki succeeds.
         state.monacoReady = true;
       })
+      .addCase(setIdeReady, (state, action) => {
+        state.ideReady = action.payload;
+      })
       // saveEditorCode
       .addCase(saveEditorCode.pending, (state) => {
         state.isSaving = true;
@@ -42,19 +52,36 @@ const codeEditorSlice = createSlice({
   },
 });
 
-export const { selectMonacoReady, selectIsSaving } = codeEditorSlice.selectors;
+export const { selectMonacoReady, selectIdeReady, selectIsSaving } =
+  codeEditorSlice.selectors;
 
-// ── Parameterized Selectors ───────────────────────────────────────────────────
-
-/**
- * Returns {@link SharedScriptInfo} for every userscript marked as a shared module.
- * Used to eagerly register Monaco extra libs before any TypeScript editor mounts.
- */
 export const selectAllSharedScriptInfos = createSelector(
   (state: RootState) => state.userscripts.scripts,
-  (scripts): SharedScriptInfo[] =>
-    Object.values(scripts)
-      .map((script) => toSharedScriptInfo(script))
+  (state: RootState) => state.editorDrafts.drafts,
+  (scripts, drafts): SharedScriptInfo[] =>
+    Object.values(scripts ?? {})
+      .map((script) => {
+        const draft = drafts[script.id];
+        const info = toSharedScriptInfo({
+          ...script,
+          code: {
+            ...script.code,
+            source: {
+              ...script.code.source,
+              typescript:
+                (draft?.dirty.typescript ?? false)
+                  ? draft.typescript
+                  : script.code.source.typescript,
+            },
+          },
+          typeDefinitions:
+            (draft?.dirty.typeDefinitions ?? false)
+              ? draft.typeDefinitions
+              : script.typeDefinitions,
+        });
+
+        return info;
+      })
       .filter((info): info is SharedScriptInfo => info != null)
 );
 
@@ -65,7 +92,8 @@ export const selectAllSharedScriptInfos = createSelector(
 export const selectSharedScriptsForUserscript = (scriptId: string) =>
   createSelector(
     (state: RootState) => state.userscripts.scripts,
-    (scripts): SharedScriptInfo[] => {
+    (state: RootState) => state.editorDrafts.drafts,
+    (scripts, drafts): SharedScriptInfo[] => {
       if (!scriptId || !scripts) {
         return undefined;
       }
@@ -77,15 +105,34 @@ export const selectSharedScriptsForUserscript = (scriptId: string) =>
       }
 
       return script.sharedScripts
-        .map((id) => scripts[id])
-        .filter((s) => s?.shared)
-        .map((s) => ({
-          id: s.id,
-          name: s.name,
-          moduleName: s.moduleName ?? "",
-          sourceCode: s.code.source.typescript,
-          typeDefinitions: s.typeDefinitions ?? "",
-        }));
+        .map((id) => {
+          const sharedScript = scripts[id];
+
+          if (!sharedScript?.shared) {
+            return null;
+          }
+
+          const draft = drafts[id];
+
+          return toSharedScriptInfo({
+            ...sharedScript,
+            code: {
+              ...sharedScript.code,
+              source: {
+                ...sharedScript.code.source,
+                typescript:
+                  (draft?.dirty.typescript ?? false)
+                    ? draft.typescript
+                    : sharedScript.code.source.typescript,
+              },
+            },
+            typeDefinitions:
+              (draft?.dirty.typeDefinitions ?? false)
+                ? draft.typeDefinitions
+                : sharedScript.typeDefinitions,
+          });
+        })
+        .filter((info): info is SharedScriptInfo => info != null);
     }
   );
 

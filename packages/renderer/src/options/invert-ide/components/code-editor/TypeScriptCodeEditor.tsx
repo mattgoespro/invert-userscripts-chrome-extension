@@ -3,9 +3,7 @@ import { selectModules } from "@/shared/store/slices/modules";
 import {
   selectAllSharedScriptInfos,
   selectGlobalModuleIdsForUserscript,
-  selectSharedScriptsForUserscript,
 } from "@/shared/store/slices/code-editor";
-import { selectUserscriptById } from "@/shared/store/slices/userscripts";
 import {
   ensureTypescriptDefaults,
   syncAmbientTypeDefinitionLibs,
@@ -14,11 +12,10 @@ import {
 } from "@packages/monaco";
 import type { CdnModuleInfo } from "@packages/monaco";
 import {
-  buildScriptTypeSlug,
   buildModelUri,
   setSuppressedModelUris,
 } from "./model-cache";
-import { useEffect, useLayoutEffect, useMemo } from "react";
+import { useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { CodeEditor, CodeEditorProps } from "../../shared/CodeEditor";
 import { registerTypeScriptQuickFixProvider } from "@/shared/utils/quick-fix-provider";
 import { registerImportIntelligence } from "@/shared/utils/import-intelligence";
@@ -29,20 +26,13 @@ import { registerImportIntelligence } from "@/shared/utils/import-intelligence";
  * declarations and CDN module type definitions for intellisense.
  */
 export function TypeScriptCodeEditor(
-  props: Omit<CodeEditorProps, "language"> & {
-    ambientTypeDefinitions?: string;
-  }
+  props: Omit<CodeEditorProps, "language">
 ) {
-  const { scriptId, ambientTypeDefinitions = "", ...rest } = props;
+  const { scriptId, ...rest } = props;
   const allSharedScripts = useAppSelector(selectAllSharedScriptInfos);
-  const sharedScripts = useAppSelector(
-    useMemo(() => selectSharedScriptsForUserscript(scriptId), [scriptId])
-  );
-  const scriptName = useAppSelector(
-    useMemo(
-      () => (state) => selectUserscriptById(state, scriptId)?.name ?? "",
-      [scriptId]
-    )
+  const sharedScriptsForLanguageService = useMemo(
+    () => allSharedScripts.filter((shared) => shared.id !== scriptId),
+    [allSharedScripts, scriptId]
   );
   const globalModuleIds = useAppSelector(
     useMemo(() => selectGlobalModuleIdsForUserscript(scriptId), [scriptId])
@@ -60,32 +50,33 @@ export function TypeScriptCodeEditor(
       .map((m) => ({ id: m.id, packageName: m.packageName! }));
   }, [globalModuleIds, modulesMap]);
 
-  // Register every shared script's extra lib before the child CodeEditor
+  // Register other shared scripts' extra libs before the child CodeEditor
   // useEffect creates a model and triggers the first TypeScript diagnostic pass.
   // useLayoutEffect runs after DOM updates but before child passive effects.
   useLayoutEffect(() => {
     ensureTypescriptDefaults();
-    syncSharedScriptLibs(allSharedScripts);
-  }, [allSharedScripts]);
+    syncSharedScriptLibs(sharedScriptsForLanguageService);
+  }, [sharedScriptsForLanguageService]);
 
   useEffect(() => {
-    // Register Quick Fix provider
     const quickFixDisposable = registerTypeScriptQuickFixProvider(
-      () => sharedScripts ?? []
+      () => sharedScriptsForLanguageService
     );
 
-    // Register Import Intelligence providers
     const importIntelligenceDisposables = registerImportIntelligence(
-      () => sharedScripts ?? []
+      () => sharedScriptsForLanguageService
     );
 
-    // Shared script source models (`scripts/<id>/main.ts`) would make
-    // TypeScript's auto-import emit a relative path to the in-memory model
-    // instead of the canonical "shared/<moduleName>" specifier from the extra
-    // lib. Suppress those models for the duration of this editor; the cache
-    // owns a single global listener that disposes them on creation.
-    const sharedModelUris = (sharedScripts ?? []).map((s) =>
-      buildModelUri(`scripts/${s.id}/main`, "typescript")
+    // Shared script source models would make TypeScript auto-import emit a
+    // relative path to the in-memory model instead of the canonical
+    // `scripts/<moduleName>/main` specifier from the extra lib.
+    // Keep the script currently being edited as a physical model so Monaco
+    // does not dispose it while the user is typing in the module name field.
+    const sharedModelUris = sharedScriptsForLanguageService.flatMap(
+      (shared) => [
+        buildModelUri(`scripts/${shared.moduleName}/main`, "typescript"),
+        buildModelUri(`scripts/${shared.moduleName}/types.d`, "typescript"),
+      ]
     );
 
     setSuppressedModelUris(sharedModelUris);
@@ -95,26 +86,20 @@ export function TypeScriptCodeEditor(
       importIntelligenceDisposables.forEach((d) => d.dispose());
       setSuppressedModelUris([]);
     };
-  }, [sharedScripts]);
+  }, [sharedScriptsForLanguageService]);
 
   useEffect(() => {
-    const ambientLibs = [
-      {
-        id: `script:${scriptId}:ambient-types`,
-        filePath: `file:///node_modules/userscripts/${buildScriptTypeSlug(scriptName, scriptId)}/types.d.ts`,
-        contents: stripExportsForAmbientLib(ambientTypeDefinitions),
-      },
-      ...(sharedScripts ?? [])
-        .filter((shared) => shared.typeDefinitions.trim())
-        .map((shared) => ({
-          id: `shared:${scriptId}:${shared.id}`,
-          filePath: `file:///node_modules/userscripts/${buildScriptTypeSlug(shared.name, shared.id)}/types.d.ts`,
-          contents: stripExportsForAmbientLib(shared.typeDefinitions),
-        })),
-    ].filter((lib) => lib.contents.trim());
+    const ambientLibs = sharedScriptsForLanguageService
+      .filter((shared) => shared.typeDefinitions.trim())
+      .map((shared) => ({
+        id: `shared:${scriptId}:${shared.id}`,
+        filePath: `file:///scripts/${shared.moduleName}/types.ambient.d.ts`,
+        contents: stripExportsForAmbientLib(shared.typeDefinitions),
+      }))
+      .filter((lib) => lib.contents.trim());
 
     syncAmbientTypeDefinitionLibs(ambientLibs);
-  }, [ambientTypeDefinitions, scriptId, scriptName, sharedScripts]);
+  }, [scriptId, sharedScriptsForLanguageService]);
 
   useEffect(() => {
     return () => {
@@ -123,9 +108,32 @@ export function TypeScriptCodeEditor(
   }, []);
 
   // Sync CDN module type declarations when the module list changes.
+  const [cdnTypesReady, setCdnTypesReady] = useState(cdnModules.length === 0);
+
   useEffect(() => {
-    syncCdnModuleLibs(cdnModules);
+    let cancelled = false;
+
+    if (cdnModules.length === 0) {
+      setCdnTypesReady(true);
+      return;
+    }
+
+    setCdnTypesReady(false);
+
+    void syncCdnModuleLibs(cdnModules).then(() => {
+      if (!cancelled) {
+        setCdnTypesReady(true);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, [cdnModules]);
+
+  if (!cdnTypesReady) {
+    return null;
+  }
 
   return <CodeEditor {...rest} scriptId={scriptId} language="typescript" />;
 }
@@ -140,9 +148,8 @@ export function TypeScriptCodeEditor(
  * keyword keeps declarations globally visible regardless of whether the user
  * has also exported them for use by other scripts.
  *
- * Exports are preserved in the source that flows through
- * `generateSharedScriptDeclaration`, so `import { X } from "shared/..."` still
- * resolves correctly.
+ * Exports are preserved in the source that flows through the script module
+ * extra libs, so `import { X } from "scripts/.../main"` still resolves correctly.
  */
 function stripExportsForAmbientLib(typeDefinitions: string): string {
   return (

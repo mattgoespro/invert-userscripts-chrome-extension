@@ -6,19 +6,39 @@ export interface CompiledJavascriptTransformOptions {
 }
 
 const SHARED_MODULE_PREFIX = "shared/";
+const SCRIPTS_MODULE_PREFIX = "scripts/";
 
-function getSharedModuleName(
+function getImportedModulePath(
   moduleSpecifier: ts.Expression
 ): string | undefined {
   if (!ts.isStringLiteral(moduleSpecifier)) {
     return undefined;
   }
 
-  if (!moduleSpecifier.text.startsWith(SHARED_MODULE_PREFIX)) {
+  const text = moduleSpecifier.text;
+
+  if (text.startsWith(SHARED_MODULE_PREFIX)) {
+    return text.slice(SHARED_MODULE_PREFIX.length);
+  }
+
+  if (!text.startsWith(SCRIPTS_MODULE_PREFIX)) {
     return undefined;
   }
 
-  return moduleSpecifier.text.slice(SHARED_MODULE_PREFIX.length);
+  const remainder = text.slice(SCRIPTS_MODULE_PREFIX.length);
+  const slashIndex = remainder.indexOf("/");
+
+  if (slashIndex === -1) {
+    return undefined;
+  }
+
+  const editor = remainder.slice(slashIndex + 1);
+
+  if (editor !== "main" && editor !== "types") {
+    return undefined;
+  }
+
+  return remainder.slice(0, slashIndex);
 }
 
 function hasRuntimeBindings(importClause?: ts.ImportClause): boolean {
@@ -65,7 +85,7 @@ function collectSharedImportModuleNames(
       continue;
     }
 
-    const moduleName = getSharedModuleName(statement.moduleSpecifier);
+    const moduleName = getImportedModulePath(statement.moduleSpecifier);
 
     if (!moduleName || !hasRuntimeBindings(statement.importClause)) {
       continue;
@@ -160,11 +180,6 @@ export function wrapSharedScriptForInjection(
   const assignments: string[] = [];
   let defaultCounter = 0;
 
-  // Returns the source range covering the `export` keyword (and an optional
-  // trailing `default` keyword) plus any whitespace up to the declaration
-  // keyword, so the modifiers can be stripped without leaving stray spaces.
-  // `export` is always the first modifier on a declaration, so its start is the
-  // start of the range; modifiers that follow (e.g. `async`) are preserved.
   const stripExportRange = (
     exportModifier: ts.Modifier,
     trailingModifier?: ts.Modifier
@@ -181,10 +196,6 @@ export function wrapSharedScriptForInjection(
 
   for (const statement of sourceFile.statements) {
     if (ts.isExportDeclaration(statement)) {
-      // `export * from "mod"` and `export { x } from "mod"` reach this code
-      // only if the upstream import resolver left them in place. Bailing
-      // out loudly is preferable to silently emitting broken JS that would
-      // throw a SyntaxError or ReferenceError at runtime.
       if (statement.moduleSpecifier) {
         throw new Error(
           `Shared module "${moduleName}" contains a re-export from ` +
@@ -336,7 +347,7 @@ export function resolveSharedImports(compiledJs: string): string {
       continue;
     }
 
-    const moduleName = getSharedModuleName(statement.moduleSpecifier);
+    const moduleName = getImportedModulePath(statement.moduleSpecifier);
 
     if (!moduleName || !hasRuntimeBindings(statement.importClause)) {
       continue;

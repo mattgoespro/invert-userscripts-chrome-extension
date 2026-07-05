@@ -185,7 +185,7 @@ export async function injectMatchingScripts(
           }
           const shared = scriptById.get(sharedId);
 
-          if (shared?.shared && shared?.moduleName) {
+          if (shared?.shared) {
             const resolvedShared = mergeCompiledCode(shared, compiledCodeMap);
             if (resolvedShared.code?.compiled?.javascript) {
               await injectSharedScript(tabId, resolvedShared);

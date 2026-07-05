@@ -1,4 +1,7 @@
 import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { Userscript } from "@shared/model";
+import { isDraftDirty } from "../editor-drafts/state.editor-drafts";
+import type { RootState } from "../../store";
 import {
   createUserscript,
   deleteUserscript,
@@ -16,6 +19,28 @@ const selectSharedUserscriptsMemo = createSelector(
   (state: UserscriptsState) => state.scripts,
   (scripts) => Object.values(scripts ?? {}).filter((script) => script.shared)
 );
+
+function syncScriptStatusFromDraft(
+  state: UserscriptsState,
+  scriptId: string,
+  draftDirty: boolean
+) {
+  const script = state.scripts[scriptId];
+
+  if (!script) {
+    return;
+  }
+
+  const nextStatus = draftDirty ? "modified" : "saved";
+
+  if (script.status !== nextStatus) {
+    script.status = nextStatus;
+
+    if (state.currentUserscript?.id === scriptId) {
+      state.currentUserscript.status = nextStatus;
+    }
+  }
+}
 
 const userscriptsSlice = createSlice({
   name: "userscripts",
@@ -66,6 +91,31 @@ const userscriptsSlice = createSlice({
         }
       },
     },
+    setUserscriptStatusFromDraft: (
+      state,
+      action: PayloadAction<{ id: string; modified: boolean }>
+    ) => {
+      const script = state.scripts[action.payload.id];
+
+      if (!script) {
+        return;
+      }
+
+      script.status = action.payload.modified ? "modified" : "saved";
+
+      if (state.currentUserscript?.id === action.payload.id) {
+        state.currentUserscript.status = script.status;
+      }
+    },
+    syncScriptsFromRemote: (state, action: PayloadAction<Userscript[]>) => {
+      for (const script of action.payload) {
+        state.scripts[script.id] = script;
+
+        if (state.currentUserscript?.id === script.id) {
+          state.currentUserscript = script;
+        }
+      }
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -110,6 +160,8 @@ const userscriptsSlice = createSlice({
         if (state.currentUserscript?.id === updatedScript.id) {
           state.currentUserscript = updatedScript;
         }
+
+        syncScriptStatusFromDraft(state, updatedScript.id, false);
       })
       .addCase(updateUserscriptTypeDefinitions.fulfilled, (state, action) => {
         const updatedScript = action.payload;
@@ -119,6 +171,8 @@ const userscriptsSlice = createSlice({
         if (state.currentUserscript?.id === updatedScript.id) {
           state.currentUserscript = updatedScript;
         }
+
+        syncScriptStatusFromDraft(state, updatedScript.id, false);
       })
       .addCase(rebuildCompiledUserscripts.fulfilled, (state, action) => {
         for (const script of action.payload) {
@@ -137,14 +191,22 @@ const userscriptsSlice = createSlice({
   },
 });
 
-export const { setCurrentUserscript, markUserscriptModified } =
-  userscriptsSlice.actions;
+export const {
+  setCurrentUserscript,
+  markUserscriptModified,
+  setUserscriptStatusFromDraft,
+  syncScriptsFromRemote,
+} = userscriptsSlice.actions;
+
+export const selectUnsavedUserscripts = (state: RootState) =>
+  Object.values(state.userscripts.scripts ?? {}).filter((script) =>
+    isDraftDirty(state.editorDrafts.drafts[script.id])
+  );
 
 export const {
   selectAllUserscripts,
   selectUserscriptById,
   selectCurrentUserscript,
-  selectUnsavedUserscripts,
   selectSharedUserscripts,
 } = userscriptsSlice.selectors;
 

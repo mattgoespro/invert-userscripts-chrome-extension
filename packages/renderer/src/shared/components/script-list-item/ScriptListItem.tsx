@@ -1,5 +1,6 @@
 import { Switch } from "@/shared/components/switch/Switch";
-import { useAppDispatch } from "@/shared/store/hooks";
+import { useAppDispatch, useAppSelector } from "@/shared/store/hooks";
+import { selectIsDraftDirty } from "@/shared/store/slices/editor-drafts";
 import { Userscript } from "@shared/model";
 import { PackageIcon } from "lucide-react";
 import { toggleUserscript } from "@/shared/store/slices/userscripts/thunks.userscripts";
@@ -17,6 +18,7 @@ export function ScriptListItem({
   onScriptSelected,
 }: ScriptListItemProps) {
   const dispatch = useAppDispatch();
+  const isModified = useAppSelector(selectIsDraftDirty(script.id));
 
   const onSelectScript = () => {
     if (!onScriptSelected || active) {
@@ -43,7 +45,7 @@ export function ScriptListItem({
       )}
       onClick={() => onSelectScript()}
     >
-      {script.status === "modified" && (
+      {isModified && (
         <div className="mr-3 h-2 w-2 shrink-0 animate-pulse-indicator rounded-full bg-accent" />
       )}
       {script.shared && (

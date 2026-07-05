@@ -55,10 +55,8 @@ export function registerTypeScriptQuickFixProvider(
                 );
 
               if (inSource || inTypeDefinitions) {
-                // generateSharedScriptDeclaration merges typeDefinitions into
-                // the root `shared/<moduleName>` extra lib, so type-only and
-                // value identifiers both resolve from the same module path.
-                const importPath = `shared/${sharedScript.moduleName}`;
+                const editor = inTypeDefinitions ? "types" : "main";
+                const importPath = `scripts/${sharedScript.moduleName}/${editor}`;
                 const importKeyword = inTypeDefinitions
                   ? "import type"
                   : "import";

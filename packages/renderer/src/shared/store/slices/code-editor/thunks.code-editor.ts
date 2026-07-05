@@ -1,9 +1,11 @@
 import { registerMonaco } from "@packages/monaco";
-import { createAsyncThunk } from "@reduxjs/toolkit/react";
+import { createAction, createAsyncThunk } from "@reduxjs/toolkit/react";
 import { updateUserscriptCode } from "../userscripts/thunks.userscripts";
 import { PrettierFormatter } from "@/sandbox/formatter";
 import { UserscriptSourceLanguage } from "@shared/model";
 import type { RuntimePortMessageEvent } from "@shared/messages";
+
+export const setIdeReady = createAction<boolean>("code-editor/setIdeReady");
 
 export const initializeMonaco = createAsyncThunk(
   "code-editor/initializeMonaco",
@@ -43,11 +45,9 @@ export const saveEditorCode = createAsyncThunk(
       type: "refreshTabs",
     };
 
-    chrome.runtime
-      .sendMessage(message)
-      .catch((error) => {
-        console.warn("Failed to send refreshTabs message:", error);
-      });
+    chrome.runtime.sendMessage(message).catch((error) => {
+      console.warn("Failed to send refreshTabs message:", error);
+    });
 
     return { code: formattedCode };
   }

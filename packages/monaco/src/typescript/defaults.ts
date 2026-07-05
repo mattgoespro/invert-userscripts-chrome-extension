@@ -1,8 +1,12 @@
-import { SharedScriptInfo, Userscript } from "@shared/model";
+import { SharedScriptInfo, Userscript, getScriptModulePath } from "@shared/model";
 import { TypeScriptCompilerOptions } from "@shared/typescript";
 import monaco from "monaco-editor";
 import ts from "typescript";
-import { generateSharedScriptDeclaration } from "./declarations";
+import {
+  generateScriptMainModuleDeclaration,
+  generateScriptTypesModuleDeclaration,
+  generateSharedScriptDeclaration,
+} from "./declarations";
 import { fetchModuleTypes } from "./cdn-types";
 
 /**
@@ -43,9 +47,9 @@ export function ensureTypescriptDefaults(): void {
     // Each userscript editor model should type-check as an isolated module, even
     // when Monaco keeps other script models alive for tab switching.
     moduleDetection: ts.ModuleDetectionKind.Force,
-    // Allow `import { x } from "shared/moduleName"` to resolve to the extra lib
-    // registered at `node_modules/shared/<moduleName>/index.d.ts`, and ensure
-    // TypeScript's auto-import generates the `shared/*` specifier rather than a
+    // Allow `import { x } from "scripts/<module>/main"` to resolve to the extra
+    // libs registered at `scripts/<module>/main.ts` and `scripts/<module>/types.d.ts`,
+    // and ensure TypeScript auto-import generates those specifiers rather than a
     // relative path to a physical model file.
     //
     // baseUrl must be "file:///" (the virtual FS root) so that the paths entries
@@ -54,6 +58,8 @@ export function ensureTypescriptDefaults(): void {
     // to fail silently.
     baseUrl: "file:///",
     paths: {
+      "scripts/*/*": ["scripts/*/*"],
+      // Legacy import path — kept during transition.
       "shared/*": ["node_modules/shared/*/index.d.ts"],
     },
   });
@@ -69,10 +75,43 @@ export function ensureTypescriptDefaults(): void {
 
 // ── Shared Script Extra Lib Registration ──────────────────────────────────────
 
+function addScriptMainExtraLib(
+  declaration: string,
+  modulePath: string
+): monaco.IDisposable {
+  const filePath = `file:///scripts/${modulePath}/main.ts`;
+  return tsContribution.typescriptDefaults.addExtraLib(declaration, filePath);
+}
+
+function addScriptTypesExtraLib(
+  declaration: string,
+  modulePath: string
+): monaco.IDisposable {
+  const filePath = `file:///scripts/${modulePath}/types.d.ts`;
+  return tsContribution.typescriptDefaults.addExtraLib(declaration, filePath);
+}
+
+/**
+ * Registers a minimal `package.json` at `scripts/<modulePath>/package.json`
+ * so TypeScript auto-import path computation can suggest
+ * `import { X } from "scripts/<modulePath>/main"`.
+ */
+function addScriptPackageJson(modulePath: string): monaco.IDisposable {
+  const packageJson = JSON.stringify({
+    name: `scripts/${modulePath}`,
+    exports: {
+      "./main": "./main.ts",
+      "./types": "./types.d.ts",
+    },
+  });
+  const filePath = `file:///scripts/${modulePath}/package.json`;
+  return tsContribution.typescriptDefaults.addExtraLib(packageJson, filePath);
+}
+
 /**
  * Registers a shared script declaration as an extra lib on the TypeScript
  * language service so the worker's module resolution can discover it at the
- * conventional `node_modules/shared/<moduleName>/index.d.ts` path.
+ * legacy `node_modules/shared/<moduleName>/index.d.ts` path.
  *
  * Extra libs — unlike standalone editor models — are explicitly pushed to the
  * TypeScript web worker. Models created via `monaco.editor.createModel()` are
@@ -92,7 +131,10 @@ export function addSharedScriptExtraLib(
 // Module-level disposable tracking — non-serializable, kept outside Redux state.
 interface SharedLibEntry {
   disposable: { dispose(): void };
+  typesDisposable: { dispose(): void };
   packageJsonDisposable: { dispose(): void };
+  legacyDisposable: { dispose(): void };
+  legacyPackageJsonDisposable: { dispose(): void };
   sourceHash: string;
 }
 const sharedLibEntries = new Map<string, SharedLibEntry>();
@@ -145,16 +187,14 @@ const ambientTypeDefinitionEntries = new Map<
 >();
 
 export function toSharedScriptInfo(script: Userscript): SharedScriptInfo | null {
-  const moduleName = script.moduleName.trim();
-
-  if (!script.shared || moduleName.length === 0) {
+  if (!script.shared) {
     return null;
   }
 
   return {
     id: script.id,
     name: script.name,
-    moduleName,
+    moduleName: getScriptModulePath(script),
     sourceCode: script.code.source.typescript,
     typeDefinitions: script.typeDefinitions ?? "",
   };
@@ -196,14 +236,19 @@ export function syncSharedScriptLibs(sharedScripts: SharedScriptInfo[]): void {
   for (const [id, entry] of sharedLibEntries) {
     if (!currentIds.has(id)) {
       entry.disposable.dispose();
+      entry.typesDisposable.dispose();
       entry.packageJsonDisposable.dispose();
+      entry.legacyDisposable.dispose();
+      entry.legacyPackageJsonDisposable.dispose();
       sharedLibEntries.delete(id);
     }
   }
 
   // Register or update extra libs for each shared script
   for (const shared of sharedScripts) {
-    if (!shared.moduleName) {
+    const modulePath = shared.moduleName;
+
+    if (!modulePath) {
       console.warn(
         `Shared script '${shared.name}' is not a module for some reason`
       );
@@ -221,21 +266,42 @@ export function syncSharedScriptLibs(sharedScripts: SharedScriptInfo[]): void {
     // Dispose the previous registration if updating
     if (existing) {
       existing.disposable.dispose();
+      existing.typesDisposable.dispose();
       existing.packageJsonDisposable.dispose();
+      existing.legacyDisposable.dispose();
+      existing.legacyPackageJsonDisposable.dispose();
     }
 
-    const declaration = generateSharedScriptDeclaration(
-      shared.moduleName,
+    const mainDeclaration = generateScriptMainModuleDeclaration(
+      shared.sourceCode
+    );
+    const typesDeclaration = generateScriptTypesModuleDeclaration(
+      shared.typeDefinitions
+    );
+    const legacyDeclaration = generateSharedScriptDeclaration(
+      modulePath,
       shared.sourceCode,
       shared.typeDefinitions
     );
 
-    const disposable = addSharedScriptExtraLib(declaration, shared.moduleName);
-    const packageJsonDisposable = addSharedScriptPackageJson(shared.moduleName);
+    const disposable = addScriptMainExtraLib(mainDeclaration, modulePath);
+    const typesDisposable = addScriptTypesExtraLib(
+      typesDeclaration,
+      modulePath
+    );
+    const packageJsonDisposable = addScriptPackageJson(modulePath);
+    const legacyDisposable = addSharedScriptExtraLib(
+      legacyDeclaration,
+      modulePath
+    );
+    const legacyPackageJsonDisposable = addSharedScriptPackageJson(modulePath);
 
     sharedLibEntries.set(shared.id, {
       disposable,
+      typesDisposable,
       packageJsonDisposable,
+      legacyDisposable,
+      legacyPackageJsonDisposable,
       sourceHash,
     });
   }

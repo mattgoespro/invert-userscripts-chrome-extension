@@ -10,24 +10,41 @@ import { OptionsPanel } from "./options-panel/OptionsPanel";
 import { UrlPatternInput } from "./url-pattern-input/UrlPatternInput";
 import { IconButton } from "@/shared/components/icon-button/IconButton";
 import { Globe } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { UrlPatternTester } from "@/shared/components/url-pattern-tester/UrlPatternTester";
 
 type ScriptMetadataProps = {
   script: Userscript;
 };
 
+const MODULE_NAME_DEBOUNCE_MS = 400;
+
 export function ScriptMetadata({ script }: ScriptMetadataProps) {
   const dispatch: AppDispatch = useAppDispatch();
   const [showUrlTester, setShowUrlTester] = useState(false);
+  const moduleNameDebounceRef = useRef<ReturnType<typeof setTimeout>>(null);
+
+  useEffect(() => {
+    return () => {
+      if (moduleNameDebounceRef.current) {
+        clearTimeout(moduleNameDebounceRef.current);
+      }
+    };
+  }, []);
 
   const onUpdateScriptMeta = async (updates: Partial<Userscript>) => {
-    dispatch(updateUserscript({ ...script, ...updates }));
+    dispatch(updateUserscript({ id: script.id, updates }));
   };
 
   const onModuleNameChange = (value: string) => {
-    const trimmed = value.trim();
-    onUpdateScriptMeta({ moduleName: value, shared: trimmed.length > 0 });
+    if (moduleNameDebounceRef.current) {
+      clearTimeout(moduleNameDebounceRef.current);
+    }
+
+    moduleNameDebounceRef.current = setTimeout(() => {
+      const trimmed = value.trim();
+      onUpdateScriptMeta({ moduleName: value, shared: trimmed.length > 0 });
+    }, MODULE_NAME_DEBOUNCE_MS);
   };
 
   const onDeleteScript = () => {

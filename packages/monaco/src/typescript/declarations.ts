@@ -11,6 +11,21 @@ interface DeclarationEntry {
  * producing `.d.ts`-style declarations that Monaco's TypeScript language service can
  * consume for `import { ... } from "shared/moduleName"` intellisense.
  */
+export function generateScriptMainModuleDeclaration(sourceCode: string): string {
+  return collectSourceExportDeclarations(sourceCode)
+    .map((entry) => entry.text)
+    .join("\n");
+}
+
+export function generateScriptTypesModuleDeclaration(
+  typeDefinitions = ""
+): string {
+  const { generatedEntries } =
+    collectTypeDefinitionModuleExports(typeDefinitions);
+
+  return generatedEntries.map((entry) => entry.text).join("\n");
+}
+
 export function generateSharedScriptDeclaration(
   _moduleName: string,
   sourceCode: string,
