@@ -1,4 +1,8 @@
-import { sanitizeModuleName, UserscriptSourceLanguage } from "@shared/model";
+import {
+  getScriptModulePath,
+  sanitizeModuleName,
+  UserscriptSourceLanguage,
+} from "@shared/model";
 import * as monaco from "monaco-editor";
 
 /**
@@ -12,23 +16,39 @@ const LANGUAGE_EXTENSIONS: Record<string, string> = {
 
 /** Cache models by URI to preserve undo history and cursor position. */
 const modelCache = new Map<string, monaco.editor.ITextModel>();
+const pendingDisposals = new Set<string>();
 
-/** Preserve transient editable contents for models that should not stay mounted. */
-const disposedModelValueCache = new Map<string, string>();
+function isModelAttached(model: monaco.editor.ITextModel): boolean {
+  const maybeAttachedModel = model as monaco.editor.ITextModel & {
+    isAttachedToEditor?: () => boolean;
+  };
 
-export function disposeModel(
-  uri: string,
-  options?: { preserveValue?: boolean }
-): void {
-  // Prefer the cached instance; fall back to Monaco's global model registry in
-  // case the model was recreated outside getOrCreateModel or was evicted from
-  // our cache by a previous disposal.
+  return (
+    typeof maybeAttachedModel.isAttachedToEditor === "function" &&
+    maybeAttachedModel.isAttachedToEditor()
+  );
+}
+
+function disposeModelWhenDetached(uri: string): void {
+  if (pendingDisposals.has(uri)) {
+    return;
+  }
+
+  pendingDisposals.add(uri);
+  globalThis.setTimeout(() => {
+    pendingDisposals.delete(uri);
+    disposeModel(uri);
+  }, 0);
+}
+
+export function disposeModel(uri: string): void {
   const model =
     modelCache.get(uri) ?? monaco.editor.getModel(monaco.Uri.parse(uri));
 
   if (model && !model.isDisposed()) {
-    if (options?.preserveValue) {
-      disposedModelValueCache.set(uri, model.getValue());
+    if (isModelAttached(model)) {
+      disposeModelWhenDetached(uri);
+      return;
     }
 
     model.dispose();
@@ -37,9 +57,38 @@ export function disposeModel(
   modelCache.delete(uri);
 }
 
-export function disposeModelsForScript(scriptId: string): void {
+export type ScriptEditorKind = "main" | "types" | "styles";
+
+export function buildScriptModelId(
+  script: { id: string; moduleName?: string },
+  editor: ScriptEditorKind
+): string {
+  const modulePath = getScriptModulePath(script);
+
+  if (editor === "types") {
+    return `scripts/${modulePath}/types.d`;
+  }
+
+  return `scripts/${modulePath}/${editor}`;
+}
+
+export function disposeModelsForScript(
+  script: { id: string; moduleName?: string } | string
+): void {
+  const markers =
+    typeof script === "string"
+      ? [script]
+      : [script.id, getScriptModulePath(script)];
+
   for (const [uri] of modelCache) {
-    if (uri.includes(scriptId)) {
+    if (
+      markers.some(
+        (marker) =>
+          uri.includes(`scripts/${marker}/`) ||
+          uri.includes(`/${marker}.`) ||
+          uri.includes(`/${marker}/`)
+      )
+    ) {
       disposeModel(uri);
     }
   }
@@ -48,24 +97,10 @@ export function disposeModelsForScript(scriptId: string): void {
 /**
  * URIs of TypeScript source models that must be kept out of the Monaco
  * TypeScript program while a dependent script is being edited.
- *
- * A shared script's editor source model (`scripts/<id>/main.ts`) would
- * otherwise make TypeScript's auto-import generate a relative path to that
- * in-memory model instead of the canonical `shared/<moduleName>` specifier
- * exposed through the registered extra lib.
  */
 const suppressedModelUris = new Set<string>();
 let suppressionListener: monaco.IDisposable | undefined;
 
-/**
- * Replaces the set of suppressed shared-script source model URIs.
- *
- * Any currently registered model matching the set is disposed immediately, and
- * a single shared listener disposes matching models that are (re-)created while
- * the suppression is active. Passing an empty array clears all suppressions and
- * tears the listener down. Centralizing this here guarantees exactly one global
- * `onDidCreateModel` listener regardless of how many editors mount.
- */
 export function setSuppressedModelUris(uris: string[]): void {
   suppressedModelUris.clear();
 
@@ -86,7 +121,7 @@ export function setSuppressedModelUris(uris: string[]): void {
   if (!suppressionListener) {
     suppressionListener = monaco.editor.onDidCreateModel((model) => {
       if (suppressedModelUris.has(model.uri.toString())) {
-        model.dispose();
+        disposeModel(model.uri.toString());
       }
     });
   }
@@ -100,14 +135,6 @@ export function buildModelUri(
   return `file:///${modelId}.${ext}`;
 }
 
-/**
- * Derives a stable, human-readable slug for a script's virtual type declaration
- * path in Monaco's TypeScript virtual filesystem. The slug is composed of a
- * name-derived prefix and the first 8 characters of the script ID to guarantee
- * uniqueness even when two scripts share the same name.
- *
- * Example: name="My Utils", id="a1b2c3d4-..." → "my-utils-a1b2c3d4"
- */
 export function buildScriptTypeSlug(name: string, id: string): string {
   const slug = sanitizeModuleName(name) || "script";
   return `${slug}-${id.slice(0, 8)}`;
@@ -119,18 +146,70 @@ export function getOrCreateModel(
   contents: string
 ): monaco.editor.ITextModel {
   const existing = modelCache.get(uri);
+
   if (existing && !existing.isDisposed()) {
     return existing;
   }
 
-  const initialContents = disposedModelValueCache.get(uri) ?? contents;
-  disposedModelValueCache.delete(uri);
+  if (existing?.isDisposed()) {
+    modelCache.delete(uri);
+  }
 
   const model = monaco.editor.createModel(
-    initialContents,
+    contents,
     language,
     monaco.Uri.parse(uri)
   );
   modelCache.set(uri, model);
   return model;
+}
+
+/**
+ * Returns a live model for the given URI, recreating it when the cache entry or
+ * a suppression listener disposed the previous instance.
+ */
+export function resolveLiveModel(
+  uri: string,
+  language: UserscriptSourceLanguage,
+  contents: string
+): monaco.editor.ITextModel {
+  let model = getOrCreateModel(uri, language, contents);
+
+  if (!model.isDisposed()) {
+    return model;
+  }
+
+  modelCache.delete(uri);
+  model = getOrCreateModel(uri, language, contents);
+  return model;
+}
+
+export function attachEditorModel(
+  editor: monaco.editor.IStandaloneCodeEditor,
+  uri: string,
+  language: UserscriptSourceLanguage,
+  contents: string
+): monaco.editor.ITextModel {
+  suppressedModelUris.delete(uri);
+
+  const model = resolveLiveModel(uri, language, contents);
+  const currentModel = editor.getModel();
+
+  if (currentModel !== model) {
+    editor.setModel(model);
+  }
+
+  return model;
+}
+
+export function syncModelContents(
+  uri: string,
+  contents: string,
+  language: UserscriptSourceLanguage
+): void {
+  const model = getOrCreateModel(uri, language, contents);
+
+  if (model.getValue() !== contents) {
+    model.setValue(contents);
+  }
 }

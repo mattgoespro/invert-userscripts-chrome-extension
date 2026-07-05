@@ -6,38 +6,23 @@ import { EditorSettings } from "@shared/model";
 import * as monaco from "monaco-editor";
 import { useEffect, useRef } from "react";
 import {
+  attachEditorModel,
   buildModelUri,
   disposeModel,
-  getOrCreateModel,
 } from "../components/code-editor/model-cache";
 
 export type CodeEditorProps = {
-  /**
-   * Unique identifier for this editor's content
-   */
   modelId: string;
-  /**
-   * Script ID (omit for read-only previews)
-   */
   scriptId?: string;
-  /**
-   * Initial contents of the editor
-   */
   contents: string;
-  /**
-   * Language of the editor (for intellisense, highlighting and formatting)
-   */
   language: FormatterLanguage;
-  /**
-   * Whether the editor is editable
-   */
   editable?: boolean;
-  /**
-   * Options to override the app's saved editor settings.
-   */
   settingsOverride?: Partial<EditorSettings>;
   disposeModelOnUnmount?: boolean;
-  preserveDisposedValue?: boolean;
+  /** Bumps whenever the draft layer pushes new contents into the editor. */
+  syncRevision?: number;
+  /** When true, external contents must not overwrite the model. */
+  bufferDirty?: boolean;
   onCodeModified?: (value: string) => void;
   onSave?: (args: {
     code: string;
@@ -46,6 +31,7 @@ export type CodeEditorProps = {
     scriptId?: string;
   }) => Promise<string | void>;
   onEditorReady?: (editor: monaco.editor.IStandaloneCodeEditor) => void;
+  onModelFlushed?: (value: string) => void;
 };
 
 export function CodeEditor(props: CodeEditorProps) {
@@ -57,10 +43,12 @@ export function CodeEditor(props: CodeEditorProps) {
     settingsOverride,
     editable = true,
     disposeModelOnUnmount = false,
-    preserveDisposedValue = false,
+    syncRevision = 0,
+    bufferDirty = false,
     onCodeModified,
     onSave,
     onEditorReady,
+    onModelFlushed,
   } = props;
 
   const dispatch = useAppDispatch();
@@ -73,12 +61,11 @@ export function CodeEditor(props: CodeEditorProps) {
   const editorInstanceRef = useRef<monaco.editor.IStandaloneCodeEditor>(null);
   const onCodeModifiedRef = useRef(onCodeModified);
   const onEditorReadyRef = useRef(onEditorReady);
-  // When true, the model content change listener is muted. Used to prevent
-  // programmatic setValue calls (e.g. post-save formatter apply) from being
-  // misinterpreted as user edits and re-dispatching markUserscriptModified.
+  const onModelFlushedRef = useRef(onModelFlushed);
   const suppressModelChangeRef = useRef(false);
+  const attachedModelUriRef = useRef<string | null>(null);
+  const attachedScriptIdRef = useRef<string | undefined>(scriptId);
 
-  // Initialize editor once on mount
   useEffect(() => {
     if (!editorRootRef.current) {
       return;
@@ -121,23 +108,26 @@ export function CodeEditor(props: CodeEditorProps) {
     editorInstanceRef.current = editorInstance;
 
     return () => {
-      // Dispose the editor's model for read-only previews to prevent unbounded model accumulation.
-      // Editable models are kept alive in the cache so undo history and cursor positions survive tab switches.
-      if (!editable || disposeModelOnUnmount) {
-        const model = editorInstance.getModel();
-        if (model) {
-          disposeModel(model.uri.toString(), {
-            preserveValue: editable && preserveDisposedValue,
-          });
-        }
+      const model = editorInstance.getModel();
+      const disposeUri =
+        model && !model.isDisposed() ? model.uri.toString() : null;
+
+      if (model && !model.isDisposed() && onModelFlushedRef.current) {
+        onModelFlushedRef.current(model.getValue());
       }
 
+      editorInstance.setModel(null);
       editorInstance.dispose();
       editorInstanceRef.current = null;
+      attachedModelUriRef.current = null;
+      attachedScriptIdRef.current = undefined;
+
+      if ((!editable || disposeModelOnUnmount) && disposeUri) {
+        disposeModel(disposeUri);
+      }
     };
   }, []);
 
-  // Keep callback ref in sync (needed for model change listener)
   useEffect(() => {
     onCodeModifiedRef.current = onCodeModified;
   }, [onCodeModified]);
@@ -146,17 +136,18 @@ export function CodeEditor(props: CodeEditorProps) {
     onEditorReadyRef.current = onEditorReady;
   }, [onEditorReady]);
 
-  // Update theme dynamically without recreating the editor
+  useEffect(() => {
+    onModelFlushedRef.current = onModelFlushed;
+  }, [onModelFlushed]);
+
   useEffect(() => {
     monaco.editor.setTheme(settings.theme);
   }, [settings.theme]);
 
-  // Update font size dynamically without recreating the editor
   useEffect(() => {
     editorInstanceRef.current?.updateOptions({ fontSize: settings.fontSize });
   }, [settings.fontSize]);
 
-  // Swap model when modelId/language changes and attach content change listener
   useEffect(() => {
     const editorInstance = editorInstanceRef.current;
 
@@ -165,11 +156,29 @@ export function CodeEditor(props: CodeEditorProps) {
     }
 
     const uri = buildModelUri(modelId, language);
-    const model = getOrCreateModel(uri, language, contents);
-    const currentModel = editorInstance.getModel();
+    const previousModel = editorInstance.getModel();
+    const previousUri =
+      previousModel && !previousModel.isDisposed()
+        ? previousModel.uri.toString()
+        : attachedModelUriRef.current;
+    const previousScriptId = attachedScriptIdRef.current;
+    const model = attachEditorModel(
+      editorInstance,
+      uri,
+      language,
+      contents
+    );
 
-    if (currentModel !== model) {
-      editorInstance.setModel(model);
+    attachedModelUriRef.current = uri;
+    attachedScriptIdRef.current = scriptId;
+
+    if (
+      previousUri &&
+      previousUri !== uri &&
+      previousScriptId &&
+      previousScriptId === scriptId
+    ) {
+      disposeModel(previousUri);
     }
 
     onEditorReadyRef.current?.(editorInstance);
@@ -185,32 +194,42 @@ export function CodeEditor(props: CodeEditorProps) {
     });
 
     return () => disposable.dispose();
-  }, [modelId, language, editable]);
+  }, [modelId, language, editable, syncRevision, contents, scriptId]);
 
-  // Sync value for read-only editors when contents changes externally
   useEffect(() => {
-    if (editable) {
+    const editorInstance = editorInstanceRef.current;
+
+    if (!editorInstance) {
       return;
     }
 
-    const editorInstance = editorInstanceRef.current;
-    const model = editorInstance?.getModel();
+    const uri = buildModelUri(modelId, language);
+    let model = editorInstance.getModel();
 
-    if (model && model.getValue() !== contents) {
-      model.setValue(contents);
+    if (!model || model.isDisposed()) {
+      model = attachEditorModel(editorInstance, uri, language, contents);
+    } else if (model.uri.toString() !== uri) {
+      model = attachEditorModel(editorInstance, uri, language, contents);
     }
-  }, [contents, editable]);
 
-  // Handle code-saving and auto-formatting
+    if (editable && bufferDirty) {
+      return;
+    }
+
+    if (model.getValue() === contents) {
+      return;
+    }
+
+    suppressModelChangeRef.current = true;
+    model.setValue(contents);
+    suppressModelChangeRef.current = false;
+  }, [contents, syncRevision, editable, bufferDirty, modelId, language]);
+
   useEffect(() => {
     if (!editable || !scriptId || !editorRootRef.current) {
       return;
     }
 
-    // Capture the element reference now so the cleanup closure can call
-    // removeEventListener even if React sets editorRootRef.current to null
-    // before the cleanup runs (which React 18+ Strict Mode does during its
-    // simulated unmount/remount cycle).
     const editorElement = editorRootRef.current;
 
     const handleKeyDown = async (e: KeyboardEvent) => {
@@ -225,7 +244,6 @@ export function CodeEditor(props: CodeEditorProps) {
         }
 
         const code = editorInstance.getValue();
-
         const autoFormat = settings?.autoFormat ?? false;
 
         const result = onSave
@@ -244,11 +262,6 @@ export function CodeEditor(props: CodeEditorProps) {
               })
             ).unwrap();
 
-        /**
-         * Apply code back to the editor as a set of edits that replace the entire content. This ensures that:
-         *   - Full undo/redo history is preserved
-         *   - Cursor and selection positions are restored
-         */
         const savedCode =
           typeof result === "string"
             ? result

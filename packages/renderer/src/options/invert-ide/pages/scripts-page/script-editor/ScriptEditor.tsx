@@ -1,7 +1,7 @@
 import { CodeEditor } from "@/options/invert-ide/shared/CodeEditor";
 import { TypeDefinitionCodeEditor } from "@/options/invert-ide/components/code-editor/TypeDefinitionCodeEditor";
 import { TypeScriptCodeEditor } from "@/options/invert-ide/components/code-editor/TypeScriptCodeEditor";
-import { buildScriptTypeSlug } from "@/options/invert-ide/components/code-editor/model-cache";
+import { buildScriptModelId } from "@/options/invert-ide/components/code-editor/model-cache";
 import {
   buildUserscriptJavascript,
   buildUserscriptStylesheet,
@@ -10,39 +10,44 @@ import {
 import { ResizeHandle } from "@/shared/components/resize-handle/ResizeHandle";
 import { Typography } from "@/shared/components/typography/Typography";
 import { useAppDispatch, useAppSelector } from "@/shared/store/hooks";
-import { selectMonacoReady } from "@/shared/store/slices/code-editor";
-import { selectEditorSettings } from "@/shared/store/slices/settings";
+import { selectIdeReady } from "@/shared/store/slices/code-editor";
 import {
-  markUserscriptModified,
-  selectCurrentUserscript,
-} from "@/shared/store/slices/userscripts";
+  selectDraftForScript,
+  selectDraftRevision,
+  selectIsDraftBufferDirty,
+  updateDraftBuffer,
+} from "@/shared/store/slices/editor-drafts";
+import { selectEditorSettings } from "@/shared/store/slices/settings";
+import { selectCurrentUserscript } from "@/shared/store/slices/userscripts";
 import { useGlobalState } from "@/options/invert-ide/contexts/global-state.context";
 import { UserscriptSourceLanguage } from "@shared/model";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Group, Panel, PanelImperativeHandle } from "react-resizable-panels";
 import { ScriptEditorDrawer } from "./script-editor-drawer/ScriptEditorDrawer";
 import { ScriptMetadata } from "./script-metadata/ScriptMetadata";
 import type * as monaco from "monaco-editor";
 import { useEditorErrorTracking } from "@/shared/hooks/useEditorErrorTracking";
 
-export function ScriptEditor() {
-  type EditorLanguage = UserscriptSourceLanguage | "type-definition";
+type EditorBuffer = UserscriptSourceLanguage | "typeDefinitions";
 
+export function ScriptEditor() {
   const dispatch = useAppDispatch();
   const script = useAppSelector(selectCurrentUserscript);
-  const monacoReady = useAppSelector(selectMonacoReady);
+  const ideReady = useAppSelector(selectIdeReady);
   const settings = useAppSelector(selectEditorSettings);
+  const draft = useAppSelector(selectDraftForScript(script.id));
+  const draftRevision = useAppSelector(selectDraftRevision(script.id));
+  const typescriptDirty = useAppSelector(
+    selectIsDraftBufferDirty(script.id, "typescript")
+  );
+  const scssDirty = useAppSelector(selectIsDraftBufferDirty(script.id, "scss"));
+  const typeDefinitionsDirty = useAppSelector(
+    selectIsDraftBufferDirty(script.id, "typeDefinitions")
+  );
   const { globalState, updateGlobalState, updatePanelSizes } = useGlobalState();
 
   const [liveJs, setLiveJs] = useState("");
   const [liveCss, setLiveCss] = useState("");
-  const [liveTypeDefinitions, setLiveTypeDefinitions] = useState(
-    script.typeDefinitions
-  );
-  const [liveTypescriptSource, setLiveTypescriptSource] = useState(
-    script.code.source.typescript
-  );
-  const [liveScssSource, setLiveScssSource] = useState(script.code.source.scss);
   const [isDrawerCollapsed, setIsDrawerCollapsed] = useState(
     globalState.outputDrawerCollapsed
   );
@@ -62,22 +67,13 @@ export function ScriptEditor() {
   const drawerPanelRef = useRef<PanelImperativeHandle>(null);
   const scssDebounceRef = useRef<ReturnType<typeof setTimeout>>(null);
 
-  // Track TypeScript errors
+  const typescriptSource = draft?.typescript ?? script.code.source.typescript;
+  const scssSource = draft?.scss ?? script.code.source.scss;
+  const typeDefinitions = draft?.typeDefinitions ?? script.typeDefinitions;
+
   useEditorErrorTracking(script.id, tsModel, "typescript");
-
-  // Track declaration file errors
   useEditorErrorTracking(script.id, typeDefinitionModel, "type-definition");
-
-  // Track SCSS errors
   useEditorErrorTracking(script.id, scssModel, "scss");
-
-  useEffect(() => {
-    setLiveTypescriptSource(script.code.source.typescript);
-  }, [script.id, script.code.source.typescript]);
-
-  useEffect(() => {
-    setLiveScssSource(script.code.source.scss);
-  }, [script.id, script.code.source.scss]);
 
   useEffect(() => {
     let cancelled = false;
@@ -85,7 +81,7 @@ export function ScriptEditor() {
     void (async () => {
       const result = await buildUserscriptJavascript(
         script,
-        liveTypescriptSource,
+        typescriptSource,
         getCompiledOutputBuildOptions(settings)
       );
 
@@ -98,11 +94,12 @@ export function ScriptEditor() {
       cancelled = true;
     };
   }, [
-    liveTypescriptSource,
+    typescriptSource,
     script.shared,
     script.moduleName,
     script.sharedScripts,
     settings.minifyCompiledOutput,
+    script.id,
   ]);
 
   useEffect(() => {
@@ -114,7 +111,7 @@ export function ScriptEditor() {
 
     scssDebounceRef.current = setTimeout(async () => {
       const result = await buildUserscriptStylesheet(
-        liveScssSource,
+        scssSource,
         getCompiledOutputBuildOptions(settings)
       );
 
@@ -129,24 +126,17 @@ export function ScriptEditor() {
         clearTimeout(scssDebounceRef.current);
       }
     };
-  }, [liveScssSource, settings.minifyCompiledOutput]);
+  }, [scssSource, settings.minifyCompiledOutput]);
 
-  useEffect(() => {
-    setLiveTypeDefinitions(script.typeDefinitions);
-  }, [script.id, script.typeDefinitions]);
+  const flushDraftBuffer = useCallback(
+    (buffer: EditorBuffer, code: string) => {
+      dispatch(updateDraftBuffer({ scriptId: script.id, buffer, code }));
+    },
+    [dispatch, script.id]
+  );
 
-  const onCodeModified = (language: EditorLanguage, code: string) => {
-    if (script.status !== "modified") {
-      dispatch(markUserscriptModified(script.id));
-    }
-
-    if (language === "typescript") {
-      setLiveTypescriptSource(code);
-    } else if (language === "scss") {
-      setLiveScssSource(code);
-    } else if (language === "type-definition") {
-      setLiveTypeDefinitions(code);
-    }
+  const onCodeModified = (buffer: EditorBuffer, code: string) => {
+    flushDraftBuffer(buffer, code);
   };
 
   const onToggleDrawer = () => {
@@ -177,7 +167,7 @@ export function ScriptEditor() {
         <ScriptMetadata key={script.id} script={script} />
       </div>
       <div className="min-h-0 min-w-0 flex-1 overflow-hidden">
-        {monacoReady && (
+        {ideReady ? (
           <Group
             orientation="vertical"
             id="script-editor-outer-panels"
@@ -220,7 +210,12 @@ export function ScriptEditor() {
                   }
                 }}
               >
-                <Panel id="typescript-editor" minSize="20%" maxSize="80%">
+                <Panel
+                  id="typescript-editor"
+                  data-testid="typescript-editor"
+                  minSize="20%"
+                  maxSize="80%"
+                >
                   <Group
                     orientation="vertical"
                     id="script-editor-typescript-stack"
@@ -243,7 +238,11 @@ export function ScriptEditor() {
                       }
                     }}
                   >
-                    <Panel id="typescript-source" minSize="35%">
+                    <Panel
+                      id="typescript-source"
+                      data-testid="typescript-source"
+                      minSize="35%"
+                    >
                       <div className="relative flex h-full flex-col overflow-hidden bg-surface-base">
                         <div className="pointer-events-none absolute top-2 right-6 z-10 select-none">
                           <Typography
@@ -255,12 +254,16 @@ export function ScriptEditor() {
                         </div>
                         <div className="min-h-0 min-w-0 flex-1">
                           <TypeScriptCodeEditor
-                            modelId={`scripts/${script.id}/main`}
+                            modelId={buildScriptModelId(script, "main")}
                             scriptId={script.id}
-                            contents={script.code.source.typescript}
-                            ambientTypeDefinitions={liveTypeDefinitions}
+                            contents={typescriptSource}
+                            syncRevision={draftRevision}
+                            bufferDirty={typescriptDirty}
                             onCodeModified={(code) =>
                               onCodeModified("typescript", code)
+                            }
+                            onModelFlushed={(code) =>
+                              flushDraftBuffer("typescript", code)
                             }
                             onEditorReady={(editor) => {
                               setTsEditorInstance(editor);
@@ -283,11 +286,16 @@ export function ScriptEditor() {
                         </div>
                         <div className="min-h-0 min-w-0 flex-1">
                           <TypeDefinitionCodeEditor
-                            modelId={`node_modules/userscripts/${buildScriptTypeSlug(script.name, script.id)}/types.d`}
+                            modelId={buildScriptModelId(script, "types")}
                             scriptId={script.id}
-                            contents={script.typeDefinitions}
+                            contents={typeDefinitions}
+                            syncRevision={draftRevision}
+                            bufferDirty={typeDefinitionsDirty}
                             onCodeModified={(code) =>
-                              onCodeModified("type-definition", code)
+                              onCodeModified("typeDefinitions", code)
+                            }
+                            onModelFlushed={(code) =>
+                              flushDraftBuffer("typeDefinitions", code)
                             }
                             onEditorReady={(editor) => {
                               setTypeDefinitionEditorInstance(editor);
@@ -312,11 +320,16 @@ export function ScriptEditor() {
                     </div>
                     <div className="min-h-0 min-w-0 flex-1">
                       <CodeEditor
-                        modelId={`scripts/${script.id}/styles`}
+                        modelId={buildScriptModelId(script, "styles")}
                         scriptId={script.id}
                         language="scss"
-                        contents={script.code.source.scss}
+                        contents={scssSource}
+                        syncRevision={draftRevision}
+                        bufferDirty={scssDirty}
                         onCodeModified={(code) => onCodeModified("scss", code)}
+                        onModelFlushed={(code) =>
+                          flushDraftBuffer("scss", code)
+                        }
                         onEditorReady={(editor) => {
                           setScssEditorInstance(editor);
                           setScssModel(editor.getModel());
@@ -331,6 +344,7 @@ export function ScriptEditor() {
             <Panel
               panelRef={drawerPanelRef}
               id="output-drawer"
+              data-testid="output-drawer"
               minSize="15%"
               maxSize="60%"
               defaultSize={`${100 - globalState.panelSizes.scriptCompiledOutputDrawerSplit}%`}
@@ -355,6 +369,12 @@ export function ScriptEditor() {
               </div>
             </Panel>
           </Group>
+        ) : (
+          <div className="flex h-full items-center justify-center">
+            <Typography variant="caption" className="text-text-muted-faint">
+              Loading editor environment...
+            </Typography>
+          </div>
         )}
       </div>
     </div>

@@ -10,6 +10,7 @@ import {
   CompiledCodeEntry,
   Userscript,
   UserscriptSourceLanguage,
+  getScriptModulePath,
 } from "@shared/model";
 import type { RuntimePortMessageEvent } from "@shared/messages";
 import { getSharedImportModuleNames } from "@shared/compiled-output";
@@ -17,6 +18,11 @@ import { ChromeSyncStorage, CompiledCodeStorage } from "@shared/storage";
 import { RootState } from "../../store";
 import { uuid } from "@/shared/utils";
 import { syncAllSharedScriptLibsFromUserscripts } from "@packages/monaco";
+import {
+  buildScriptWithDraftSource,
+  extractUserscriptMetadataUpdates,
+  getDraftOrSavedSource,
+} from "../editor-drafts/helpers";
 import { UserscriptsTransferFile } from "./transfer.userscripts";
 import { DefaultNewUserscriptName } from "./state.userscripts";
 
@@ -58,35 +64,34 @@ function resolveSharedScriptIdsFromSourceOrThrow(
   const sharedByModuleName = new Map<string, string>();
 
   for (const candidate of Object.values(scriptsMap).map(normalizeUserscript)) {
-    const moduleName = candidate.moduleName.trim();
-
-    if (!candidate.shared || moduleName.length === 0) {
+    if (!candidate.shared) {
       continue;
     }
 
-    const existingScriptId = sharedByModuleName.get(moduleName);
+    const modulePath = getScriptModulePath(candidate);
+    const existingScriptId = sharedByModuleName.get(modulePath);
 
     if (existingScriptId && existingScriptId !== candidate.id) {
       throw new Error(
-        `Shared module "${moduleName}" is defined by more than one script.`
+        `Shared module "${modulePath}" is defined by more than one script.`
       );
     }
 
-    sharedByModuleName.set(moduleName, candidate.id);
+    sharedByModuleName.set(modulePath, candidate.id);
   }
 
-  return moduleNames.map((moduleName) => {
-    const sharedScriptId = sharedByModuleName.get(moduleName);
+  return moduleNames.map((modulePath) => {
+    const sharedScriptId = sharedByModuleName.get(modulePath);
 
     if (!sharedScriptId) {
       throw new Error(
-        `Unknown shared module import "shared/${moduleName}" in script "${script.name}".`
+        `Unknown shared module import "scripts/${modulePath}/main" in script "${script.name}".`
       );
     }
 
     if (sharedScriptId === script.id) {
       throw new Error(
-        `Script "${script.name}" cannot import itself from "shared/${moduleName}".`
+        `Script "${script.name}" cannot import itself from "scripts/${modulePath}/main".`
       );
     }
 
@@ -216,13 +221,14 @@ export const createUserscript = createAsyncThunk(
   "userscripts/createUserscript",
   async () => {
     const timestamp = Date.now();
+    const id = uuid();
     const script: Userscript = {
-      id: uuid(),
+      id,
       name: DefaultNewUserscriptName,
       enabled: false,
       status: "modified",
       shared: false,
-      moduleName: "",
+      moduleName: id,
       sharedScripts: [],
       globalModules: [],
       typeDefinitions: "",
@@ -294,18 +300,34 @@ export const toggleUserscript = createAsyncThunk(
 
 export const updateUserscript = createAsyncThunk<
   Userscript,
-  Userscript,
+  { id: string; updates: Partial<Userscript> },
   { state: RootState }
->("userscripts/updateUserscript", async (script: Userscript, { getState }) => {
-  const normalizedScript = normalizeUserscript(script);
+>("userscripts/updateUserscript", async ({ id, updates }, { getState }) => {
+  const state = getState();
   const previousScriptsMap = await ChromeSyncStorage.getAllScripts();
+  const storedScript = normalizeUserscript(previousScriptsMap[id]);
+
+  if (!storedScript) {
+    throw new Error(`Userscript not found: ${id}`);
+  }
+
+  const metadataUpdates = extractUserscriptMetadataUpdates(updates);
+  const draftSource = getDraftOrSavedSource(state, id);
+  const normalizedScript = buildScriptWithDraftSource(
+    {
+      ...storedScript,
+      ...metadataUpdates,
+      updatedAt: Date.now(),
+    },
+    draftSource
+  );
+
   const previousScript = previousScriptsMap[normalizedScript.id]
     ? normalizeUserscript(previousScriptsMap[normalizedScript.id])
     : undefined;
   const compiledEntry = await CompiledCodeStorage.getCompiledCode(
     normalizedScript.id
   );
-  const state = getState();
   const storageScript = buildStorageSafeScript(normalizedScript);
 
   if (!isCompiledCodeBuildCurrent(compiledEntry, getBuildOptions(state))) {
@@ -341,7 +363,17 @@ export const updateUserscript = createAsyncThunk<
     );
   }
 
-  await ChromeSyncStorage.updateScript(normalizedScript.id, storageScript);
+  await ChromeSyncStorage.updateScript(normalizedScript.id, {
+    ...storageScript,
+    code: {
+      source: storedScript.code.source,
+      compiled: {
+        javascript: "",
+        css: "",
+      },
+    },
+    typeDefinitions: storedScript.typeDefinitions,
+  });
 
   return normalizedScript;
 });
@@ -461,8 +493,8 @@ export const importUserscripts = createAsyncThunk<
   const existingSharedByModuleName = new Map(
     Object.values(existingScriptsMap)
       .map(normalizeUserscript)
-      .filter((script) => script.shared && script.moduleName.trim().length > 0)
-      .map((script) => [script.moduleName.trim(), script.id])
+      .filter((script) => script.shared)
+      .map((script) => [getScriptModulePath(script), script.id])
   );
 
   const importedScripts = file.userscripts.map((entry, index) => {
@@ -499,8 +531,8 @@ export const importUserscripts = createAsyncThunk<
 
   const importedSharedByModuleName = new Map(
     importedScripts
-      .filter((script) => script.shared && script.moduleName.length > 0)
-      .map((script) => [script.moduleName, script.id])
+      .filter((script) => script.shared)
+      .map((script) => [getScriptModulePath(script), script.id])
   );
 
   for (const [index, entry] of file.userscripts.entries()) {

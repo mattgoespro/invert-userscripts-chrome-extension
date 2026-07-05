@@ -101,3 +101,15 @@ export function sanitizeModuleName(name: string): string {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
 }
+
+/**
+ * Resolves the module path segment used in `scripts/<path>/main|types` import
+ * specifiers and Monaco model URIs. Falls back to the script ID when metadata
+ * is empty or sanitizes to nothing.
+ */
+export function getScriptModulePath(script: {
+  id: string;
+  moduleName?: string;
+}): string {
+  return sanitizeModuleName(script.moduleName?.trim() ?? "") || script.id;
+}

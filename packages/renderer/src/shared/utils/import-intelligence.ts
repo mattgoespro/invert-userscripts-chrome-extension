@@ -1,19 +1,20 @@
 import * as monaco from "monaco-editor";
 import { SharedScriptInfo } from "@shared/model";
 
+const SCRIPT_IMPORT_PATTERN =
+  /import\s+(?:type\s+)?(?:{[^}]*}|\*\s+as\s+\w+|\w+)\s+from\s+["']scripts\/([^/"']+)\/(main|types)["']$/;
+const SCRIPT_MODULE_PREFIX_PATTERN = /["']scripts\/([^/"']*)\/?$/;
+
 /**
  * Registers Import Intelligence providers for shared scripts:
- * - Completion provider for "shared/" imports
+ * - Completion provider for `scripts/<module>/main|types` imports
  * - Hover provider showing exported members
- * - Definition provider (go-to-definition)
- * - Reference provider (find-all-usages)
  */
 export function registerImportIntelligence(
   getSharedScripts: () => SharedScriptInfo[]
 ): monaco.IDisposable[] {
   const disposables: monaco.IDisposable[] = [];
 
-  // Completion provider for shared scripts
   disposables.push(
     monaco.languages.registerCompletionItemProvider("typescript", {
       triggerCharacters: ["/", '"', "'"],
@@ -25,29 +26,79 @@ export function registerImportIntelligence(
           endColumn: position.column,
         });
 
-        // Check if we're in an import statement
-        const importMatch = textUntilPosition.match(
-          /import\s+(?:type\s+)?(?:{[^}]*}|\*\s+as\s+\w+|\w+)\s+from\s+["']shared\/(.*?)$/
-        );
+        const importMatch = textUntilPosition.match(SCRIPT_IMPORT_PATTERN);
 
         if (!importMatch) {
-          // Also handle the case where user just typed "shared/"
-          if (textUntilPosition.match(/["']shared\/$/)) {
+          const modulePrefixMatch = textUntilPosition.match(
+            SCRIPT_MODULE_PREFIX_PATTERN
+          );
+
+          if (modulePrefixMatch) {
+            const partialModulePath = modulePrefixMatch[1];
+            const sharedScripts = getSharedScripts();
+
+            if (partialModulePath.includes("/")) {
+              const [modulePath, partialEditor] = partialModulePath.split("/");
+              const suggestions: monaco.languages.CompletionItem[] = ["main", "types"]
+                .filter((editor) => editor.startsWith(partialEditor ?? ""))
+                .map((editor) => ({
+                  label: editor,
+                  range: {
+                    startLineNumber: position.lineNumber,
+                    startColumn: textUntilPosition.length + 1,
+                    endLineNumber: position.lineNumber,
+                    endColumn: position.column,
+                  },
+                  kind: monaco.languages.CompletionItemKind.Module,
+                  insertText: editor,
+                  detail: `scripts/${modulePath}/${editor}`,
+                }));
+
+              return { suggestions };
+            }
+
+            const suggestions: monaco.languages.CompletionItem[] =
+              sharedScripts
+                .filter((script) =>
+                  script.moduleName.startsWith(partialModulePath)
+                )
+                .flatMap((script) =>
+                  (["main", "types"] as const).map((editor) => ({
+                    label: `${script.moduleName}/${editor}`,
+                    range: {
+                      startLineNumber: position.lineNumber,
+                      startColumn: textUntilPosition.length + 1,
+                      endLineNumber: position.lineNumber,
+                      endColumn: position.column,
+                    },
+                    kind: monaco.languages.CompletionItemKind.Module,
+                    insertText: `${script.moduleName}/${editor}`,
+                    detail: script.name,
+                    documentation: `Shared script: ${script.name}`,
+                  }))
+                );
+
+            return { suggestions };
+          }
+
+          if (textUntilPosition.match(/["']scripts\/$/)) {
             const sharedScripts = getSharedScripts();
             const suggestions: monaco.languages.CompletionItem[] =
-              sharedScripts.map((script) => ({
-                label: script.moduleName,
-                range: {
-                  startLineNumber: position.lineNumber,
-                  startColumn: textUntilPosition.length + 1,
-                  endLineNumber: position.lineNumber,
-                  endColumn: position.column,
-                },
-                kind: monaco.languages.CompletionItemKind.Module,
-                insertText: script.moduleName,
-                detail: script.name,
-                documentation: `Shared script: ${script.name}`,
-              }));
+              sharedScripts.flatMap((script) =>
+                (["main", "types"] as const).map((editor) => ({
+                  label: `${script.moduleName}/${editor}`,
+                  range: {
+                    startLineNumber: position.lineNumber,
+                    startColumn: textUntilPosition.length + 1,
+                    endLineNumber: position.lineNumber,
+                    endColumn: position.column,
+                  },
+                  kind: monaco.languages.CompletionItemKind.Module,
+                  insertText: `${script.moduleName}/${editor}`,
+                  detail: script.name,
+                  documentation: `Shared script: ${script.name}`,
+                }))
+              );
 
             return { suggestions };
           }
@@ -55,31 +106,32 @@ export function registerImportIntelligence(
           return { suggestions: [] };
         }
 
-        const partialModuleName = importMatch[1];
+        const partialModulePath = importMatch[1];
         const sharedScripts = getSharedScripts();
 
         const suggestions: monaco.languages.CompletionItem[] = sharedScripts
-          .filter((script) => script.moduleName.startsWith(partialModuleName))
-          .map((script) => ({
-            label: script.moduleName,
-            range: {
-              startLineNumber: position.lineNumber,
-              startColumn: textUntilPosition.length + 1,
-              endLineNumber: position.lineNumber,
-              endColumn: position.column,
-            },
-            kind: monaco.languages.CompletionItemKind.Module,
-            insertText: script.moduleName,
-            detail: script.name,
-            documentation: `Shared script: ${script.name}`,
-          }));
+          .filter((script) => script.moduleName.startsWith(partialModulePath))
+          .flatMap((script) =>
+            (["main", "types"] as const).map((editor) => ({
+              label: `${script.moduleName}/${editor}`,
+              range: {
+                startLineNumber: position.lineNumber,
+                startColumn: textUntilPosition.length + 1,
+                endLineNumber: position.lineNumber,
+                endColumn: position.column,
+              },
+              kind: monaco.languages.CompletionItemKind.Module,
+              insertText: `${script.moduleName}/${editor}`,
+              detail: script.name,
+              documentation: `Shared script: ${script.name}`,
+            }))
+          );
 
         return { suggestions };
       },
     })
   );
 
-  // Completion provider for export members
   disposables.push(
     monaco.languages.registerCompletionItemProvider("typescript", {
       triggerCharacters: ["{", ",", " "],
@@ -91,39 +143,35 @@ export function registerImportIntelligence(
           endColumn: position.column,
         });
 
-        // Check if we're in the destructuring part of an import
-        const importMatch = textUntilPosition.match(
-          /import\s+(?:type\s+)?{([^}]*)}\s+from\s+["']shared\/([^"']+)["']$/
-        );
+        const importMatch = textUntilPosition.match(SCRIPT_IMPORT_PATTERN);
 
         if (!importMatch) {
-          // Handle case where user is typing inside the braces
           const inBracesMatch = textUntilPosition.match(
             /import\s+(?:type\s+)?{([^}]*)$/
           );
 
           if (inBracesMatch) {
-            // Find the module name from earlier in the file
             const lineText = model.getLineContent(position.lineNumber);
-            const moduleMatch = lineText.match(
-              /from\s+["']shared\/([^"']+)["']/
-            );
+            const moduleMatch =
+              lineText.match(
+                /from\s+["']scripts\/([^/"']+)\/(main|types)["']/
+              ) ?? lineText.match(/from\s+["']shared\/([^"']+)["']/);
 
             if (!moduleMatch) {
               return { suggestions: [] };
             }
 
-            const moduleName = moduleMatch[1];
+            const modulePath = moduleMatch[1];
             const sharedScripts = getSharedScripts();
             const script = sharedScripts.find(
-              (s) => s.moduleName === moduleName
+              (entry) => entry.moduleName === modulePath
             );
 
             if (!script) {
               return { suggestions: [] };
             }
 
-            const exports = extractExports(script);
+            const exports = extractExports(script, moduleMatch[2] === "types");
             const suggestions: monaco.languages.CompletionItem[] = exports.map(
               (exp) => ({
                 label: exp.name,
@@ -145,15 +193,17 @@ export function registerImportIntelligence(
           return { suggestions: [] };
         }
 
-        const moduleName = importMatch[2];
+        const modulePath = importMatch[1];
         const sharedScripts = getSharedScripts();
-        const script = sharedScripts.find((s) => s.moduleName === moduleName);
+        const script = sharedScripts.find(
+          (entry) => entry.moduleName === modulePath
+        );
 
         if (!script) {
           return { suggestions: [] };
         }
 
-        const exports = extractExports(script);
+        const exports = extractExports(script, importMatch[2] === "types");
         const suggestions: monaco.languages.CompletionItem[] = exports.map(
           (exp) => ({
             label: exp.name,
@@ -174,7 +224,6 @@ export function registerImportIntelligence(
     })
   );
 
-  // Hover provider
   disposables.push(
     monaco.languages.registerHoverProvider("typescript", {
       provideHover(model, position) {
@@ -184,12 +233,11 @@ export function registerImportIntelligence(
           return null;
         }
 
-        // Check if this word is from a shared import
         const importMatch = model
           .getValue()
           .match(
             new RegExp(
-              `import\\s+(?:type\\s+)?{[^}]*\\b${escapeRegExp(word.word)}\\b[^}]*}\\s+from\\s+["']shared\\/([^"']+)["']`,
+              `import\\s+(?:type\\s+)?{[^}]*\\b${escapeRegExp(word.word)}\\b[^}]*}\\s+from\\s+["'](?:scripts\\/([^/"']+)\\/(main|types)|shared\\/([^"']+))["']`,
               "m"
             )
           );
@@ -198,20 +246,26 @@ export function registerImportIntelligence(
           return null;
         }
 
-        const moduleName = importMatch[1];
+        const modulePath = importMatch[1] ?? importMatch[3];
         const sharedScripts = getSharedScripts();
-        const script = sharedScripts.find((s) => s.moduleName === moduleName);
+        const script = sharedScripts.find(
+          (entry) => entry.moduleName === modulePath
+        );
 
         if (!script) {
           return null;
         }
 
-        const exports = extractExports(script);
+        const exports = extractExports(script, importMatch[2] === "types");
         const exportInfo = exports.find((exp) => exp.name === word.word);
 
         if (!exportInfo) {
           return null;
         }
+
+        const importPath = importMatch[1]
+          ? `scripts/${importMatch[1]}/${importMatch[2]}`
+          : `shared/${importMatch[3]}`;
 
         return {
           range: new monaco.Range(
@@ -225,7 +279,7 @@ export function registerImportIntelligence(
               value: `**${exportInfo.name}** (${exportInfo.type})`,
             },
             {
-              value: `From shared script: \`${script.name}\` (\`shared/${moduleName}\`)`,
+              value: `From shared script: \`${script.name}\` (\`${importPath}\`)`,
             },
           ],
         };
@@ -236,15 +290,16 @@ export function registerImportIntelligence(
   return disposables;
 }
 
-/**
- * Extract export information from TypeScript source code
- */
 function extractExports(
-  sharedScript: SharedScriptInfo
+  sharedScript: SharedScriptInfo,
+  typesOnly: boolean
 ): Array<{ name: string; type: string }> {
   const exports = new Map<string, { name: string; type: string }>();
 
-  collectSourceExports(exports, sharedScript.sourceCode);
+  if (!typesOnly) {
+    collectSourceExports(exports, sharedScript.sourceCode);
+  }
+
   collectTypeDefinitionExports(exports, sharedScript.typeDefinitions);
 
   return Array.from(exports.values());
@@ -254,7 +309,6 @@ function collectSourceExports(
   exports: Map<string, { name: string; type: string }>,
   sourceCode: string
 ): void {
-  // Match: export function name
   const functionMatches = sourceCode.matchAll(
     /export\s+(?:async\s+)?function\s+(\w+)/g
   );
@@ -262,37 +316,31 @@ function collectSourceExports(
     exports.set(match[1], { name: match[1], type: "function" });
   }
 
-  // Match: export const name
   const constMatches = sourceCode.matchAll(/export\s+const\s+(\w+)/g);
   for (const match of constMatches) {
     exports.set(match[1], { name: match[1], type: "const" });
   }
 
-  // Match: export class name
   const classMatches = sourceCode.matchAll(/export\s+class\s+(\w+)/g);
   for (const match of classMatches) {
     exports.set(match[1], { name: match[1], type: "class" });
   }
 
-  // Match: export interface name
   const interfaceMatches = sourceCode.matchAll(/export\s+interface\s+(\w+)/g);
   for (const match of interfaceMatches) {
     exports.set(match[1], { name: match[1], type: "interface" });
   }
 
-  // Match: export type name
   const typeMatches = sourceCode.matchAll(/export\s+type\s+(\w+)/g);
   for (const match of typeMatches) {
     exports.set(match[1], { name: match[1], type: "type" });
   }
 
-  // Match: export enum name
   const enumMatches = sourceCode.matchAll(/export\s+enum\s+(\w+)/g);
   for (const match of enumMatches) {
     exports.set(match[1], { name: match[1], type: "enum" });
   }
 
-  // Match: export { name1, name2 }
   const namedExportMatches = sourceCode.matchAll(/export\s+{([^}]+)}/g);
   for (const match of namedExportMatches) {
     const names = match[1]
@@ -340,9 +388,6 @@ function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-/**
- * Map export type to Monaco completion kind
- */
 function getCompletionKind(type: string): monaco.languages.CompletionItemKind {
   switch (type) {
     case "function":

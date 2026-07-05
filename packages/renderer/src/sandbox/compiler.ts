@@ -6,6 +6,7 @@ import {
   EditorSettings,
   Userscript,
   UserscriptCompileResult,
+  getScriptModulePath,
 } from "@shared/model";
 import { prepareCompiledJavascript } from "@shared/compiled-output";
 import { minify as minifyJavascript } from "terser";
@@ -93,7 +94,7 @@ async function minifyCompiledJavascript(
 }
 
 export async function buildUserscriptJavascript(
-  script: Pick<Userscript, "shared" | "moduleName">,
+  script: Pick<Userscript, "shared" | "moduleName" | "id">,
   sourceCode: string,
   options: CompiledOutputBuildOptions
 ): Promise<UserscriptCompileResult> {
@@ -111,7 +112,7 @@ export async function buildUserscriptJavascript(
     // inspects `result.success` — don't see an unhandled rejection.
     code = prepareCompiledJavascript(compiled.code ?? "", {
       shared: script.shared,
-      moduleName: script.moduleName,
+      moduleName: getScriptModulePath(script),
     });
   } catch (error) {
     return {

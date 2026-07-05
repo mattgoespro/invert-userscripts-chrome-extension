@@ -148,7 +148,7 @@ export class ScriptsPage {
   // ─── Code Editors ────────────────────────────────────────────────────────
 
   /** Type into the TypeScript editor and save with Ctrl+S. */
-  async saveTypescriptCode(code: string) {
+  async saveTypescriptCode(code: string, scriptName?: string) {
     const editor = this.page
       .locator("[data-testid='typescript-source'] .monaco-editor")
       .first();
@@ -157,6 +157,28 @@ export class ScriptsPage {
     await this.page.keyboard.press("Control+a");
     await this.page.keyboard.type(code);
     await this.page.keyboard.press("Control+s");
+
+    if (scriptName) {
+      const item = this.scriptListPanel
+        .locator("div")
+        .filter({ has: this.page.getByText(scriptName, { exact: true }) });
+      await expect(item.locator(".animate-pulse-indicator")).not.toBeVisible({
+        timeout: 15_000,
+      });
+    }
+
+    await this.page.waitForFunction(
+      () =>
+        chrome.storage.sync
+          .get(null)
+          .then((data) =>
+            Object.keys(data).some(
+              (key) => key.startsWith("userscript:") && !key.includes(":chunk:")
+            )
+          ),
+      undefined,
+      { timeout: 15_000 }
+    );
   }
 
   // ─── Compiled Output Drawer ───────────────────────────────────────────────
