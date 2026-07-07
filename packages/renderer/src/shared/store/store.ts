@@ -12,7 +12,6 @@ import {
   isDraftDirty,
   type EditorDraft,
 } from "./slices/editor-drafts/state.editor-drafts";
-import { syncAllSharedScriptLibsFromUserscripts } from "@packages/monaco";
 import { refreshScriptsFromStorage } from "./slices/editor-drafts/thunks.storage-sync";
 import editorReducer from "./slices/code-editor";
 import modulesReducer from "./slices/modules";
@@ -64,12 +63,14 @@ listenerMiddleware.startListening({
   },
 });
 
+// Monaco-side effects (models, package.json libs, ambient/CDN types) are
+// handled by the WorkspaceService, which subscribes to this store once.
+
 listenerMiddleware.startListening({
   actionCreator: refreshScriptsFromStorage.fulfilled,
   effect: (action, listenerApi) => {
     if (action.payload.syncedScripts.length > 0) {
       listenerApi.dispatch(syncScriptsFromRemote(action.payload.syncedScripts));
-      syncAllSharedScriptLibsFromUserscripts(action.payload.syncedScripts);
     }
   },
 });
@@ -78,7 +79,6 @@ listenerMiddleware.startListening({
   actionCreator: applyRemoteScript,
   effect: (action, listenerApi) => {
     listenerApi.dispatch(syncScriptsFromRemote([action.payload]));
-    syncAllSharedScriptLibsFromUserscripts([action.payload]);
     syncModifiedStatus(listenerApi, action.payload.id);
   },
 });
@@ -87,7 +87,6 @@ listenerMiddleware.startListening({
   actionCreator: resolveConflictTakeRemote,
   effect: (action, listenerApi) => {
     listenerApi.dispatch(syncScriptsFromRemote([action.payload]));
-    syncAllSharedScriptLibsFromUserscripts([action.payload]);
     syncModifiedStatus(listenerApi, action.payload.id);
   },
 });
@@ -96,7 +95,6 @@ listenerMiddleware.startListening({
   actionCreator: resolveAllConflictsTakeRemote,
   effect: (action, listenerApi) => {
     listenerApi.dispatch(syncScriptsFromRemote(action.payload));
-    syncAllSharedScriptLibsFromUserscripts(action.payload);
     for (const script of action.payload) {
       syncModifiedStatus(listenerApi, script.id);
     }

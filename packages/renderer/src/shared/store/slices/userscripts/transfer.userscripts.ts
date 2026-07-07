@@ -1,4 +1,4 @@
-import { getSharedImportModuleNames } from "@shared/compiled-output";
+import { getSharedImportModuleNames } from "@shared/shared-module-imports";
 import { GlobalModules, Userscript, Userscripts } from "@shared/model";
 
 const TRANSFER_SCHEMA_URL = "https://json-schema.org/draft/2020-12/schema";

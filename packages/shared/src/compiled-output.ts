@@ -5,7 +5,6 @@ export interface CompiledJavascriptTransformOptions {
   moduleName?: string;
 }
 
-const SHARED_MODULE_PREFIX = "shared/";
 const SCRIPTS_MODULE_PREFIX = "scripts/";
 
 function getImportedModulePath(
@@ -16,10 +15,6 @@ function getImportedModulePath(
   }
 
   const text = moduleSpecifier.text;
-
-  if (text.startsWith(SHARED_MODULE_PREFIX)) {
-    return text.slice(SHARED_MODULE_PREFIX.length);
-  }
 
   if (!text.startsWith(SCRIPTS_MODULE_PREFIX)) {
     return undefined;
@@ -65,36 +60,6 @@ function hasRuntimeBindings(importClause?: ts.ImportClause): boolean {
   return importClause.namedBindings.elements.some(
     (element) => !element.isTypeOnly
   );
-}
-
-function collectSharedImportModuleNames(
-  sourceCode: string,
-  scriptKind: ts.ScriptKind
-): string[] {
-  const sourceFile = ts.createSourceFile(
-    scriptKind === ts.ScriptKind.JS ? "compiled.js" : "source.ts",
-    sourceCode,
-    ts.ScriptTarget.ES2020,
-    true,
-    scriptKind
-  );
-  const moduleNames = new Set<string>();
-
-  for (const statement of sourceFile.statements) {
-    if (!ts.isImportDeclaration(statement)) {
-      continue;
-    }
-
-    const moduleName = getImportedModulePath(statement.moduleSpecifier);
-
-    if (!moduleName || !hasRuntimeBindings(statement.importClause)) {
-      continue;
-    }
-
-    moduleNames.add(moduleName);
-  }
-
-  return [...moduleNames];
 }
 
 function getSharedNamespaceAccessor(moduleName: string): string {
@@ -158,10 +123,6 @@ function buildSharedImportReplacement(
   }
 
   return replacementLines.join("\n");
-}
-
-export function getSharedImportModuleNames(sourceCode: string): string[] {
-  return collectSharedImportModuleNames(sourceCode, ts.ScriptKind.TS);
 }
 
 export function wrapSharedScriptForInjection(

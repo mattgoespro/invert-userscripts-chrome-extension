@@ -144,8 +144,8 @@ export function OptionsPanel({
           <PanelSection>
             <span className="font-body text-xs leading-[1.4] text-text-muted">
               Shared imports are derived from <code>import</code> statements
-              that reference <code>shared/&lt;module-name&gt;</code> in the
-              TypeScript source.
+              that reference <code>scripts/&lt;module-name&gt;/main</code> in
+              the TypeScript source.
             </span>
             {currentSharedDependencies.length > 0 ? (
               <div className="flex flex-col gap-sm">
@@ -156,7 +156,7 @@ export function OptionsPanel({
                   >
                     <span className="truncate">{shared.name}</span>
                     <span className="shrink-0 text-text-muted-faint">
-                      shared/{shared.moduleName}
+                      scripts/{shared.moduleName}/main
                     </span>
                   </div>
                 ))}

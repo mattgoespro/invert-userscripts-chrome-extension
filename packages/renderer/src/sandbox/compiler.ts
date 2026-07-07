@@ -1,5 +1,3 @@
-import { transpileModule } from "typescript";
-import { TypeScriptCompilerOptions } from "@shared/typescript";
 import {
   CompiledCodeBuildMetadata,
   CompiledCodeEntry,
@@ -8,8 +6,6 @@ import {
   UserscriptCompileResult,
   getScriptModulePath,
 } from "@shared/model";
-import { prepareCompiledJavascript } from "@shared/compiled-output";
-import { minify as minifyJavascript } from "terser";
 
 export interface CompiledOutputBuildOptions {
   minifyCompiledOutput: boolean;
@@ -42,54 +38,190 @@ export function isCompiledCodeBuildCurrent(
   );
 }
 
-export class TypeScriptCompiler {
-  static compile(code: string): UserscriptCompileResult {
-    try {
-      const result = transpileModule(code, {
-        compilerOptions: TypeScriptCompilerOptions,
-      });
-
-      return {
-        success: true,
-        code: result.outputText,
-      };
-    } catch (error) {
-      return {
-        success: false,
-        error:
-          error instanceof Error
-            ? error
-            : new Error("Unknown compilation error"),
-      };
-    }
-  }
+interface BuildWorkerRequest {
+  type: "compile";
+  id: string;
+  sourceCode: string;
+  shared?: boolean;
+  moduleName?: string;
+  minify?: boolean;
 }
 
-async function minifyCompiledJavascript(
-  code: string
-): Promise<UserscriptCompileResult> {
-  try {
-    const result = await minifyJavascript(code, {
-      compress: true,
-      ecma: 2020,
-      format: {
-        comments: false,
-      },
-      mangle: true,
+interface BuildWorkerResponse {
+  type: "compile-result" | "worker-ready";
+  id?: string;
+  success?: boolean;
+  code?: string;
+  error?: string;
+}
+
+/**
+ * Off-thread JavaScript build pipeline (transpile → shared-module transform →
+ * optional minify). TypeScript and terser live in the dedicated build-worker
+ * entry, not in the main options bundle.
+ */
+class BuildWorkerClient {
+  private static worker: Worker | null = null;
+  private static isReady = false;
+  private static readyPromise: Promise<void> | null = null;
+  private static pendingRequests = new Map<
+    string,
+    { resolve: (result: UserscriptCompileResult) => void }
+  >();
+
+  private static handleWorkerFailure(error: Error): void {
+    this.isReady = false;
+    this.readyPromise = null;
+
+    if (this.worker) {
+      this.worker.terminate();
+      this.worker = null;
+    }
+
+    for (const pending of this.pendingRequests.values()) {
+      pending.resolve({ success: false, error });
+    }
+
+    this.pendingRequests.clear();
+  }
+
+  static initialize(): Promise<void> {
+    if (this.readyPromise) {
+      return this.readyPromise;
+    }
+
+    this.readyPromise = new Promise((resolve, reject) => {
+      try {
+        const workerUrl =
+          typeof chrome !== "undefined" && chrome.runtime?.getURL
+            ? chrome.runtime.getURL("build-worker.js")
+            : new URL("/build-worker.js", window.location.origin).href;
+
+        this.worker = new Worker(workerUrl);
+
+        const initTimeout = setTimeout(() => {
+          this.handleWorkerFailure(
+            new Error("Build worker failed to initialize within 15 seconds.")
+          );
+          reject(
+            new Error("Build worker failed to initialize within 15 seconds.")
+          );
+        }, 15000);
+
+        this.worker.addEventListener(
+          "message",
+          (event: MessageEvent<BuildWorkerResponse>) => {
+            if (event.data?.type === "worker-ready") {
+              clearTimeout(initTimeout);
+              this.isReady = true;
+              resolve();
+              return;
+            }
+
+            if (event.data?.type === "compile-result" && event.data.id) {
+              const pending = this.pendingRequests.get(event.data.id);
+
+              if (!pending) {
+                return;
+              }
+
+              this.pendingRequests.delete(event.data.id);
+
+              if (event.data.success) {
+                pending.resolve({
+                  success: true,
+                  code: event.data.code,
+                });
+              } else {
+                pending.resolve({
+                  success: false,
+                  error: new Error(
+                    event.data.error ?? "Unknown compilation error"
+                  ),
+                });
+              }
+            }
+          }
+        );
+
+        this.worker.addEventListener("error", (event) => {
+          clearTimeout(initTimeout);
+          const error = new Error(event.message || "Build worker failed.");
+          const wasReady = this.isReady;
+
+          this.handleWorkerFailure(error);
+
+          if (!wasReady) {
+            reject(error);
+          }
+        });
+      } catch (error) {
+        this.readyPromise = null;
+        reject(
+          error instanceof Error
+            ? error
+            : new Error("Build worker initialization failed.")
+        );
+      }
     });
 
-    return {
-      success: true,
-      code: result.code ?? "",
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error:
-        error instanceof Error
-          ? error
-          : new Error("Unknown JavaScript minification error"),
-    };
+    return this.readyPromise;
+  }
+
+  static async compile(
+    script: Pick<Userscript, "shared" | "moduleName" | "id">,
+    sourceCode: string,
+    options: CompiledOutputBuildOptions
+  ): Promise<UserscriptCompileResult> {
+    if (!this.isReady || !this.worker) {
+      try {
+        await this.initialize();
+      } catch (error) {
+        return {
+          success: false,
+          error:
+            error instanceof Error
+              ? error
+              : new Error("Build worker initialization failed."),
+        };
+      }
+    }
+
+    const worker = this.worker;
+
+    if (!worker) {
+      return {
+        success: false,
+        error: new Error("Build worker is not available."),
+      };
+    }
+
+    return new Promise((resolve) => {
+      const id = crypto.randomUUID();
+
+      this.pendingRequests.set(id, { resolve });
+
+      const request: BuildWorkerRequest = {
+        type: "compile",
+        id,
+        sourceCode,
+        shared: script.shared,
+        moduleName: getScriptModulePath(script),
+        minify: options.minifyCompiledOutput,
+      };
+
+      worker.postMessage(request);
+
+      setTimeout(() => {
+        if (this.pendingRequests.has(id)) {
+          this.pendingRequests.delete(id);
+          resolve({
+            success: false,
+            error: new Error("JavaScript compilation timed out."),
+          });
+        }
+      }, 30000);
+    });
   }
 }
 
@@ -98,48 +230,7 @@ export async function buildUserscriptJavascript(
   sourceCode: string,
   options: CompiledOutputBuildOptions
 ): Promise<UserscriptCompileResult> {
-  const compiled = TypeScriptCompiler.compile(sourceCode);
-
-  if (!compiled.success) {
-    return compiled;
-  }
-
-  let code: string;
-  try {
-    // prepareCompiledJavascript can throw for unsupported shared-module
-    // constructs (e.g. re-exports). Convert that into the result-object
-    // contract so callers — including the live-preview effect that only
-    // inspects `result.success` — don't see an unhandled rejection.
-    code = prepareCompiledJavascript(compiled.code ?? "", {
-      shared: script.shared,
-      moduleName: getScriptModulePath(script),
-    });
-  } catch (error) {
-    return {
-      success: false,
-      error: error instanceof Error ? error : new Error(String(error)),
-    };
-  }
-
-  if (!options.minifyCompiledOutput) {
-    return {
-      success: true,
-      code,
-    };
-  }
-
-  const minified = await minifyCompiledJavascript(code);
-
-  if (!minified.success) {
-    return minified;
-  }
-
-  code = minified.code ?? "";
-
-  return {
-    success: true,
-    code,
-  };
+  return BuildWorkerClient.compile(script, sourceCode, options);
 }
 
 export async function buildUserscriptStylesheet(
@@ -207,9 +298,6 @@ export class SassCompiler {
       this.iframe.src = "/sass-sandbox.html";
       this.iframe.style.display = "none";
 
-      // Reject initialization if the sandbox doesn't respond within 15 seconds.
-      // Without this guard, any compile() call would hang indefinitely if the
-      // sandbox page fails to load (404, CSP violation, JS error, etc.).
       const initTimeout = setTimeout(() => {
         this.readyPromise = null;
         reject(
@@ -294,7 +382,6 @@ export class SassCompiler {
 
       this.iframe!.contentWindow!.postMessage(request, "*");
 
-      // Timeout after 10 seconds
       setTimeout(() => {
         if (this.pendingRequests.has(id)) {
           this.pendingRequests.delete(id);
@@ -306,4 +393,9 @@ export class SassCompiler {
       }, 10000);
     });
   }
+}
+
+/** Eagerly spin up the build worker alongside other sandbox runtimes. */
+export function initializeBuildWorker(): Promise<void> {
+  return BuildWorkerClient.initialize();
 }

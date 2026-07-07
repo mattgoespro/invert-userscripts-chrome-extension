@@ -13,11 +13,10 @@ import {
   getScriptModulePath,
 } from "@shared/model";
 import type { RuntimePortMessageEvent } from "@shared/messages";
-import { getSharedImportModuleNames } from "@shared/compiled-output";
+import { getSharedImportModuleNames } from "@shared/shared-module-imports";
 import { ChromeSyncStorage, CompiledCodeStorage } from "@shared/storage";
 import { RootState } from "../../store";
 import { uuid } from "@/shared/utils";
-import { syncAllSharedScriptLibsFromUserscripts } from "@packages/monaco";
 import {
   buildScriptWithDraftSource,
   extractUserscriptMetadataUpdates,
@@ -577,11 +576,6 @@ export const importUserscripts = createAsyncThunk<
   );
 
   sendRefreshTabsMessage();
-
-  syncAllSharedScriptLibsFromUserscripts([
-    ...Object.values(getState().userscripts.scripts),
-    ...importedScripts,
-  ]);
 
   return importedScripts;
 });

@@ -3,26 +3,28 @@ import { useAppDispatch, useAppSelector } from "@/shared/store/hooks";
 import { saveEditorCode } from "@/shared/store/slices/code-editor/thunks.code-editor";
 import { selectEditorSettings } from "@/shared/store/slices/settings";
 import { EditorSettings } from "@shared/model";
+import {
+  attachWorkspaceModel,
+  buildModelUri,
+  disposeDetachedModel,
+  getOrCreateDetachedModel,
+} from "@packages/monaco";
 import * as monaco from "monaco-editor";
 import { useEffect, useRef } from "react";
-import {
-  attachEditorModel,
-  buildModelUri,
-  disposeModel,
-} from "../components/code-editor/model-cache";
 
 export type CodeEditorProps = {
   modelId: string;
+  /**
+   * Present for script buffers: the model is owned by the workspace (created
+   * up front, content-synced by the WorkspaceService, never disposed by the
+   * editor). Absent for auxiliary editors (previews, compiled output) whose
+   * detached models this component owns and disposes.
+   */
   scriptId?: string;
   contents: string;
   language: FormatterLanguage;
   editable?: boolean;
   settingsOverride?: Partial<EditorSettings>;
-  disposeModelOnUnmount?: boolean;
-  /** Bumps whenever the draft layer pushes new contents into the editor. */
-  syncRevision?: number;
-  /** When true, external contents must not overwrite the model. */
-  bufferDirty?: boolean;
   onCodeModified?: (value: string) => void;
   onSave?: (args: {
     code: string;
@@ -31,7 +33,6 @@ export type CodeEditorProps = {
     scriptId?: string;
   }) => Promise<string | void>;
   onEditorReady?: (editor: monaco.editor.IStandaloneCodeEditor) => void;
-  onModelFlushed?: (value: string) => void;
 };
 
 export function CodeEditor(props: CodeEditorProps) {
@@ -42,13 +43,9 @@ export function CodeEditor(props: CodeEditorProps) {
     contents,
     settingsOverride,
     editable = true,
-    disposeModelOnUnmount = false,
-    syncRevision = 0,
-    bufferDirty = false,
     onCodeModified,
     onSave,
     onEditorReady,
-    onModelFlushed,
   } = props;
 
   const dispatch = useAppDispatch();
@@ -61,10 +58,7 @@ export function CodeEditor(props: CodeEditorProps) {
   const editorInstanceRef = useRef<monaco.editor.IStandaloneCodeEditor>(null);
   const onCodeModifiedRef = useRef(onCodeModified);
   const onEditorReadyRef = useRef(onEditorReady);
-  const onModelFlushedRef = useRef(onModelFlushed);
-  const suppressModelChangeRef = useRef(false);
-  const attachedModelUriRef = useRef<string | null>(null);
-  const attachedScriptIdRef = useRef<string | undefined>(scriptId);
+  const isWorkspaceModel = scriptId != null;
 
   useEffect(() => {
     if (!editorRootRef.current) {
@@ -109,21 +103,16 @@ export function CodeEditor(props: CodeEditorProps) {
 
     return () => {
       const model = editorInstance.getModel();
-      const disposeUri =
+      const modelUri =
         model && !model.isDisposed() ? model.uri.toString() : null;
-
-      if (model && !model.isDisposed() && onModelFlushedRef.current) {
-        onModelFlushedRef.current(model.getValue());
-      }
 
       editorInstance.setModel(null);
       editorInstance.dispose();
       editorInstanceRef.current = null;
-      attachedModelUriRef.current = null;
-      attachedScriptIdRef.current = undefined;
 
-      if ((!editable || disposeModelOnUnmount) && disposeUri) {
-        disposeModel(disposeUri);
+      // Workspace models outlive editors; detached preview models don't.
+      if (!isWorkspaceModel && modelUri) {
+        disposeDetachedModel(modelUri);
       }
     };
   }, []);
@@ -137,10 +126,6 @@ export function CodeEditor(props: CodeEditorProps) {
   }, [onEditorReady]);
 
   useEffect(() => {
-    onModelFlushedRef.current = onModelFlushed;
-  }, [onModelFlushed]);
-
-  useEffect(() => {
     monaco.editor.setTheme(settings.theme);
   }, [settings.theme]);
 
@@ -148,6 +133,7 @@ export function CodeEditor(props: CodeEditorProps) {
     editorInstanceRef.current?.updateOptions({ fontSize: settings.fontSize });
   }, [settings.fontSize]);
 
+  // Attach the model for this URI and forward buffer changes.
   useEffect(() => {
     const editorInstance = editorInstanceRef.current;
 
@@ -156,74 +142,35 @@ export function CodeEditor(props: CodeEditorProps) {
     }
 
     const uri = buildModelUri(modelId, language);
-    const previousModel = editorInstance.getModel();
-    const previousUri =
-      previousModel && !previousModel.isDisposed()
-        ? previousModel.uri.toString()
-        : attachedModelUriRef.current;
-    const previousScriptId = attachedScriptIdRef.current;
-    const model = attachEditorModel(
-      editorInstance,
-      uri,
-      language,
-      contents
-    );
+    const model = isWorkspaceModel
+      ? attachWorkspaceModel(editorInstance, uri, language, contents)
+      : getOrCreateDetachedModel(uri, language, contents);
 
-    attachedModelUriRef.current = uri;
-    attachedScriptIdRef.current = scriptId;
-
-    if (
-      previousUri &&
-      previousUri !== uri &&
-      previousScriptId &&
-      previousScriptId === scriptId
-    ) {
-      disposeModel(previousUri);
+    if (editorInstance.getModel() !== model) {
+      editorInstance.setModel(model);
     }
 
     onEditorReadyRef.current?.(editorInstance);
 
-    if (!onCodeModifiedRef.current) {
-      return;
-    }
-
     const disposable = model.onDidChangeContent(() => {
-      if (!suppressModelChangeRef.current) {
-        onCodeModifiedRef.current?.(model.getValue());
-      }
+      onCodeModifiedRef.current?.(model.getValue());
     });
 
     return () => disposable.dispose();
-  }, [modelId, language, editable, syncRevision, contents, scriptId]);
+  }, [modelId, language, isWorkspaceModel]);
 
+  // Detached preview models have no workspace sync; mirror the contents prop.
   useEffect(() => {
-    const editorInstance = editorInstanceRef.current;
-
-    if (!editorInstance) {
+    if (isWorkspaceModel) {
       return;
     }
 
-    const uri = buildModelUri(modelId, language);
-    let model = editorInstance.getModel();
+    const model = editorInstanceRef.current?.getModel();
 
-    if (!model || model.isDisposed()) {
-      model = attachEditorModel(editorInstance, uri, language, contents);
-    } else if (model.uri.toString() !== uri) {
-      model = attachEditorModel(editorInstance, uri, language, contents);
+    if (model && !model.isDisposed() && model.getValue() !== contents) {
+      model.setValue(contents);
     }
-
-    if (editable && bufferDirty) {
-      return;
-    }
-
-    if (model.getValue() === contents) {
-      return;
-    }
-
-    suppressModelChangeRef.current = true;
-    model.setValue(contents);
-    suppressModelChangeRef.current = false;
-  }, [contents, syncRevision, editable, bufferDirty, modelId, language]);
+  }, [contents, isWorkspaceModel, modelId, language]);
 
   useEffect(() => {
     if (!editable || !scriptId || !editorRootRef.current) {
@@ -274,19 +221,20 @@ export function CodeEditor(props: CodeEditorProps) {
 
         const model = editorInstance.getModel();
 
-        if (!model) {
+        if (!model || model.getValue() === savedCode) {
           return;
         }
 
+        // Apply formatting through executeEdits to preserve the cursor and
+        // undo stack. The resulting change event round-trips through the
+        // draft store, which no-ops on identical content.
         const savedSelections = editorInstance.getSelections() ?? [];
 
-        suppressModelChangeRef.current = true;
         editorInstance.executeEdits(
           "prettier-format",
           [{ range: model.getFullModelRange(), text: savedCode }],
           savedSelections
         );
-        suppressModelChangeRef.current = false;
       }
     };
 

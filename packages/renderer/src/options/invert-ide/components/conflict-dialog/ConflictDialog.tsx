@@ -2,7 +2,6 @@ import { Button } from "@/shared/components/button/Button";
 import { Dialog } from "@/shared/components/dialog/Dialog";
 import { Typography } from "@/shared/components/typography/Typography";
 import { useAppDispatch, useAppSelector } from "@/shared/store/hooks";
-import { selectCurrentUserscript } from "@/shared/store/slices/userscripts";
 import {
   DraftBuffer,
   resolveAllConflictsKeepLocal,
@@ -11,8 +10,6 @@ import {
   resolveConflictTakeRemote,
   selectPendingConflicts,
 } from "@/shared/store/slices/editor-drafts";
-import { syncAllSharedScriptLibsFromUserscripts } from "@packages/monaco";
-import { disposeModelsForScript } from "../code-editor/model-cache";
 import { useMemo } from "react";
 
 const BUFFER_LABELS: Record<DraftBuffer, string> = {
@@ -34,11 +31,13 @@ function truncatePreview(text: string, maxLength = 120): string {
 export function ConflictDialog() {
   const dispatch = useAppDispatch();
   const conflicts = useAppSelector(selectPendingConflicts);
-  const currentScript = useAppSelector(selectCurrentUserscript);
   const conflictList = useMemo(() => Object.values(conflicts), [conflicts]);
 
   const open = conflictList.length > 0;
 
+  // Taking remote replaces the drafts (clean, revision-bumped); the
+  // WorkspaceService observes the store change and updates the Monaco models,
+  // including ones attached to open editors.
   const onTakeRemote = (scriptId: string) => {
     const conflict = conflicts[scriptId];
 
@@ -47,11 +46,6 @@ export function ConflictDialog() {
     }
 
     dispatch(resolveConflictTakeRemote(conflict.remoteScript));
-    syncAllSharedScriptLibsFromUserscripts([conflict.remoteScript]);
-
-    if (currentScript?.id === scriptId) {
-      disposeModelsForScript(conflict.remoteScript);
-    }
   };
 
   const onKeepLocal = (scriptId: string) => {
@@ -62,11 +56,6 @@ export function ConflictDialog() {
     const scripts = conflictList.map((conflict) => conflict.remoteScript);
 
     dispatch(resolveAllConflictsTakeRemote(scripts));
-    syncAllSharedScriptLibsFromUserscripts(scripts);
-
-    if (currentScript && conflicts[currentScript.id]) {
-      disposeModelsForScript(currentScript);
-    }
   };
 
   const onKeepAllLocal = () => {

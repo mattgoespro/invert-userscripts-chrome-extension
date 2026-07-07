@@ -48,7 +48,6 @@ type StoredUserscriptManifest =
       chunkCount: number;
     };
 
-const LEGACY_USERSCRIPTS_KEY = "userscripts";
 const USERSCRIPT_KEY_PREFIX = "userscript:";
 const USERSCRIPT_CHUNK_SEPARATOR = ":chunk:";
 const USERSCRIPT_STORAGE_VERSION = 2;
@@ -86,8 +85,7 @@ export class ChromeSyncStorage {
    * Reads all userscripts from `chrome.storage.sync`.
    *
    * Userscript payloads are stored per script as compressed manifests to avoid
-   * Chrome sync's 8KB-per-item quota. Legacy installs may still have a single
-   * `userscripts` blob; when present, it is migrated to the compressed layout.
+   * Chrome sync's 8KB-per-item quota.
    */
   static async getAllScripts(): Promise<Userscripts> {
     const allItems = await chrome.storage.sync.get(null);
@@ -131,23 +129,7 @@ export class ChromeSyncStorage {
       }
     }
 
-    const legacyScripts = allItems[LEGACY_USERSCRIPTS_KEY] as
-      | Record<string, Userscript | StoredUserscriptPayload>
-      | undefined;
-
-    if (!legacyScripts) {
-      return scripts;
-    }
-
-    const migratedScripts = await this.migrateLegacyUserscripts(
-      legacyScripts,
-      scripts
-    );
-
-    return {
-      ...migratedScripts,
-      ...scripts,
-    };
+    return scripts;
   }
 
   static async saveScript(script: Userscript): Promise<void> {
@@ -442,41 +424,6 @@ export class ChromeSyncStorage {
     const json = await this.decodePayload(encodedPayload, manifest.encoding);
 
     return JSON.parse(json) as StoredUserscriptPayload;
-  }
-
-  private static async migrateLegacyUserscripts(
-    legacyScripts: Record<string, Userscript | StoredUserscriptPayload>,
-    loadedScripts: Userscripts
-  ): Promise<Userscripts> {
-    const migratedScripts: Userscripts = {};
-    const migratedEntries: Record<string, StoredUserscriptManifest | string> =
-      {};
-
-    for (const legacyId of Object.keys(legacyScripts)) {
-      const legacyScript = legacyScripts[legacyId];
-      const scriptId =
-        ("id" in legacyScript ? legacyScript.id : undefined) ?? legacyId;
-
-      if (loadedScripts[scriptId]) {
-        continue;
-      }
-
-      const hydratedScript = this.hydrateUserscript(scriptId, legacyScript);
-      const { manifest, chunkEntries } =
-        await this.buildStoredUserscriptEntries(hydratedScript);
-
-      migratedScripts[scriptId] = hydratedScript;
-      migratedEntries[this.getUserscriptStorageKey(scriptId)] = manifest;
-      Object.assign(migratedEntries, chunkEntries);
-    }
-
-    if (Object.keys(migratedEntries).length > 0) {
-      await chrome.storage.sync.set(migratedEntries);
-    }
-
-    await chrome.storage.sync.remove(LEGACY_USERSCRIPTS_KEY);
-
-    return migratedScripts;
   }
 
   private static getUserscriptStorageKey(scriptId: string): string {

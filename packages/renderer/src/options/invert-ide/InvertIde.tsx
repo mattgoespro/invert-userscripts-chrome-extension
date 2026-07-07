@@ -1,7 +1,7 @@
 import { useGlobalState } from "@/options/invert-ide/contexts/global-state.context";
 import { ConflictDialog } from "@/options/invert-ide/components/conflict-dialog/ConflictDialog";
 import { useStorageSync } from "@/options/invert-ide/hooks/useStorageSync";
-import { SassCompiler } from "@/sandbox/compiler";
+import { SassCompiler, initializeBuildWorker } from "@/sandbox/compiler";
 import { CommandPalette } from "@/shared/components/command-palette/CommandPalette";
 import { useAppDispatch, useAppSelector } from "@/shared/store/hooks";
 import {
@@ -15,9 +15,11 @@ import {
   loadUserscripts,
   rebuildCompiledUserscripts,
 } from "@/shared/store/slices/userscripts/thunks.userscripts";
-import { syncAllSharedScriptLibsFromUserscripts } from "@packages/monaco";
+import { startWorkspaceService } from "@/shared/services/workspace-service";
+import { store } from "@/shared/store/store";
 import { useCallback, useEffect, useState } from "react";
-import { Sidebar, SidebarButton } from "./components/sidebar/Sidebar";
+import { Sidebar } from "./components/sidebar/Sidebar";
+import type { AppSidebarTab } from "@shared/storage";
 import { ModulesPage } from "./pages/modules-page/ModulesPage";
 import { ScriptsPage } from "./pages/scripts-page/ScriptsPage";
 import { Settings } from "./pages/settings-page/SettingsPage";
@@ -42,17 +44,23 @@ export function InvertIde() {
 
   useEffect(() => {
     SassCompiler.initialize();
+    void initializeBuildWorker();
     dispatch(initializeMonaco());
+
+    let stopWorkspaceService: (() => void) | undefined;
 
     void (async () => {
       try {
-        const [scripts] = await Promise.all([
+        await Promise.all([
           dispatch(loadUserscripts()).unwrap(),
           dispatch(loadSettings()).unwrap(),
           dispatch(loadModules()).unwrap(),
-        ] as const);
+        ]);
 
-        syncAllSharedScriptLibsFromUserscripts(scripts);
+        // Single owner of store → Monaco sync: creates real models for every
+        // script, registers module package.json entries and ambient/CDN libs.
+        stopWorkspaceService = startWorkspaceService(store);
+
         await dispatch(rebuildCompiledUserscripts({ scope: "stale" })).unwrap();
         dispatch(setIdeReady(true));
       } catch (error) {
@@ -60,6 +68,8 @@ export function InvertIde() {
         dispatch(setIdeReady(true));
       }
     })();
+
+    return () => stopWorkspaceService?.();
   }, [dispatch]);
 
   useEffect(() => {
@@ -91,7 +101,7 @@ export function InvertIde() {
     }
   }
 
-  function onNavigate(button: SidebarButton) {
+  function onNavigate(button: AppSidebarTab) {
     updateGlobalState({ activeSidebarTab: button });
   }
 

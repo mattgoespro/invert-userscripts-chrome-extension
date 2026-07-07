@@ -4,7 +4,7 @@
   "include": ["**/*.ts"],
   "compilerOptions": {
     "composite": true,
-    "lib": ["dom", "dom.iterable"],
+    "lib": ["es2022", "dom", "dom.iterable"],
     "types": ["chrome"],
     "outDir": "dist/packages/shared"
   }

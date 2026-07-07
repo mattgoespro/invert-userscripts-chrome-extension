@@ -35,6 +35,10 @@ export default (
         import: "./packages/renderer/src/sandbox/sass-sandbox.ts",
         filename: "sass-sandbox.js",
       },
+      "build-worker": {
+        import: "./packages/renderer/src/sandbox/build-worker.ts",
+        filename: "build-worker.js",
+      },
     },
     stats: "errors-warnings",
     output: {

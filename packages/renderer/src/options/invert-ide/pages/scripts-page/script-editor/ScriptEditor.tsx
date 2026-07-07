@@ -1,7 +1,7 @@
 import { CodeEditor } from "@/options/invert-ide/shared/CodeEditor";
 import { TypeDefinitionCodeEditor } from "@/options/invert-ide/components/code-editor/TypeDefinitionCodeEditor";
 import { TypeScriptCodeEditor } from "@/options/invert-ide/components/code-editor/TypeScriptCodeEditor";
-import { buildScriptModelId } from "@/options/invert-ide/components/code-editor/model-cache";
+import { buildScriptModelId } from "@packages/monaco";
 import {
   buildUserscriptJavascript,
   buildUserscriptStylesheet,
@@ -13,8 +13,6 @@ import { useAppDispatch, useAppSelector } from "@/shared/store/hooks";
 import { selectIdeReady } from "@/shared/store/slices/code-editor";
 import {
   selectDraftForScript,
-  selectDraftRevision,
-  selectIsDraftBufferDirty,
   updateDraftBuffer,
 } from "@/shared/store/slices/editor-drafts";
 import { selectEditorSettings } from "@/shared/store/slices/settings";
@@ -36,14 +34,6 @@ export function ScriptEditor() {
   const ideReady = useAppSelector(selectIdeReady);
   const settings = useAppSelector(selectEditorSettings);
   const draft = useAppSelector(selectDraftForScript(script.id));
-  const draftRevision = useAppSelector(selectDraftRevision(script.id));
-  const typescriptDirty = useAppSelector(
-    selectIsDraftBufferDirty(script.id, "typescript")
-  );
-  const scssDirty = useAppSelector(selectIsDraftBufferDirty(script.id, "scss"));
-  const typeDefinitionsDirty = useAppSelector(
-    selectIsDraftBufferDirty(script.id, "typeDefinitions")
-  );
   const { globalState, updateGlobalState, updatePanelSizes } = useGlobalState();
 
   const [liveJs, setLiveJs] = useState("");
@@ -257,13 +247,8 @@ export function ScriptEditor() {
                             modelId={buildScriptModelId(script, "main")}
                             scriptId={script.id}
                             contents={typescriptSource}
-                            syncRevision={draftRevision}
-                            bufferDirty={typescriptDirty}
                             onCodeModified={(code) =>
                               onCodeModified("typescript", code)
-                            }
-                            onModelFlushed={(code) =>
-                              flushDraftBuffer("typescript", code)
                             }
                             onEditorReady={(editor) => {
                               setTsEditorInstance(editor);
@@ -289,13 +274,8 @@ export function ScriptEditor() {
                             modelId={buildScriptModelId(script, "types")}
                             scriptId={script.id}
                             contents={typeDefinitions}
-                            syncRevision={draftRevision}
-                            bufferDirty={typeDefinitionsDirty}
                             onCodeModified={(code) =>
                               onCodeModified("typeDefinitions", code)
-                            }
-                            onModelFlushed={(code) =>
-                              flushDraftBuffer("typeDefinitions", code)
                             }
                             onEditorReady={(editor) => {
                               setTypeDefinitionEditorInstance(editor);
@@ -324,12 +304,7 @@ export function ScriptEditor() {
                         scriptId={script.id}
                         language="scss"
                         contents={scssSource}
-                        syncRevision={draftRevision}
-                        bufferDirty={scssDirty}
                         onCodeModified={(code) => onCodeModified("scss", code)}
-                        onModelFlushed={(code) =>
-                          flushDraftBuffer("scss", code)
-                        }
                         onEditorReady={(editor) => {
                           setScssEditorInstance(editor);
                           setScssModel(editor.getModel());

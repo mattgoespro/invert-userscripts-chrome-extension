@@ -117,7 +117,7 @@ type Userscripts = Record<string, Userscript>;
 **Key fields**:
 
 - **`shared`** — When `true`, marks this script as a shared module that other scripts can import.
-- **`moduleName`** — The module name used for import resolution (e.g., `import { fn } from "shared/moduleName"`).
+- **`moduleName`** — The module name used for import resolution (e.g., `import { fn } from "scripts/moduleName/main"`).
 - **`sharedScripts`** — Array of userscript IDs this script depends on (shared script dependencies).
 - **`globalModules`** — Array of global module IDs that should be injected before this script runs.
 - **`typeDefinitions`** — Extra TypeScript declarations stored alongside the userscript source.
@@ -576,11 +576,11 @@ The `packages/renderer/src/sandbox/` directory contains the in-browser compilati
 
 ### TypeScript Compilation
 
-`TypeScriptCompiler` (static class in `compiler.ts`) wraps `typescript.transpileModule()` directly:
+`buildUserscriptJavascript()` delegates to a dedicated **build worker** (`build-worker.js` webpack entry) so the ~3MB TypeScript compiler never lands in the main options bundle:
 
-- Uses shared `TypeScriptCompilerOptions` from `packages/shared/src/typescript.ts`
-- Options: Target ES2020, Module ESNext, ModuleResolution Node10, esModuleInterop, allowJs, checkJs, isolatedModules
-- Strict mode disabled (to match shared config)
+- Worker runs `transpileModule()` with shared `TypeScriptCompilerOptions` from `packages/shared/src/typescript.ts`
+- Applies shared-module transforms via `prepareCompiledJavascript()` from `packages/shared/src/compiled-output.ts`
+- Optionally minifies with terser inside the worker
 - Returns `UserscriptCompileResult` (`{ success, code?, error?: Error }`)
 
 ### SCSS Compilation
@@ -604,12 +604,13 @@ The `packages/renderer/src/sandbox/` directory contains the in-browser compilati
 
 ### Sandbox Files
 
-| File                | Purpose                                       |
-| ------------------- | --------------------------------------------- |
-| `compiler.ts`       | `TypeScriptCompiler` + `SassCompiler` classes |
-| `formatter.ts`      | `PrettierFormatter` class                     |
-| `sass-sandbox.ts`   | Iframe-side listener for SCSS compilation     |
-| `sass-sandbox.html` | Sandboxed page with relaxed CSP for dart-sass |
+| File                | Purpose                                                    |
+| ------------------- | ---------------------------------------------------------- |
+| `compiler.ts`       | Build worker client + `SassCompiler` class                 |
+| `build-worker.ts`   | Off-thread TS transpile + shared-module transform + minify |
+| `formatter.ts`      | `PrettierFormatter` class                                  |
+| `sass-sandbox.ts`   | Iframe-side listener for SCSS compilation                  |
+| `sass-sandbox.html` | Sandboxed page with relaxed CSP for dart-sass              |
 
 ---
 
@@ -926,7 +927,7 @@ packages/renderer/src/
 │   ├── index.html
 │   └── index.tsx
 ├── sandbox/                          # In-browser compilation & formatting
-│   ├── compiler.ts                   # TypeScriptCompiler + SassCompiler
+│   ├── compiler.ts                   # Build worker client + SassCompiler
 │   ├── formatter.ts                  # PrettierFormatter
 │   ├── sass-sandbox.ts              # Iframe-side SCSS compilation listener
 │   └── sass-sandbox.html            # Sandboxed page with relaxed CSP
@@ -987,8 +988,10 @@ packages/monaco/src/
 ├── theming.ts              # EditorThemes map, applyHighlighter(), getThemeOptions()
 ├── utils.ts                # CamelToKebabCase utility type
 ├── typescript/
-│   ├── declarations.ts     # Shared script declaration generation (addExtraLib)
-│   └── defaults.ts         # ensureTypescriptDefaults() configuration
+│   ├── vfs.ts              # Real-model virtual file system (workspace-owned models)
+│   ├── defaults.ts         # ensureTypescriptDefaults(), module package.json, ambient/CDN libs
+│   ├── cdn-types.ts        # Dependency-aware CDN @types acquisition (IndexedDB cache)
+│   └── module-specifier-completion.ts  # scripts/ path completion (worker gap fill)
 └── themes/
     ├── index.ts             # Barrel for all theme modules
     ├── defaults.ts          # Re-exports of all Shiki built-in themes
@@ -1003,9 +1006,12 @@ packages/monaco/src/
 
 ```text
 packages/shared/src/
-├── index.ts             # Barrel: re-exports model and storage
+├── index.ts             # Barrel: re-exports model, storage, compiled-output, typescript
 ├── model.ts             # All data types (Userscript, GlobalModule, EditorSettings, etc.)
 ├── messages.ts          # Type-safe messaging (RuntimePortMessageEvent, sources, payloads)
+├── compiled-output.ts   # Shared-module import/export AST transforms (build worker only)
+├── shared-module-imports.ts  # Lightweight scripts/*/main import discovery (main thread)
+├── shared-module-imports.ts  # Lightweight scripts/<m>/main import discovery (main thread)
 ├── storage/
 │   ├── index.ts             # Barrel: re-exports ChromeSyncStorage, GlobalStateManager, types
 │   ├── sync.storage.ts      # ChromeSyncStorage (chrome.storage.sync wrapper for scripts, modules, settings)

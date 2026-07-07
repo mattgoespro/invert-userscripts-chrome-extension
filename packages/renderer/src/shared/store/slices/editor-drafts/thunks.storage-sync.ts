@@ -122,22 +122,7 @@ export function getAffectedScriptIdsFromStorageChanges(
 ): string[] {
   const scriptIds = new Set<string>();
 
-  for (const [key, change] of Object.entries(changes)) {
-    if (key === "userscripts") {
-      const next = change.newValue as Record<string, unknown> | undefined;
-      const previous = change.oldValue as Record<string, unknown> | undefined;
-
-      for (const id of Object.keys(next ?? {})) {
-        scriptIds.add(id);
-      }
-
-      for (const id of Object.keys(previous ?? {})) {
-        scriptIds.add(id);
-      }
-
-      continue;
-    }
-
+  for (const key of Object.keys(changes)) {
     const scriptId = parseUserscriptIdFromKey(key);
 
     if (scriptId) {

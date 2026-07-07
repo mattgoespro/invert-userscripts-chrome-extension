@@ -1,6 +1,7 @@
 import { expect } from "@playwright/test";
 import type { Page } from "@playwright/test";
 import { extensionTest } from "./extension.fixture";
+import { buildUserscriptSyncEntries } from "./userscript-storage";
 
 interface StorageFixtures {
   /**
@@ -45,27 +46,7 @@ export const test = extensionTest.extend<StorageFixtures>({
       syncData: Record<string, unknown>,
       localData?: Record<string, unknown>
     ) => {
-      // ChromeSyncStorage stores userscripts as compressed manifests at
-      // "userscript:<id>" keys. Tests seed raw Userscript objects, so convert
-      // "userscript:<id>" entries to the legacy "userscripts" blob format which
-      // ChromeSyncStorage.getAllScripts() still reads and migrates automatically.
-      const legacyScripts: Record<string, unknown> = {};
-      const otherSyncData: Record<string, unknown> = {};
-
-      for (const [key, value] of Object.entries(syncData)) {
-        if (key.startsWith("userscript:")) {
-          const id = key.slice("userscript:".length);
-          legacyScripts[id] = value;
-        } else {
-          otherSyncData[key] = value;
-        }
-      }
-
-      const finalSyncData: Record<string, unknown> = { ...otherSyncData };
-
-      if (Object.keys(legacyScripts).length > 0) {
-        finalSyncData["userscripts"] = legacyScripts;
-      }
+      const finalSyncData = buildUserscriptSyncEntries(syncData);
 
       await page.evaluate(
         async ({ sync, local }) => {

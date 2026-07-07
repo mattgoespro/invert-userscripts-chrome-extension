@@ -1,4 +1,5 @@
 import { test, expect, buildUserscript } from "../../fixtures";
+import { buildUserscriptSyncManifest } from "../../fixtures/userscript-storage";
 import { normalizeMonacoText } from "../../helpers/monaco";
 import { OptionsPage, ScriptsPage } from "../../pages";
 
@@ -205,9 +206,10 @@ test.describe("Scripts — draft sync", () => {
       },
       updatedAt: Date.now(),
     };
+    const remoteManifest = buildUserscriptSyncManifest(remoteScript);
 
     await optionsPage.evaluate(
-      async ({ scriptId, payload }) => {
+      async ({ scriptId, manifest }) => {
         const allItems = await chrome.storage.sync.get(null);
         const modernKey = `userscript:${scriptId}`;
         const chunkKeys = Object.keys(allItems).filter((key) =>
@@ -215,9 +217,9 @@ test.describe("Scripts — draft sync", () => {
         );
 
         await chrome.storage.sync.remove([modernKey, ...chunkKeys]);
-        await chrome.storage.sync.set({ userscripts: { [scriptId]: payload } });
+        await chrome.storage.sync.set({ [modernKey]: manifest });
       },
-      { scriptId: script.id, payload: remoteScript }
+      { scriptId: script.id, manifest: remoteManifest }
     );
 
     await expect(

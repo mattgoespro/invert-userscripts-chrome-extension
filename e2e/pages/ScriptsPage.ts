@@ -59,8 +59,6 @@ export class ScriptsPage {
     // The label has explicit dimensions (h-5 w-9) so it's always in the viewport.
     await item.locator("label.switch--wrapper").first().click();
     // Wait for the toggleUserscript thunk to write to chrome.storage.sync.
-    // The thunk reads the legacy 'userscripts' key then saves in the modern
-    // 'userscript:<id>' format — presence of that key confirms the write completed.
     await this.page.waitForFunction(
       async () => {
         const data = await chrome.storage.sync.get(null);
