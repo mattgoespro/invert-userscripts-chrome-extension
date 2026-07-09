@@ -3,7 +3,9 @@
   "compilerOptions": {
     "target": "ESNext",
     "module": "ESNext",
+    "moduleResolution": "bundler",
     "lib": ["es2022", "dom", "dom.iterable"],
+    "types": [],
     "strict": false,
     "outDir": "./out",
     "rootDir": "userscripts"

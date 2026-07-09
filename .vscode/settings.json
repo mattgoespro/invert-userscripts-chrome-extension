@@ -1,9 +1,4 @@
 {
-  "[chatagent]": {
-    "editor.defaultFormatter": "darkriszty.markdown-table-prettify",
-    "editor.formatOnPaste": true,
-    "editor.formatOnSave": true
-  },
   "[css]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.formatOnPaste": true,
@@ -69,6 +64,14 @@
   "git.openRepositoryInParentFolders": "never",
   "gitProjectManager.baseProjectsFolders": ["%USERPROFILE%\\Desktop\\Code"],
   "gitProjectManager.openInNewWindow": true,
+  "js/ts.format.enabled": false,
+  "js/ts.preferences.importModuleSpecifier": "shortest",
+  "js/ts.preferences.renameMatchingJsxTags": true,
+  "js/ts.preferences.useAliasesForRenames": false,
+  "js/ts.tsc.autoDetect": "off",
+  "js/ts.tsdk.path": "node_modules\\typescript\\lib",
+  "js/ts.updateImportsOnFileMove.enabled": "always",
+  "json.schemaDownload.enable": true,
   "markdown.extension.completion.enabled": true,
   "markdown.extension.italic.indicator": "_",
   "markdown.preview.fontSize": 11,
@@ -117,13 +120,6 @@
   "terminal.integrated.shellIntegration.enabled": true,
   "terminal.integrated.smoothScrolling": true,
   "terminal.integrated.stickyScroll.enabled": true,
-  "typescript.format.enable": false,
-  "typescript.preferences.importModuleSpecifier": "shortest",
-  "typescript.preferences.renameMatchingJsxTags": true,
-  "typescript.preferences.useAliasesForRenames": false,
-  "typescript.tsc.autoDetect": "off",
-  "typescript.tsdk": "node_modules\\typescript\\lib",
-  "typescript.updateImportsOnFileMove.enabled": "always",
   "vsicons.dontShowNewVersionMessage": true,
   "workbench.activityBar.orientation": "vertical",
   "workbench.colorTheme": "Default Dark Modern",

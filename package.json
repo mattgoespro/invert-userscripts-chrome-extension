@@ -23,6 +23,7 @@
     "lint": "eslint packages plugins examples",
     "test": "node --loader ts-node/esm --test tests/*.test.mjs",
     "format": "prettier --write .",
+    "build:examples": "tsc -p examples/tsconfig.json",
     "e2e": "playwright test",
     "e2e:headless": "HEADLESS=true playwright test"
   },

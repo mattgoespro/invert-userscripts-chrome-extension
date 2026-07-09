@@ -59,8 +59,8 @@ function copyToClipboard(text: string) {
  * @returns the result of the function callback if resolved to
  *   a non-null value.
  */
-async function retry(
-  retryFn: () => boolean | Promise<boolean>,
+async function retry<T>(
+  retryFn: () => T | Promise<T>,
   options = {
     waitTime: 3e3,
     retryLimit: 10,

@@ -224,7 +224,7 @@ function handleQualityObserverUpdate(
 }
 
 async function runLocalVideoResolver() {
-  const videoElement = findVideoElementInDocument();
+  const videoElement = await findVideoElementInDocument();
 
   updateLogVideoElementButton({
     onClickFn: () => console.dir(videoElement),

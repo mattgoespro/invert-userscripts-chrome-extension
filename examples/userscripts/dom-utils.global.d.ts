@@ -8,7 +8,10 @@ declare global {
     throwError?: boolean;
   };
 
-  function retry<T>(retryFn: () => T, options?: RetryOptions): T;
+  function retry<T>(
+    retryFn: () => T | Promise<T>,
+    options?: RetryOptions
+  ): Promise<T>;
 
   function convertToCamelCase(str: string): string;
 
