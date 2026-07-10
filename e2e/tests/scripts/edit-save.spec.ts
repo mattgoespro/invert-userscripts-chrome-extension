@@ -51,11 +51,10 @@ test.describe("Scripts — edit and save", () => {
     await options.waitForReady();
 
     // The switch for the script should be unchecked (disabled)
-    const item = optionsPage
+    const item = scripts.scriptListPanel
       .locator("div")
-      .filter({ has: optionsPage.getByText("ToggleScript", { exact: true }) })
-      .first();
+      .filter({ has: optionsPage.getByText("ToggleScript", { exact: true }) });
     const checkbox = item.locator("input[type='checkbox']");
-    await expect(checkbox).not.toBeChecked();
+    await expect(checkbox).not.toBeChecked({ timeout: 15_000 });
   });
 });

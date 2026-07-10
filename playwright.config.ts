@@ -1,8 +1,8 @@
 import { defineConfig } from "@playwright/test";
 
-// Pass HEADLESS=true to run in headless mode (requires Chrome 112+ new-headless).
-// Extensions work with the new headless mode used by Playwright ≥1.45.
-const headless = process.env["HEADLESS"] === "true";
+// Headless by default. Pass `--headed` to open a visible browser window.
+// Extensions require Chrome's new headless mode (Playwright ≥1.45).
+const headless = !process.argv.includes("--headed");
 
 export default defineConfig({
   testDir: "./e2e",
@@ -14,6 +14,7 @@ export default defineConfig({
   },
   reporter: [["html", { outputFolder: "e2e/report", open: "never" }], ["list"]],
   globalSetup: "./e2e/global-setup.ts",
+  outputDir: "./e2e/report",
   projects: [
     {
       name: "chromium",

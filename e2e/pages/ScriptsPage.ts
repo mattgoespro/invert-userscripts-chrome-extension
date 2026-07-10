@@ -1,4 +1,12 @@
 import { expect, type Page } from "@playwright/test";
+import {
+  editorNeedle,
+  readTypescriptEditorText,
+  replaceMonacoEditorContent,
+  saveMonacoEditor,
+  typescriptEditor,
+  waitForTypescriptEditorText,
+} from "../helpers/monaco";
 
 /**
  * Page Object Model for the Scripts page (sidebar tab "Scripts" in Options).
@@ -33,11 +41,28 @@ export class ScriptsPage {
    * Click a script in the list by name. Scoped to the sidebar panel to avoid
    * matching the script name appearing elsewhere on the page.
    */
-  async selectScript(name: string) {
+  /**
+   * Click a script in the list by name. Scoped to the sidebar panel to avoid
+   * matching the script name appearing elsewhere on the page.
+   * @param expectedEditorSnippet When provided, waits for the TypeScript editor
+   *   to reflect the selected script before returning.
+   */
+  async selectScript(name: string, expectedEditorSnippet?: string) {
     await this.scriptListPanel.getByText(name, { exact: true }).click();
-    await this.page.waitForSelector(".monaco-editor[data-uri]", {
-      timeout: 15_000,
-    });
+    await expect(this.scriptNameInput).toHaveValue(name, { timeout: 15_000 });
+    await expect(
+      this.scriptListPanel
+        .locator(".border-l-accent")
+        .getByText(name, { exact: true })
+    ).toBeVisible({ timeout: 15_000 });
+    await this.page.waitForSelector(
+      "[data-testid='typescript-source'] .monaco-editor .view-lines",
+      { timeout: 15_000 }
+    );
+
+    if (expectedEditorSnippet) {
+      await waitForTypescriptEditorText(this.page, expectedEditorSnippet);
+    }
   }
 
   /** Get all script names currently shown in the list. */
@@ -55,16 +80,47 @@ export class ScriptsPage {
     const item = this.scriptListPanel
       .locator("div")
       .filter({ has: this.page.getByText(name, { exact: true }) });
+    const checkbox = item.locator("input[type='checkbox']");
+    const wasChecked = await checkbox.isChecked();
+
     // Click the visible label wrapper (triggers the hidden checkbox via HTML label behavior).
-    // The label has explicit dimensions (h-5 w-9) so it's always in the viewport.
-    await item.locator("label.switch--wrapper").first().click();
-    // Wait for the toggleUserscript thunk to write to chrome.storage.sync.
+    await item.locator("label.switch--wrapper").first().click({ force: true });
+
+    if (wasChecked) {
+      await expect(checkbox).not.toBeChecked({ timeout: 15_000 });
+    } else {
+      await expect(checkbox).toBeChecked({ timeout: 15_000 });
+    }
+
+    // Wait for the toggleUserscript thunk to persist to chrome.storage.sync.
     await this.page.waitForFunction(
-      async () => {
+      async (scriptName) => {
         const data = await chrome.storage.sync.get(null);
-        return Object.keys(data).some((k) => k.startsWith("userscript:"));
+
+        for (const [key, value] of Object.entries(data)) {
+          if (!key.startsWith("userscript:") || key.includes(":chunk:")) {
+            continue;
+          }
+
+          const entry = value as { data?: string; encoding?: string };
+
+          if (entry?.encoding !== "utf8-base64" || !entry.data) {
+            continue;
+          }
+
+          const json = JSON.parse(atob(entry.data)) as {
+            name?: string;
+            enabled?: true;
+          };
+
+          if (json.name === scriptName) {
+            return json.enabled !== true;
+          }
+        }
+
+        return false;
       },
-      undefined,
+      name,
       { timeout: 15_000 }
     );
   }
@@ -75,6 +131,16 @@ export class ScriptsPage {
       .locator("div")
       .filter({ has: this.page.getByText(name, { exact: true }) });
     return item.locator(".animate-pulse-indicator").isVisible();
+  }
+
+  /** Wait until the script's modified pulse indicator appears. */
+  async waitForScriptModified(name: string) {
+    const item = this.scriptListPanel
+      .locator("div")
+      .filter({ has: this.page.getByText(name, { exact: true }) });
+    await expect(item.locator(".animate-pulse-indicator")).toBeVisible({
+      timeout: 15_000,
+    });
   }
 
   // ─── Script Metadata ──────────────────────────────────────────────────────
@@ -146,37 +212,49 @@ export class ScriptsPage {
   // ─── Code Editors ────────────────────────────────────────────────────────
 
   /** Type into the TypeScript editor and save with Ctrl+S. */
-  async saveTypescriptCode(code: string, scriptName?: string) {
-    const editor = this.page
-      .locator("[data-testid='typescript-source'] .monaco-editor")
-      .first();
-    await editor.click();
-    // Select all existing content and replace
-    await this.page.keyboard.press("Control+a");
-    await this.page.keyboard.type(code);
-    await this.page.keyboard.press("Control+s");
-
-    if (scriptName) {
-      const item = this.scriptListPanel
-        .locator("div")
-        .filter({ has: this.page.getByText(scriptName, { exact: true }) });
-      await expect(item.locator(".animate-pulse-indicator")).not.toBeVisible({
-        timeout: 15_000,
-      });
-    }
+  async saveTypescriptCode(code: string) {
+    const editor = typescriptEditor(this.page);
+    await replaceMonacoEditorContent(editor, code);
+    await saveMonacoEditor(this.page);
 
     await this.page.waitForFunction(
-      () =>
-        chrome.storage.sync
-          .get(null)
-          .then((data) =>
-            Object.keys(data).some(
-              (key) => key.startsWith("userscript:") && !key.includes(":chunk:")
-            )
-          ),
-      undefined,
+      async ({ expected }) => {
+        const data = await chrome.storage.sync.get(null);
+        const scriptKey = Object.keys(data).find(
+          (key) => key.startsWith("userscript:") && !key.includes(":chunk:")
+        );
+
+        if (!scriptKey) {
+          return false;
+        }
+
+        const entry = data[scriptKey] as
+          | { data?: string; encoding?: string }
+          | undefined;
+
+        if (!entry?.data || entry.encoding !== "utf8-base64") {
+          return false;
+        }
+
+        const json = atob(entry.data);
+        return json.includes(expected);
+      },
+      { expected: code.replace(/\s+/g, " ").trim() },
       { timeout: 15_000 }
     );
+  }
+
+  /** Replace TypeScript editor contents without saving. */
+  async replaceTypescriptCode(code: string) {
+    const editor = typescriptEditor(this.page);
+    await replaceMonacoEditorContent(editor, code);
+    const needle = editorNeedle(code);
+    await waitForTypescriptEditorText(this.page, needle);
+  }
+
+  /** Read the TypeScript editor's visible source text. */
+  async getTypescriptEditorText() {
+    return readTypescriptEditorText(this.page);
   }
 
   // ─── Compiled Output Drawer ───────────────────────────────────────────────

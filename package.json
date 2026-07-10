@@ -24,8 +24,9 @@
     "test": "node --loader ts-node/esm --test tests/*.test.mjs",
     "format": "prettier --write .",
     "build:examples": "tsc -p examples/tsconfig.json",
-    "e2e": "playwright test",
-    "e2e:headless": "HEADLESS=true playwright test"
+    "e2e": "playwright test --headed",
+    "e2e:headless": "playwright test",
+    "e2e:install": "playwright install chromium"
   },
   "dependencies": {
     "@reduxjs/toolkit": "^2.11.2",

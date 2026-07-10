@@ -1,6 +1,6 @@
 import { test, expect, buildUserscript } from "../../fixtures";
 import { buildUserscriptSyncManifest } from "../../fixtures/userscript-storage";
-import { normalizeMonacoText } from "../../helpers/monaco";
+import { waitForTypescriptEditorText } from "../../helpers/monaco";
 import { OptionsPage, ScriptsPage } from "../../pages";
 
 test.describe("Scripts — draft sync", () => {
@@ -29,22 +29,13 @@ test.describe("Scripts — draft sync", () => {
 
     await options.waitForReady();
     await scripts.selectScript("ReloadFidelity");
-    await scripts.saveTypescriptCode(
-      "export const saved = 42;",
-      "ReloadFidelity"
-    );
+    await scripts.saveTypescriptCode("export const saved = 42;");
 
     await optionsPage.reload();
     await options.waitForReady();
     await scripts.selectScript("ReloadFidelity");
 
-    const editorText = normalizeMonacoText(
-      await optionsPage
-        .locator("[data-testid='typescript-source'] .view-lines")
-        .innerText()
-    );
-
-    expect(editorText).toContain("saved = 42");
+    await waitForTypescriptEditorText(optionsPage, "saved = 42");
   });
 
   test("metadata rename does not overwrite unsaved TypeScript in editor or storage", async ({
@@ -73,32 +64,18 @@ test.describe("Scripts — draft sync", () => {
     await options.waitForReady();
     await scripts.selectScript("MetadataSafety");
 
-    const editor = optionsPage
-      .locator("[data-testid='typescript-source'] .monaco-editor")
-      .first();
-    await editor.click();
-    await optionsPage.keyboard.press("Control+a");
-    await optionsPage.keyboard.type("export const unsaved = 99;");
+    await scripts.replaceTypescriptCode("export const unsaved = 99;");
 
     await scripts.setScriptName("RenamedMetadataSafety");
 
-    const editorText = normalizeMonacoText(
-      await optionsPage
-        .locator("[data-testid='typescript-source'] .view-lines")
-        .innerText()
-    );
-    expect(editorText).toContain("unsaved = 99");
+    await waitForTypescriptEditorText(optionsPage, "unsaved = 99");
 
     await optionsPage.reload();
     await options.waitForReady();
     await scripts.selectScript("RenamedMetadataSafety");
 
-    const reloadedText = normalizeMonacoText(
-      await optionsPage
-        .locator("[data-testid='typescript-source'] .view-lines")
-        .innerText()
-    );
-    expect(reloadedText).toContain("stored = 1");
+    await waitForTypescriptEditorText(optionsPage, "stored = 1");
+    const reloadedText = await scripts.getTypescriptEditorText();
     expect(reloadedText).not.toContain("unsaved = 99");
   });
 
@@ -109,6 +86,7 @@ test.describe("Scripts — draft sync", () => {
   }) => {
     const first = buildUserscript({
       name: "FirstScript",
+      moduleName: "first-script",
       code: {
         source: { typescript: "export const first = 1;", scss: "" },
         compiled: { javascript: "", css: "" },
@@ -116,6 +94,7 @@ test.describe("Scripts — draft sync", () => {
     });
     const second = buildUserscript({
       name: "SecondScript",
+      moduleName: "second-script",
       code: {
         source: { typescript: "export const second = 2;", scss: "" },
         compiled: { javascript: "", css: "" },
@@ -126,6 +105,10 @@ test.describe("Scripts — draft sync", () => {
     await seedStorage(optionsPage, {
       [`userscript:${first.id}`]: first,
       [`userscript:${second.id}`]: second,
+      globalState: {
+        activeSidebarTab: "scripts",
+        selectedScriptId: first.id,
+      },
     });
     await optionsPage.reload();
 
@@ -133,24 +116,14 @@ test.describe("Scripts — draft sync", () => {
     const scripts = new ScriptsPage(optionsPage);
 
     await options.waitForReady();
-    await scripts.selectScript("FirstScript");
+    await scripts.selectScript("FirstScript", "first = 1");
 
-    const editor = optionsPage
-      .locator("[data-testid='typescript-source'] .monaco-editor")
-      .first();
-    await editor.click();
-    await optionsPage.keyboard.press("Control+a");
-    await optionsPage.keyboard.type("export const switched = 7;");
+    await scripts.replaceTypescriptCode("export const switched = 7;");
 
-    await scripts.selectScript("SecondScript");
-    await scripts.selectScript("FirstScript");
+    await scripts.selectScript("SecondScript", "second = 2");
+    await scripts.selectScript("FirstScript", "switched = 7");
 
-    const editorText = normalizeMonacoText(
-      await optionsPage
-        .locator("[data-testid='typescript-source'] .view-lines")
-        .innerText()
-    );
-    expect(editorText).toContain("switched = 7");
+    await waitForTypescriptEditorText(optionsPage, "switched = 7");
   });
 
   test("external storage change prompts conflict and take-remote applies remote text", async ({
@@ -179,21 +152,8 @@ test.describe("Scripts — draft sync", () => {
     await options.waitForReady();
     await scripts.selectScript("ConflictScript");
 
-    const editor = optionsPage
-      .locator("[data-testid='typescript-source'] .monaco-editor")
-      .first();
-    await editor.click();
-    await optionsPage.keyboard.press("Control+a");
-    await optionsPage.keyboard.type("export const dirty = 5;");
-
-    await expect(
-      scripts.scriptListPanel
-        .locator("div")
-        .filter({
-          has: optionsPage.getByText("ConflictScript", { exact: true }),
-        })
-        .locator(".animate-pulse-indicator")
-    ).toBeVisible({ timeout: 15_000 });
+    await scripts.replaceTypescriptCode("export const dirty = 5;");
+    await scripts.waitForScriptModified("ConflictScript");
 
     const remoteScript = {
       ...script,
@@ -232,14 +192,6 @@ test.describe("Scripts — draft sync", () => {
       optionsPage.getByRole("dialog", { name: "Storage sync conflict" })
     ).not.toBeVisible({ timeout: 15_000 });
 
-    await expect
-      .poll(async () =>
-        normalizeMonacoText(
-          await optionsPage
-            .locator("[data-testid='typescript-source'] .view-lines")
-            .innerText()
-        )
-      )
-      .toContain("remote = 9");
+    await waitForTypescriptEditorText(optionsPage, "remote = 9");
   });
 });

@@ -9,9 +9,8 @@ import path from "path";
 
 const EXTENSION_DIST_PATH = path.resolve(import.meta.dirname, "../../dist");
 
-// Mirror the top-level playwright.config.ts HEADLESS flag so launchPersistentContext
-// matches the project-level headless setting.
-const headless = process.env["HEADLESS"] === "true";
+// Mirror playwright.config.ts: headless unless --headed is passed.
+const headless = !process.argv.includes("--headed");
 
 /** Test-scoped fixtures (a new instance per test). */
 interface ExtensionTestFixtures {
