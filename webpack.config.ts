@@ -195,17 +195,6 @@ export default (
               return JSON.stringify(manifest);
             },
           },
-          // {
-          //   from: path.join(
-          //     __dirname,
-          //     "packages",
-          //     "renderer",
-          //     "src",
-          //     "assets",
-          //     "images"
-          //   ),
-          //   to: path.join(__dirname, "dist", "assets", "images"),
-          // },
           {
             from: path.join(
               __dirname,

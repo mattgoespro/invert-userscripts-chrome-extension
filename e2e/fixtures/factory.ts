@@ -1,9 +1,5 @@
-import type {
-  Userscript,
-  GlobalModule,
-  EditorSettings,
-} from "../../packages/shared/src/model";
-import { sanitizeModuleName } from "../../packages/shared/src/model";
+import type { Userscript, GlobalModule, EditorSettings } from "@shared/model";
+import { sanitizeModuleName } from "@shared/model";
 import { v4 as uuid } from "uuid";
 
 export function buildUserscript(

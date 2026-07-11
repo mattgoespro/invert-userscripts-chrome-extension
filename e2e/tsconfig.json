@@ -3,12 +3,15 @@
   "include": ["**/*.ts"],
   "exclude": ["report"],
   "compilerOptions": {
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
+    "module": "esnext",
+    "moduleResolution": "bundler",
     "lib": ["es2020", "dom"],
     "types": ["@playwright/test", "node", "chrome"],
     "noEmit": true,
     "strict": false,
-    "noImplicitAny": true
+    "noImplicitAny": true,
+    "paths": {
+      "@shared/*": ["../packages/shared/src/*"]
+    }
   }
 }

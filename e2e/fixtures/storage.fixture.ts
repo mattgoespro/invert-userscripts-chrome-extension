@@ -5,13 +5,13 @@ import { buildUserscriptSyncEntries } from "./userscript-storage";
 
 interface StorageFixtures {
   /**
-   * Clears both chrome.storage.sync and chrome.storage.local.
+   * Clears both `chrome.storage.sync` and `chrome.storage.local`.
    * Must be called with a page opened on a chrome-extension:// origin.
    */
   clearStorage: (page: Page) => Promise<void>;
   /**
-   * Seeds chrome.storage.sync and optionally chrome.storage.local with the
-   * provided data. Must be called with a page opened on a chrome-extension:// origin.
+   * Seeds `chrome.storage.sync` and optionally `chrome.storage.local` with the
+   * provided data. Must be called with a page opened on a _chrome-extension://_ origin.
    */
   seedStorage: (
     page: Page,
@@ -21,8 +21,8 @@ interface StorageFixtures {
 }
 
 /**
- * Merged test fixture that includes extension fixtures (context, extensionId,
- * optionsPage, popupPage) plus chrome.storage helpers.
+ * Merged test fixture that includes extension fixtures (`context`, `extensionId`,
+ * `optionsPage`, `popupPage`) plus `chrome.storage` helpers.
  *
  * Import `test` and `expect` from `e2e/fixtures/index.ts` in all test files.
  */
@@ -39,7 +39,6 @@ export const test = extensionTest.extend<StorageFixtures>({
 
     await use(clear);
   },
-
   seedStorage: async ({}, use) => {
     const seed = async (
       page: Page,

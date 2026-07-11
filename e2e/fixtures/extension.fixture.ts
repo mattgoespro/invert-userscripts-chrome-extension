@@ -1,6 +1,6 @@
 import {
   chromium,
-  test as base,
+  test,
   type BrowserContext,
   type Page,
 } from "@playwright/test";
@@ -9,35 +9,38 @@ import path from "path";
 
 const EXTENSION_DIST_PATH = path.resolve(import.meta.dirname, "../../dist");
 
-// Mirror playwright.config.ts: headless unless --headed is passed.
-const headless = !process.argv.includes("--headed");
-
-/** Test-scoped fixtures (a new instance per test). */
+/**
+ * Test-scoped fixtures (a new instance per test).
+ */
 interface ExtensionTestFixtures {
   optionsPage: Page;
   popupPage: Page;
 }
 
-/** Worker-scoped fixtures (shared across tests in the same worker). */
+/**
+ * Worker-scoped fixtures (shared across tests in the same worker).
+ */
 interface ExtensionWorkerFixtures {
   extensionContext: BrowserContext;
   extensionId: string;
 }
 
-export const extensionTest = base.extend<
+export const extensionTest = test.extend<
   ExtensionTestFixtures,
   ExtensionWorkerFixtures
 >({
   extensionContext: [
-    async ({}, use) => {
+    async ({}, use, workerInfo) => {
       const userDataDir = path.join(
         os.tmpdir(),
         `playwright-ext-${Date.now()}`
       );
 
-      // Chrome extensions require headed mode or --headless=new (not the legacy
-      // --headless flag). Always set headless:false and pass --headless=new as a
-      // Chrome arg when headless mode is requested so the extension loads correctly.
+      // Prefer Playwright's project headless flag (set by --headed / --headless).
+      // Do not read process.argv: workers often never see the CLI flag.
+      // Extensions need headed mode or Chrome's --headless=new (not legacy --headless).
+      const headless = workerInfo.project.use.headless ?? true;
+
       const context = await chromium.launchPersistentContext(userDataDir, {
         headless: false,
         args: [
@@ -54,7 +57,6 @@ export const extensionTest = base.extend<
     },
     { scope: "worker" },
   ],
-
   extensionId: [
     async ({ extensionContext }, use) => {
       // Set up the listener BEFORE checking serviceWorkers() to avoid a race
@@ -78,7 +80,6 @@ export const extensionTest = base.extend<
     },
     { scope: "worker" },
   ],
-
   optionsPage: async ({ extensionContext, extensionId }, use) => {
     const page = await extensionContext.newPage();
     await page.goto(`chrome-extension://${extensionId}/options.html`);
@@ -88,7 +89,6 @@ export const extensionTest = base.extend<
     await use(page);
     await page.close();
   },
-
   popupPage: async ({ extensionContext, extensionId }, use) => {
     const page = await extensionContext.newPage();
     await page.goto(`chrome-extension://${extensionId}/popup.html`);
