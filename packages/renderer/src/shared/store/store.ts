@@ -3,6 +3,7 @@ import { createLogger } from "redux-logger";
 import editorDraftsReducer from "./slices/editor-drafts";
 import {
   applyRemoteScript,
+  commitDraftForSave,
   markDraftClean,
   resolveAllConflictsTakeRemote,
   resolveConflictTakeRemote,
@@ -58,6 +59,13 @@ listenerMiddleware.startListening({
 
 listenerMiddleware.startListening({
   actionCreator: markDraftClean,
+  effect: (action, listenerApi) => {
+    syncModifiedStatus(listenerApi, action.payload.scriptId);
+  },
+});
+
+listenerMiddleware.startListening({
+  actionCreator: commitDraftForSave,
   effect: (action, listenerApi) => {
     syncModifiedStatus(listenerApi, action.payload.scriptId);
   },

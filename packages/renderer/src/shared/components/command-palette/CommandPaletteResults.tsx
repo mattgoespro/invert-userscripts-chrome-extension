@@ -2,51 +2,65 @@ import { Command } from "@/shared/command-palette/command.types";
 import { CommandPaletteItem } from "./CommandPaletteItem";
 
 interface CommandPaletteResultsProps {
-  results: Command[];
+  recentCommands: Command[];
+  allCommands: Command[];
   selectedIndex: number;
   onSelect: (command: Command) => void;
   onHover: (index: number) => void;
-  showRecent: boolean;
 }
 
 export function CommandPaletteResults({
-  results,
+  recentCommands,
+  allCommands,
   selectedIndex,
   onSelect,
   onHover,
-  showRecent,
 }: CommandPaletteResultsProps) {
-  if (results.length === 0) {
+  const hasRecent = recentCommands.length > 0;
+  const hasAll = allCommands.length > 0;
+
+  if (!hasRecent && !hasAll) {
     return (
-      <div className="flex items-center justify-center p-2xl">
-        <span className="font-mono text-sm text-text-muted-faint">
-          No commands found
+      <div className="flex items-center px-md py-sm">
+        <span className="font-mono text-[12px] text-text-muted-faint">
+          No matching commands
         </span>
       </div>
     );
   }
 
   return (
-    <div className="scrollbar-thin max-h-[60vh] overflow-y-auto">
-      {showRecent && results.length > 0 && (
-        <div className="px-md pt-sm pb-xs">
-          <span className="tracking-wide font-mono text-xs text-text-muted-faint uppercase">
-            // Recent
-          </span>
-        </div>
+    <div
+      role="listbox"
+      aria-label="Commands"
+      className="scrollbar-thin max-h-[min(50vh,420px)] overflow-y-auto py-xs"
+    >
+      {recentCommands.map((command, index) => (
+        <CommandPaletteItem
+          key={`recent-${command.id}`}
+          command={command}
+          selected={index === selectedIndex}
+          onSelect={() => onSelect(command)}
+          onHover={() => onHover(index)}
+        />
+      ))}
+
+      {hasRecent && hasAll && (
+        <div className="my-xs border-t border-border" role="separator" />
       )}
-      <div className="py-xs">
-        {results.map((command, index) => (
+
+      {allCommands.map((command, index) => {
+        const flatIndex = recentCommands.length + index;
+        return (
           <CommandPaletteItem
-            key={command.id}
+            key={`all-${command.id}`}
             command={command}
-            selected={index === selectedIndex}
-            index={index}
+            selected={flatIndex === selectedIndex}
             onSelect={() => onSelect(command)}
-            onHover={() => onHover(index)}
+            onHover={() => onHover(flatIndex)}
           />
-        ))}
-      </div>
+        );
+      })}
     </div>
   );
 }

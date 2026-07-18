@@ -1,6 +1,5 @@
 import { PrettierFormatter } from "@/sandbox/formatter";
 import { useAppDispatch } from "@/shared/store/hooks";
-import { markDraftClean } from "@/shared/store/slices/editor-drafts";
 import { updateUserscriptTypeDefinitions } from "@/shared/store/slices/userscripts/thunks.userscripts";
 import { CodeEditor, CodeEditorProps } from "../../shared/CodeEditor";
 
@@ -28,8 +27,6 @@ export function TypeDefinitionCodeEditor(
             typeDefinitions: formattedCode,
           })
         ).unwrap();
-
-        dispatch(markDraftClean({ scriptId, buffer: "typeDefinitions" }));
 
         return formattedCode;
       }}

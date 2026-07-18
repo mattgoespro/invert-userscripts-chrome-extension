@@ -17,6 +17,7 @@ import { getSharedImportModuleNames } from "@shared/shared-module-imports";
 import { ChromeSyncStorage, CompiledCodeStorage } from "@shared/storage";
 import { RootState } from "../../store";
 import { uuid } from "@/shared/utils";
+import { commitDraftForSave } from "../editor-drafts/actions";
 import {
   buildScriptWithDraftSource,
   extractUserscriptMetadataUpdates,
@@ -381,13 +382,26 @@ export const updateUserscript = createAsyncThunk<
 
 export const updateUserscriptTypeDefinitions = createAsyncThunk(
   "userscripts/updateUserscriptTypeDefinitions",
-  async ({ id, typeDefinitions }: { id: string; typeDefinitions: string }) => {
+  async (
+    { id, typeDefinitions }: { id: string; typeDefinitions: string },
+    { dispatch }
+  ) => {
     const scriptsMap = await ChromeSyncStorage.getAllScripts();
     const script = normalizeUserscript(scriptsMap[id]);
 
     script.typeDefinitions = typeDefinitions;
     script.status = "saved";
     script.updatedAt = Date.now();
+
+    // Commit before the sync write so the same-tab storage echo does not treat
+    // this save as a remote conflict against a still-dirty draft.
+    dispatch(
+      commitDraftForSave({
+        scriptId: id,
+        buffer: "typeDefinitions",
+        code: typeDefinitions,
+      })
+    );
 
     await ChromeSyncStorage.updateScript(id, buildStorageSafeScript(script));
 
@@ -405,7 +419,7 @@ export const updateUserscriptCode = createAsyncThunk<
   { state: RootState }
 >(
   "userscripts/updateUserscriptCode",
-  async ({ id, language, code }, { getState }) => {
+  async ({ id, language, code }, { getState, dispatch }) => {
     const scriptsMap = await ChromeSyncStorage.getAllScripts();
     const script = normalizeUserscript(scriptsMap[id]);
 
@@ -427,6 +441,17 @@ export const updateUserscriptCode = createAsyncThunk<
 
     script.status = "saved";
     script.updatedAt = Date.now();
+
+    // Commit immediately before the sync write. Doing this earlier (e.g. before
+    // compile) would leave the draft clean if compilation fails; doing it after
+    // the write allows the same-tab onChanged echo to race a dirty draft.
+    dispatch(
+      commitDraftForSave({
+        scriptId: id,
+        buffer: language === "typescript" ? "typescript" : "scss",
+        code,
+      })
+    );
 
     await ChromeSyncStorage.updateScript(id, buildStorageSafeScript(script));
     await CompiledCodeStorage.saveCompiledCode(id, compiledEntry);

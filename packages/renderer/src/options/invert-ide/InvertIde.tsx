@@ -45,13 +45,15 @@ export function InvertIde() {
   useEffect(() => {
     SassCompiler.initialize();
     void initializeBuildWorker();
-    dispatch(initializeMonaco());
 
     let stopWorkspaceService: (() => void) | undefined;
 
     void (async () => {
       try {
+        // Monaco/Shiki must finish before ideReady — otherwise editors mount
+        // against Monarch and miss shikiToMonaco's theme/tokenizer patches.
         await Promise.all([
+          dispatch(initializeMonaco()).unwrap(),
           dispatch(loadUserscripts()).unwrap(),
           dispatch(loadSettings()).unwrap(),
           dispatch(loadModules()).unwrap(),

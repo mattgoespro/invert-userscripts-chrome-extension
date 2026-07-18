@@ -11,8 +11,13 @@ import { EditorDefaultTheme, EditorThemes } from "./theming";
  */
 const ShikiLanguages = new Set(["typescript", "javascript", "scss", "css"]);
 
+// Cached init promise — registerMonaco must only wire Shiki once (StrictMode remounts,
+// duplicate dispatches). Re-running would stack monkey-patches and replace the highlighter.
+let initPromise: Promise<void> | null = null;
+
 /**
  * Initializes Shiki's TextMate tokenizer and wires it into Monaco via `shikiToMonaco`.
+ * Safe to call multiple times — subsequent calls return the same promise.
  *
  * All themes are pre-loaded at initialization so `shikiToMonaco` can register them with Monaco
  * upfront — eliminating the need for lazy theme loading and custom monkey-patches.
@@ -24,7 +29,15 @@ const ShikiLanguages = new Set(["typescript", "javascript", "scss", "css"]);
  *    causes vscode-textmate to return a corrupted mid-parse ruleStack when exceeded, cascading
  *    to all subsequent lines losing syntax highlighting.
  */
-export async function registerMonaco(): Promise<void> {
+export function registerMonaco(): Promise<void> {
+  if (!initPromise) {
+    initPromise = initializeShiki();
+  }
+
+  return initPromise;
+}
+
+async function initializeShiki(): Promise<void> {
   const highlighter = await createHighlighterCore({
     themes: Object.values(EditorThemes),
     langs: [
@@ -51,7 +64,6 @@ export async function registerMonaco(): Promise<void> {
 
   // Wire Shiki into Monaco: registers all themes, installs setTheme/create monkey-patches,
   // and sets up TextMate token providers for each loaded language.
-
   shikiToMonaco(highlighter, monaco as typeof import("monaco-editor-core"), {
     tokenizeTimeLimit: 0,
   });

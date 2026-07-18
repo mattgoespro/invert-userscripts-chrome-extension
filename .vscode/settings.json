@@ -121,10 +121,11 @@
   "terminal.integrated.smoothScrolling": true,
   "terminal.integrated.stickyScroll.enabled": true,
   "vsicons.dontShowNewVersionMessage": true,
+  "window.autoDetectColorScheme": false,
   "workbench.activityBar.orientation": "vertical",
   "workbench.colorTheme": "Default Dark Modern",
   "workbench.editor.closeOnFileDelete": true,
-  "workbench.iconTheme": "vscode-icons",
+  "workbench.iconTheme": "vs-seti",
   "workbench.settings.enableNaturalLanguageSearch": true,
   "workbench.tree.indent": 10
 }

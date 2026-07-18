@@ -18,13 +18,11 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
   const [recentCommandIds, setRecentCommandIds] = useState<string[]>([]);
   const paletteRef = useRef<HTMLDivElement>(null);
 
-  // Build a stable ID → Command map for recent-command lookups
   const commandMap = useMemo(
     () => new Map(commands.map((cmd) => [cmd.id, cmd])),
     [commands]
   );
 
-  // Load recent commands on mount
   useEffect(() => {
     if (open) {
       CommandPaletteStorage.getRecentActions().then(setRecentCommandIds);
@@ -33,31 +31,38 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
     }
   }, [open]);
 
-  // Filter visible commands (check `when` condition)
   const visibleCommands = useMemo(() => {
     return commands.filter((cmd) => (cmd.when ? cmd.when() : true));
   }, [commands]);
 
-  // Fuzzy search results
-  const searchResults = useMemo(() => {
-    if (!query.trim()) {
-      // Show recent commands when no query
-      return recentCommandIds
-        .map((id) => commandMap.get(id))
-        .filter((cmd): cmd is Command => cmd !== undefined);
+  const { recentCommands, allCommands, flatResults } = useMemo(() => {
+    if (query.trim()) {
+      const results = fuzzysort
+        .go(query, visibleCommands, {
+          keys: ["label", "keywords"],
+          limit: 50,
+          threshold: -10000,
+        })
+        .map((result) => result.obj);
+
+      return {
+        recentCommands: [] as Command[],
+        allCommands: results,
+        flatResults: results,
+      };
     }
 
-    // Fuzzy search with fuzzysort
-    const results = fuzzysort.go(query, visibleCommands, {
-      keys: ["label", "keywords"],
-      limit: 50,
-      threshold: -10000,
-    });
+    const recent = recentCommandIds
+      .map((id) => commandMap.get(id))
+      .filter((cmd): cmd is Command => cmd !== undefined);
 
-    return results.map((result) => result.obj);
+    return {
+      recentCommands: recent,
+      allCommands: visibleCommands,
+      flatResults: [...recent, ...visibleCommands],
+    };
   }, [query, visibleCommands, recentCommandIds, commandMap]);
 
-  // Handle command execution
   const executeCommand = useCallback(
     async (command: Command) => {
       try {
@@ -71,38 +76,30 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
     [onClose]
   );
 
-  // Keyboard navigation
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       if (e.key === "ArrowDown") {
         e.preventDefault();
         setSelectedIndex((prev) =>
-          Math.min(prev + 1, searchResults.length - 1)
+          Math.min(prev + 1, Math.max(flatResults.length - 1, 0))
         );
       } else if (e.key === "ArrowUp") {
         e.preventDefault();
         setSelectedIndex((prev) => Math.max(prev - 1, 0));
       } else if (e.key === "Enter") {
         e.preventDefault();
-        const selected = searchResults[selectedIndex];
+        const selected = flatResults[selectedIndex];
         if (selected) {
           executeCommand(selected);
         }
       } else if (e.key === "Escape") {
         e.preventDefault();
         onClose();
-      } else if (e.key >= "1" && e.key <= "9") {
-        const index = parseInt(e.key) - 1;
-        if (index < searchResults.length) {
-          e.preventDefault();
-          executeCommand(searchResults[index]);
-        }
       }
     },
-    [searchResults, selectedIndex, executeCommand, onClose]
+    [flatResults, selectedIndex, executeCommand, onClose]
   );
 
-  // Click outside to close
   useEffect(() => {
     if (!open) {
       return;
@@ -121,33 +118,34 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [open, onClose]);
 
-  // Reset selected index when results change
   useEffect(() => {
     setSelectedIndex(0);
-  }, [searchResults]);
+  }, [flatResults]);
 
   if (!open) {
     return null;
   }
 
   return (
-    <div className="backdrop-blur-sm fixed inset-0 z-1000 flex animate-fade-in items-start justify-center bg-[rgba(0,0,0,0.5)] pt-[20vh]">
+    <div className="fixed inset-0 z-1000 flex animate-fade-in items-start justify-center bg-black/45 pt-[10vh]">
       <div
         ref={paletteRef}
-        className="shadow-2xl w-full max-w-2xl overflow-hidden rounded-default border border-accent-border bg-surface-overlay"
+        role="dialog"
+        aria-label="Command palette"
+        className="flex w-full max-w-[600px] animate-dialog-enter flex-col overflow-hidden rounded-[6px] border border-border bg-surface-raised shadow-[0_16px_48px_rgba(0,0,0,0.55)]"
         onKeyDown={handleKeyDown}
       >
         <CommandPaletteInput
           value={query}
           onChange={setQuery}
-          placeholder="Search commands, scripts, or content..."
+          placeholder="Type a command to search..."
         />
         <CommandPaletteResults
-          results={searchResults}
+          recentCommands={recentCommands}
+          allCommands={allCommands}
           selectedIndex={selectedIndex}
           onSelect={executeCommand}
           onHover={setSelectedIndex}
-          showRecent={!query.trim()}
         />
       </div>
     </div>

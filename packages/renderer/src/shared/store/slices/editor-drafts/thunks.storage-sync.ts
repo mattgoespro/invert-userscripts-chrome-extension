@@ -61,12 +61,14 @@ export const refreshScriptsFromStorage = createAsyncThunk<
 >(
   "editorDrafts/refreshScriptsFromStorage",
   async (args, { getState, dispatch }) => {
-    const state = getState();
     const [scriptsMap, compiledCodeMap] = await Promise.all([
       ChromeSyncStorage.getAllScripts(),
       CompiledCodeStorage.getAllCompiledCode(),
     ]);
 
+    // Re-read after awaits so an in-flight local save can clear dirty flags
+    // before we decide whether a storage echo is a real conflict.
+    const state = getState();
     const targetIds = args?.scriptIds ?? [
       ...new Set([
         ...Object.keys(state.editorDrafts.drafts),
@@ -79,7 +81,7 @@ export const refreshScriptsFromStorage = createAsyncThunk<
 
     for (const scriptId of targetIds) {
       const remoteScript = scriptsMap[scriptId];
-      const localDraft = state.editorDrafts.drafts[scriptId];
+      const localDraft = getState().editorDrafts.drafts[scriptId];
 
       if (!remoteScript) {
         if (localDraft && isDraftDirty(localDraft)) {

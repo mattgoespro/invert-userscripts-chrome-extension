@@ -5,21 +5,46 @@ import { useEffect, useRef } from "react";
 interface CommandPaletteItemProps {
   command: Command;
   selected: boolean;
-  index: number;
   onSelect: () => void;
   onHover: () => void;
+}
+
+function ShortcutKeys({
+  shortcut,
+  selected,
+}: {
+  shortcut: string;
+  selected: boolean;
+}) {
+  const keys = shortcut.split("+");
+
+  return (
+    <span className="ml-md flex shrink-0 items-center gap-2xs">
+      {keys.map((key) => (
+        <kbd
+          key={key}
+          className={clsx(
+            "rounded-[3px] border px-1.5 py-px font-mono text-[11px] leading-none",
+            selected
+              ? "border-accent-border bg-accent/15 text-foreground"
+              : "border-border bg-surface-input text-text-muted-faint"
+          )}
+        >
+          {key}
+        </kbd>
+      ))}
+    </span>
+  );
 }
 
 export function CommandPaletteItem({
   command,
   selected,
-  index,
   onSelect,
   onHover,
 }: CommandPaletteItemProps) {
   const itemRef = useRef<HTMLDivElement>(null);
 
-  // Scroll into view when selected
   useEffect(() => {
     if (selected) {
       itemRef.current?.scrollIntoView({ block: "nearest" });
@@ -31,50 +56,33 @@ export function CommandPaletteItem({
   return (
     <div
       ref={itemRef}
+      role="option"
+      aria-selected={selected}
       className={clsx(
-        "flex cursor-pointer items-center gap-md px-md py-sm font-mono text-sm transition-colors",
+        "flex h-7 cursor-pointer items-center gap-sm px-md font-mono text-[12px] transition-colors",
         selected
-          ? "bg-accent-subtle text-accent"
-          : "text-text-muted-strong hover:bg-hover-overlay"
+          ? "bg-accent/20 text-foreground"
+          : "text-text-muted hover:bg-hover-overlay"
       )}
       onClick={onSelect}
       onMouseEnter={onHover}
     >
-      {/* Quick-select number (1-9) */}
-      {index < 9 && (
-        <span
-          className={clsx(
-            "flex h-5 w-5 shrink-0 items-center justify-center rounded text-xs font-bold",
-            selected
-              ? "bg-accent text-surface-base"
-              : "bg-surface-input text-text-muted-faint"
-          )}
-        >
-          {index + 1}
-        </span>
-      )}
-
-      {/* Icon */}
-      {Icon && (
+      {Icon ? (
         <Icon
-          size={16}
-          className={selected ? "text-accent" : "text-text-muted"}
+          size={14}
+          className={clsx(
+            "shrink-0",
+            selected ? "text-foreground" : "text-text-muted-faint"
+          )}
         />
+      ) : (
+        <span className="w-3.5 shrink-0" />
       )}
 
-      {/* Label */}
-      <span className="flex-1">{command.label}</span>
+      <span className="min-w-0 flex-1 truncate">{command.label}</span>
 
-      {/* Keyboard shortcut */}
       {command.shortcut && (
-        <span
-          className={clsx(
-            "text-xs",
-            selected ? "text-accent-muted" : "text-text-muted-faint"
-          )}
-        >
-          {command.shortcut}
-        </span>
+        <ShortcutKeys shortcut={command.shortcut} selected={selected} />
       )}
     </div>
   );

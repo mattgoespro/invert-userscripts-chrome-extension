@@ -10,7 +10,10 @@ import {
 import { ResizeHandle } from "@/shared/components/resize-handle/ResizeHandle";
 import { Typography } from "@/shared/components/typography/Typography";
 import { useAppDispatch, useAppSelector } from "@/shared/store/hooks";
-import { selectIdeReady } from "@/shared/store/slices/code-editor";
+import {
+  selectIdeReady,
+  selectMonacoReady,
+} from "@/shared/store/slices/code-editor";
 import {
   selectDraftForScript,
   updateDraftBuffer,
@@ -32,6 +35,7 @@ export function ScriptEditor() {
   const dispatch = useAppDispatch();
   const script = useAppSelector(selectCurrentUserscript);
   const ideReady = useAppSelector(selectIdeReady);
+  const monacoReady = useAppSelector(selectMonacoReady);
   const settings = useAppSelector(selectEditorSettings);
   const draft = useAppSelector(selectDraftForScript(script.id));
   const { globalState, updateGlobalState, updatePanelSizes } = useGlobalState();
@@ -157,7 +161,7 @@ export function ScriptEditor() {
         <ScriptMetadata key={script.id} script={script} />
       </div>
       <div className="min-h-0 min-w-0 flex-1 overflow-hidden">
-        {ideReady ? (
+        {ideReady && monacoReady ? (
           <Group
             orientation="vertical"
             id="script-editor-outer-panels"

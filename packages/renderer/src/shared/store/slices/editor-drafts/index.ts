@@ -10,6 +10,7 @@ import {
   updateUserscriptTypeDefinitions,
 } from "../userscripts/thunks.userscripts";
 import { saveEditorCode } from "../code-editor/thunks.code-editor";
+import { commitDraftForSave } from "./actions";
 import {
   bumpDraftRevision,
   draftFromScript,
@@ -193,6 +194,22 @@ const editorDraftsSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      .addCase(commitDraftForSave, (state, action) => {
+        const { scriptId, buffer, code } = action.payload;
+        const draft = state.drafts[scriptId];
+
+        if (!draft) {
+          return;
+        }
+
+        if (draft[buffer] === code && !draft.dirty[buffer]) {
+          return;
+        }
+
+        draft[buffer] = code;
+        draft.dirty[buffer] = false;
+        draft.revision += 1;
+      })
       .addCase(loadUserscripts.fulfilled, (state, action) => {
         const nextDrafts: Record<string, EditorDraft> = {};
 
@@ -280,6 +297,8 @@ export const {
   resolveAllConflictsTakeRemote,
   flushModelToDraft,
 } = editorDraftsSlice.actions;
+
+export { commitDraftForSave } from "./actions";
 
 export {
   buildScriptWithDraftSource,
