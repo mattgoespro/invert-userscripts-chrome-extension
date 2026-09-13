@@ -1,6 +1,5 @@
 ---
 name: "Webpack Build Conventions"
-applyTo: "webpack.config.ts"
 description: "Use when editing webpack.config.ts for the Chrome extension build: entry coordination, tsconfig loader routing, Monaco bundling, copied assets, and dev reloader exclusions."
 ---
 

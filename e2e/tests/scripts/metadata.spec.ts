@@ -109,9 +109,10 @@ test.describe("Scripts — metadata", () => {
       .filter({ hasText: "After page load" })
       .click();
 
-    await expect(
-      runAtSelect.locator("button").first()
-    ).toContainText("After page load", { timeout: 10_000 });
+    await expect(runAtSelect.locator("button").first()).toContainText(
+      "After page load",
+      { timeout: 10_000 }
+    );
 
     await optionsPage.reload();
     await options.waitForReady();
@@ -122,7 +123,7 @@ test.describe("Scripts — metadata", () => {
     ).toContainText("After page load", { timeout: 10_000 });
   });
 
-  test("new script without patterns shows setup banner", async ({
+  test("new script defaults to matching all URLs and does not show the setup banner", async ({
     optionsPage,
     clearStorage,
   }) => {
@@ -134,6 +135,8 @@ test.describe("Scripts — metadata", () => {
 
     await options.waitForReady();
     await scripts.createScript();
-    await expect(optionsPage.getByTestId("script-setup-banner")).toBeVisible();
+    await expect(optionsPage.getByTestId("script-setup-banner")).toHaveCount(0);
+    const toggle = optionsPage.locator("button").filter({ hasText: /urls:/ });
+    await expect(toggle).toContainText("*://*/*");
   });
 });

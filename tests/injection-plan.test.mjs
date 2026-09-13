@@ -6,6 +6,7 @@ import {
   collectSharedScriptIdsToInject,
   mergeCompiledCode,
   selectMatchingScriptsForInjection,
+  sharedDependenciesAreFresh,
 } from "../packages/runtime/src/ide/injection-plan.ts";
 import {
   buildModuleFixture,
@@ -52,19 +53,77 @@ test("selectMatchingScriptsForInjection requires enabled + runAt + URL match", (
   );
 });
 
-test("collectCompiledCodeScriptIds includes shared dependency ids", () => {
-  const matching = [
-    buildUserscriptFixture({
+test("selectMatchingScriptsForInjection excludes shared modules", () => {
+  const scriptsMap = {
+    page: buildUserscriptFixture({
       id: "page",
-      sharedScripts: ["shared-a", "shared-b"],
+      enabled: true,
+      shared: false,
+      runAt: "afterPageLoad",
+      urlPatterns: ["https://example.com/*"],
     }),
-    buildUserscriptFixture({
-      id: "other",
-      sharedScripts: ["shared-a"],
+    lib: buildUserscriptFixture({
+      id: "lib",
+      enabled: true,
+      shared: true,
+      moduleName: "lib",
+      runAt: "afterPageLoad",
+      urlPatterns: ["https://example.com/*"],
     }),
-  ];
+  };
 
-  const ids = collectCompiledCodeScriptIds(matching).sort();
+  const matching = selectMatchingScriptsForInjection(
+    scriptsMap,
+    "https://example.com/page",
+    "afterPageLoad"
+  );
+
+  assert.deepEqual(
+    matching.map((script) => script.id),
+    ["page"]
+  );
+});
+
+test("collectCompiledCodeScriptIds includes shared dependency ids", () => {
+  const sharedA = buildUserscriptFixture({
+    id: "shared-a",
+    shared: true,
+    moduleName: "shared-a",
+    code: { source: { typescript: "export const a = 1;" } },
+  });
+  const sharedB = buildUserscriptFixture({
+    id: "shared-b",
+    shared: true,
+    moduleName: "shared-b",
+    code: { source: { typescript: "export const b = 1;" } },
+  });
+  const page = buildUserscriptFixture({
+    id: "page",
+    code: {
+      source: {
+        typescript: [
+          'import { a } from "scripts/shared-a/main";',
+          'import { b } from "scripts/shared-b/main";',
+        ].join("\n"),
+      },
+    },
+  });
+  const other = buildUserscriptFixture({
+    id: "other",
+    code: {
+      source: {
+        typescript: 'import { a } from "scripts/shared-a/main";',
+      },
+    },
+  });
+  const scriptsMap = {
+    page,
+    other,
+    "shared-a": sharedA,
+    "shared-b": sharedB,
+  };
+
+  const ids = collectCompiledCodeScriptIds([page, other], scriptsMap).sort();
 
   assert.deepEqual(ids, ["other", "page", "shared-a", "shared-b"]);
 });
@@ -118,17 +177,31 @@ test("collectEnabledCdnModuleIds dedupes and skips disabled/missing modules", ()
 });
 
 test("collectSharedScriptIdsToInject keeps first-seen order and ignores non-shared entries", () => {
-  const matching = [
-    buildUserscriptFixture({
-      id: "page-a",
-      sharedScripts: ["shared-1", "not-shared", "shared-2"],
-    }),
-    buildUserscriptFixture({
-      id: "page-b",
-      sharedScripts: ["shared-2", "shared-1"],
-    }),
-  ];
+  const pageA = buildUserscriptFixture({
+    id: "page-a",
+    code: {
+      source: {
+        typescript: [
+          'import "scripts/shared-1/main";',
+          'import "scripts/shared-2/main";',
+        ].join("\n"),
+      },
+    },
+  });
+  const pageB = buildUserscriptFixture({
+    id: "page-b",
+    code: {
+      source: {
+        typescript: [
+          'import "scripts/shared-2/main";',
+          'import "scripts/shared-1/main";',
+        ].join("\n"),
+      },
+    },
+  });
   const scriptsMap = {
+    "page-a": pageA,
+    "page-b": pageB,
     "shared-1": buildUserscriptFixture({
       id: "shared-1",
       shared: true,
@@ -142,11 +215,71 @@ test("collectSharedScriptIdsToInject keeps first-seen order and ignores non-shar
     "not-shared": buildUserscriptFixture({
       id: "not-shared",
       shared: false,
+      moduleName: "not-shared",
     }),
   };
 
-  assert.deepEqual(collectSharedScriptIdsToInject(matching, scriptsMap), [
+  assert.deepEqual(collectSharedScriptIdsToInject([pageA, pageB], scriptsMap), [
     "shared-1",
     "shared-2",
   ]);
+});
+
+test("collectSharedScriptIdsToInject walks nested shared imports", () => {
+  const leaf = buildUserscriptFixture({
+    id: "leaf",
+    shared: true,
+    moduleName: "leaf",
+    code: { source: { typescript: "export const leaf = 1;" } },
+  });
+  const mid = buildUserscriptFixture({
+    id: "mid",
+    shared: true,
+    moduleName: "mid",
+    code: {
+      source: {
+        typescript:
+          'import { leaf } from "scripts/leaf/main"; export const mid = leaf;',
+      },
+    },
+  });
+  const page = buildUserscriptFixture({
+    id: "page",
+    code: {
+      source: {
+        typescript: 'import { mid } from "scripts/mid/main"; console.log(mid);',
+      },
+    },
+  });
+  const scriptsMap = { leaf, mid, page };
+
+  assert.deepEqual(collectSharedScriptIdsToInject([page], scriptsMap), [
+    "leaf",
+    "mid",
+  ]);
+});
+
+test("sharedDependenciesAreFresh is false when a nested shared import is missing", () => {
+  const mid = buildUserscriptFixture({
+    id: "mid",
+    shared: true,
+    moduleName: "mid",
+    code: {
+      source: {
+        typescript:
+          'import { leaf } from "scripts/leaf/main"; export const mid = 1;',
+      },
+    },
+  });
+  const page = buildUserscriptFixture({
+    id: "page",
+    code: {
+      source: {
+        typescript: 'import { mid } from "scripts/mid/main";',
+      },
+    },
+  });
+  const scriptsMap = { mid, page };
+
+  assert.equal(sharedDependenciesAreFresh(page, scriptsMap, {}), false);
 });

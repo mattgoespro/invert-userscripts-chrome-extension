@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  listImportedSharedScriptIds,
   listSharedScriptIds,
   resolveWorkspaceScriptClosure,
 } from "../packages/shared/src/workspace-closure.ts";
@@ -22,10 +23,9 @@ describe("resolveWorkspaceScriptClosure", () => {
       },
     };
 
-    assert.deepEqual(
-      resolveWorkspaceScriptClosure(scriptsMap.a, scriptsMap),
-      ["a"]
-    );
+    assert.deepEqual(resolveWorkspaceScriptClosure(scriptsMap.a, scriptsMap), [
+      "a",
+    ]);
   });
 
   it("puts transitive dependencies before the active script (from imports)", () => {
@@ -142,5 +142,38 @@ describe("listSharedScriptIds", () => {
       }).sort(),
       ["a", "c"]
     );
+  });
+});
+
+describe("listImportedSharedScriptIds", () => {
+  it("returns shared modules imported by any script", () => {
+    const scriptsMap = {
+      logger: {
+        id: "logger",
+        shared: true,
+        moduleName: "logger",
+        code: { source: { typescript: "export function createLogger() {}" } },
+      },
+      unused: {
+        id: "unused",
+        shared: true,
+        moduleName: "unused",
+        code: { source: { typescript: "export const u = 1;" } },
+      },
+      consumer: {
+        id: "consumer",
+        shared: true,
+        moduleName: "consumer",
+        code: {
+          source: {
+            typescript: `import { createLogger } from "scripts/logger/main";`,
+          },
+        },
+      },
+    };
+
+    assert.deepEqual(listImportedSharedScriptIds(scriptsMap).sort(), [
+      "logger",
+    ]);
   });
 });

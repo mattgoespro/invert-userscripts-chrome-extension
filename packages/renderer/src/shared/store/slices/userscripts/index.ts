@@ -36,6 +36,15 @@ const userscriptsSlice = createSlice({
         state.scripts[script.id] = script;
       }
     },
+    removeRemoteScripts: (state, action: PayloadAction<string[]>) => {
+      for (const id of action.payload) {
+        delete state.scripts[id];
+
+        if (state.currentScriptId === id) {
+          state.currentScriptId = null;
+        }
+      }
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -44,10 +53,7 @@ const userscriptsSlice = createSlice({
           action.payload.map((script) => [script.id, script])
         );
 
-        if (
-          state.currentScriptId &&
-          !state.scripts[state.currentScriptId]
-        ) {
+        if (state.currentScriptId && !state.scripts[state.currentScriptId]) {
           state.currentScriptId = null;
         }
       })
@@ -77,6 +83,21 @@ const userscriptsSlice = createSlice({
       })
       .addCase(rebuildCompiledUserscripts.fulfilled, (state, action) => {
         for (const script of action.payload) {
+          const existing = state.scripts[script.id];
+
+          // A newer persist can finish while this rebuild was in flight.
+          // Never roll the entity (or its compiled overlay) back to the
+          // snapshot the rebuild started from.
+          if (
+            existing &&
+            (existing.updatedAt > script.updatedAt ||
+              existing.code.source.typescript !==
+                script.code.source.typescript ||
+              existing.code.source.scss !== script.code.source.scss)
+          ) {
+            continue;
+          }
+
           state.scripts[script.id] = script;
         }
       })
@@ -88,7 +109,10 @@ const userscriptsSlice = createSlice({
   },
 });
 
-export const { setCurrentUserscript, syncScriptsFromRemote } =
-  userscriptsSlice.actions;
+export const {
+  setCurrentUserscript,
+  syncScriptsFromRemote,
+  removeRemoteScripts,
+} = userscriptsSlice.actions;
 
 export default userscriptsSlice.reducer;

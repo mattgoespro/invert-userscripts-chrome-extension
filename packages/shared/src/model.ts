@@ -74,6 +74,8 @@ export interface UserscriptCompileResult {
 export interface CompiledCodeBuildMetadata {
   version: 1;
   minifyCompiledOutput: boolean;
+  /** Hash of the TypeScript/SCSS/shared identity that produced this artifact. */
+  sourceHash?: string;
 }
 
 export interface CompiledCodeEntry {
@@ -112,4 +114,28 @@ export function getScriptModulePath(script: {
   moduleName?: string;
 }): string {
   return sanitizeModuleName(script.moduleName?.trim() ?? "") || script.id;
+}
+
+/**
+ * Another script already owns this Monaco / import path
+ * (`scripts/<path>/main`). Callers must reject the write so two editors cannot
+ * share one model URI.
+ */
+export function findDuplicateModulePathScript(
+  scripts: Iterable<Pick<Userscript, "id" | "moduleName" | "name">>,
+  candidate: { id: string; moduleName?: string }
+): Pick<Userscript, "id" | "moduleName" | "name"> | undefined {
+  const path = getScriptModulePath(candidate);
+
+  for (const script of scripts) {
+    if (script.id === candidate.id) {
+      continue;
+    }
+
+    if (getScriptModulePath(script) === path) {
+      return script;
+    }
+  }
+
+  return undefined;
 }

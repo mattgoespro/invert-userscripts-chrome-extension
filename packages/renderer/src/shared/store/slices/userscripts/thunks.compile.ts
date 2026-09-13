@@ -1,15 +1,15 @@
 import { createAsyncThunk } from "@reduxjs/toolkit/react";
-import { isCompiledCodeBuildCurrent } from "@shared/compile-metadata";
+import {
+  isCompiledCodeBuildCurrent,
+  isUserscriptCompileSnapshotStale,
+  hashUserscriptCompileSources,
+} from "@shared/compile-metadata";
 import type { Userscript } from "@shared/model";
 import { resolveSharedScriptIdsFromSourceOrThrow } from "@shared/resolve-shared-scripts";
-import {
-  ChromeSyncStorage,
-  CompiledCodeStorage,
-} from "@shared/storage";
+import { ChromeSyncStorage, CompiledCodeStorage } from "@shared/storage";
 import {
   mergeCompiledCode,
   normalizeUserscript,
-  toStorageSafeUserscript,
 } from "@shared/userscript-hydrate";
 import type { RootState } from "../../store";
 import { compileAllOutputsOrThrow, getBuildOptions } from "./compile-helpers";
@@ -37,10 +37,10 @@ export const rebuildCompiledUserscripts = createAsyncThunk<
       return true;
     }
 
-    return !isCompiledCodeBuildCurrent(
-      compiledCodeMap[script.id],
-      buildOptions
-    );
+    return !isCompiledCodeBuildCurrent(compiledCodeMap[script.id], {
+      ...buildOptions,
+      sourceHash: hashUserscriptCompileSources(script),
+    });
   });
 
   if (scriptsToRebuild.length === 0) {
@@ -65,12 +65,37 @@ export const rebuildCompiledUserscripts = createAsyncThunk<
       );
     }
 
-    const compiledEntry = await compileAllOutputsOrThrow(script, state);
-    const updatedScript = mergeCompiledCode(script, compiledEntry);
+    let compiledEntry: Awaited<ReturnType<typeof compileAllOutputsOrThrow>>;
+
+    try {
+      compiledEntry = await compileAllOutputsOrThrow(script, state);
+    } catch (error) {
+      console.error(
+        `Failed to rebuild compiled output for "${script.name}":`,
+        error
+      );
+      continue;
+    }
+
+    // Re-read after compile: a Ctrl+S that landed mid-rebuild must not be
+    // overwritten with this snapshot's source or compiled output.
+    const latestStoredEntry = (await ChromeSyncStorage.getAllScripts())[
+      script.id
+    ];
+    const latestStored = latestStoredEntry
+      ? normalizeUserscript(latestStoredEntry)
+      : undefined;
+
+    if (
+      !latestStored ||
+      isUserscriptCompileSnapshotStale(script, latestStored)
+    ) {
+      continue;
+    }
 
     await CompiledCodeStorage.saveCompiledCode(script.id, compiledEntry);
 
-    const nextSharedScripts = updatedScript.sharedScripts ?? [];
+    const nextSharedScripts = script.sharedScripts ?? [];
     const sharedScriptsChanged =
       previousSharedScripts.length !== nextSharedScripts.length ||
       previousSharedScripts.some(
@@ -78,16 +103,31 @@ export const rebuildCompiledUserscripts = createAsyncThunk<
       );
 
     if (sharedScriptsChanged) {
-      await ChromeSyncStorage.updateScript(
-        script.id,
-        toStorageSafeUserscript(updatedScript)
-      );
+      await ChromeSyncStorage.updateScript(script.id, {
+        sharedScripts: nextSharedScripts,
+      });
     }
 
-    rebuiltScripts.push(updatedScript);
+    rebuiltScripts.push(
+      mergeCompiledCode(
+        { ...latestStored, sharedScripts: nextSharedScripts },
+        compiledEntry
+      )
+    );
   }
 
-  sendApplyScriptsMessage(rebuiltScripts.map((script) => script.id));
+  if (rebuiltScripts.length > 0) {
+    const applyResult = await sendApplyScriptsMessage(
+      rebuiltScripts.map((script) => script.id)
+    );
+
+    if (!applyResult.success) {
+      console.error(
+        "Failed to apply rebuilt scripts to matching tabs:",
+        applyResult
+      );
+    }
+  }
 
   return rebuiltScripts;
 });

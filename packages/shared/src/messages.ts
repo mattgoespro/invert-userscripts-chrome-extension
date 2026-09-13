@@ -39,6 +39,8 @@ export type ApplyScriptsResponse = {
   success: boolean;
   appliedTabCount: number;
   removedTabCount?: number;
+  /** Tabs that matched but were skipped because compiled output was stale. */
+  staleSkipCount?: number;
 };
 
 export function isRuntimePort(name: string): name is RuntimePortMessageSource {

@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   hydrateUserscript,
+  isRawStoredUserscriptPayload,
+  isStoredUserscriptManifest,
   serializeUserscript,
 } from "../packages/shared/src/storage/userscript-payload.ts";
 import { buildUserscriptFixture } from "./helpers/fixtures.mjs";
@@ -153,5 +155,37 @@ describe("hydrateUserscript", () => {
     assert.equal(restored.code.source.typescript, "");
     // Compiled output is intentionally not persisted in sync storage.
     assert.equal(restored.code.compiled.javascript, "");
+  });
+});
+
+describe("stored userscript shape guards", () => {
+  it("recognizes v2 manifests and legacy raw payloads", () => {
+    assert.equal(
+      isStoredUserscriptManifest({
+        version: 2,
+        encoding: "gzip-base64",
+        mode: "inline",
+        data: "abc",
+      }),
+      true
+    );
+    assert.equal(
+      isRawStoredUserscriptPayload({
+        version: 2,
+        encoding: "gzip-base64",
+        mode: "inline",
+        data: "abc",
+      }),
+      false
+    );
+    assert.equal(
+      isRawStoredUserscriptPayload({
+        name: "Legacy Script",
+        createdAt: 1,
+        updatedAt: 1,
+      }),
+      true
+    );
+    assert.equal(isRawStoredUserscriptPayload({ enabled: true }), false);
   });
 });

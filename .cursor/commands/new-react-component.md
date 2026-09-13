@@ -1,14 +1,6 @@
----
-description: "Use when: scaffolding a new React component in the renderer package with the correct folder structure, ownership-based placement, CVA boilerplate, TypeScript types, and Tailwind design-system conventions."
-argument-hint: "ComponentName variant:primary,secondary location:packages/renderer/src/options/... or location:packages/renderer/src/shared/components/..."
-agent: "frontend-designer-engineer"
----
+# new-react-component
 
-Create a new React component following the project's established patterns from [copilot-instructions.md](../copilot-instructions.md).
-
-## Input
-
-The user provides:
+The following information must be provided:
 
 - **Component name** (PascalCase, e.g., `Tooltip`, `Badge`)
 - **Variants** (optional, comma-separated, e.g., `variant:primary,secondary,danger`)
@@ -18,7 +10,7 @@ The user provides:
 
 Create a single file inside a `kebab-case` folder:
 
-```
+```plaintext
 {location}/{kebab-case-name}/
   {PascalCase}.tsx
 ```

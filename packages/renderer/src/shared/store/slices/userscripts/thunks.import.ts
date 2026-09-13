@@ -106,7 +106,16 @@ export const importUserscripts = createAsyncThunk<
     })
   );
 
-  sendApplyScriptsMessage(importedScripts.map((script) => script.id));
+  const applyResult = await sendApplyScriptsMessage(
+    importedScripts.map((script) => script.id)
+  );
+
+  if (!applyResult.success) {
+    console.error(
+      "Failed to apply imported scripts to matching tabs:",
+      applyResult
+    );
+  }
 
   return importedScripts;
 });

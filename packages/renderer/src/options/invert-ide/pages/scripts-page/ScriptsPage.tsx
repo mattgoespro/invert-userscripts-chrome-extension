@@ -44,7 +44,14 @@ export function ScriptsPage() {
   const [isImporting, setIsImporting] = useState(false);
 
   const onCreateScript = async () => {
-    dispatch(createUserscript());
+    try {
+      await dispatch(createUserscript()).unwrap();
+    } catch (error) {
+      toast({
+        variant: "error",
+        message: `Failed to create script: ${getErrorMessage(error)}`,
+      });
+    }
   };
 
   const onExportScripts = useCallback(() => {
@@ -111,78 +118,92 @@ export function ScriptsPage() {
   };
 
   return (
-    <Group
-      orientation="horizontal"
-      id="scripts-page-panels"
-      className="h-full min-w-0 flex-1 overflow-hidden"
-      defaultLayout={{
-        "scripts-sidebar": panelSizes.scriptListSidebarWidth,
-        "scripts-editor": 100 - panelSizes.scriptListSidebarWidth,
-      }}
-      onLayoutChanged={(layout) => {
-        const sidebarWidth = layout["scripts-sidebar"];
-        if (sidebarWidth != null) {
-          dispatch(updatePanelSizes({ scriptListSidebarWidth: sidebarWidth }));
-        }
-      }}
-    >
-      <Panel id="scripts-sidebar" minSize="15%" maxSize="30%">
-        <div className="flex h-full flex-col border-r border-border bg-surface-raised">
-          <div className="flex items-center justify-between border-b border-border p-md">
-            <Typography variant="subtitle">
-              <span className="mr-2 font-mono text-sm text-text-muted-faint">
-                //
-              </span>
-              Scripts
-            </Typography>
-            <div className="flex items-center gap-2xs">
-              <ScriptsActionsMenu
-                onImportClick={() => setImportDialogOpen(true)}
-                onExportClick={onExportScripts}
-              />
-              <IconButton
-                icon={PlusIcon}
-                variant="ghost"
-                size="sm"
-                onClick={onCreateScript}
-                title="Create new script"
-              />
-            </div>
-          </div>
-          <div className="relative min-h-0 flex-1">
-            <div className="flex h-full flex-col">
-              <ScriptList onScriptSelected={onScriptSelected} />
-            </div>
-            {isImporting && (
-              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-sm bg-[rgba(12,14,18,0.88)]">
-                <LoaderCircleIcon
-                  size={20}
-                  className="animate-spin text-accent"
-                />
-                <span className="font-mono text-xs text-text-muted-strong uppercase">
-                  Importing scripts...
+    <>
+      <Group
+        orientation="horizontal"
+        id="scripts-page-panels"
+        className="h-full min-w-0 flex-1 overflow-hidden"
+        defaultLayout={{
+          "scripts-sidebar": panelSizes.scriptListSidebarWidth,
+          "scripts-editor": 100 - panelSizes.scriptListSidebarWidth,
+        }}
+        onLayoutChanged={(layout) => {
+          const sidebarWidth = layout["scripts-sidebar"];
+          if (sidebarWidth != null) {
+            dispatch(
+              updatePanelSizes({ scriptListSidebarWidth: sidebarWidth })
+            );
+          }
+        }}
+      >
+        <Panel
+          id="scripts-sidebar"
+          minSize="15%"
+          maxSize="30%"
+          className="min-h-0"
+        >
+          <div className="flex h-full min-h-0 flex-col bg-surface-raised">
+            <div className="flex items-center justify-between border-b border-border p-md">
+              <Typography variant="subtitle">
+                <span className="mr-2 font-mono text-sm text-text-muted-faint">
+                  //
                 </span>
+                Scripts
+              </Typography>
+              <div className="flex items-center gap-2xs">
+                <ScriptsActionsMenu
+                  onImportClick={() => setImportDialogOpen(true)}
+                  onExportClick={onExportScripts}
+                />
+                <IconButton
+                  icon={PlusIcon}
+                  variant="ghost"
+                  size="sm"
+                  onClick={onCreateScript}
+                  title="Create new script"
+                />
               </div>
-            )}
+            </div>
+            <div className="relative min-h-0 flex-1">
+              <div className="flex h-full flex-col">
+                <ScriptList onScriptSelected={onScriptSelected} />
+              </div>
+              {isImporting && (
+                <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-sm bg-[rgba(12,14,18,0.88)]">
+                  <LoaderCircleIcon
+                    size={20}
+                    className="animate-spin text-accent"
+                  />
+                  <span className="font-mono text-xs text-text-muted-strong uppercase">
+                    Importing scripts...
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      </Panel>
-      <ResizeHandle direction="horizontal" />
-      <Panel id="scripts-editor" minSize="70%" maxSize="85%">
-        {selectedScript ? (
-          <ScriptEditor />
-        ) : (
-          <CodeComment className="m-auto">
-            Select a script to start editing.
-          </CodeComment>
-        )}
-      </Panel>
+        </Panel>
+        <ResizeHandle direction="horizontal" />
+        <Panel
+          id="scripts-editor"
+          minSize="70%"
+          maxSize="85%"
+          className="flex min-h-0 flex-col"
+        >
+          {selectedScript ? (
+            <ScriptEditor />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center">
+              <CodeComment>Select a script to start editing.</CodeComment>
+            </div>
+          )}
+        </Panel>
+      </Group>
       <ImportUserscriptsDialog
         open={importDialogOpen}
         importing={isImporting}
         onClose={() => setImportDialogOpen(false)}
         onImport={onImportScripts}
       />
-    </Group>
+    </>
   );
 }

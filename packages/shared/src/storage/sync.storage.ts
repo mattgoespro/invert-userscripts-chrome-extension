@@ -7,6 +7,8 @@ import {
 } from "../model";
 import {
   hydrateUserscript,
+  isRawStoredUserscriptPayload,
+  isStoredUserscriptManifest,
   serializeUserscript,
   type StoredUserscriptPayload,
 } from "./userscript-payload";
@@ -113,6 +115,13 @@ export class ChromeSyncStorage {
 
   static async saveScript(script: Userscript): Promise<void> {
     await this.writeUserscript(script);
+  }
+
+  /** True when a userscript manifest/payload key exists, even if it fails to decode. */
+  static async hasScriptManifest(scriptId: string): Promise<boolean> {
+    const key = this.getUserscriptStorageKey(scriptId);
+    const result = await chrome.storage.sync.get(key);
+    return result[key] != null;
   }
 
   static async updateScript(
@@ -266,12 +275,22 @@ export class ChromeSyncStorage {
 
   private static async readUserscriptFromStoredValue(
     scriptId: string,
-    manifest: StoredUserscriptManifest,
+    manifest: StoredUserscriptManifest | unknown,
     storageValues: Record<string, unknown>
   ): Promise<Userscript> {
+    if (isRawStoredUserscriptPayload(manifest)) {
+      return hydrateUserscript(scriptId, manifest);
+    }
+
+    if (!isStoredUserscriptManifest(manifest)) {
+      throw new Error(
+        `Unrecognized userscript storage value for '${scriptId}'.`
+      );
+    }
+
     const payload = await this.readStoredUserscriptPayload(
       scriptId,
-      manifest,
+      manifest as StoredUserscriptManifest,
       storageValues
     );
 

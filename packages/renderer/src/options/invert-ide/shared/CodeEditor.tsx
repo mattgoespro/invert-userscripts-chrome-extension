@@ -3,7 +3,7 @@ import { useToast } from "@/shared/components/toast/ToastProvider";
 import { useAppDispatch, useAppSelector } from "@/shared/store/hooks";
 import { saveEditorCode } from "@/shared/store/slices/code-editor/thunks.code-editor";
 import { selectEditorSettings } from "@/shared/store/slices/settings";
-import { formatMatchingTabsToast } from "@/shared/store/slices/userscripts/messaging";
+import { describeApplyResult } from "@/shared/store/slices/userscripts/messaging";
 import { EditorSettings } from "@shared/model";
 import {
   attachWorkspaceModel,
@@ -165,7 +165,10 @@ export function CodeEditor(props: CodeEditorProps) {
     return () => {
       disposable.dispose();
     };
-  }, [modelId, language, isWorkspaceModel, contents]);
+    // `contents` is intentionally omitted: workspace models are synced by
+    // WorkspaceService. Re-running this effect on every draft keystroke tore
+    // down onDidChangeContent and dropped unsaved text on script switch.
+  }, [modelId, language, isWorkspaceModel]);
 
   // Detached preview models have no workspace sync; mirror the contents prop.
   useEffect(() => {
@@ -223,12 +226,24 @@ export function CodeEditor(props: CodeEditorProps) {
           "appliedTabCount" in result &&
           typeof result.appliedTabCount === "number"
         ) {
+          const applySuccess =
+            "applySuccess" in result && result.applySuccess === false
+              ? false
+              : true;
+          const staleSkipCount =
+            "staleSkipCount" in result &&
+            typeof result.staleSkipCount === "number"
+              ? result.staleSkipCount
+              : 0;
+          const feedback = describeApplyResult({
+            success: applySuccess,
+            appliedTabCount: result.appliedTabCount,
+            staleSkipCount,
+          });
+
           toast({
-            variant: "info",
-            message: formatMatchingTabsToast(
-              result.appliedTabCount,
-              "Applied to"
-            ),
+            variant: feedback.variant,
+            message: feedback.message,
           });
         }
 
@@ -264,7 +279,15 @@ export function CodeEditor(props: CodeEditorProps) {
     editorElement.addEventListener("keydown", handleKeyDown);
 
     return () => editorElement.removeEventListener("keydown", handleKeyDown);
-  }, [editable, scriptId, settings?.autoFormat, language, dispatch, onSave, toast]);
+  }, [
+    editable,
+    scriptId,
+    settings?.autoFormat,
+    language,
+    dispatch,
+    onSave,
+    toast,
+  ]);
 
   return <div ref={editorRootRef} className="h-full w-full min-w-0"></div>;
 }

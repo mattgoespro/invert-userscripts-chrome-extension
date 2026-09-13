@@ -9,9 +9,9 @@ import {
   type SharedModuleSpecifierInfo,
   type WorkspaceFile,
 } from "@packages/monaco";
-import { getScriptModulePath } from "@shared/model";
+import { getScriptModulePath, type Userscript } from "@shared/model";
 import {
-  listSharedScriptIds,
+  listImportedSharedScriptIds,
   resolveWorkspaceScriptClosure,
 } from "@shared/workspace-closure";
 import { isDraftDirty } from "../store/slices/editor-drafts";
@@ -29,10 +29,14 @@ import { getDraftBuffer } from "./workspace-sync-plan";
  * Subscribes to the Redux store exactly once and reconciles, debounced and
  * revision-diffed:
  *
- * - Monaco models for the active script, its import closure (derived from
- *   TypeScript source), every shared module, plus any dirty offscreen drafts.
- * - Static package.json extra libs, ambient type copies, and CDN @types for
- *   every configured global module (eager, not scoped to the active script).
+ * - Monaco models for the active script, its import closure, dirty offscreen
+ *   drafts, and shared modules imported by any script (kept resident so
+ *   switching away from a consumer does not dispose its dependencies).
+ *   Unrelated unused shared modules stay out of the TypeScript program.
+ * - Static package.json extra libs and ambient type copies for the active
+ *   closure (not for resident imports that are out of scope).
+ * - CDN `@types` only for modules referenced by the active closure and dirty
+ *   drafts.
  *
  * Editors own attached buffers. The service only overwrites an attached buffer
  * when that buffer's draft is clean (e.g. storage-sync take-remote).
@@ -75,7 +79,8 @@ export function startWorkspaceService(store: AppStore): () => void {
 
   let scheduled: ReturnType<typeof setTimeout> | null = null;
   let lastSignature = "";
-  let lastCurrentScriptId = store.getState().userscripts.currentScriptId ?? null;
+  let lastCurrentScriptId =
+    store.getState().userscripts.currentScriptId ?? null;
 
   const sync = () => {
     scheduled = null;
@@ -87,36 +92,46 @@ export function startWorkspaceService(store: AppStore): () => void {
     const currentScript = selectCurrentScript(state);
     const modules = state.modules.modules ?? {};
 
-    const closureIds = resolveWorkspaceScriptClosure(currentScript, scriptsMap, {
-      getTypescriptSource: (script) =>
-        getDraftBuffer(script, drafts[script.id], "typescript").contents,
-    });
-    const sharedIds = listSharedScriptIds(scriptsMap);
+    const getTypescriptSource = (script: Userscript) =>
+      getDraftBuffer(script, drafts[script.id], "typescript").contents;
+
+    const closureIds = resolveWorkspaceScriptClosure(
+      currentScript,
+      scriptsMap,
+      { getTypescriptSource }
+    );
     const dirtyDraftIds = Object.entries(drafts)
       .filter(([, draft]) => isDraftDirty(draft))
       .map(([scriptId]) => scriptId)
       .filter((scriptId) => scriptsMap[scriptId] != null);
+    const importedSharedIds = listImportedSharedScriptIds(
+      scriptsMap,
+      getTypescriptSource
+    );
 
     const closureDeps = closureIds.filter(
       (scriptId) => scriptId !== currentScript?.id
     );
-    const extraSharedIds = sharedIds.filter(
-      (scriptId) => !closureIds.includes(scriptId)
-    );
-    const included = new Set([...closureDeps, ...extraSharedIds]);
-    const workspaceIds = [...closureDeps, ...extraSharedIds];
+    const included = new Set(closureDeps);
+    const workspaceIds = [...closureDeps];
 
     if (currentScript) {
       workspaceIds.push(currentScript.id);
       included.add(currentScript.id);
     }
 
-    for (const scriptId of dirtyDraftIds) {
+    for (const scriptId of [...dirtyDraftIds, ...importedSharedIds]) {
       if (!included.has(scriptId)) {
         workspaceIds.push(scriptId);
         included.add(scriptId);
       }
     }
+
+    const typeScopeIds = new Set([
+      ...closureIds,
+      ...(currentScript ? [currentScript.id] : []),
+      ...dirtyDraftIds,
+    ]);
 
     // Signature tracks draft revision + TypeScript text (import edges), not
     // the persisted sharedScripts cache.
@@ -151,7 +166,6 @@ export function startWorkspaceService(store: AppStore): () => void {
       filePath: string;
       contents: string;
     }> = [];
-    const workspaceIdSet = new Set(workspaceIds);
 
     for (const scriptId of workspaceIds) {
       const script = scriptsMap[scriptId];
@@ -165,20 +179,21 @@ export function startWorkspaceService(store: AppStore): () => void {
       const main = getDraftBuffer(script, draft, "typescript");
       const types = getDraftBuffer(script, draft, "typeDefinitions");
 
-      files.push(
-        {
-          uri: buildScriptFileUri(script, "main"),
-          language: "typescript",
-          contents: main.contents,
-          preserveAttachedBuffer: main.dirty,
-        },
-        {
+      files.push({
+        uri: buildScriptFileUri(script, "main"),
+        language: "typescript",
+        contents: main.contents,
+        preserveAttachedBuffer: main.dirty,
+      });
+
+      if (isActive || typeScopeIds.has(script.id)) {
+        files.push({
           uri: buildScriptFileUri(script, "types"),
           language: "typescript",
           contents: types.contents,
           preserveAttachedBuffer: types.dirty,
-        }
-      );
+        });
+      }
 
       if (isActive || isDraftDirty(draft)) {
         const styles = getDraftBuffer(script, draft, "scss");
@@ -192,7 +207,7 @@ export function startWorkspaceService(store: AppStore): () => void {
 
       if (
         !isActive &&
-        workspaceIdSet.has(script.id) &&
+        typeScopeIds.has(script.id) &&
         script.shared &&
         isModuleDeclarationFile(types.contents)
       ) {
@@ -214,10 +229,19 @@ export function startWorkspaceService(store: AppStore): () => void {
     syncWorkspaceModels(files);
     syncAmbientTypeDefinitionLibs(ambientLibs);
 
-    // Eagerly register @types for every configured CDN module so switching
-    // scripts never tears libs down and re-fetches (which flashes diagnostics).
+    // Register @types only for CDN modules referenced by the active script,
+    // its import closure, and dirty drafts so unrelated package globals do not
+    // leak into the editor via resident imported modules.
+    const referencedModuleIds = new Set<string>();
+
+    for (const scriptId of typeScopeIds) {
+      for (const moduleId of scriptsMap[scriptId]?.globalModules ?? []) {
+        referencedModuleIds.add(moduleId);
+      }
+    }
+
     const cdnModules = Object.values(modules).flatMap((module) =>
-      module.packageName
+      referencedModuleIds.has(module.id) && module.packageName
         ? [{ id: module.id, packageName: module.packageName }]
         : []
     );

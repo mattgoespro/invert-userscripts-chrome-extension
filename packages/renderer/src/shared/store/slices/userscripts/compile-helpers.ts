@@ -3,7 +3,10 @@ import {
   buildUserscriptStylesheet,
   getCompiledOutputBuildOptions,
 } from "@/sandbox/compiler";
-import { buildCompiledCodeEntry } from "@shared/compile-metadata";
+import {
+  buildCompiledCodeEntry,
+  hashUserscriptCompileSources,
+} from "@shared/compile-metadata";
 import type { CompiledCodeEntry, Userscript } from "@shared/model";
 import type { RootState } from "../../store";
 
@@ -57,5 +60,8 @@ export async function compileAllOutputsOrThrow(
     compileStylesheetOrThrow(script, state),
   ]);
 
-  return buildCompiledCodeEntry(javascript, css, getBuildOptions(state));
+  return buildCompiledCodeEntry(javascript, css, {
+    ...getBuildOptions(state),
+    sourceHash: hashUserscriptCompileSources(script),
+  });
 }

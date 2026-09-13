@@ -29,7 +29,7 @@ test.describe("Injection — apply / CSS replace", () => {
     await seedStorage(
       optionsPage,
       { [`userscript:${script.id}`]: script },
-      buildCompiledLocalEntry(script.id, {
+      buildCompiledLocalEntry(script, {
         javascript: MARKER_JS,
         css: OPACITY_CSS,
       })
@@ -73,7 +73,7 @@ test.describe("Injection — apply / CSS replace", () => {
     await seedStorage(
       optionsPage,
       { [`userscript:${script.id}`]: script },
-      buildCompiledLocalEntry(script.id, {
+      buildCompiledLocalEntry(script, {
         javascript: MARKER_JS,
         css: OPACITY_CSS,
       })
@@ -120,7 +120,7 @@ test.describe("Injection — apply / CSS replace", () => {
     await seedStorage(
       optionsPage,
       { [`userscript:${script.id}`]: script },
-      buildCompiledLocalEntry(script.id, {
+      buildCompiledLocalEntry(script, {
         javascript: MARKER_JS,
         css: OPACITY_CSS,
       })

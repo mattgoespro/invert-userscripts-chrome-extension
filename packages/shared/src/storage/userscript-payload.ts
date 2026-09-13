@@ -99,6 +99,44 @@ export function serializeUserscript(script: Userscript): StoredUserscriptPayload
 }
 
 /**
+ * True when `value` is a v2 compressed userscript manifest (inline or chunked).
+ * Legacy sync entries stored the sparse payload object directly.
+ */
+export function isStoredUserscriptManifest(value: unknown): boolean {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const manifest = value as { version?: unknown; encoding?: unknown; mode?: unknown };
+
+  return (
+    manifest.version === 2 &&
+    (manifest.encoding === "gzip-base64" ||
+      manifest.encoding === "utf8-base64") &&
+    (manifest.mode === "inline" || manifest.mode === "chunked")
+  );
+}
+
+/**
+ * True when `value` looks like a sparse userscript payload (pre-manifest sync).
+ */
+export function isRawStoredUserscriptPayload(
+  value: unknown
+): value is Partial<Userscript> | StoredUserscriptPayload {
+  if (!value || typeof value !== "object" || isStoredUserscriptManifest(value)) {
+    return false;
+  }
+
+  const payload = value as Record<string, unknown>;
+
+  return (
+    typeof payload.name === "string" ||
+    typeof payload.createdAt === "number" ||
+    payload.code != null
+  );
+}
+
+/**
  * Hydrate a userscript from a sparse stored payload, applying storage defaults
  * for omitted fields. `now` is injectable so missing timestamps stay deterministic in tests.
  */

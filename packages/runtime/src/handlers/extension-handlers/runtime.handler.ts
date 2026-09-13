@@ -34,13 +34,12 @@ export const onMessage = (
   void (async () => {
     switch (message.type) {
       case "applyScripts": {
-        const result = await applyScriptsToMatchingTabs(
-          message.data.scriptIds
-        );
+        const result = await applyScriptsToMatchingTabs(message.data.scriptIds);
         await refreshBadgesForOpenTabs();
         const response: ApplyScriptsResponse = {
-          success: true,
+          success: result.success,
           appliedTabCount: result.appliedTabCount,
+          staleSkipCount: result.staleSkipCount,
         };
         sendResponse(response);
         break;
@@ -52,8 +51,9 @@ export const onMessage = (
           const result = await applyScriptsToMatchingTabs([scriptId]);
           await refreshBadgesForOpenTabs();
           const response: ApplyScriptsResponse = {
-            success: true,
+            success: result.success,
             appliedTabCount: result.appliedTabCount,
+            staleSkipCount: result.staleSkipCount,
           };
           sendResponse(response);
         } else {
@@ -73,8 +73,9 @@ export const onMessage = (
         const result = await applyScriptsToMatchingTabs([]);
         await refreshBadgesForOpenTabs();
         const response: ApplyScriptsResponse = {
-          success: true,
+          success: result.success,
           appliedTabCount: result.appliedTabCount,
+          staleSkipCount: result.staleSkipCount,
         };
         sendResponse(response);
         break;

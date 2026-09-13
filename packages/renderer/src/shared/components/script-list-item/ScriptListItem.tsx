@@ -1,7 +1,10 @@
 import { Switch } from "@/shared/components/switch/Switch";
 import { useToast } from "@/shared/components/toast/ToastProvider";
 import { selectIsDraftDirty } from "@/shared/store/slices/editor-drafts/selectors";
-import { formatMatchingTabsToast } from "@/shared/store/slices/userscripts/messaging";
+import {
+  describeApplyResult,
+  formatMatchingTabsToast,
+} from "@/shared/store/slices/userscripts/messaging";
 import { toggleUserscript } from "@/shared/store/slices/userscripts/thunks.crud";
 import { Userscript } from "@shared/model";
 import { PackageIcon } from "lucide-react";
@@ -18,6 +21,8 @@ type ToggleResult = {
   script: Userscript;
   appliedTabCount: number;
   removedTabCount: number;
+  applySuccess?: boolean;
+  staleSkipCount?: number;
 };
 
 type ThunkDispatch = {
@@ -48,16 +53,27 @@ export function ScriptListItem({
     try {
       const payload = await dispatch(toggleUserscript(script.id)).unwrap();
       const enabled = payload.script.enabled;
-      const count = enabled
-        ? payload.appliedTabCount
-        : payload.removedTabCount;
+
+      if (!enabled) {
+        toast({
+          variant: "info",
+          message: formatMatchingTabsToast(
+            payload.removedTabCount,
+            "Removed from"
+          ),
+        });
+        return;
+      }
+
+      const feedback = describeApplyResult({
+        success: payload.applySuccess !== false,
+        appliedTabCount: payload.appliedTabCount,
+        staleSkipCount: payload.staleSkipCount,
+      });
 
       toast({
-        variant: "info",
-        message: formatMatchingTabsToast(
-          count,
-          enabled ? "Applied to" : "Removed from"
-        ),
+        variant: feedback.variant,
+        message: feedback.message,
       });
     } catch (error) {
       console.error("Failed to toggle userscript:", error);

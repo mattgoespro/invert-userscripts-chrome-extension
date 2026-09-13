@@ -1,5 +1,9 @@
 import { expect, type Page } from "@playwright/test";
 import {
+  readStoredUserscripts,
+  waitForStoredTypescript,
+} from "../helpers/chrome-sync";
+import {
   editorNeedle,
   readTypescriptEditorText,
   replaceMonacoEditorContent,
@@ -47,10 +51,6 @@ export class ScriptsPage {
   /**
    * Click a script in the list by name. Scoped to the sidebar panel to avoid
    * matching the script name appearing elsewhere on the page.
-   */
-  /**
-   * Click a script in the list by name. Scoped to the sidebar panel to avoid
-   * matching the script name appearing elsewhere on the page.
    * @param expectedEditorSnippet When provided, waits for the TypeScript editor
    *   to reflect the selected script before returning.
    */
@@ -94,36 +94,15 @@ export class ScriptsPage {
 
     // Wait for the toggleUserscript thunk to persist to chrome.storage.sync.
     // Sync omits `enabled` when false, so treat a missing flag as disabled.
-    await this.page.waitForFunction(
-      async ({ scriptName, enabled }) => {
-        const data = await chrome.storage.sync.get(null);
-
-        for (const [key, value] of Object.entries(data)) {
-          if (!key.startsWith("userscript:") || key.includes(":chunk:")) {
-            continue;
-          }
-
-          const entry = value as { data?: string; encoding?: string };
-
-          if (entry?.encoding !== "utf8-base64" || !entry.data) {
-            continue;
-          }
-
-          const json = JSON.parse(atob(entry.data)) as {
-            name?: string;
-            enabled?: true;
-          };
-
-          if (json.name === scriptName) {
-            return (json.enabled === true) === enabled;
-          }
-        }
-
-        return false;
-      },
-      { scriptName: name, enabled: expectEnabled },
-      { timeout: 15_000 }
-    );
+    await expect
+      .poll(
+        async () => {
+          const scripts = await readStoredUserscripts(this.page);
+          return scripts.find((script) => script.name === name)?.enabled;
+        },
+        { timeout: 15_000 }
+      )
+      .toBe(expectEnabled);
   }
 
   /** Check whether the script's modified pulse indicator is visible. */
@@ -214,31 +193,9 @@ export class ScriptsPage {
     await replaceMonacoEditorContent(editor, code);
     await saveMonacoEditor(this.page);
 
-    await this.page.waitForFunction(
-      async ({ expected }) => {
-        const data = await chrome.storage.sync.get(null);
-        const scriptKey = Object.keys(data).find(
-          (key) => key.startsWith("userscript:") && !key.includes(":chunk:")
-        );
-
-        if (!scriptKey) {
-          return false;
-        }
-
-        const entry = data[scriptKey] as
-          | { data?: string; encoding?: string }
-          | undefined;
-
-        if (!entry?.data || entry.encoding !== "utf8-base64") {
-          return false;
-        }
-
-        const json = atob(entry.data);
-        return json.includes(expected);
-      },
-      { expected: code.replace(/\s+/g, " ").trim() },
-      { timeout: 15_000 }
-    );
+    const expected = code.replace(/\s+/g, " ").trim();
+    await waitForStoredTypescript(this.page, { includes: expected });
+    await waitForTypescriptEditorText(this.page, editorNeedle(code));
   }
 
   /** Replace TypeScript editor contents without saving. */

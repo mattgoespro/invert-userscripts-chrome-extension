@@ -1,21 +1,31 @@
 import type { BrowserContext, Page } from "@playwright/test";
 import { expect } from "../fixtures";
 import type { Userscript } from "@shared/model";
+import { hashUserscriptCompileSources } from "@shared/compile-metadata";
 
 export type CompiledSeed = {
   javascript: string;
   css: string;
-  build?: { version: 1; minifyCompiledOutput: boolean };
+  build?: {
+    version: 1;
+    minifyCompiledOutput: boolean;
+    sourceHash?: string;
+  };
 };
 
 export function buildCompiledLocalEntry(
-  scriptId: string,
-  entry: CompiledSeed
+  script: Userscript,
+  entry: { javascript: string; css: string }
 ): Record<string, CompiledSeed> {
   return {
-    [`compiled:${scriptId}`]: {
-      build: { version: 1, minifyCompiledOutput: false },
-      ...entry,
+    [`compiled:${script.id}`]: {
+      javascript: entry.javascript,
+      css: entry.css,
+      build: {
+        version: 1,
+        minifyCompiledOutput: false,
+        sourceHash: hashUserscriptCompileSources(script),
+      },
     },
   };
 }
@@ -30,8 +40,8 @@ export async function openContentTab(
 }
 
 export async function readHtmlOpacity(page: Page): Promise<string> {
-  return page.evaluate(() =>
-    getComputedStyle(document.documentElement).opacity
+  return page.evaluate(
+    () => getComputedStyle(document.documentElement).opacity
   );
 }
 

@@ -1,6 +1,7 @@
 import { useAppDispatch } from "@/shared/store/hooks";
 import { getAffectedScriptIdsFromStorageChanges } from "@/shared/store/slices/editor-drafts/helpers";
 import { refreshScriptsFromStorage } from "@/shared/store/slices/editor-drafts/thunks.storage-sync";
+import { rebuildCompiledUserscripts } from "@/shared/store/slices/userscripts/thunks.userscripts";
 import { useEffect, useRef } from "react";
 
 /**
@@ -15,10 +16,23 @@ import { useEffect, useRef } from "react";
 export function useStorageSync() {
   const dispatch = useAppDispatch();
   const refreshInFlightRef = useRef(false);
+  const pendingRefreshRef = useRef<string[] | "all" | null>(null);
 
   useEffect(() => {
+    const mergePending = (scriptIds?: string[]) => {
+      if (scriptIds === undefined || pendingRefreshRef.current === "all") {
+        pendingRefreshRef.current = "all";
+        return;
+      }
+
+      pendingRefreshRef.current = [
+        ...new Set([...(pendingRefreshRef.current ?? []), ...scriptIds]),
+      ];
+    };
+
     const refresh = async (scriptIds?: string[]) => {
       if (refreshInFlightRef.current) {
+        mergePending(scriptIds);
         return;
       }
 
@@ -31,6 +45,25 @@ export function useStorageSync() {
       } finally {
         refreshInFlightRef.current = false;
       }
+
+      const pending = pendingRefreshRef.current;
+      pendingRefreshRef.current = null;
+
+      if (pending === "all") {
+        void refresh();
+        return;
+      }
+
+      if (pending && pending.length > 0) {
+        void refresh(pending);
+        return;
+      }
+
+      try {
+        await dispatch(rebuildCompiledUserscripts({ scope: "stale" })).unwrap();
+      } catch (error) {
+        console.error("Failed to rebuild stale compiled scripts:", error);
+      }
     };
 
     const onStorageChanged = (
@@ -41,13 +74,13 @@ export function useStorageSync() {
         return;
       }
 
-      const scriptIds = getAffectedScriptIdsFromStorageChanges(changes);
+      const affectedIds = getAffectedScriptIdsFromStorageChanges(changes);
 
-      if (scriptIds.length === 0) {
+      if (affectedIds.length === 0) {
         return;
       }
 
-      void refresh(scriptIds);
+      void refresh(affectedIds);
     };
 
     const onVisibilityChange = () => {

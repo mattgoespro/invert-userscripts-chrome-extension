@@ -59,6 +59,8 @@ export const saveEditorCode = createAsyncThunk(
     return {
       code: formattedCode,
       appliedTabCount: result.appliedTabCount,
+      applySuccess: result.applySuccess,
+      staleSkipCount: result.staleSkipCount,
     };
   }
 );

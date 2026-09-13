@@ -1,11 +1,18 @@
 import { createAsyncThunk } from "@reduxjs/toolkit/react";
-import { buildCompiledCodeEntry } from "@shared/compile-metadata";
-import type { Userscript } from "@shared/model";
+import {
+  buildCompiledCodeEntry,
+  hashUserscriptCompileSources,
+  isCompiledCodeBuildCurrent,
+} from "@shared/compile-metadata";
+import {
+  findDuplicateModulePathScript,
+  getScriptModulePath,
+  type Userscript,
+} from "@shared/model";
 import {
   hasSharedJavascriptConfigChanged,
   resolveSharedScriptIdsFromSourceOrThrow,
 } from "@shared/resolve-shared-scripts";
-import { isCompiledCodeBuildCurrent } from "@shared/compile-metadata";
 import { ChromeSyncStorage, CompiledCodeStorage } from "@shared/storage";
 import {
   mergeCompiledCode,
@@ -13,11 +20,7 @@ import {
   toStorageSafeUserscript,
 } from "@shared/userscript-hydrate";
 import { commitDraftForSave } from "../editor-drafts/actions";
-import {
-  buildScriptWithDraftSource,
-  extractUserscriptMetadataUpdates,
-  getDraftOrSavedSource,
-} from "../editor-drafts/helpers";
+import { extractUserscriptMetadataUpdates } from "../editor-drafts/helpers";
 import type { DraftBuffer } from "../editor-drafts/state.editor-drafts";
 import type { RootState } from "../../store";
 import {
@@ -35,23 +38,42 @@ export const updateUserscript = createAsyncThunk<
   const state = getState();
   const previousScriptsMap = await ChromeSyncStorage.getAllScripts();
   const storedEntry = previousScriptsMap[id];
+  const localEntity = state.userscripts.scripts?.[id];
 
-  if (!storedEntry) {
+  const entity = storedEntry ?? localEntity;
+
+  if (!entity) {
     throw new Error(`Userscript not found: ${id}`);
   }
 
-  const storedScript = normalizeUserscript(storedEntry);
+  const storedScript = {
+    ...normalizeUserscript(entity),
+    sharedScripts: [...(entity.sharedScripts ?? [])],
+    globalModules: [...(entity.globalModules ?? [])],
+    urlPatterns: [...(entity.urlPatterns ?? [])],
+    code: {
+      source: { ...entity.code.source },
+      compiled: { ...entity.code.compiled },
+    },
+  };
 
   const metadataUpdates = extractUserscriptMetadataUpdates(updates);
-  const draftSource = getDraftOrSavedSource(state, id);
-  const normalizedScript = buildScriptWithDraftSource(
-    {
-      ...storedScript,
-      ...metadataUpdates,
-      updatedAt: Date.now(),
-    },
-    draftSource
+  const normalizedScript = {
+    ...storedScript,
+    ...metadataUpdates,
+    updatedAt: Date.now(),
+  };
+
+  const duplicate = findDuplicateModulePathScript(
+    Object.values(previousScriptsMap).map(normalizeUserscript),
+    normalizedScript
   );
+
+  if (duplicate) {
+    throw new Error(
+      `Module path "${getScriptModulePath(normalizedScript)}" is already used by "${duplicate.name}". Choose a unique module name.`
+    );
+  }
 
   const previousScript = previousScriptsMap[normalizedScript.id]
     ? normalizeUserscript(previousScriptsMap[normalizedScript.id])
@@ -59,54 +81,106 @@ export const updateUserscript = createAsyncThunk<
   const compiledEntry = await CompiledCodeStorage.getCompiledCode(
     normalizedScript.id
   );
-  const storageScript = toStorageSafeUserscript(normalizedScript);
+  const buildOptions = {
+    ...getBuildOptions(state),
+    sourceHash: hashUserscriptCompileSources(normalizedScript),
+  };
 
-  if (!isCompiledCodeBuildCurrent(compiledEntry, getBuildOptions(state))) {
-    const rebuiltEntry = await compileAllOutputsOrThrow(
-      normalizedScript,
-      state
-    );
+  let pendingCompiled:
+    | Awaited<ReturnType<typeof compileAllOutputsOrThrow>>
+    | undefined;
 
-    normalizedScript.code.compiled.javascript = rebuiltEntry.javascript;
-    normalizedScript.code.compiled.css = rebuiltEntry.css;
-
-    await CompiledCodeStorage.saveCompiledCode(
-      normalizedScript.id,
-      rebuiltEntry
-    );
+  if (!isCompiledCodeBuildCurrent(compiledEntry, buildOptions)) {
+    pendingCompiled = await compileAllOutputsOrThrow(normalizedScript, state);
+    normalizedScript.code.compiled.javascript = pendingCompiled.javascript;
+    normalizedScript.code.compiled.css = pendingCompiled.css;
   } else if (
     hasSharedJavascriptConfigChanged(normalizedScript, previousScript)
   ) {
     const javascript = await compileJavascriptOrThrow(normalizedScript, state);
     const css = compiledEntry?.css ?? normalizedScript.code.compiled.css;
-    const rebuiltEntry = buildCompiledCodeEntry(
-      javascript,
-      css,
-      getBuildOptions(state)
-    );
-
+    pendingCompiled = buildCompiledCodeEntry(javascript, css, buildOptions);
     normalizedScript.code.compiled.javascript = javascript;
     normalizedScript.code.compiled.css = css;
+  }
 
-    await CompiledCodeStorage.saveCompiledCode(
-      normalizedScript.id,
-      rebuiltEntry
+  const latestMap = await ChromeSyncStorage.getAllScripts();
+  const latestEntry = latestMap[id];
+  const latestStored = latestEntry
+    ? normalizeUserscript(latestEntry)
+    : storedScript;
+  const sourceChanged = Boolean(
+    latestEntry &&
+      (latestStored.code.source.typescript !==
+        storedScript.code.source.typescript ||
+        latestStored.code.source.scss !== storedScript.code.source.scss ||
+        (latestStored.typeDefinitions ?? "") !==
+          (storedScript.typeDefinitions ?? ""))
+  );
+
+  const persistCandidate = {
+    ...latestStored,
+    ...metadataUpdates,
+    updatedAt: Date.now(),
+  };
+  const lateDuplicate = findDuplicateModulePathScript(
+    Object.values(latestMap).map(normalizeUserscript),
+    persistCandidate
+  );
+
+  if (lateDuplicate) {
+    throw new Error(
+      `Module path "${getScriptModulePath(persistCandidate)}" is already used by "${lateDuplicate.name}". Choose a unique module name.`
     );
   }
 
-  await ChromeSyncStorage.updateScript(normalizedScript.id, {
-    ...storageScript,
+  if (!sourceChanged && pendingCompiled) {
+    await CompiledCodeStorage.saveCompiledCode(
+      normalizedScript.id,
+      pendingCompiled
+    );
+  }
+
+  const storageSafe = toStorageSafeUserscript({
+    ...persistCandidate,
     code: {
-      source: storedScript.code.source,
+      source: latestStored.code.source,
       compiled: {
         javascript: "",
         css: "",
       },
     },
-    typeDefinitions: storedScript.typeDefinitions,
+    typeDefinitions: latestStored.typeDefinitions,
   });
 
-  return normalizedScript;
+  if (latestEntry) {
+    await ChromeSyncStorage.updateScript(normalizedScript.id, storageSafe);
+  } else {
+    await ChromeSyncStorage.saveScript(storageSafe);
+  }
+
+  const compiledForReturn = sourceChanged
+    ? ((await CompiledCodeStorage.getCompiledCode(id)) ?? {
+        javascript: "",
+        css: "",
+      })
+    : (pendingCompiled ??
+      compiledEntry ?? {
+        javascript: normalizedScript.code.compiled.javascript,
+        css: normalizedScript.code.compiled.css,
+      });
+
+  return {
+    ...persistCandidate,
+    code: {
+      source: latestStored.code.source,
+      compiled: {
+        javascript: compiledForReturn.javascript,
+        css: compiledForReturn.css,
+      },
+    },
+    typeDefinitions: latestStored.typeDefinitions,
+  };
 });
 
 export type PersistScriptBuffersArgs = {
@@ -130,7 +204,12 @@ export type PersistScriptBuffersArgs = {
  * imports → optional compile → commit drafts clean → sync + local → optional apply.
  */
 export const persistScriptBuffers = createAsyncThunk<
-  { script: Userscript; appliedTabCount: number },
+  {
+    script: Userscript;
+    appliedTabCount: number;
+    applySuccess: boolean;
+    staleSkipCount: number;
+  },
   PersistScriptBuffersArgs,
   { state: RootState }
 >(
@@ -152,10 +231,33 @@ export const persistScriptBuffers = createAsyncThunk<
       bufferOverrides?.typeDefinitions ?? draft.typeDefinitions;
 
     const scriptsMap = await ChromeSyncStorage.getAllScripts();
-    const script = normalizeUserscript(scriptsMap[scriptId]);
+    const storedEntry = scriptsMap[scriptId];
+    const entity = storedEntry ?? state.userscripts.scripts?.[scriptId];
 
-    if (!script) {
+    if (!entity) {
       throw new Error(`Userscript not found: ${scriptId}`);
+    }
+
+    const script: Userscript = {
+      ...normalizeUserscript(entity),
+      sharedScripts: [...(entity.sharedScripts ?? [])],
+      globalModules: [...(entity.globalModules ?? [])],
+      urlPatterns: [...(entity.urlPatterns ?? [])],
+      code: {
+        source: { ...entity.code.source },
+        compiled: { ...entity.code.compiled },
+      },
+    };
+
+    const duplicate = findDuplicateModulePathScript(
+      Object.values(scriptsMap).map(normalizeUserscript),
+      script
+    );
+
+    if (duplicate) {
+      throw new Error(
+        `Module path "${getScriptModulePath(script)}" is already used by "${duplicate.name}". Choose a unique module name.`
+      );
     }
 
     script.code.source.typescript = typescript;
@@ -165,7 +267,7 @@ export const persistScriptBuffers = createAsyncThunk<
     try {
       script.sharedScripts = resolveSharedScriptIdsFromSourceOrThrow(
         script,
-        scriptsMap,
+        { ...scriptsMap, [script.id]: script },
         typescript
       );
     } catch (error) {
@@ -208,10 +310,13 @@ export const persistScriptBuffers = createAsyncThunk<
       );
     }
 
-    await ChromeSyncStorage.updateScript(
-      scriptId,
-      toStorageSafeUserscript(script)
-    );
+    const storageSafe = toStorageSafeUserscript(script);
+
+    if (storedEntry) {
+      await ChromeSyncStorage.updateScript(scriptId, storageSafe);
+    } else {
+      await ChromeSyncStorage.saveScript(storageSafe);
+    }
 
     if (compile && compiledEntry) {
       await CompiledCodeStorage.saveCompiledCode(scriptId, compiledEntry);
@@ -219,13 +324,13 @@ export const persistScriptBuffers = createAsyncThunk<
 
     const applyResult = applyTabs
       ? await sendApplyScriptsMessage([scriptId])
-      : { appliedTabCount: 0 };
+      : { appliedTabCount: 0, success: true, staleSkipCount: 0 };
 
     return {
-      script: compiledEntry
-        ? mergeCompiledCode(script, compiledEntry)
-        : script,
+      script: compiledEntry ? mergeCompiledCode(script, compiledEntry) : script,
       appliedTabCount: applyResult.appliedTabCount,
+      applySuccess: applyResult.success,
+      staleSkipCount: applyResult.staleSkipCount ?? 0,
     };
   }
 );

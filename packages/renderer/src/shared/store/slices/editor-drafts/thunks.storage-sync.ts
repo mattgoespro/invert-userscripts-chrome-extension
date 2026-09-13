@@ -9,6 +9,7 @@ import {
   removeDraft,
   syncDraftFromRemoteScript,
 } from "./index";
+import { removeRemoteScripts } from "../userscripts";
 
 export const refreshScriptsFromStorage = createAsyncThunk<
   { syncedScripts: Userscript[]; conflictIds: string[] },
@@ -34,6 +35,7 @@ export const refreshScriptsFromStorage = createAsyncThunk<
 
     const syncedScripts: Userscript[] = [];
     const conflictIds: string[] = [];
+    const removedIds: string[] = [];
 
     for (const scriptId of targetIds) {
       const remoteScript = scriptsMap[scriptId];
@@ -49,6 +51,12 @@ export const refreshScriptsFromStorage = createAsyncThunk<
           break;
         case "remove":
           dispatch(removeDraft(scriptId));
+          // A hydrate miss looks like "not in scriptsMap" even when the
+          // manifest key is still present (mid-write or decode failure).
+          // Only drop the Redux entity when storage actually deleted it.
+          if (!(await ChromeSyncStorage.hasScriptManifest(scriptId))) {
+            removedIds.push(scriptId);
+          }
           break;
         case "conflict":
           dispatch(enqueueConflict(decision.conflict));
@@ -63,6 +71,10 @@ export const refreshScriptsFromStorage = createAsyncThunk<
           syncedScripts.push(decision.script);
           break;
       }
+    }
+
+    if (removedIds.length > 0) {
+      dispatch(removeRemoteScripts(removedIds));
     }
 
     return { syncedScripts, conflictIds };

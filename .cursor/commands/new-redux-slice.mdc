@@ -1,12 +1,4 @@
----
-name: "Renderer Package: Redux Slice Conventions"
-description: "Redux Toolkit slice conventions: createAsyncThunk patterns, RTK selectors API, storage quota stripping, file structure, and typed hooks for the Invert IDE store."
-applyTo: "packages/renderer/src/shared/store/**"
----
-
-# Redux Toolkit Slice Conventions
-
-## File Structure
+# new-redux-sliace
 
 Each slice lives in its own subdirectory under `packages/renderer/src/shared/store/slices/`:
 

@@ -6,8 +6,8 @@ type ResizeHandleProps = {
 };
 
 /**
- * Styled wrapper around a {@linkcode Separator} component from `react-resizable-panels` that uses a Visual Studio Code-style invisible
- * hit area with accent highlight on hover/drag.
+ * Styled wrapper around a {@linkcode Separator} from `react-resizable-panels`.
+ * Always shows a 1px split line; the hit area lights accent on hover/drag.
  */
 export const ResizeHandle = forwardRef<HTMLDivElement, ResizeHandleProps>(
   ({ direction = "horizontal" }, ref) => {

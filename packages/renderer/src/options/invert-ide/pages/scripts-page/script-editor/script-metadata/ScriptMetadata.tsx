@@ -12,6 +12,7 @@ import { IconButton } from "@/shared/components/icon-button/IconButton";
 import { Globe } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { UrlPatternTester } from "@/shared/components/url-pattern-tester/UrlPatternTester";
+import { useToast } from "@/shared/components/toast/ToastProvider";
 
 type ScriptMetadataProps = {
   script: Userscript;
@@ -19,8 +20,27 @@ type ScriptMetadataProps = {
 
 const MODULE_NAME_DEBOUNCE_MS = 400;
 
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+
+  if (
+    error &&
+    typeof error === "object" &&
+    "message" in error &&
+    typeof error.message === "string" &&
+    error.message
+  ) {
+    return error.message;
+  }
+
+  return "Failed to update script metadata.";
+}
+
 export function ScriptMetadata({ script }: ScriptMetadataProps) {
   const dispatch: AppDispatch = useAppDispatch();
+  const { toast } = useToast();
   const [showUrlTester, setShowUrlTester] = useState(false);
   const moduleNameDebounceRef = useRef<ReturnType<typeof setTimeout>>(null);
 
@@ -33,7 +53,14 @@ export function ScriptMetadata({ script }: ScriptMetadataProps) {
   }, []);
 
   const onUpdateScriptMeta = async (updates: Partial<Userscript>) => {
-    await dispatch(updateUserscript({ id: script.id, updates })).unwrap();
+    try {
+      await dispatch(updateUserscript({ id: script.id, updates })).unwrap();
+    } catch (error) {
+      toast({
+        variant: "error",
+        message: getErrorMessage(error),
+      });
+    }
   };
 
   const onModuleNameChange = (value: string) => {

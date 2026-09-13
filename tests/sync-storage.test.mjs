@@ -116,6 +116,37 @@ test("ChromeSyncStorage skips scripts with missing chunks instead of throwing", 
   }
 });
 
+test("ChromeSyncStorage hydrates legacy raw userscript objects", async () => {
+  mock.store.set("userscript:legacy-script", {
+    name: "Legacy Script",
+    createdAt: 1,
+    updatedAt: 2,
+    enabled: true,
+    code: {
+      source: { typescript: "export const ok = true;", scss: "" },
+    },
+    urlPatterns: ["*://*/*"],
+    runAt: "afterPageLoad",
+  });
+
+  const loaded = await ChromeSyncStorage.getAllScripts();
+
+  assert.equal(loaded["legacy-script"].name, "Legacy Script");
+  assert.equal(loaded["legacy-script"].enabled, true);
+  assert.equal(
+    loaded["legacy-script"].code.source.typescript,
+    "export const ok = true;"
+  );
+  assert.equal(loaded["legacy-script"].runAt, "afterPageLoad");
+});
+
+test("ChromeSyncStorage.hasScriptManifest is true when the key exists", async () => {
+  mock.store.set("userscript:present", { name: "Still here", createdAt: 1 });
+
+  assert.equal(await ChromeSyncStorage.hasScriptManifest("present"), true);
+  assert.equal(await ChromeSyncStorage.hasScriptManifest("missing"), false);
+});
+
 test("ChromeSyncStorage.deleteScript removes manifest and chunk keys", async () => {
   const previousCompressionStream = globalThis.CompressionStream;
   globalThis.CompressionStream = undefined;

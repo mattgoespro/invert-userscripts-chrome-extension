@@ -77,11 +77,53 @@ export function resolveWorkspaceScriptClosure(
 }
 
 /**
- * IDs of every shared module script — kept in the Monaco workspace so switching
- * to an unrelated shared script does not dispose modules other consumers import.
+ * IDs of every shared module script. Not used as the Monaco workspace set —
+ * putting every shared file in the TypeScript program leaks types into
+ * unrelated editors. Prefer {@link listImportedSharedScriptIds} to keep
+ * imported modules resident across script switches.
  */
 export function listSharedScriptIds(scriptsMap: Userscripts): string[] {
   return Object.values(scriptsMap)
     .filter((script) => script.shared)
     .map((script) => script.id);
+}
+
+/**
+ * Shared scripts that at least one userscript imports from TypeScript source.
+ *
+ * These stay in the Monaco workspace even when an unrelated script is active,
+ * so switching away from a consumer and back does not dispose its dependencies
+ * (which would flash TS2307). Unused shared modules stay out of the program.
+ */
+export function listImportedSharedScriptIds(
+  scriptsMap: Userscripts,
+  getTypescriptSource?: (script: Userscript) => string
+): string[] {
+  const getSource =
+    getTypescriptSource ??
+    ((script: Userscript) => script.code.source.typescript);
+
+  const sharedByModulePath = new Map<string, string>();
+
+  for (const candidate of Object.values(scriptsMap)) {
+    if (!candidate.shared) {
+      continue;
+    }
+
+    sharedByModulePath.set(getScriptModulePath(candidate), candidate.id);
+  }
+
+  const imported = new Set<string>();
+
+  for (const script of Object.values(scriptsMap)) {
+    for (const modulePath of getSharedImportModuleNames(getSource(script))) {
+      const dependencyId = sharedByModulePath.get(modulePath);
+
+      if (dependencyId) {
+        imported.add(dependencyId);
+      }
+    }
+  }
+
+  return [...imported];
 }

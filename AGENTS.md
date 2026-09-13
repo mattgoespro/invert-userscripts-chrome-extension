@@ -1,5 +1,124 @@
 # AGENTS.md
 
+## Project Overview
+
+**Invert IDE** is a Chrome extension (Manifest V3) that provides an integrated TypeScript/SCSS IDE directly in the browser. Users can write, manage, and inject JavaScript userscripts with a Monaco editor, combining development tooling with script injection capabilities. The extension compiles TypeScript and SCSS in-browser, formats code with Prettier, and programmatically injects compiled scripts into matching web pages.
+
+## Architecture & Monorepo Structure
+
+The project follows a monorepo architecture with four distinct packages:
+
+| Package             | Purpose                                                           | Key Technologies                                                |
+| ------------------- | ----------------------------------------------------------------- | --------------------------------------------------------------- |
+| `packages/renderer` | React-based UI for the Options page (IDE) and extension Popup     | TypeScript, React 19, React Redux, Redux Toolkit, Monaco Editor |
+| `packages/runtime`  | Background service workers and content scripts                    | TypeScript, Chrome Extensions API                               |
+| `packages/shared`   | Common types, storage wrappers, and message definitions           | TypeScript                                                      |
+| `packages/monaco`   | Monaco editor integration, Shiki tokenizer, and theme definitions | TypeScript, Monaco Editor, Shiki                                |
+
+## Key Developer Workflows
+
+### Build & Run
+
+| Command          | Description                                         |
+| ---------------- | --------------------------------------------------- |
+| `npm run dev`    | Run Webpack in watch mode for development           |
+| `npm run build`  | Production build                                    |
+| `npm run lint`   | Run ESLint across all packages, tools, and examples |
+| `npm run format` | Run Prettier to format all files                    |
+| `npm run clean`  | Remove the `dist` directory and webpack cache       |
+
+These are the only verified root scripts today; there is no repo-wide `test` script in `package.json`. The repository uses `pnpm` as its package manager, even when examples show `npm run ...`, and `npm run clean` shells out to `rm -rf`.
+
+### Path Aliases
+
+- `@shared/*` → Maps to `packages/shared/src/*`. Use for importing shared logic across packages.
+- `@packages/monaco` → Maps to `packages/monaco/src/index.ts`. Use for importing Monaco editor integration, themes, and utilities.
+- `@/*` → Maps to `./src/*` within the renderer package (e.g., `@/shared/components` → `packages/renderer/src/shared/components`).
+
+## Build System (Webpack)
+
+Treat `webpack.config.ts` as a coupled extension build manifest. Entry points, copied assets, Monaco bundling, manifest rewriting, and dev reloader behavior are coordinated.
+
+## Chrome Extension Configuration
+
+### Manifest V3 (`public/manifest.json`)
+
+| Setting          | Value / Details                                      |
+| ---------------- | ---------------------------------------------------- |
+| Permissions      | `storage`, `activeTab`, `scripting`, `webNavigation` |
+| Host Permissions | `<all_urls>`                                         |
+| Background       | Service worker: `background.js`                      |
+| Action           | Popup: `popup.html`                                  |
+| Options          | `options.html` (opens in new tab)                    |
+| Sandbox          | `sass-sandbox.html` (for WASM SCSS compilation)      |
+| CSP (pages)      | Allows `wasm-unsafe-eval` for TS/SCSS compilation    |
+| CSP (sandbox)    | Allows `unsafe-eval` for dart-sass                   |
+
+## Code Quality & Linting
+
+### ESLint Configuration
+
+The project uses ESLint flat config with a shared base and package-specific extensions:
+
+**Root Configuration** (`eslint.config.mjs`):
+
+- TypeScript-ESLint recommended rules
+- Global ignores: `node_modules/`, `dist/`
+- Exports `base` object with `{ common, configureTsEslintConfig }` for per-package consumption
+
+**Key Rules**:
+
+| Rule                                 | Setting | Notes                               |
+| ------------------------------------ | ------- | ----------------------------------- |
+| `@typescript-eslint/no-unused-vars`  | `warn`  | Ignores variables prefixed with `_` |
+| `@typescript-eslint/no-explicit-any` | `warn`  | Prefer explicit types               |
+| `no-unused-vars`                     | `off`   | Deferred to TypeScript rule         |
+
+### Prettier Configuration
+
+Consistent code formatting is enforced via Prettier (`prettier.config.mjs`):
+
+| Option               | Value                                              |
+| -------------------- | -------------------------------------------------- |
+| `trailingComma`      | `"es5"`                                            |
+| `plugins`            | `["prettier-plugin-tailwindcss"]`                  |
+| `tailwindStylesheet` | `packages/renderer/src/assets/styles/tailwind.css` |
+| `tailwindFunctions`  | `["clsx"]`                                         |
+
+## TypeScript Configuration
+
+### Key TypeScript Compiler Options
+
+**Base Options** (`tsconfig.base.json`):
+
+- **Target**: ES2020
+- **Module**: ESNext with Bundler module resolution
+- **Strict Mode**: Disabled at base level
+- **noImplicitAny**: true
+- **forceConsistentCasingInFileNames**: true
+- **noImplicitThis**: true
+- **esModuleInterop**: true
+- **resolveJsonModule**: true
+- **skipLibCheck**: true
+- **Base Paths**: `@shared/*` → `packages/shared/src/*`, `@monaco/*` → `packages/monaco/src/*`
+
+## TypeScript Best Practices
+
+When writing, refactoring, or updating TypeScript code:
+
+1. **Use explicit types** for function parameters and return values
+2. **Avoid `any`** — prefer specific types or `unknown` with type guards
+3. **Use `interface` for object shapes** and `type` for unions/intersections
+4. **Use `as const` for literal types** when appropriate (e.g. action type constants)
+5. **Leverage TypeScript's type inference** where possible, but be explicit in public APIs
+6. **Use scoped control flow blocks** (e.g., `if`, `for`, `try/catch`) with proper block scoping and avoid single-line statements without braces
+7. **Use `error` as the variable name in `catch` blocks** for consistency
+8. **Use `event` as the variable name for event handlers** for clarity
+
+### Additional Rules
+
+For additional code quality, refer to the ESLint rules defined in `eslint.config.mjs`, especially those related to TypeScript and React.
+
 ## Cursor Cloud specific instructions
 
 This repo is a **Chrome MV3 extension** ("Invert IDE Userscripts") built as a pnpm workspace

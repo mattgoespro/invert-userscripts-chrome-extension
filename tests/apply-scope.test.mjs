@@ -1,50 +1,31 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-
-/**
- * Mirrors packages/shared/src/apply-scope.ts — keep in sync when changing expand logic.
- * (Node's test runner loads .mjs without a TS import graph.)
- */
-function expandAffectedScriptIds(scriptIds, scriptsMap) {
-  const affected = new Set(
-    scriptIds.filter((scriptId) => scriptsMap[scriptId] != null)
-  );
-
-  let grew = true;
-
-  while (grew) {
-    grew = false;
-
-    for (const script of Object.values(scriptsMap)) {
-      if (affected.has(script.id)) {
-        continue;
-      }
-
-      if (script.sharedScripts?.some((sharedId) => affected.has(sharedId))) {
-        affected.add(script.id);
-        grew = true;
-      }
-    }
-  }
-
-  return Array.from(affected);
-}
+import { expandAffectedScriptIds } from "../packages/shared/src/apply-scope.ts";
+import { buildUserscriptFixture } from "./helpers/fixtures.mjs";
 
 describe("expandAffectedScriptIds", () => {
   it("returns only the seed script when nothing depends on it", () => {
     const scriptsMap = {
-      a: { id: "a", sharedScripts: [] },
-      b: { id: "b", sharedScripts: [] },
+      a: buildUserscriptFixture({ id: "a", sharedScripts: [] }),
+      b: buildUserscriptFixture({ id: "b", sharedScripts: [] }),
     };
 
     assert.deepEqual(expandAffectedScriptIds(["a"], scriptsMap), ["a"]);
   });
 
-  it("includes consumers of a shared module", () => {
+  it("includes consumers of a shared module via sharedScripts cache", () => {
     const scriptsMap = {
-      shared: { id: "shared", sharedScripts: [] },
-      consumer: { id: "consumer", sharedScripts: ["shared"] },
-      other: { id: "other", sharedScripts: [] },
+      shared: buildUserscriptFixture({
+        id: "shared",
+        shared: true,
+        moduleName: "shared",
+        sharedScripts: [],
+      }),
+      consumer: buildUserscriptFixture({
+        id: "consumer",
+        sharedScripts: ["shared"],
+      }),
+      other: buildUserscriptFixture({ id: "other", sharedScripts: [] }),
     };
 
     const result = expandAffectedScriptIds(["shared"], scriptsMap).sort();
@@ -53,9 +34,59 @@ describe("expandAffectedScriptIds", () => {
 
   it("includes nested consumers via fixpoint expansion", () => {
     const scriptsMap = {
-      leaf: { id: "leaf", sharedScripts: [] },
-      mid: { id: "mid", sharedScripts: ["leaf"] },
-      top: { id: "top", sharedScripts: ["mid"] },
+      leaf: buildUserscriptFixture({
+        id: "leaf",
+        shared: true,
+        moduleName: "leaf",
+        sharedScripts: [],
+      }),
+      mid: buildUserscriptFixture({
+        id: "mid",
+        shared: true,
+        moduleName: "mid",
+        sharedScripts: ["leaf"],
+      }),
+      top: buildUserscriptFixture({
+        id: "top",
+        sharedScripts: ["mid"],
+      }),
+    };
+
+    const result = expandAffectedScriptIds(["leaf"], scriptsMap).sort();
+    assert.deepEqual(result, ["leaf", "mid", "top"]);
+  });
+
+  it("includes nested consumers discovered from TypeScript imports", () => {
+    const scriptsMap = {
+      leaf: buildUserscriptFixture({
+        id: "leaf",
+        shared: true,
+        moduleName: "leaf",
+        sharedScripts: [],
+        code: { source: { typescript: "export const leaf = 1;" } },
+      }),
+      mid: buildUserscriptFixture({
+        id: "mid",
+        shared: true,
+        moduleName: "mid",
+        sharedScripts: [],
+        code: {
+          source: {
+            typescript:
+              'import { leaf } from "scripts/leaf/main"; export const mid = leaf;',
+          },
+        },
+      }),
+      top: buildUserscriptFixture({
+        id: "top",
+        sharedScripts: [],
+        code: {
+          source: {
+            typescript:
+              'import { mid } from "scripts/mid/main"; console.log(mid);',
+          },
+        },
+      }),
     };
 
     const result = expandAffectedScriptIds(["leaf"], scriptsMap).sort();
@@ -64,7 +95,7 @@ describe("expandAffectedScriptIds", () => {
 
   it("ignores unknown script ids", () => {
     const scriptsMap = {
-      a: { id: "a", sharedScripts: [] },
+      a: buildUserscriptFixture({ id: "a", sharedScripts: [] }),
     };
 
     assert.deepEqual(expandAffectedScriptIds(["missing"], scriptsMap), []);

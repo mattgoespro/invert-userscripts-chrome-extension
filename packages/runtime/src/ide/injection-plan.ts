@@ -1,10 +1,14 @@
 import {
   CompiledCodeEntry,
+  getScriptModulePath,
   GlobalModules,
   Userscript,
   Userscripts,
 } from "@shared/model";
+import { isCompiledArtifactFresh } from "@shared/compile-metadata";
 import { matchesUrlPattern } from "@shared/url-matching";
+import { getSharedImportModuleNames } from "@shared/shared-module-imports";
+import { resolveWorkspaceScriptClosure } from "@shared/workspace-closure";
 
 /**
  * Selects enabled userscripts that match the tab URL and requested run timing.
@@ -19,29 +23,137 @@ export function selectMatchingScriptsForInjection(
   return Object.values(scriptsMap).filter(
     (script) =>
       script.enabled &&
+      !script.shared &&
       script.runAt === timing &&
       matchesUrlPattern(url, script.urlPatterns)
   );
 }
 
 /**
- * Collects script IDs whose compiled payloads must be loaded for injection,
- * including shared-script dependencies referenced by matching userscripts.
+ * Shared-module IDs needed on the page for these userscripts, in dependency
+ * order (nested imports before their consumers). Edges come from TypeScript
+ * source, not the persisted sharedScripts cache.
  */
-export function collectCompiledCodeScriptIds(
-  matchingScripts: Userscript[]
+export function collectSharedScriptIdsToInject(
+  matchingScripts: Userscript[],
+  scriptsMap: Userscripts
 ): string[] {
-  const scriptIdsToFetch = new Set<string>(matchingScripts.map((s) => s.id));
+  const injectedShared = new Set<string>();
+  const ordered: string[] = [];
 
   for (const script of matchingScripts) {
-    if (script.sharedScripts?.length > 0) {
-      for (const sharedId of script.sharedScripts) {
-        scriptIdsToFetch.add(sharedId);
+    const closure = resolveWorkspaceScriptClosure(script, scriptsMap, {
+      getTypescriptSource: (candidate) => candidate.code.source.typescript,
+    });
+
+    for (const scriptId of closure) {
+      if (scriptId === script.id || injectedShared.has(scriptId)) {
+        continue;
+      }
+
+      if (scriptsMap[scriptId]?.shared) {
+        ordered.push(scriptId);
+        injectedShared.add(scriptId);
       }
     }
   }
 
+  return ordered;
+}
+
+/**
+ * Collects script IDs whose compiled payloads must be loaded for injection,
+ * including the transitive shared-module closure of matching userscripts.
+ */
+export function collectCompiledCodeScriptIds(
+  matchingScripts: Userscript[],
+  scriptsMap: Userscripts
+): string[] {
+  const scriptIdsToFetch = new Set<string>(
+    matchingScripts.map((script) => script.id)
+  );
+
+  for (const sharedId of collectSharedScriptIdsToInject(
+    matchingScripts,
+    scriptsMap
+  )) {
+    scriptIdsToFetch.add(sharedId);
+  }
+
   return Array.from(scriptIdsToFetch);
+}
+
+/**
+ * True when a userscript (or a nested shared import) refers to a
+ * `scripts/<module>/main` path that is not a shared module in `scriptsMap`.
+ */
+export function hasUnresolvedSharedImports(
+  script: Userscript,
+  scriptsMap: Userscripts
+): boolean {
+  const sharedByModulePath = new Map<string, string>();
+
+  for (const candidate of Object.values(scriptsMap)) {
+    if (candidate.shared) {
+      sharedByModulePath.set(getScriptModulePath(candidate), candidate.id);
+    }
+  }
+
+  const seen = new Set<string>();
+
+  const visit = (scriptId: string): boolean => {
+    if (seen.has(scriptId)) {
+      return false;
+    }
+
+    seen.add(scriptId);
+
+    const current = scriptsMap[scriptId];
+
+    if (!current) {
+      return true;
+    }
+
+    for (const modulePath of getSharedImportModuleNames(
+      current.code.source.typescript
+    )) {
+      const dependencyId = sharedByModulePath.get(modulePath);
+
+      if (!dependencyId || visit(dependencyId)) {
+        return true;
+      }
+    }
+
+    return false;
+  };
+
+  return visit(script.id);
+}
+
+export function sharedDependenciesAreFresh(
+  script: Userscript,
+  scriptsMap: Userscripts,
+  compiledCodeMap: Record<string, CompiledCodeEntry | undefined>,
+  minifyCompiledOutput?: boolean
+): boolean {
+  if (hasUnresolvedSharedImports(script, scriptsMap)) {
+    return false;
+  }
+
+  for (const sharedId of collectSharedScriptIdsToInject([script], scriptsMap)) {
+    const shared = scriptsMap[sharedId];
+    const entry = compiledCodeMap[sharedId];
+
+    if (
+      !shared?.shared ||
+      !isCompiledArtifactFresh(shared, entry, minifyCompiledOutput) ||
+      !entry?.javascript?.trim()
+    ) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 /**
@@ -96,39 +208,6 @@ export function collectEnabledCdnModuleIds(
       if (module?.enabled) {
         ordered.push(moduleId);
         injectedModules.add(moduleId);
-      }
-    }
-  }
-
-  return ordered;
-}
-
-/**
- * Returns shared-script IDs to inject (deduplicated, first-seen order) for the
- * matching userscripts. Only entries marked `shared` are included.
- */
-export function collectSharedScriptIdsToInject(
-  matchingScripts: Userscript[],
-  scriptsMap: Userscripts
-): string[] {
-  const injectedShared = new Set<string>();
-  const ordered: string[] = [];
-
-  for (const script of matchingScripts) {
-    if (!script.sharedScripts?.length) {
-      continue;
-    }
-
-    for (const sharedId of script.sharedScripts) {
-      if (injectedShared.has(sharedId)) {
-        continue;
-      }
-
-      const shared = scriptsMap[sharedId];
-
-      if (shared?.shared) {
-        ordered.push(sharedId);
-        injectedShared.add(sharedId);
       }
     }
   }

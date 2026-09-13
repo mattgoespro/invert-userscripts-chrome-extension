@@ -13,9 +13,7 @@ export {
  *
  * Open script files are real Monaco text models at canonical
  * `file:///scripts/<module>/...` URIs. The workspace service keeps models for
- * the active script, its import / sharedScripts closure, every shared module
- * (so switching away does not dispose modules other scripts still import),
- * and dirty offscreen drafts. Because the TypeScript language service runs
+ * the active script, its import closure, and dirty offscreen drafts. Because
  * with eager model sync, the worker sees these models as actual program files:
  * `import { x } from "scripts/<module>/main"` resolves through the
  * `baseUrl`/`paths` mapping straight to the dependency's real source — no
@@ -31,9 +29,9 @@ export interface WorkspaceFile {
   language: UserscriptSourceLanguage;
   contents: string;
   /**
-   * When true and the model is currently attached to an editor, its buffer is
-   * left untouched (the editor owns it — content flows back through
-   * `onDidChangeContent`). Detached models are always updated.
+   * When true, leave this model's buffer untouched. Dirty drafts own the
+   * buffer even after the editor detaches during a script switch — a lagging
+   * store value must not clobber unsaved Monaco text.
    */
   preserveAttachedBuffer?: boolean;
 }
@@ -95,10 +93,7 @@ export function upsertWorkspaceModel(
   const existing = getExistingModel(uri);
 
   if (existing) {
-    const skipWrite =
-      options?.preserveAttachedBuffer && existing.isAttachedToEditor();
-
-    if (!skipWrite) {
+    if (!options?.preserveAttachedBuffer) {
       replaceModelContents(existing, contents);
     }
 

@@ -1,4 +1,8 @@
 import { createAsyncThunk } from "@reduxjs/toolkit/react";
+import {
+  buildCompiledCodeEntry,
+  hashUserscriptCompileSources,
+} from "@shared/compile-metadata";
 import type { Userscript } from "@shared/model";
 import { ChromeSyncStorage, CompiledCodeStorage } from "@shared/storage";
 import {
@@ -34,16 +38,27 @@ export const createUserscript = createAsyncThunk(
           css: "",
         },
       },
-      urlPatterns: [],
-      runAt: "beforePageLoad",
+      urlPatterns: ["*://*/*"],
+      runAt: "afterPageLoad",
       createdAt: timestamp,
       updatedAt: timestamp,
     };
     await ChromeSyncStorage.saveScript(script);
-    await CompiledCodeStorage.saveCompiledCode(script.id, {
-      javascript: "",
-      css: "",
-    });
+    try {
+      const editorSettings = await ChromeSyncStorage.getEditorSettings();
+      await CompiledCodeStorage.saveCompiledCode(
+        script.id,
+        buildCompiledCodeEntry("", "", {
+          minifyCompiledOutput: editorSettings.minifyCompiledOutput ?? false,
+          sourceHash: hashUserscriptCompileSources(script),
+        })
+      );
+    } catch (error) {
+      console.warn(
+        "Failed to seed compiled code for new userscript:",
+        error
+      );
+    }
     return script;
   }
 );
@@ -82,6 +97,8 @@ export const toggleUserscript = createAsyncThunk(
       script: updatedScript,
       appliedTabCount: applyResult.appliedTabCount,
       removedTabCount: applyResult.removedTabCount ?? 0,
+      applySuccess: applyResult.success,
+      staleSkipCount: applyResult.staleSkipCount ?? 0,
     };
   }
 );

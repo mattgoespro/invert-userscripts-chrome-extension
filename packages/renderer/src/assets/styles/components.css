@@ -97,7 +97,7 @@
     transform: rotate(45deg);
   }
 
-  /* --- Resize Handle (attribute selectors + ::after pseudo) --- */
+  /* --- Resize Handle (always-visible 1px split; accent on hover/drag) --- */
 
   .resize-handle {
     position: relative;
@@ -108,15 +108,16 @@
   .resize-handle::after {
     content: "";
     position: absolute;
-    inset: 0;
-    background: var(--accent);
-    opacity: 0;
-    transition: opacity 0.1s ease-out 0.1s;
+    background: var(--border);
+    transition:
+      background-color 0.1s ease-out 0.1s,
+      width 0.1s ease-out 0.1s,
+      height 0.1s ease-out 0.1s;
   }
 
   .resize-handle[data-separator="hover"]::after,
   .resize-handle[data-separator="active"]::after {
-    opacity: 1;
+    background: var(--accent);
   }
 
   .resize-handle[data-separator="active"]::after {
@@ -124,13 +125,39 @@
   }
 
   .resize-handle--horizontal {
-    width: 4px;
+    width: 5px;
     cursor: col-resize;
   }
 
+  .resize-handle--horizontal::after {
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 1px;
+    transform: translateX(-50%);
+  }
+
+  .resize-handle--horizontal[data-separator="hover"]::after,
+  .resize-handle--horizontal[data-separator="active"]::after {
+    width: 3px;
+  }
+
   .resize-handle--vertical {
-    height: 4px;
+    height: 5px;
     cursor: row-resize;
+  }
+
+  .resize-handle--vertical::after {
+    left: 0;
+    right: 0;
+    top: 50%;
+    height: 1px;
+    transform: translateY(-50%);
+  }
+
+  .resize-handle--vertical[data-separator="hover"]::after,
+  .resize-handle--vertical[data-separator="active"]::after {
+    height: 3px;
   }
 
   /* --- Theme Preview (force-hide cursor in read-only editor) --- */

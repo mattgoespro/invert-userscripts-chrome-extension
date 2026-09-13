@@ -7,6 +7,7 @@ const EMPTY_APPLY_RESPONSE: ApplyScriptsResponse = {
   success: false,
   appliedTabCount: 0,
   removedTabCount: 0,
+  staleSkipCount: 0,
 };
 
 export async function sendApplyScriptsMessage(
@@ -19,9 +20,9 @@ export async function sendApplyScriptsMessage(
   };
 
   try {
-    const response = (await chrome.runtime.sendMessage(
-      message
-    )) as ApplyScriptsResponse | undefined;
+    const response = (await chrome.runtime.sendMessage(message)) as
+      | ApplyScriptsResponse
+      | undefined;
 
     return response ?? EMPTY_APPLY_RESPONSE;
   } catch (error) {
@@ -41,9 +42,9 @@ export async function sendSetEnabledMessage(
   };
 
   try {
-    const response = (await chrome.runtime.sendMessage(
-      message
-    )) as ApplyScriptsResponse | undefined;
+    const response = (await chrome.runtime.sendMessage(message)) as
+      | ApplyScriptsResponse
+      | undefined;
 
     return response ?? EMPTY_APPLY_RESPONSE;
   } catch (error) {
@@ -58,4 +59,48 @@ export function formatMatchingTabsToast(
 ): string {
   const noun = count === 1 ? "tab" : "tabs";
   return `${verb} ${count} matching ${noun}`;
+}
+
+export function formatApplyFailureToast(appliedTabCount: number): string {
+  if (appliedTabCount > 0) {
+    return `Applied to ${appliedTabCount} matching ${appliedTabCount === 1 ? "tab" : "tabs"}, but some injections failed.`;
+  }
+
+  return "Failed to inject the script into matching tabs.";
+}
+
+export function formatStaleSkipToast(): string {
+  return "Matching tabs were skipped until compiled output is current.";
+}
+
+export function describeApplyResult(result: {
+  success: boolean;
+  appliedTabCount: number;
+  staleSkipCount?: number;
+}): { variant: "info" | "error"; message: string } {
+  if (!result.success) {
+    return {
+      variant: "error",
+      message: formatApplyFailureToast(result.appliedTabCount),
+    };
+  }
+
+  if (result.appliedTabCount === 0 && (result.staleSkipCount ?? 0) > 0) {
+    return {
+      variant: "info",
+      message: formatStaleSkipToast(),
+    };
+  }
+
+  if (result.appliedTabCount > 0 && (result.staleSkipCount ?? 0) > 0) {
+    return {
+      variant: "info",
+      message: `${formatMatchingTabsToast(result.appliedTabCount, "Applied to")}. Some matching tabs were skipped until compiled output is current.`,
+    };
+  }
+
+  return {
+    variant: "info",
+    message: formatMatchingTabsToast(result.appliedTabCount, "Applied to"),
+  };
 }
