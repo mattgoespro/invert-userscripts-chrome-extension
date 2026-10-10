@@ -76,6 +76,7 @@
   "markdown.extension.italic.indicator": "_",
   "markdown.preview.fontSize": 11,
   "markdown.validate.enabled": true,
+  "npm.packageManager": "pnpm",
   "prettier.configPath": "prettier.config.mjs",
   "prettier.requireConfig": true,
   "search.exclude": {

@@ -17,8 +17,8 @@
     "developer tools"
   ],
   "scripts": {
-    "build": "TS_NODE_PROJECT=tsconfig.tools.json NODE_OPTIONS='--loader ts-node/esm' webpack --mode production",
-    "dev": "TS_NODE_PROJECT=tsconfig.tools.json NODE_OPTIONS='--loader ts-node/esm' webpack --mode development --watch",
+    "build": "webpack --mode production",
+    "dev": "webpack --mode development --watch",
     "lint": "eslint packages plugins examples",
     "test": "node --import ./tests/register-ts-node.mjs --import ./tests/register-aliases.mjs --test tests/*.test.mjs",
     "format": "prettier --write .",

@@ -66,6 +66,7 @@ export function ScriptEditor() {
   );
 
   const drawerPanelRef = useRef<PanelImperativeHandle>(null);
+  const drawerCollapsedRef = useRef(outputDrawerCollapsed);
 
   const typescriptSource =
     draft?.typescript ?? script?.code.source.typescript ?? "";
@@ -149,6 +150,12 @@ export function ScriptEditor() {
     }
 
     const collapsed = drawerPanelRef.current.isCollapsed();
+    if (collapsed === drawerCollapsedRef.current) {
+      return;
+    }
+
+    // Resize events also fire when the viewport changes without toggling the drawer.
+    drawerCollapsedRef.current = collapsed;
     setIsDrawerCollapsed(collapsed);
     dispatch(setOutputDrawerCollapsed(collapsed));
   };
