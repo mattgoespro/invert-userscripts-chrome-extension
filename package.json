@@ -19,15 +19,17 @@
   "scripts": {
     "build": "webpack --mode production",
     "dev": "webpack --mode development --watch",
-    "clean": "rm -rf dist && rm -rf node_modules/.cache",
     "lint": "eslint packages plugins examples",
     "test": "node --import ./tests/register-ts-node.mjs --import ./tests/register-aliases.mjs --test tests/*.test.mjs",
-    "check:manifest": "node scripts/check-manifest.mjs",
     "format": "prettier --write .",
-    "build:examples": "tsc -p examples/tsconfig.json",
+    "clean": "rm -rf dist && rm -rf node_modules/.cache",
     "e2e": "playwright test --headed",
     "e2e:headless": "playwright test",
-    "e2e:install": "playwright install chromium"
+    "e2e:install": "playwright install chromium",
+    "unpack": "tsx scripts/unpack.ts",
+    "preunpack": "rm -rf dist && npm run build",
+    "build:examples": "tsc -p examples/tsconfig.json",
+    "check:manifest": "node scripts/check-manifest.mjs"
   },
   "dependencies": {
     "@reduxjs/toolkit": "^2.11.2",
@@ -87,6 +89,7 @@
     "ts-loader": "^9.5.4",
     "ts-node": "^10.9.2",
     "tsconfig-paths-webpack-plugin": "^4.2.0",
+    "tsx": "^4.23.15",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.53.1",
     "webpack": "^5.104.1",
