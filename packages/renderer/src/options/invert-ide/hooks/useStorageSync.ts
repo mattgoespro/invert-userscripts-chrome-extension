@@ -1,8 +1,9 @@
+import { createStorageSyncCoordinator } from "@/shared/services/storage-reconciliation";
 import { useAppDispatch } from "@/shared/store/hooks";
 import { getAffectedScriptIdsFromStorageChanges } from "@/shared/store/slices/editor-drafts/helpers";
 import { refreshScriptsFromStorage } from "@/shared/store/slices/editor-drafts/thunks.storage-sync";
 import { rebuildCompiledUserscripts } from "@/shared/store/slices/userscripts/thunks.userscripts";
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 
 /**
  * Keep IDE drafts/entities reconciled with chrome.storage.sync.
@@ -15,56 +16,21 @@ import { useEffect, useRef } from "react";
  */
 export function useStorageSync() {
   const dispatch = useAppDispatch();
-  const refreshInFlightRef = useRef(false);
-  const pendingRefreshRef = useRef<string[] | "all" | null>(null);
-
   useEffect(() => {
-    const mergePending = (scriptIds?: string[]) => {
-      if (scriptIds === undefined || pendingRefreshRef.current === "all") {
-        pendingRefreshRef.current = "all";
-        return;
-      }
-
-      pendingRefreshRef.current = [
-        ...new Set([...(pendingRefreshRef.current ?? []), ...scriptIds]),
-      ];
-    };
-
-    const refresh = async (scriptIds?: string[]) => {
-      if (refreshInFlightRef.current) {
-        mergePending(scriptIds);
-        return;
-      }
-
-      refreshInFlightRef.current = true;
-
-      try {
-        await dispatch(refreshScriptsFromStorage({ scriptIds })).unwrap();
-      } catch (error) {
-        console.error("Failed to refresh scripts from storage:", error);
-      } finally {
-        refreshInFlightRef.current = false;
-      }
-
-      const pending = pendingRefreshRef.current;
-      pendingRefreshRef.current = null;
-
-      if (pending === "all") {
-        void refresh();
-        return;
-      }
-
-      if (pending && pending.length > 0) {
-        void refresh(pending);
-        return;
-      }
-
-      try {
-        await dispatch(rebuildCompiledUserscripts({ scope: "stale" })).unwrap();
-      } catch (error) {
-        console.error("Failed to rebuild stale compiled scripts:", error);
-      }
-    };
+    const coordinator = createStorageSyncCoordinator({
+      refresh: (scriptIds) =>
+        dispatch(refreshScriptsFromStorage({ scriptIds })).unwrap(),
+      rebuild: () =>
+        dispatch(rebuildCompiledUserscripts({ scope: "stale" })).unwrap(),
+      onError: (phase, error) => {
+        console.error(
+          phase === "refresh"
+            ? "Failed to refresh scripts from storage:"
+            : "Failed to rebuild stale compiled scripts:",
+          error
+        );
+      },
+    });
 
     const onStorageChanged = (
       changes: Record<string, chrome.storage.StorageChange>,
@@ -80,12 +46,12 @@ export function useStorageSync() {
         return;
       }
 
-      void refresh(affectedIds);
+      void coordinator.requestRefresh(affectedIds);
     };
 
     const onVisibilityChange = () => {
       if (document.visibilityState === "visible") {
-        void refresh();
+        void coordinator.requestRefresh();
       }
     };
 
@@ -93,6 +59,7 @@ export function useStorageSync() {
     document.addEventListener("visibilitychange", onVisibilityChange);
 
     return () => {
+      coordinator.dispose();
       chrome.storage.onChanged.removeListener(onStorageChanged);
       document.removeEventListener("visibilitychange", onVisibilityChange);
     };

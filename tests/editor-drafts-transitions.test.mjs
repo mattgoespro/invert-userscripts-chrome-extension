@@ -38,10 +38,7 @@ describe("applyUpdateDraftBuffer", () => {
   it("marks dirty and bumps revision when code changes", () => {
     const draft = draftFromScript(buildUserscriptFixture());
 
-    assert.equal(
-      applyUpdateDraftBuffer(draft, "scss", ".edited {}"),
-      true
-    );
+    assert.equal(applyUpdateDraftBuffer(draft, "scss", ".edited {}"), true);
     assert.equal(draft.scss, ".edited {}");
     assert.equal(draft.dirty.scss, true);
     assert.equal(draft.revision, 1);
@@ -127,6 +124,7 @@ describe("conflict resolution", () => {
     const script = buildUserscriptFixture({ id: "s1" });
     const pending = {
       s1: {
+        conflictId: "observation-1",
         scriptId: "s1",
         scriptName: script.name,
         remoteScript: script,
@@ -135,7 +133,7 @@ describe("conflict resolution", () => {
     };
     const draft = dirtyLocalDraft(script);
 
-    applyResolveConflictKeepLocal(pending, "s1");
+    applyResolveConflictKeepLocal(pending, "s1", "observation-1");
     assert.equal(pending.s1, undefined);
     assert.equal(draft.dirty.typescript, true);
   });

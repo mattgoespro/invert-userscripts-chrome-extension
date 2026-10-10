@@ -4,6 +4,11 @@ import { normalizeUserscript } from "./userscript-hydrate";
 
 /**
  * Resolve `scripts/<module>/main` imports in source to shared script IDs.
+ *
+ * Editor IntelliSense can offer `scripts/<id>/main` for any userscript (including
+ * unsaved / non-Shared ones). Those imports must not block Ctrl+S: only Shared
+ * matches become `sharedScripts`. Duplicate Shared module paths and self-imports
+ * still throw.
  */
 export function resolveSharedScriptIdsFromSourceOrThrow(
   script: Userscript,
@@ -35,13 +40,13 @@ export function resolveSharedScriptIdsFromSourceOrThrow(
     sharedByModuleName.set(modulePath, candidate.id);
   }
 
-  return moduleNames.map((modulePath) => {
+  const ids: string[] = [];
+
+  for (const modulePath of moduleNames) {
     const sharedScriptId = sharedByModuleName.get(modulePath);
 
     if (!sharedScriptId) {
-      throw new Error(
-        `Unknown shared module import "scripts/${modulePath}/main" in script "${script.name}".`
-      );
+      continue;
     }
 
     if (sharedScriptId === script.id) {
@@ -50,8 +55,10 @@ export function resolveSharedScriptIdsFromSourceOrThrow(
       );
     }
 
-    return sharedScriptId;
-  });
+    ids.push(sharedScriptId);
+  }
+
+  return ids;
 }
 
 export function hasSharedJavascriptConfigChanged(

@@ -1,5 +1,5 @@
-import { test, expect, buildUserscript } from "../../fixtures";
-import { OptionsPage, ScriptsPage } from "../../pages";
+import { test, expect, buildUserscript } from "../fixtures";
+import { OptionsPage, ScriptsPage } from "../page-objects";
 import {
   buildCompiledLocalEntry,
   matchingExampleScript,
@@ -8,7 +8,7 @@ import {
   sendApplyScripts,
   waitForHtmlOpacity,
   waitForInvertMarker,
-} from "../../helpers/injection";
+} from "../helpers/injection";
 
 const MARKER_JS = `document.documentElement.setAttribute("data-invert","on");`;
 const OPACITY_CSS = `html { opacity: 0.5 !important; }`;

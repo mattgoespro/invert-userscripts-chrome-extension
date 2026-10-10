@@ -1,5 +1,5 @@
-import { test, expect, buildUserscript } from "../../fixtures";
-import { OptionsPage, ScriptsPage } from "../../pages";
+import { test, expect, buildUserscript } from "../fixtures";
+import { OptionsPage, ScriptsPage } from "../page-objects";
 
 test.describe("Scripts — edit and save", () => {
   test("renamed script name persists after page reload", async ({

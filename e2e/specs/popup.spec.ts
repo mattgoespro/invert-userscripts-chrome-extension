@@ -1,5 +1,5 @@
-import { test, expect, buildUserscript } from "../../fixtures";
-import { PopupPage } from "../../pages";
+import { test, expect, buildUserscript } from "../fixtures";
+import { PopupPage } from "../page-objects";
 
 test.describe("Popup", () => {
   test("shows empty state when no scripts match the current tab", async ({

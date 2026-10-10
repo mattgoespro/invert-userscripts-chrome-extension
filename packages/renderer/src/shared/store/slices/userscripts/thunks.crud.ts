@@ -1,21 +1,22 @@
-import { createAsyncThunk } from "@reduxjs/toolkit/react";
 import {
-  buildCompiledCodeEntry,
-  hashUserscriptCompileSources,
-} from "@shared/compile-metadata";
+  acceptDeletedScript,
+  acceptPublishedScript,
+} from "./actions.publication";
+import { createAsyncThunk } from "@reduxjs/toolkit/react";
 import type { Userscript } from "@shared/model";
 import { ChromeSyncStorage, CompiledCodeStorage } from "@shared/storage";
 import {
-  normalizeUserscript,
-  toStorageSafeUserscript,
-} from "@shared/userscript-hydrate";
+  publishNewScript,
+  publishEnabledToggle,
+  removePublishedScript,
+} from "../../../services/userscript-publication";
 import { uuid } from "@shared/utils";
 import { sendSetEnabledMessage } from "./messaging";
 import { DefaultNewUserscriptName } from "./state.userscripts";
 
 export const createUserscript = createAsyncThunk(
   "userscripts/createUserscript",
-  async () => {
+  async (_, { dispatch }) => {
     const timestamp = Date.now();
     const id = uuid();
     const script: Userscript = {
@@ -24,7 +25,7 @@ export const createUserscript = createAsyncThunk(
       enabled: false,
       status: "saved",
       shared: false,
-      moduleName: id,
+      moduleName: "",
       sharedScripts: [],
       globalModules: [],
       typeDefinitions: "",
@@ -43,54 +44,49 @@ export const createUserscript = createAsyncThunk(
       createdAt: timestamp,
       updatedAt: timestamp,
     };
-    await ChromeSyncStorage.saveScript(script);
-    try {
-      const editorSettings = await ChromeSyncStorage.getEditorSettings();
-      await CompiledCodeStorage.saveCompiledCode(
-        script.id,
-        buildCompiledCodeEntry("", "", {
-          minifyCompiledOutput: editorSettings.minifyCompiledOutput ?? false,
-          sourceHash: hashUserscriptCompileSources(script),
-        })
-      );
-    } catch (error) {
-      console.warn(
-        "Failed to seed compiled code for new userscript:",
-        error
-      );
-    }
+    await publishNewScript(
+      script,
+      {
+        sourceStorage: ChromeSyncStorage,
+        compiledStorage: CompiledCodeStorage,
+      },
+      async () => {
+        const settings = await ChromeSyncStorage.getEditorSettings();
+        return { minifyCompiledOutput: settings.minifyCompiledOutput ?? false };
+      },
+      (published) => {
+        dispatch(acceptPublishedScript({ script: published, kind: "created" }));
+      }
+    );
     return script;
   }
 );
 
 export const deleteUserscript = createAsyncThunk(
   "userscripts/deleteUserscript",
-  async (scriptId: string) => {
-    await ChromeSyncStorage.deleteScript(scriptId);
-    await CompiledCodeStorage.deleteCompiledCode(scriptId);
+  async (scriptId: string, { dispatch }) => {
+    await removePublishedScript(
+      scriptId,
+      ChromeSyncStorage,
+      CompiledCodeStorage,
+      (id) => {
+        dispatch(acceptDeletedScript(id));
+      }
+    );
     return scriptId;
   }
 );
 
 export const toggleUserscript = createAsyncThunk(
   "userscripts/toggleUserscript",
-  async (scriptId: string) => {
-    const scriptsMap = await ChromeSyncStorage.getAllScripts();
-    const script = normalizeUserscript(scriptsMap[scriptId]);
-
-    if (!script) {
-      throw new Error(`Userscript not found: ${scriptId}`);
-    }
-
-    const updatedScript: Userscript = {
-      ...script,
-      enabled: !script.enabled,
-    };
-
-    await ChromeSyncStorage.saveScript(toStorageSafeUserscript(updatedScript));
-    const applyResult = await sendSetEnabledMessage(
+  async (scriptId: string, { dispatch }) => {
+    const { script: updatedScript, applyResult } = await publishEnabledToggle(
       scriptId,
-      updatedScript.enabled
+      ChromeSyncStorage,
+      (script) => {
+        dispatch(acceptPublishedScript({ script, kind: "toggled" }));
+      },
+      sendSetEnabledMessage
     );
 
     return {

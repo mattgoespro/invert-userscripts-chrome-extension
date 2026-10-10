@@ -1,8 +1,8 @@
 import path from "path";
-import { test, expect, buildUserscript } from "../../fixtures";
-import { OptionsPage, ScriptsPage } from "../../pages";
+import { test, expect, buildUserscript } from "../fixtures";
+import { OptionsPage, ScriptsPage } from "../page-objects";
 
-const FIXTURE_FILE = path.join(import.meta.dirname, "../data/scripts.json");
+const FIXTURE_FILE = path.join(import.meta.dirname, "../fixtures/scripts.json");
 
 test.describe("Scripts — import / export", () => {
   test("exports scripts as a downloadable JSON file", async ({

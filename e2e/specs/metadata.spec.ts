@@ -1,5 +1,5 @@
-import { test, expect, buildUserscript } from "../../fixtures";
-import { OptionsPage, ScriptsPage } from "../../pages";
+import { test, expect, buildUserscript } from "../fixtures";
+import { OptionsPage, ScriptsPage } from "../page-objects";
 
 test.describe("Scripts — metadata", () => {
   test("URL pattern is saved and shown after reload", async ({

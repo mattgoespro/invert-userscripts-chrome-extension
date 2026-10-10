@@ -1,3 +1,4 @@
+import { captureEditorSave } from "@/shared/services/draft-save-lifecycle";
 import { FormatterLanguage } from "@/sandbox/formatter";
 import { useToast } from "@/shared/components/toast/ToastProvider";
 import { useAppDispatch, useAppSelector } from "@/shared/store/hooks";
@@ -201,6 +202,7 @@ export function CodeEditor(props: CodeEditorProps) {
           return;
         }
 
+        const applyFormattedCode = captureEditorSave(editorInstance);
         const code = editorInstance.getValue();
         const autoFormat = settings?.autoFormat ?? false;
 
@@ -257,22 +259,7 @@ export function CodeEditor(props: CodeEditorProps) {
               ? result.code
               : code;
 
-        const model = editorInstance.getModel();
-
-        if (!model || model.getValue() === savedCode) {
-          return;
-        }
-
-        // Apply formatting through executeEdits to preserve the cursor and
-        // undo stack. The resulting change event round-trips through the
-        // draft store, which no-ops on identical content.
-        const savedSelections = editorInstance.getSelections() ?? [];
-
-        editorInstance.executeEdits(
-          "prettier-format",
-          [{ range: model.getFullModelRange(), text: savedCode }],
-          savedSelections
-        );
+        applyFormattedCode(savedCode);
       }
     };
 

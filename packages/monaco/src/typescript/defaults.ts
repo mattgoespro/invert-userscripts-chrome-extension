@@ -1,5 +1,5 @@
 import { TypeScriptCompilerOptions } from "@shared/typescript";
-import type * as monaco from "monaco-editor";
+import * as monaco from "monaco-editor";
 
 /**
  * The TypeScript contribution module is imported directly by its ESM subpath.
@@ -64,6 +64,64 @@ export function ensureTypescriptDefaults(): void {
   tsContribution.typescriptDefaults.setDiagnosticsOptions({
     onlyVisible: true,
   });
+}
+
+let lastProgramFileSignature = "";
+let programRefreshGeneration = 0;
+
+/**
+ * Monaco's TS worker eager-syncs only the models that existed when it started,
+ * and validating one model does not pull sibling files into the worker.
+ *
+ * An unexported types pane is mounted only when that script becomes active, so
+ * `types.d.ts` is often created after `main.ts` is already in the program.
+ * Without a diagnostics refresh, `main.ts` keeps TS2304 until a full reload.
+ *
+ * Call this only when the set of TypeScript file URIs changes — not on every
+ * keystroke. Syncs every TS model into the existing worker, then bumps a dummy
+ * extra lib so DiagnosticsAdapter revalidates attached editors without tearing
+ * the worker down.
+ */
+export function refreshTypescriptDiagnosticsIfProgramFilesChanged(
+  fileUris: readonly string[]
+): void {
+  const signature = [...fileUris].sort().join("\0");
+
+  if (signature === lastProgramFileSignature) {
+    return;
+  }
+
+  lastProgramFileSignature = signature;
+
+  void syncTypescriptWorkerProgram().catch((error) => {
+    if (lastProgramFileSignature === signature) {
+      lastProgramFileSignature = "";
+    }
+
+    console.warn("TypeScript program refresh failed:", error);
+  });
+}
+
+async function syncTypescriptWorkerProgram(): Promise<void> {
+  const models = monaco.editor
+    .getModels()
+    .filter(
+      (model) => model.getLanguageId() === "typescript" && !model.isDisposed()
+    );
+
+  if (models.length === 0) {
+    return;
+  }
+
+  const accessor = await getTypeScriptWorkerAccessor();
+  await accessor(...models.map((model) => model.uri));
+
+  programRefreshGeneration += 1;
+  const disposable = tsContribution.typescriptDefaults.addExtraLib(
+    `// invert-ide program refresh ${programRefreshGeneration}\n`,
+    "file:///invert-ide-program-refresh.d.ts"
+  );
+  disposable.dispose();
 }
 
 // ── Module package.json Registration ──────────────────────────────────────────
@@ -131,10 +189,9 @@ const ambientTypeDefinitionEntries = new Map<
 >();
 
 /**
- * Syncs ambient (globally-visible) type definition extra libs. Used for the
- * export-stripped copies of type panes that contain exports: the real
- * `types.d.ts` model is a module in that case, so its declarations are only
- * importable — the ambient copy keeps them globally visible as well.
+ * Syncs leftover type-definition extra libs. Type panes are real `types.d.ts`
+ * models now; `WorkspaceService` calls this with an empty list so older
+ * `types.ambient.d.ts` copies cannot leak globals.
  */
 export function syncAmbientTypeDefinitionLibs(
   libs: AmbientTypeDefinitionLibInfo[]

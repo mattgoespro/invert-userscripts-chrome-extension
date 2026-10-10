@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   isModuleDeclarationFile,
+  shouldMountTypesModel,
+  shouldPublishAmbientTypeLib,
   stripExportsForAmbientLib,
 } from "../packages/renderer/src/shared/services/ambient-type-defs.ts";
 
@@ -17,6 +19,48 @@ describe("isModuleDeclarationFile", () => {
   it("treats ambient-only declarations as non-modules", () => {
     assert.equal(isModuleDeclarationFile("declare const foo: string;"), false);
     assert.equal(isModuleDeclarationFile("interface Foo { x: number }"), false);
+  });
+});
+
+describe("shouldMountTypesModel", () => {
+  it("always mounts the active types pane", () => {
+    assert.equal(
+      shouldMountTypesModel({
+        isActive: true,
+        typeDefinitions: "type Foo = string;",
+      }),
+      true
+    );
+  });
+
+  it("mounts an offscreen types pane once it has export", () => {
+    assert.equal(
+      shouldMountTypesModel({
+        isActive: false,
+        typeDefinitions: "export type Foo = string;",
+      }),
+      true
+    );
+  });
+
+  it("does not mount an offscreen unexported types pane", () => {
+    assert.equal(
+      shouldMountTypesModel({
+        isActive: false,
+        typeDefinitions: "type Foo = string;",
+      }),
+      false
+    );
+  });
+
+  it("unmounts an offscreen types pane after the last export is removed", () => {
+    assert.equal(
+      shouldMountTypesModel({
+        isActive: false,
+        typeDefinitions: "type Foo = string;\n",
+      }),
+      false
+    );
   });
 });
 
@@ -57,8 +101,110 @@ describe("stripExportsForAmbientLib", () => {
     assert.doesNotMatch(output, /export \*/);
   });
 
-  it("leaves non-export ambient content unchanged", () => {
-    const input = "declare global {\n  interface Window { x: number }\n}\n";
-    assert.equal(stripExportsForAmbientLib(input), input);
+  it("unwraps declare global blocks after stripping export {}", () => {
+    const input = [
+      "declare global {",
+      "  type PrettyStringifyOptions = { quoteStrings?: boolean };",
+      "  function prettyStringify(value: unknown): string;",
+      "}",
+      "",
+      "export {};",
+    ].join("\n");
+
+    const output = stripExportsForAmbientLib(input);
+
+    assert.match(
+      output,
+      /type PrettyStringifyOptions = \{ quoteStrings\?: boolean \};/
+    );
+    assert.match(output, /function prettyStringify\(value: unknown\): string;/);
+    assert.doesNotMatch(output, /declare\s+global/);
+    assert.doesNotMatch(output, /export\s*\{\s*\}/);
+  });
+
+  it("unwraps nested braces inside declare global type literals", () => {
+    const input = [
+      "declare global {",
+      "  type Box = { inner: { x: number } };",
+      "}",
+      "export {};",
+    ].join("\n");
+
+    const output = stripExportsForAmbientLib(input);
+
+    assert.match(output, /type Box = \{ inner: \{ x: number \} \};/);
+    assert.doesNotMatch(output, /declare\s+global/);
+  });
+});
+
+describe("shouldPublishAmbientTypeLib", () => {
+  it("publishes a stripped extra lib for the active pane when it uses export type", () => {
+    assert.equal(
+      shouldPublishAmbientTypeLib({
+        shared: true,
+        typesModeled: true,
+        typeDefinitions:
+          "export type PrettyStringifyOptions = { quoteStrings?: boolean };",
+      }),
+      true
+    );
+  });
+
+  it("publishes a stripped extra lib for a non-shared active export type pane", () => {
+    assert.equal(
+      shouldPublishAmbientTypeLib({
+        shared: false,
+        typesModeled: true,
+        typeDefinitions: "export type Foo = string;",
+      }),
+      true
+    );
+  });
+
+  it("does not extra-lib an ambient (non-module) types pane that is already in the program", () => {
+    assert.equal(
+      shouldPublishAmbientTypeLib({
+        shared: true,
+        typesModeled: true,
+        typeDefinitions:
+          "type PrettyStringifyOptions = { quoteStrings?: boolean };",
+      }),
+      false
+    );
+  });
+
+  it("does not extra-lib a modeled declare global module (the model already leaks globals)", () => {
+    assert.equal(
+      shouldPublishAmbientTypeLib({
+        shared: true,
+        typesModeled: true,
+        typeDefinitions:
+          "declare global {\n  type Foo = string;\n}\nexport {};\n",
+      }),
+      false
+    );
+  });
+
+  it("publishes offscreen shared type panes so other userscripts still see page globals", () => {
+    assert.equal(
+      shouldPublishAmbientTypeLib({
+        shared: true,
+        typesModeled: false,
+        typeDefinitions:
+          "type PrettyStringifyOptions = { quoteStrings?: boolean };",
+      }),
+      true
+    );
+  });
+
+  it("does not extra-lib unused non-shared type panes", () => {
+    assert.equal(
+      shouldPublishAmbientTypeLib({
+        shared: false,
+        typesModeled: false,
+        typeDefinitions: "export type Foo = string;",
+      }),
+      false
+    );
   });
 });

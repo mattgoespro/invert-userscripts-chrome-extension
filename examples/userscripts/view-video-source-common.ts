@@ -9,8 +9,16 @@ function isTopLevelFrame() {
   return window.self === window.top;
 }
 
+function getVideoSourceUrl(videoElement: HTMLVideoElement): string {
+  return videoElement.currentSrc || videoElement.src;
+}
+
+function hasVideoLoadFailed(videoElement: HTMLVideoElement): boolean {
+  return videoElement.error != null;
+}
+
 function videoDetailsFromElement(videoElement: HTMLVideoElement): VideoDetails {
-  return { src: videoElement.currentSrc, dpi: videoElement.videoHeight };
+  return { src: getVideoSourceUrl(videoElement), dpi: videoElement.videoHeight };
 }
 
 function getQuality(dpi: number): VideoQuality {
@@ -23,24 +31,35 @@ function getQuality(dpi: number): VideoQuality {
 function findVideoElementInDocument() {
   return retry(
     () => {
-      const videos = document.querySelectorAll("video");
+      const videos = Array.from(document.querySelectorAll("video"));
 
-      if ((videos ?? []).length === 0) {
+      if (videos.length === 0) {
         window.log.warn("No video elements have been loaded in page yet...");
         return null;
       }
 
-      const candidates = Array.from(videos).filter(
-        (el) => el.videoWidth >= 360
-      );
+      const readyVideos = videos.filter((el) => el.videoWidth >= 360);
 
-      if (candidates.length >= 1) {
-        if (candidates.length > 1) {
+      if (readyVideos.length >= 1) {
+        if (readyVideos.length > 1) {
           window.log.warn("Multiple videos found, returning the first result.");
         } else {
           window.log.info("Resolved video element.");
         }
-        return candidates[0];
+        return readyVideos[0];
+      }
+
+      const failedVideos = videos.filter(hasVideoLoadFailed);
+
+      if (failedVideos.length >= 1) {
+        if (failedVideos.length > 1) {
+          window.log.warn(
+            "Multiple videos failed to load, returning the first result."
+          );
+        } else {
+          window.log.warn("Resolved video element, but it failed to load.");
+        }
+        return failedVideos[0];
       }
 
       return null;
@@ -133,9 +152,20 @@ async function resolveAndObserveVideo(options: ResolveAndObserveVideoOptions) {
   }
 
   if (videoElement.error) {
+    const { code, message } = videoElement.error;
+    const src = getVideoSourceUrl(videoElement);
+
     window.log.warn(
-      `Video player encountered an error: ${videoElement.error.message}`
+      `Video player encountered an error (MediaError ${code}): ${
+        message || "no message"
+      }`
     );
+
+    if (src) {
+      window.log.warn(`Failed video source URL: ${src}`);
+    }
+
+    onPlayerError?.(videoElement.error);
     return;
   }
 

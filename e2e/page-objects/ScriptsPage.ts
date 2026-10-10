@@ -131,7 +131,7 @@ export class ScriptsPage {
     await this.scriptNameInput.fill(name);
     await this.scriptNameInput.press("Tab");
     // Wait for the updateUserscript thunk to complete: the sidebar reflects the new
-    // name only after the fulfilled action updates Redux state.
+    // name only after durable publication is accepted into Redux state.
     await expect(this.scriptListPanel).toContainText(name, { timeout: 15_000 });
   }
 
@@ -150,8 +150,7 @@ export class ScriptsPage {
     await input.press("Enter");
 
     // Wait for the updateUserscript thunk to complete:
-    // the [N] count badge in the toggle only appears after Redux processes
-    // the fulfilled action (storage write has completed).
+    // the [N] count badge appears after Redux accepts durable publication.
     await expect(toggle).toContainText("[", { timeout: 15_000 });
   }
 
@@ -224,7 +223,7 @@ export class ScriptsPage {
 
   /** Read the text content of the compiled output in the drawer. */
   async getCompiledOutput(): Promise<string> {
-    const drawer = this.page.locator("[data-panel-id='output-drawer']");
+    const drawer = this.page.locator("[data-testid='output-drawer']");
     // Read visible Monaco editor lines
     const lines = drawer.locator(".view-line");
     return (await lines.allTextContents()).join("\n");

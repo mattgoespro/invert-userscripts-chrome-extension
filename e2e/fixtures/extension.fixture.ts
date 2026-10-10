@@ -55,7 +55,7 @@ export const extensionTest = test.extend<
       await use(context);
       await context.close();
     },
-    { scope: "test" },
+    { scope: "worker" },
   ],
   extensionId: [
     async ({ extensionContext }, use) => {
@@ -86,7 +86,7 @@ export const extensionTest = test.extend<
 
       await use(match[1]);
     },
-    { scope: "test" },
+    { scope: "worker" },
   ],
   optionsPage: async ({ extensionContext, extensionId }, use) => {
     const page = await extensionContext.newPage();

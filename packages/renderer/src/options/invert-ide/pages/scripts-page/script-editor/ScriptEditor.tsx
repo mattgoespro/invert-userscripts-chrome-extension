@@ -1,3 +1,4 @@
+import { useLiveCompiledOutput } from "@/shared/hooks/useLiveCompiledOutput";
 import { CodeEditor } from "@/options/invert-ide/shared/CodeEditor";
 import { TypeDefinitionCodeEditor } from "@/options/invert-ide/components/code-editor/TypeDefinitionCodeEditor";
 import { TypeScriptCodeEditor } from "@/options/invert-ide/components/code-editor/TypeScriptCodeEditor";
@@ -37,9 +38,6 @@ import { useEditorErrorTracking } from "@/shared/hooks/useEditorErrorTracking";
 
 type EditorBuffer = UserscriptSourceLanguage | "typeDefinitions";
 
-/** Live Output drawer preview — not on the typing critical path. */
-const PREVIEW_DEBOUNCE_MS = 400;
-
 export function ScriptEditor() {
   const dispatch = useAppDispatch();
   const script = useAppSelector(selectCurrentUserscript);
@@ -51,8 +49,6 @@ export function ScriptEditor() {
   const panelSizes = useAppSelector(selectPanelSizes);
   const outputDrawerCollapsed = useAppSelector(selectOutputDrawerCollapsed);
 
-  const [liveJs, setLiveJs] = useState("");
-  const [liveCss, setLiveCss] = useState("");
   const [isDrawerCollapsed, setIsDrawerCollapsed] = useState(
     outputDrawerCollapsed
   );
@@ -70,10 +66,6 @@ export function ScriptEditor() {
   );
 
   const drawerPanelRef = useRef<PanelImperativeHandle>(null);
-  const tsDebounceRef = useRef<ReturnType<typeof setTimeout>>(null);
-  const scssDebounceRef = useRef<ReturnType<typeof setTimeout>>(null);
-  const tsPreviewGenerationRef = useRef(0);
-  const scssPreviewGenerationRef = useRef(0);
 
   const typescriptSource =
     draft?.typescript ?? script?.code.source.typescript ?? "";
@@ -93,87 +85,36 @@ export function ScriptEditor() {
     dispatch(ensureDraft(script));
   }, [dispatch, script]);
 
-  // Seed drawer from last saved compile; live preview only runs when open.
-  useEffect(() => {
+  const buildJavascript = useCallback(async (): Promise<string> => {
     if (!script) {
-      return;
+      return "";
     }
-
-    setLiveJs(script.code.compiled.javascript ?? "");
-    setLiveCss(script.code.compiled.css ?? "");
-  }, [script]);
-
-  useEffect(() => {
-    if (!script || isDrawerCollapsed) {
-      return;
-    }
-
-    let cancelled = false;
-    const generation = ++tsPreviewGenerationRef.current;
-
-    if (tsDebounceRef.current) {
-      clearTimeout(tsDebounceRef.current);
-    }
-
-    tsDebounceRef.current = setTimeout(() => {
-      void (async () => {
-        const result = await buildUserscriptJavascript(
-          script,
-          typescriptSource,
-          getCompiledOutputBuildOptions(settings)
-        );
-
-        if (!cancelled && generation === tsPreviewGenerationRef.current) {
-          setLiveJs(result.success && result.code ? result.code : "");
-        }
-      })();
-    }, PREVIEW_DEBOUNCE_MS);
-
-    return () => {
-      cancelled = true;
-      if (tsDebounceRef.current) {
-        clearTimeout(tsDebounceRef.current);
-      }
-    };
-  }, [
-    isDrawerCollapsed,
-    typescriptSource,
-    script,
-    settings.minifyCompiledOutput,
-  ]);
-
-  useEffect(() => {
-    if (!script || isDrawerCollapsed) {
-      return;
-    }
-
-    let cancelled = false;
-    const generation = ++scssPreviewGenerationRef.current;
-
-    if (scssDebounceRef.current) {
-      clearTimeout(scssDebounceRef.current);
-    }
-
-    scssDebounceRef.current = setTimeout(() => {
-      void (async () => {
-        const result = await buildUserscriptStylesheet(
-          scssSource,
-          getCompiledOutputBuildOptions(settings)
-        );
-
-        if (!cancelled && generation === scssPreviewGenerationRef.current) {
-          setLiveCss(result.success && result.code ? result.code : "");
-        }
-      })();
-    }, PREVIEW_DEBOUNCE_MS);
-
-    return () => {
-      cancelled = true;
-      if (scssDebounceRef.current) {
-        clearTimeout(scssDebounceRef.current);
-      }
-    };
-  }, [isDrawerCollapsed, scssSource, settings.minifyCompiledOutput]);
+    const result = await buildUserscriptJavascript(
+      script,
+      typescriptSource,
+      getCompiledOutputBuildOptions(settings)
+    );
+    return result.success && result.code ? result.code : "";
+  }, [script, typescriptSource, settings.minifyCompiledOutput]);
+  const buildCss = useCallback(async (): Promise<string> => {
+    const result = await buildUserscriptStylesheet(
+      scssSource,
+      getCompiledOutputBuildOptions(settings)
+    );
+    return result.success && result.code ? result.code : "";
+  }, [scssSource, settings.minifyCompiledOutput]);
+  const liveJs = useLiveCompiledOutput(
+    scriptId,
+    script?.code.compiled.javascript ?? "",
+    !isDrawerCollapsed,
+    buildJavascript
+  );
+  const liveCss = useLiveCompiledOutput(
+    scriptId,
+    script?.code.compiled.css ?? "",
+    !isDrawerCollapsed,
+    buildCss
+  );
 
   const flushDraftBuffer = useCallback(
     (buffer: EditorBuffer, code: string) => {
@@ -324,7 +265,11 @@ export function ScriptEditor() {
                       </div>
                     </Panel>
                     <ResizeHandle direction="vertical" />
-                    <Panel id="typescript-definitions" minSize="20%">
+                    <Panel
+                      id="typescript-definitions"
+                      data-testid="typescript-definitions"
+                      minSize="20%"
+                    >
                       <div className="relative flex h-full flex-col overflow-hidden bg-surface-base">
                         <div className="pointer-events-none absolute top-2 right-6 z-10 select-none">
                           <Typography

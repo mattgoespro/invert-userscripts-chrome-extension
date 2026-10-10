@@ -1,8 +1,11 @@
-import { test, expect, buildUserscript } from "../../fixtures";
-import { OptionsPage, ScriptsPage } from "../../pages";
+import { test, expect, buildUserscript } from "../fixtures";
+import { OptionsPage, ScriptsPage } from "../page-objects";
 
 test.describe("Scripts — create and delete", () => {
-  test("creates a new script and shows it in the list", async ({ optionsPage, clearStorage }) => {
+  test("creates a new script and shows it in the list", async ({
+    optionsPage,
+    clearStorage,
+  }) => {
     await clearStorage(optionsPage);
     await optionsPage.reload();
 
@@ -16,7 +19,10 @@ test.describe("Scripts — create and delete", () => {
     expect(names.length).toBeGreaterThanOrEqual(1);
   });
 
-  test("creates multiple scripts and each appears in the list", async ({ optionsPage, clearStorage }) => {
+  test("creates multiple scripts and each appears in the list", async ({
+    optionsPage,
+    clearStorage,
+  }) => {
     await clearStorage(optionsPage);
     await optionsPage.reload();
 
@@ -50,6 +56,8 @@ test.describe("Scripts — create and delete", () => {
     await scripts.deleteCurrentScript();
 
     // After deletion, the script should no longer appear in the list
-    await expect(optionsPage.getByText("DeleteMe", { exact: true })).toBeHidden();
+    await expect(
+      optionsPage.getByText("DeleteMe", { exact: true })
+    ).toBeHidden();
   });
 });

@@ -1,0 +1,158 @@
+---
+description: Userscript TypeScript workspace — Monaco models, types.d.ts pane, own-script ambient vs scripts/<m> imports, extra libs, IntelliSense/auto-import. Load when fixing TS2304/TS2307, type panes, module specifiers, or Monaco TS worker behavior.
+alwaysApply: true
+---
+
+# Userscript TypeScript workspace
+
+Invert IDE is not a normal TS project. Two **separate** pipelines share names like `scripts/<m>/main`. Changing one to fix a diagnostic usually breaks another.
+
+Before any types/Monaco/import change: name the channel, name which files are in the program, then change one lever. Verify **own-script unexported types**, **`export type` auto-import from `scripts/<m>/types`**, and **`scripts/<m>/main` imports across script switches**.
+
+## Two editor channels (do not collapse these)
+
+| Channel | User action | How it becomes visible | Typical failure |
+| --- | --- | --- | --- |
+| **Own-script ambient** | Types pane with **no** top-level `import`/`export` | Active `types.d.ts` is a non-module `.d.ts` | TS2304 `Cannot find name 'Foo'` in **that** script |
+| **ES modules** | `import { x } from "scripts/<m>/main"` or `.../types` | Real Monaco models at `file:///scripts/<m>/main.ts` and `.../types.d.ts` plus `package.json` extra libs | TS2307 `Cannot find module` |
+
+`export` never means “also a page global”. Unexported types-pane names are **own-script only**. Other userscripts must import exported names.
+
+```ts
+// Channel A — active types pane, no import/export. Visible in this script's main only.
+type PrettyStringifyOptions = { quoteStrings?: boolean };
+
+// Channel B — import from another (or the same) userscript.
+import type { PrettyStringifyOptions } from "scripts/pretty-stringify/types";
+import { prettyStringify } from "scripts/pretty-stringify/main";
+```
+
+## Editor vs runtime (short split)
+
+| | Editor (Monaco TS worker) | Runtime (page injection) |
+| --- | --- | --- |
+| Source of truth | `WorkspaceService` models + package.json / CDN extra libs | Build worker emit + `prepareCompiledJavascript` |
+| Type pane | IntelliSense only (not injected) | Ignored |
+| `scripts/<m>/main` | Resolved via `baseUrl`/`paths` to `main.ts` models | Rewritten to `__INVERT_SHARED__` **only for Shared** |
+| Closure | `getSharedImportModuleNames` on **`/main` only** | Injection plan from the same `/main` imports (`sharedScripts` is a save-time cache) |
+
+Do not fix editor diagnostics by changing compiled-output rewrite, and do not “fix” injection by adding extra libs. Non-Shared `scripts/<m>/…` imports may typecheck in the editor and still fail at runtime — that is out of scope.
+
+## File map
+
+| Area | Files |
+| --- | --- |
+| URIs | `packages/monaco/src/typescript/model-uris.ts` |
+| Compiler options, `package.json` extra libs, leftover ambient extra-lib disposer, CDN `addExtraLib` | `packages/monaco/src/typescript/defaults.ts` |
+| Models (eager sync) | `packages/monaco/src/typescript/vfs.ts` |
+| Specifier **string** completion only | `packages/monaco/src/typescript/module-specifier-*.ts` |
+| Program membership | `packages/renderer/src/shared/services/workspace-service.ts` |
+| Module detection + types mount rule | `packages/renderer/src/shared/services/ambient-type-defs.ts` (`isModuleDeclarationFile`, `shouldMountTypesModel`) |
+| `/main` import edges | `packages/shared/src/shared-module-imports.ts`, `workspace-closure.ts` |
+| Shared compiler options | `packages/shared/src/typescript.ts` |
+| Native TS quick-fixes are **not** here | `packages/renderer/src/shared/utils/quick-fix-provider.ts` (JSDoc + try/catch only) |
+| CDN `@types` | `packages/monaco/src/typescript/cdn-types.ts` |
+| Regression | `e2e/specs/type-declarations.spec.ts`, `e2e/specs/shared-imports.spec.ts` |
+| Units | `tests/model-uris.test.mjs`, `tests/ambient-type-defs.test.mjs`, `tests/workspace-closure.test.mjs`, `tests/module-specifier-completion.test.mjs` |
+
+## Virtual files (invariants)
+
+`getScriptModulePath` = sanitized `moduleName`, else script id.
+
+| Buffer | Model id | URI | When mounted |
+| --- | --- | --- | --- |
+| Userscript | `scripts/<m>/main` | `file:///scripts/<m>/main.ts` | **Every** userscript, always |
+| Types pane | `scripts/<m>/types.d` | `file:///scripts/<m>/types.d.ts` | Active **or** pane is a module (`import`/`export`) |
+| Styles | `scripts/<m>/styles` | `file:///scripts/<m>/styles.scss` | Active or dirty draft |
+| Package (extra lib) | — | `file:///scripts/<m>/package.json` | Every userscript module path |
+
+**Never extra-lib a types pane** (`types.ambient.d.ts` is gone). **Never rename the types buffer to `types.ts`.** `moduleDetection: Force` makes every `.ts` file a module. A plain `type Foo` in `types.ts` is **not** global (TS2304 in `script.ts`). `.d.ts` without `import`/`export` stays ambient **even with Force**. The UI caption `// types.d.ts` is the contract.
+
+`package.json` extra lib (all scripts, not per keystroke):
+
+```json
+{ "name": "scripts/<m>", "exports": { "./main": "./main.ts", "./types": "./types.d.ts" } }
+```
+
+That is why auto-import suggests `scripts/<m>/main` or `scripts/<m>/types` instead of a `file:///` relative path.
+
+## Compiler options (why they exist)
+
+Monaco starts from `TypeScriptCompilerOptions` (`isolatedModules: true`, `strict: false`, …) then sets:
+
+- `moduleDetection: Force` — userscript `.ts` files are modules even with no import/export, so two unsaved scripts in one program do not collide as global scripts. **`.d.ts` is the exception.**
+- `baseUrl: "file:///"`, `paths: { "scripts/*/*": ["scripts/*/*"] }` — specifiers map onto model URIs.
+- `setEagerModelSync(true)` — live models **are** the program. Extra libs are not a substitute for `main.ts` / module `types.d.ts`. The TS worker only eager-syncs models that existed at worker start, and validating `main.ts` does not pull a later `types.d.ts` into the worker — `refreshTypescriptDiagnosticsIfProgramFilesChanged` syncs every TS model and revalidates attached editors when the TypeScript URI set changes (script switch / first `export`).
+- `onlyVisible: true` — markers only for attached editors; offscreen files still resolve and feed auto-import.
+
+Do not turn off Force to “make types global”. That re-opens multi-script global collisions and fights `isolatedModules`.
+
+Caveat: an **active ambient** types pane is technically visible to other mains in the checker; `onlyVisible` hides that in the UI. Do not extra-lib to paper over it.
+
+## Types pane formats
+
+User-authored `script.typeDefinitions`. Nothing generates this from `script.ts`.
+
+`isModuleDeclarationFile` ≈ top-level `import`/`export`. `shouldMountTypesModel` = active **or** module.
+
+| Pane text | `types.d.ts` in program | Own `script.ts` free name? | `import type { X } from "scripts/<m>/types"` |
+| --- | --- | --- | --- |
+| Bare `type` / `interface` / `declare function` | Only while that script is **active** | Yes (ambient) | No (not exported) |
+| `export type X` / `export {}` | Yes (active or offscreen) | **No** — auto-import it (`./types` in the owner, `scripts/<m>/types` from others) | Yes |
+| Any `export`/`import` plus unexported aliases in the **same** file | Yes (whole file is a module) | Unexported aliases are **not** free names | Only exported names |
+
+Adding the first `export`/`import` to an offscreen pane mounts it (~50ms draft debounce). Removing the last one unmounts it; existing importers get TS2307 / missing-export.
+
+`stripExportsForAmbientLib` / `shouldPublishAmbientTypeLib` are leftover helpers. **Do not** register type-pane extra libs from `WorkspaceService`.
+
+## What is in the TypeScript program
+
+`WorkspaceService` is the only store → Monaco owner. Signature includes **every** script’s `typescript` and `typeDefinitions` draft text so export edits offscreen still resync.
+
+**`main.ts`:** every userscript. Required so auto-import can offer `import { x } from "scripts/<m>/main"` before the user has imported anything.
+
+**`types.d.ts`:** `shouldMountTypesModel` — not “every shared script”, not extra libs.
+
+**Closure edges:** regex on `scripts/<m>/main` in TS source (drafts). Used for CDN `@types` scope (active + closure + dirty drafts). **`import type` from `/types` does not add a closure edge.** `sharedScripts[]` is ignored for IntelliSense.
+
+Specifier completion lists **all** userscripts’ `main` and `types` entries (not only Shared). It does not mount files.
+
+## IntelliSense and quick-fixes
+
+| Feature | Owner |
+| --- | --- |
+| Named-import members, hover, TS2307, **auto-import / “cannot find name” import fixes** | Monaco TS worker, once models + `package.json` extra libs exist |
+| Completing `"scripts/<m>/…"` inside an import string | `registerModuleSpecifierCompletion` only (worker has no `readDirectory`) |
+| Wrap try/catch, generate JSDoc | `registerBespokeCodeActions` only |
+
+Do not add a custom “import from `scripts/…`” code action. If auto-import is missing, the exporter’s `main.ts`/`types.d.ts` is not in the program or `package.json` exports are wrong.
+
+## Diagnose before editing
+
+1. Read the **code** (2304 vs 2307 vs 7044). 7044 on callback params is often a consequence of a missing options type (2304).
+2. **2304 name:** is the types pane a module? If unexported, is **this** script active? If `export type`, the fix is auto-import from `scripts/<m>/types`, not an extra lib.
+3. **2307 module:** does `getScriptModulePath` match the specifier? Is `main.ts` / module `types.d.ts` mounted?
+4. **Auto-import missing:** is the exporting `main.ts` or module `types.d.ts` mounted? Is `package.json` registered?
+5. Prove with tsc-style reasoning: Force + `types.ts` sibling → 2304; Force + ambient `types.d.ts` sibling → own-script global. Do not ship a URI/`Force`/extra-lib change that you have not classified this way.
+
+## Forbidden “fixes”
+
+```ts
+// BAD — pane becomes a Force-module; plain `type Foo` is invisible to script.ts
+buildScriptModelId(script, "types") // → scripts/<m>/types  → types.ts
+
+// GOOD
+buildScriptModelId(script, "types") // → scripts/<m>/types.d → types.d.ts
+```
+
+- Do not extra-lib types panes to fake page globals (including stripped `export type` copies).
+- Do not mount every offscreen unexported `types.d.ts` (that would leak names across scripts).
+- Do not add a custom “import from `scripts/…`” code action.
+- Do not prove own-script globals with only `declare global` + `export {}` fixtures. Product case is a **plain** `type` alias (`e2e/specs/type-declarations.spec.ts`).
+- Do not change `moduleDetection`, types URI, extra-lib conditions, or mount sets in the same patch “to see what works”.
+
+## Verify
+
+- Units: `model-uris`, `ambient-type-defs` (`shouldMountTypesModel`), `workspace-closure`, `module-specifier-completion`.
+- E2E: `type-declarations.spec.ts` (own ambient + export-type auto-import + cross-script isolation) and `shared-imports.spec.ts` (TS2307 across switches + auto-import of unused main exports).
+- `pnpm run dev` overwrites `dist/`. E2E loads `dist/`. Do not mix a production `pnpm build` with an active webpack watch. After a watch compile, reload the unpacked extension; the reloader often has no connected options page.

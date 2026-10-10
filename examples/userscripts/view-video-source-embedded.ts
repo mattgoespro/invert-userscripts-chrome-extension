@@ -23,9 +23,7 @@ async function initViewVideoSourceEmbedded() {
       window.log.warn("Unable to find video in embedded frame.");
     },
     onPlayerError: () => {
-      window.log.warn(
-        "Video player encountered an error, stopping quality observer."
-      );
+      window.log.warn("Video player failed to load in the embedded frame.");
     },
     foundMessage: "Found video in embedded frame. Starting quality observer...",
   });

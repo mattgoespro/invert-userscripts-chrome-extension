@@ -1,6 +1,7 @@
 import {
   buildScriptFileUri,
   ensureTypescriptDefaults,
+  refreshTypescriptDiagnosticsIfProgramFilesChanged,
   registerModuleSpecifierCompletion,
   syncAmbientTypeDefinitionLibs,
   syncCdnModuleLibs,
@@ -9,19 +10,10 @@ import {
   type SharedModuleSpecifierInfo,
   type WorkspaceFile,
 } from "@packages/monaco";
-import { getScriptModulePath, type Userscript } from "@shared/model";
-import {
-  listImportedSharedScriptIds,
-  resolveWorkspaceScriptClosure,
-} from "@shared/workspace-closure";
-import { isDraftDirty } from "../store/slices/editor-drafts";
+import { getScriptModulePath } from "@shared/model";
 import type { AppStore, RootState } from "../store/store";
 import { registerBespokeCodeActions } from "../utils/quick-fix-provider";
-import {
-  isModuleDeclarationFile,
-  stripExportsForAmbientLib,
-} from "./ambient-type-defs";
-import { getDraftBuffer } from "./workspace-sync-plan";
+import { projectWorkspace } from "./workspace-sync-plan";
 
 /**
  * The single owner of all store -> Monaco synchronization.
@@ -29,12 +21,14 @@ import { getDraftBuffer } from "./workspace-sync-plan";
  * Subscribes to the Redux store exactly once and reconciles, debounced and
  * revision-diffed:
  *
- * - Monaco models for the active script, its import closure, dirty offscreen
- *   drafts, and shared modules imported by any script (kept resident so
- *   switching away from a consumer does not dispose its dependencies).
- *   Unrelated unused shared modules stay out of the TypeScript program.
- * - Static package.json extra libs and ambient type copies for the active
- *   closure (not for resident imports that are out of scope).
+ * - Monaco models for every userscript `main.ts` (auto-import needs exported
+ *   symbols before any `scripts/<m>/main` import exists). The active types
+ *   pane is always mounted; offscreen types panes are mounted only when they
+ *   are modules (`import`/`export`), so adding or removing `export` remounts
+ *   them on the next draft sync.
+ * - Static package.json extra libs for every script. Type panes are never
+ *   extra-libbed: unexported names are own-script ambient globals; exported
+ *   names are import-only via `scripts/<m>/types`.
  * - CDN `@types` only for modules referenced by the active closure and dirty
  *   drafts.
  *
@@ -44,22 +38,11 @@ import { getDraftBuffer } from "./workspace-sync-plan";
 
 const SYNC_DEBOUNCE_MS = 50;
 
-function selectSharedModuleInfos(
-  state: RootState
-): SharedModuleSpecifierInfo[] {
-  return Object.values(state.userscripts.scripts ?? {})
-    .filter((script) => script.shared)
-    .map((script) => ({
-      moduleName: getScriptModulePath(script),
-      scriptName: script.name,
-    }));
-}
-
-function selectCurrentScript(state: RootState) {
-  const currentScriptId = state.userscripts.currentScriptId;
-  return currentScriptId
-    ? (state.userscripts.scripts?.[currentScriptId] ?? undefined)
-    : undefined;
+function selectModuleInfos(state: RootState): SharedModuleSpecifierInfo[] {
+  return Object.values(state.userscripts.scripts ?? {}).map((script) => ({
+    moduleName: getScriptModulePath(script),
+    scriptName: script.name,
+  }));
 }
 
 let running = false;
@@ -73,7 +56,7 @@ export function startWorkspaceService(store: AppStore): () => void {
   ensureTypescriptDefaults();
 
   const completionDisposable = registerModuleSpecifierCompletion(() =>
-    selectSharedModuleInfos(store.getState())
+    selectModuleInfos(store.getState())
   );
   const codeActionsDisposable = registerBespokeCodeActions();
 
@@ -86,167 +69,38 @@ export function startWorkspaceService(store: AppStore): () => void {
     scheduled = null;
 
     const state = store.getState();
-    const scriptsMap = state.userscripts.scripts ?? {};
-    const scripts = Object.values(scriptsMap);
-    const drafts = state.editorDrafts.drafts;
-    const currentScript = selectCurrentScript(state);
-    const modules = state.modules.modules ?? {};
-
-    const getTypescriptSource = (script: Userscript) =>
-      getDraftBuffer(script, drafts[script.id], "typescript").contents;
-
-    const closureIds = resolveWorkspaceScriptClosure(
-      currentScript,
-      scriptsMap,
-      { getTypescriptSource }
-    );
-    const dirtyDraftIds = Object.entries(drafts)
-      .filter(([, draft]) => isDraftDirty(draft))
-      .map(([scriptId]) => scriptId)
-      .filter((scriptId) => scriptsMap[scriptId] != null);
-    const importedSharedIds = listImportedSharedScriptIds(
-      scriptsMap,
-      getTypescriptSource
+    const projection = projectWorkspace(
+      {
+        scripts: state.userscripts.scripts ?? {},
+        drafts: state.editorDrafts.drafts,
+        currentScriptId: state.userscripts.currentScriptId,
+        modules: state.modules.modules ?? {},
+      },
+      lastSignature
     );
 
-    const closureDeps = closureIds.filter(
-      (scriptId) => scriptId !== currentScript?.id
-    );
-    const included = new Set(closureDeps);
-    const workspaceIds = [...closureDeps];
-
-    if (currentScript) {
-      workspaceIds.push(currentScript.id);
-      included.add(currentScript.id);
-    }
-
-    for (const scriptId of [...dirtyDraftIds, ...importedSharedIds]) {
-      if (!included.has(scriptId)) {
-        workspaceIds.push(scriptId);
-        included.add(scriptId);
-      }
-    }
-
-    const typeScopeIds = new Set([
-      ...closureIds,
-      ...(currentScript ? [currentScript.id] : []),
-      ...dirtyDraftIds,
-    ]);
-
-    // Signature tracks draft revision + TypeScript text (import edges), not
-    // the persisted sharedScripts cache.
-    const signature = JSON.stringify([
-      workspaceIds.map((scriptId) => {
-        const script = scriptsMap[scriptId];
-        const typescript = script
-          ? getDraftBuffer(script, drafts[scriptId], "typescript").contents
-          : "";
-
-        return [
-          scriptId,
-          script ? getScriptModulePath(script) : "",
-          script?.updatedAt ?? 0,
-          drafts[scriptId]?.revision ?? -1,
-          typescript,
-        ];
-      }),
-      currentScript?.id,
-      Object.values(modules).map((module) => [module.id, module.packageName]),
-    ]);
-
-    if (signature === lastSignature) {
+    if (!projection) {
       return;
     }
 
-    lastSignature = signature;
-
-    const files: WorkspaceFile[] = [];
-    const ambientLibs: Array<{
-      id: string;
-      filePath: string;
-      contents: string;
-    }> = [];
-
-    for (const scriptId of workspaceIds) {
-      const script = scriptsMap[scriptId];
-
-      if (!script) {
-        continue;
-      }
-
-      const isActive = script.id === currentScript?.id;
-      const draft = drafts[script.id];
-      const main = getDraftBuffer(script, draft, "typescript");
-      const types = getDraftBuffer(script, draft, "typeDefinitions");
-
-      files.push({
-        uri: buildScriptFileUri(script, "main"),
-        language: "typescript",
-        contents: main.contents,
-        preserveAttachedBuffer: main.dirty,
-      });
-
-      if (isActive || typeScopeIds.has(script.id)) {
-        files.push({
-          uri: buildScriptFileUri(script, "types"),
-          language: "typescript",
-          contents: types.contents,
-          preserveAttachedBuffer: types.dirty,
-        });
-      }
-
-      if (isActive || isDraftDirty(draft)) {
-        const styles = getDraftBuffer(script, draft, "scss");
-        files.push({
-          uri: buildScriptFileUri(script, "styles"),
-          language: "scss",
-          contents: styles.contents,
-          preserveAttachedBuffer: styles.dirty,
-        });
-      }
-
-      if (
-        !isActive &&
-        typeScopeIds.has(script.id) &&
-        script.shared &&
-        isModuleDeclarationFile(types.contents)
-      ) {
-        const ambientContents = stripExportsForAmbientLib(types.contents);
-
-        if (ambientContents.trim()) {
-          const modulePath = getScriptModulePath(script);
-          ambientLibs.push({
-            id: `ambient:${script.id}`,
-            filePath: `file:///scripts/${modulePath}/types.ambient.d.ts`,
-            contents: ambientContents,
-          });
-        }
-      }
-    }
-
-    const modulePaths = scripts.map((script) => getScriptModulePath(script));
-    syncModulePackageJsons(modulePaths);
-    syncWorkspaceModels(files);
-    syncAmbientTypeDefinitionLibs(ambientLibs);
-
-    // Register @types only for CDN modules referenced by the active script,
-    // its import closure, and dirty drafts so unrelated package globals do not
-    // leak into the editor via resident imported modules.
-    const referencedModuleIds = new Set<string>();
-
-    for (const scriptId of typeScopeIds) {
-      for (const moduleId of scriptsMap[scriptId]?.globalModules ?? []) {
-        referencedModuleIds.add(moduleId);
-      }
-    }
-
-    const cdnModules = Object.values(modules).flatMap((module) =>
-      referencedModuleIds.has(module.id) && module.packageName
-        ? [{ id: module.id, packageName: module.packageName }]
-        : []
+    lastSignature = projection.signature;
+    const files: WorkspaceFile[] = projection.models.map(
+      ({ script, editor, ...file }) => ({
+        ...file,
+        uri: buildScriptFileUri(script, editor),
+      })
     );
+    syncModulePackageJsons(projection.modulePaths);
+    syncWorkspaceModels(files);
+    refreshTypescriptDiagnosticsIfProgramFilesChanged(
+      files
+        .filter((file) => file.language === "typescript")
+        .map((file) => file.uri)
+    );
+    // Clear ambient copies left by older sessions; type panes are real models.
+    syncAmbientTypeDefinitionLibs([]);
 
-    void syncCdnModuleLibs(cdnModules).catch((error) => {
+    void syncCdnModuleLibs(projection.cdnModules).catch((error) => {
       console.warn("CDN type acquisition failed:", error);
     });
   };

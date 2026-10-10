@@ -5,7 +5,7 @@ import {
   DraftBuffer,
   EditorDraft,
   EditorDraftsState,
-  RemoteDraftConflict,
+  PendingDraftConflict,
 } from "./state.editor-drafts";
 
 /**
@@ -58,9 +58,18 @@ export function applyCommitDraftForSave(
   draft: EditorDraft,
   buffer: DraftBuffer,
   code: string,
-  saveRequestId: string
+  saveRequestId: string,
+  snapshotCode?: string
 ): boolean {
   draft.lastSaveRequestId[buffer] = saveRequestId;
+
+  if (snapshotCode !== undefined && draft[buffer] !== snapshotCode) {
+    // Saving an older snapshot must not erase edits made while compiling.
+    draft.lastSynced[buffer] = code;
+    draft.dirty[buffer] = draft[buffer] !== code;
+    draft.revision += 1;
+    return true;
+  }
 
   if (draft[buffer] === code && !draft.dirty[buffer]) {
     return false;
@@ -80,7 +89,9 @@ export function nextDraftFromRemoteScript(
   existing: EditorDraft | undefined,
   script: Userscript
 ): EditorDraft {
-  return existing ? bumpDraftRevision(existing, script) : draftFromScript(script);
+  return existing
+    ? bumpDraftRevision(existing, script)
+    : draftFromScript(script);
 }
 
 /**
@@ -101,10 +112,16 @@ export function applyRemoteScriptAndClearConflict(
  * Keep local draft; only drop the pending conflict entry.
  */
 export function applyResolveConflictKeepLocal(
-  pendingConflicts: Record<string, RemoteDraftConflict>,
-  scriptId: string
+  pendingConflicts: Record<string, PendingDraftConflict>,
+  scriptId: string,
+  conflictId: string | null
 ): void {
-  delete pendingConflicts[scriptId];
+  if (
+    conflictId !== null &&
+    pendingConflicts[scriptId]?.conflictId === conflictId
+  ) {
+    delete pendingConflicts[scriptId];
+  }
 }
 
 /**

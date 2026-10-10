@@ -1,21 +1,27 @@
+import {
+  acceptPublishedScript,
+  acceptDeletedScript,
+} from "../userscripts/actions.publication";
+import {
+  completeDraftSave,
+  rejectDraftSave,
+} from "../../../services/draft-save-lifecycle";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { Userscript } from "@shared/model";
 import { setCurrentUserscript } from "../userscripts";
+import { persistScriptBuffers } from "../userscripts/thunks.userscripts";
 import {
-  createUserscript,
-  deleteUserscript,
-  importUserscripts,
-  loadUserscripts,
-  persistScriptBuffers,
-} from "../userscripts/thunks.userscripts";
-import { commitDraftForSave } from "./actions";
+  commitDraftForSave,
+  removeDraft,
+  syncDraftFromRemoteScript,
+  enqueueConflict,
+} from "./actions";
 import {
   applyCommitDraftForSave,
   applyFlushModelToDraft,
   applyResolveAllConflictsTakeRemote,
   applyResolveConflictKeepLocal,
   applyResolveConflictTakeRemote,
-  applySaveRejectionDirtyRestore,
   applyUpdateDraftBuffer,
 } from "./editor-drafts-transitions";
 import {
@@ -97,42 +103,23 @@ const editorDraftsSlice = createSlice({
         applyUpdateDraftBuffer(draft, buffer, code);
       },
     },
-    syncDraftFromRemoteScript: {
-      prepare: (script: Userscript) => ({ payload: script }),
-      reducer: (state, action: PayloadAction<Userscript>) => {
-        const script = action.payload;
-        const existing = state.drafts[script.id];
-
-        // Only refresh drafts that already exist (open / dirty). Untouched
-        // scripts stay draft-less until opened.
-        if (!existing) {
-          return;
-        }
-
-        state.drafts[script.id] = bumpDraftRevision(existing, script);
-      },
-    },
-    removeDraft: {
-      prepare: (scriptId: string) => ({ payload: scriptId }),
-      reducer: (state, action: PayloadAction<string>) => {
-        delete state.drafts[action.payload];
-        delete state.pendingConflicts[action.payload];
-      },
-    },
-    enqueueConflict: {
-      prepare: (conflict: RemoteDraftConflict) => ({ payload: conflict }),
-      reducer: (state, action: PayloadAction<RemoteDraftConflict>) => {
-        state.pendingConflicts[action.payload.scriptId] = action.payload;
-      },
-    },
     resolveConflictKeepLocal: {
-      prepare: (scriptId: string) => ({ payload: scriptId }),
-      reducer: (state, action: PayloadAction<string>) => {
-        applyResolveConflictKeepLocal(state.pendingConflicts, action.payload);
+      prepare: (observation: {
+        scriptId: string;
+        conflictId: string | null;
+      }) => ({
+        payload: observation,
+      }),
+      reducer: (
+        state,
+        action: PayloadAction<{ scriptId: string; conflictId: string | null }>
+      ) => {
+        applyResolveConflictKeepLocal(
+          state.pendingConflicts,
+          action.payload.scriptId,
+          action.payload.conflictId
+        );
       },
-    },
-    resolveAllConflictsKeepLocal: (state) => {
-      state.pendingConflicts = {};
     },
     resolveConflictTakeRemote: {
       prepare: (script: Userscript) => ({ payload: script }),
@@ -173,15 +160,43 @@ const editorDraftsSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      .addCase(syncDraftFromRemoteScript, (state, action) => {
+        const script = action.payload;
+        const existing = state.drafts[script.id];
+        if (existing) {
+          state.drafts[script.id] = bumpDraftRevision(existing, script);
+        }
+      })
+      .addCase(removeDraft, (state, action) => {
+        delete state.drafts[action.payload];
+        delete state.pendingConflicts[action.payload];
+      })
+      .addCase(enqueueConflict, (state, action) => {
+        const previous = state.pendingConflicts[action.payload.scriptId];
+        const { conflictId: _newId, ...observation } = action.payload;
+        const { conflictId: _oldId, ...previousObservation } = previous ?? {};
+        if (
+          JSON.stringify(observation) !== JSON.stringify(previousObservation)
+        ) {
+          state.pendingConflicts[action.payload.scriptId] = action.payload;
+        }
+      })
       .addCase(commitDraftForSave, (state, action) => {
-        const { scriptId, buffer, code, saveRequestId } = action.payload;
+        const { scriptId, buffer, code, saveRequestId, snapshotCode } =
+          action.payload;
         const draft = state.drafts[scriptId];
 
         if (!draft) {
           return;
         }
 
-        applyCommitDraftForSave(draft, buffer, code, saveRequestId);
+        applyCommitDraftForSave(
+          draft,
+          buffer,
+          code,
+          saveRequestId,
+          snapshotCode
+        );
       })
       .addCase(setCurrentUserscript, (state, action) => {
         // Draft ensure for the newly selected script happens in the listener
@@ -194,79 +209,27 @@ const editorDraftsSlice = createSlice({
           ),
         ]);
       })
-      .addCase(loadUserscripts.fulfilled, (state, action) => {
-        // Keep only dirty drafts across reload of the entity map; clean drafts
-        // are recreated lazily when a script is opened.
-        const validIds = new Set(action.payload.map((script) => script.id));
-        const nextDrafts: Record<string, EditorDraft> = {};
-
-        for (const [scriptId, draft] of Object.entries(state.drafts)) {
-          if (validIds.has(scriptId) && isDraftDirty(draft)) {
-            nextDrafts[scriptId] = draft;
-          }
+      .addCase(acceptPublishedScript, (state, action) => {
+        const { script, kind } = action.payload;
+        if (kind === "created" || kind === "imported") {
+          // A storage echo may already have opened the draft while writes ran.
+          ensureDraftFromScript(state, script);
         }
-
-        state.drafts = nextDrafts;
       })
-      .addCase(createUserscript.fulfilled, (state, action) => {
-        state.drafts[action.payload.id] = draftFromScript(action.payload);
-      })
-      .addCase(deleteUserscript.fulfilled, (state, action) => {
+      .addCase(acceptDeletedScript, (state, action) => {
         delete state.drafts[action.payload];
         delete state.pendingConflicts[action.payload];
       })
-      .addCase(importUserscripts.fulfilled, (state, action) => {
-        for (const script of action.payload) {
-          state.drafts[script.id] = draftFromScript(script);
-        }
-      })
       .addCase(persistScriptBuffers.fulfilled, (state, action) => {
-        const script = action.payload.script;
-        const draft = state.drafts[script.id];
-
-        if (!draft) {
-          state.drafts[script.id] = draftFromScript(script);
-          return;
-        }
-
-        // commitDraftForSave already cleared dirty + lastSynced; mirror the
-        // persisted entity and drop any pending conflict for this script.
-        draft.typescript = script.code.source.typescript;
-        draft.scss = script.code.source.scss;
-        draft.typeDefinitions = script.typeDefinitions ?? "";
-        draft.dirty.typescript = false;
-        draft.dirty.scss = false;
-        draft.dirty.typeDefinitions = false;
-        draft.lastSynced.typescript = draft.typescript;
-        draft.lastSynced.scss = draft.scss;
-        draft.lastSynced.typeDefinitions = draft.typeDefinitions;
-        draft.revision += 1;
-        delete state.pendingConflicts[script.id];
+        completeDraftSave(
+          state,
+          action.payload.script,
+          action.meta.requestId,
+          action.payload.conflictId
+        );
       })
-      // commitDraftForSave runs before the sync write so same-tab storage echoes
-      // do not false-positive; if the write fails, restore dirty flags.
-      // Ignore rejections from superseded in-flight saves so a stale failure
-      // cannot mark the draft dirty after a newer save already committed.
       .addCase(persistScriptBuffers.rejected, (state, action) => {
-        const draft = state.drafts[action.meta.arg.scriptId];
-
-        if (!draft) {
-          return;
-        }
-
-        const buffers: DraftBuffer[] = [
-          "typescript",
-          "scss",
-          "typeDefinitions",
-        ];
-
-        for (const buffer of buffers) {
-          applySaveRejectionDirtyRestore(
-            draft,
-            buffer,
-            action.meta.requestId
-          );
-        }
+        rejectDraftSave(state, action.meta.arg.scriptId, action.meta.requestId);
       });
   },
 });
@@ -274,17 +237,18 @@ const editorDraftsSlice = createSlice({
 export const {
   ensureDraft,
   updateDraftBuffer,
-  syncDraftFromRemoteScript,
-  removeDraft,
-  enqueueConflict,
   resolveConflictKeepLocal,
   resolveConflictTakeRemote,
-  resolveAllConflictsKeepLocal,
   resolveAllConflictsTakeRemote,
   flushModelToDraft,
 } = editorDraftsSlice.actions;
 
-export { commitDraftForSave } from "./actions";
+export {
+  commitDraftForSave,
+  removeDraft,
+  syncDraftFromRemoteScript,
+  enqueueConflict,
+} from "./actions";
 
 export {
   buildScriptWithDraftSource,

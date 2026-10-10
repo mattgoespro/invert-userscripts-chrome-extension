@@ -1,21 +1,20 @@
 import { createAsyncThunk } from "@reduxjs/toolkit/react";
-import { ChromeSyncStorage, CompiledCodeStorage } from "@shared/storage";
-import { hydrateUserscriptWithCompiled } from "@shared/userscript-hydrate";
+import type { Userscript } from "@shared/model";
+import { reconcileStoredScripts } from "../../../services/storage-reconciliation";
+import {
+  storageSyncContext,
+  type StorageSyncState,
+} from "../editor-drafts/storage-sync-context";
 
-/**
- * Storage-only hydrate path — no compile pipeline dependency.
- * Safe for popup / lightweight surfaces.
- */
-export const loadUserscripts = createAsyncThunk(
-  "userscripts/loadUserscripts",
-  async () => {
-    const [scriptsMap, compiledCodeMap] = await Promise.all([
-      ChromeSyncStorage.getAllScripts(),
-      CompiledCodeStorage.getAllCompiledCode(),
-    ]);
-
-    return Object.values(scriptsMap).map((script) =>
-      hydrateUserscriptWithCompiled(script, compiledCodeMap[script.id])
-    );
-  }
-);
+/** Storage-only hydration uses the same current observation as refresh. */
+export const loadUserscripts = createAsyncThunk<
+  Userscript[],
+  void,
+  { state: StorageSyncState }
+>("userscripts/loadUserscripts", async (_, { getState, dispatch }) => {
+  const result = await reconcileStoredScripts(
+    undefined,
+    storageSyncContext(getState, dispatch)
+  );
+  return result.syncedScripts;
+});

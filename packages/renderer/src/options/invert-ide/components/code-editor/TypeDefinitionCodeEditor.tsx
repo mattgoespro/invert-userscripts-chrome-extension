@@ -13,25 +13,23 @@ export function TypeDefinitionCodeEditor(
       {...props}
       language="typescript"
       onSave={async ({ code, autoFormat, scriptId }) => {
-        const formattedCode = autoFormat
-          ? await PrettierFormatter.format(code, "typescript")
-          : code;
-
         if (!scriptId) {
-          return formattedCode;
+          return autoFormat
+            ? PrettierFormatter.format(code, "typescript")
+            : code;
         }
 
-        await dispatch(
+        const result = await dispatch(
           persistScriptBuffers({
             scriptId,
-            bufferOverrides: { typeDefinitions: formattedCode },
+            focusedBuffer: { buffer: "typeDefinitions", code, autoFormat },
             // Type-only saves historically did not recompile or re-inject.
             applyTabs: false,
             compile: false,
           })
         ).unwrap();
 
-        return formattedCode;
+        return result.script.typeDefinitions ?? "";
       }}
     />
   );

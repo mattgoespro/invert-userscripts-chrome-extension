@@ -8,7 +8,6 @@ import {
   resolveAllConflictsTakeRemote,
   resolveConflictTakeRemote,
 } from "./slices/editor-drafts";
-import { refreshScriptsFromStorage } from "./slices/editor-drafts/thunks.storage-sync";
 import editorReducer from "./slices/code-editor";
 import modulesReducer from "./slices/modules";
 import settingsReducer from "./slices/settings";
@@ -121,15 +120,6 @@ listenerMiddleware.startListening({
 
     if (script) {
       listenerApi.dispatch(ensureDraft(script));
-    }
-  },
-});
-
-listenerMiddleware.startListening({
-  actionCreator: refreshScriptsFromStorage.fulfilled,
-  effect: (action, listenerApi) => {
-    if (action.payload.syncedScripts.length > 0) {
-      listenerApi.dispatch(syncScriptsFromRemote(action.payload.syncedScripts));
     }
   },
 });

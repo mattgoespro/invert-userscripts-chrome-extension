@@ -90,8 +90,18 @@ async function runLocalVideoResolver() {
   await resolveAndObserveVideo({
     onDetails: dispatchVideoDetails,
     onVideoResolved: (videoElement) => {
+      if (videoElement == null) {
+        return;
+      }
+
       updateLogVideoElementButton({
-        onClickFn: () => console.dir(videoElement),
+        onClickFn: () => {
+          console.dir(videoElement);
+          const src = getVideoSourceUrl(videoElement);
+          if (src) {
+            console.log(src);
+          }
+        },
         disabled: false,
       });
     },
@@ -100,10 +110,7 @@ async function runLocalVideoResolver() {
       window.toaster?.showToast("warn", "Unable to find video in page.");
     },
     onPlayerError: () => {
-      window.toaster?.showToast(
-        "error",
-        "Video player encountered an error, stopping quality observer."
-      );
+      window.toaster?.showToast("error", "Video player failed to load.");
     },
   });
 }

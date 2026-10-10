@@ -27,6 +27,10 @@ declare global {
 
   function isTopLevelFrame(): boolean;
 
+  function getVideoSourceUrl(videoElement: HTMLVideoElement): string;
+
+  function hasVideoLoadFailed(videoElement: HTMLVideoElement): boolean;
+
   function videoDetailsFromElement(
     videoElement: HTMLVideoElement
   ): VideoDetails;

@@ -1,3 +1,4 @@
+import { startIdeWorkspace } from "@/shared/services/ide-workspace-lifetime";
 import { ConflictDialog } from "@/options/invert-ide/components/conflict-dialog/ConflictDialog";
 import { useStorageSync } from "@/options/invert-ide/hooks/useStorageSync";
 import { SassCompiler, initializeBuildWorker } from "@/sandbox/compiler";
@@ -49,34 +50,26 @@ export function InvertIde() {
     SassCompiler.initialize();
     initializeBuildWorker();
 
-    let stopWorkspaceService: (() => void) | undefined;
-
-    void (async () => {
-      try {
-        // Monaco/Shiki must finish before ideReady — otherwise editors mount
-        // against Monarch and miss shikiToMonaco's theme/tokenizer patches.
+    return startIdeWorkspace({
+      initialize: async () => {
+        // Monaco/Shiki must finish before readiness mounts the editors.
         await Promise.all([
           dispatch(initializeMonaco()).unwrap(),
           dispatch(loadUserscripts()).unwrap(),
           dispatch(loadSettings()).unwrap(),
           dispatch(loadModules()).unwrap(),
         ]);
-
-        // Selection restore is owned by the loadUserscripts.fulfilled listener.
-
-        // Single owner of store → Monaco sync: active script + shared-dep
-        // closure models, module package.json entries, ambient/CDN libs.
-        stopWorkspaceService = startWorkspaceService(store);
-
+      },
+      attachWorkspace: () => startWorkspaceService(store),
+      rebuildStaleArtifacts: async () => {
         await dispatch(rebuildCompiledUserscripts({ scope: "stale" })).unwrap();
+      },
+      markReady: () => {
         dispatch(setIdeReady(true));
-      } catch (error) {
-        console.error("Failed to initialize IDE state:", error);
-        dispatch(setIdeReady(true));
-      }
-    })();
-
-    return () => stopWorkspaceService?.();
+      },
+      reportError: (error) =>
+        console.error("Failed to initialize IDE state:", error),
+    });
   }, [dispatch]);
 
   useEffect(() => {

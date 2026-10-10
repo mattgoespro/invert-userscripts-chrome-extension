@@ -51,13 +51,13 @@ export function matchScriptsSpecifierPrefix(
  */
 export function getModuleSpecifierSuggestions(
   typedPath: string,
-  sharedModules: SharedModuleSpecifierInfo[]
+  modules: SharedModuleSpecifierInfo[]
 ): ModuleSpecifierSuggestion[] {
   const segmentEnd = typedPath.indexOf("/");
 
   if (segmentEnd !== -1) {
     const moduleName = typedPath.slice(0, segmentEnd);
-    const known = sharedModules.some((info) => info.moduleName === moduleName);
+    const known = modules.some((info) => info.moduleName === moduleName);
 
     if (!known) {
       return [];
@@ -73,7 +73,7 @@ export function getModuleSpecifierSuggestions(
     }));
   }
 
-  return sharedModules.flatMap((info) =>
+  return modules.flatMap((info) =>
     (["main", "types"] as const).map((entry) => ({
       kind: "module-entry" as const,
       moduleName: info.moduleName,
@@ -81,7 +81,7 @@ export function getModuleSpecifierSuggestions(
       label: `${info.moduleName}/${entry}`,
       insertText: `${info.moduleName}/${entry}`,
       detail: info.scriptName,
-      documentation: `Shared script: ${info.scriptName}`,
+      documentation: `Userscript: ${info.scriptName}`,
     }))
   );
 }

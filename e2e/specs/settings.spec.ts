@@ -1,5 +1,5 @@
-import { test, expect } from "../../fixtures";
-import { OptionsPage, SettingsPage } from "../../pages";
+import { test, expect } from "../fixtures";
+import { OptionsPage, SettingsPage } from "../page-objects";
 
 test.describe("Settings", () => {
   test("changing the app theme updates the data-theme attribute", async ({

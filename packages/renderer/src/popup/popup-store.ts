@@ -1,15 +1,18 @@
-import { configureStore, createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import type { Userscript } from "@shared/model";
+import {
+  configureStore,
+  createSlice,
+  type PayloadAction,
+} from "@reduxjs/toolkit";
 import {
   initialState as editorDraftsInitialState,
   type EditorDraftsState,
 } from "@/shared/store/slices/editor-drafts/state.editor-drafts";
+import { initialState as userscriptsInitialState } from "@/shared/store/slices/userscripts/state.userscripts";
 import {
-  initialState as userscriptsInitialState,
-  type UserscriptsState,
-} from "@/shared/store/slices/userscripts/state.userscripts";
-import { loadUserscripts } from "@/shared/store/slices/userscripts/thunks.load";
-import { toggleUserscript } from "@/shared/store/slices/userscripts/thunks.crud";
+  acceptPublishedScript,
+  syncScriptsFromRemote,
+  removeRemoteScripts,
+} from "@/shared/store/slices/userscripts/actions.publication";
 
 /**
  * Popup-only store: load + toggle. Does not register IDE compile/save thunks
@@ -21,13 +24,21 @@ const popupUserscriptsSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
-      .addCase(loadUserscripts.fulfilled, (state, action) => {
-        state.scripts = Object.fromEntries(
-          action.payload.map((script) => [script.id, script])
-        );
+      .addCase(syncScriptsFromRemote, (state, action) => {
+        for (const script of action.payload) {
+          state.scripts[script.id] = script;
+        }
       })
-      .addCase(toggleUserscript.fulfilled, (state, action) => {
-        state.scripts[action.payload.script.id] = action.payload.script;
+      .addCase(removeRemoteScripts, (state, action) => {
+        for (const id of action.payload) {
+          delete state.scripts[id];
+        }
+      })
+      .addCase(acceptPublishedScript, (state, action) => {
+        const { script, kind } = action.payload;
+        if (kind === "toggled" && state.scripts[script.id]) {
+          state.scripts[script.id].enabled = script.enabled;
+        }
       });
   },
 });

@@ -3,11 +3,13 @@ import { persistScriptBuffers } from "../userscripts/thunks.userscripts";
 import type { RootState } from "../../store";
 
 /** Keep action types stable with the editorDrafts slice reducers. */
-const resolveConflictKeepLocal = createAction<string>(
+interface ConflictObservation {
+  scriptId: string;
+  conflictId: string | null;
+}
+
+const resolveConflictKeepLocal = createAction<ConflictObservation>(
   "editorDrafts/resolveConflictKeepLocal"
-);
-const resolveAllConflictsKeepLocal = createAction(
-  "editorDrafts/resolveAllConflictsKeepLocal"
 );
 
 /**
@@ -20,9 +22,11 @@ export const keepLocalConflictAndPersist = createAsyncThunk<
   { state: RootState }
 >(
   "editorDrafts/keepLocalConflictAndPersist",
-  async (scriptId, { dispatch }) => {
-    await dispatch(persistScriptBuffers({ scriptId })).unwrap();
-    dispatch(resolveConflictKeepLocal(scriptId));
+  async (scriptId, { dispatch, getState }) => {
+    const conflictId =
+      getState().editorDrafts.pendingConflicts[scriptId]?.conflictId ?? null;
+    await dispatch(persistScriptBuffers({ scriptId, conflictId })).unwrap();
+    dispatch(resolveConflictKeepLocal({ scriptId, conflictId }));
   }
 );
 
@@ -33,12 +37,21 @@ export const keepAllLocalConflictsAndPersist = createAsyncThunk<
 >(
   "editorDrafts/keepAllLocalConflictsAndPersist",
   async (_arg, { dispatch, getState }) => {
-    const scriptIds = Object.keys(getState().editorDrafts.pendingConflicts);
+    const observations = Object.values(
+      getState().editorDrafts.pendingConflicts
+    ).map(({ scriptId, conflictId }) => ({
+      scriptId,
+      conflictId: conflictId ?? null,
+    }));
 
-    for (const scriptId of scriptIds) {
-      await dispatch(persistScriptBuffers({ scriptId })).unwrap();
+    for (const observation of observations) {
+      const current =
+        getState().editorDrafts.pendingConflicts[observation.scriptId];
+      if (!current || current.conflictId !== observation.conflictId) {
+        continue;
+      }
+      await dispatch(persistScriptBuffers(observation)).unwrap();
+      dispatch(resolveConflictKeepLocal(observation));
     }
-
-    dispatch(resolveAllConflictsKeepLocal());
   }
 );

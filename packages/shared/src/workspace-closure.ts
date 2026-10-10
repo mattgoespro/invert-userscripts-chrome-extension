@@ -77,10 +77,9 @@ export function resolveWorkspaceScriptClosure(
 }
 
 /**
- * IDs of every shared module script. Not used as the Monaco workspace set —
- * putting every shared file in the TypeScript program leaks types into
- * unrelated editors. Prefer {@link listImportedSharedScriptIds} to keep
- * imported modules resident across script switches.
+ * IDs of every shared module script. Userscript `main.ts` models for these
+ * stay in the TypeScript program so auto-import can offer
+ * `scripts/<m>/main` before any import exists.
  */
 export function listSharedScriptIds(scriptsMap: Userscripts): string[] {
   return Object.values(scriptsMap)

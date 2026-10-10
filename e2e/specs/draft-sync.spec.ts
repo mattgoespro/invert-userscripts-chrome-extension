@@ -1,7 +1,7 @@
-import { test, expect, buildUserscript } from "../../fixtures";
-import { buildUserscriptSyncManifest } from "../../fixtures/userscript-storage";
-import { waitForTypescriptEditorText } from "../../helpers/monaco";
-import { OptionsPage, ScriptsPage } from "../../pages";
+import { test, expect, buildUserscript } from "../fixtures";
+import { buildUserscriptSyncManifest } from "../fixtures/userscript-storage";
+import { waitForTypescriptEditorText } from "../helpers/monaco";
+import { OptionsPage, ScriptsPage } from "../page-objects";
 
 test.describe("Scripts — draft sync", () => {
   test("saved TypeScript survives hard reload", async ({

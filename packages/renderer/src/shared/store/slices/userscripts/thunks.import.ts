@@ -1,12 +1,11 @@
+import { acceptPublishedScript } from "./actions.publication";
+import { publishImportedScript } from "../../../services/userscript-publication";
 import { createAsyncThunk } from "@reduxjs/toolkit/react";
 import type { Userscript } from "@shared/model";
 import { getScriptModulePath } from "@shared/model";
 import { getSharedImportModuleNames } from "@shared/shared-module-imports";
 import { ChromeSyncStorage, CompiledCodeStorage } from "@shared/storage";
-import {
-  normalizeUserscript,
-  toStorageSafeUserscript,
-} from "@shared/userscript-hydrate";
+import { normalizeUserscript } from "@shared/userscript-hydrate";
 import { uuid } from "@shared/utils";
 import type { RootState } from "../../store";
 import { compileAllOutputsOrThrow } from "./compile-helpers";
@@ -17,7 +16,7 @@ export const importUserscripts = createAsyncThunk<
   Userscript[],
   UserscriptsTransferFile,
   { state: RootState }
->("userscripts/importUserscripts", async (file, { getState }) => {
+>("userscripts/importUserscripts", async (file, { getState, dispatch }) => {
   const state = getState();
   const existingScriptsMap = await ChromeSyncStorage.getAllScripts();
   const globalModules = state.modules.modules;
@@ -99,10 +98,19 @@ export const importUserscripts = createAsyncThunk<
       script.code.compiled.javascript = compiledEntry.javascript;
       script.code.compiled.css = compiledEntry.css;
 
-      await Promise.all([
-        ChromeSyncStorage.saveScript(toStorageSafeUserscript(script)),
-        CompiledCodeStorage.saveCompiledCode(script.id, compiledEntry),
-      ]);
+      await publishImportedScript(
+        script,
+        compiledEntry,
+        {
+          sourceStorage: ChromeSyncStorage,
+          compiledStorage: CompiledCodeStorage,
+        },
+        (published) => {
+          dispatch(
+            acceptPublishedScript({ script: published, kind: "imported" })
+          );
+        }
+      );
     })
   );
 

@@ -1,7 +1,6 @@
 import { registerMonaco } from "@packages/monaco";
 import { createAction, createAsyncThunk } from "@reduxjs/toolkit/react";
 import { persistScriptBuffers } from "../userscripts/thunks.userscripts";
-import { PrettierFormatter } from "@/sandbox/formatter";
 import { UserscriptSourceLanguage } from "@shared/model";
 import type { DraftBuffer } from "../editor-drafts/state.editor-drafts";
 
@@ -40,24 +39,20 @@ export const saveEditorCode = createAsyncThunk(
     },
     { dispatch }
   ) => {
-    let formattedCode = code;
-
-    if (autoFormat) {
-      formattedCode = await PrettierFormatter.format(code, language);
-    }
-
     const result = await dispatch(
       persistScriptBuffers({
         scriptId,
-        bufferOverrides: {
-          [draftBufferForLanguage(language)]: formattedCode,
+        focusedBuffer: {
+          buffer: draftBufferForLanguage(language),
+          code,
+          autoFormat,
         },
         applyTabs: true,
       })
     ).unwrap();
 
     return {
-      code: formattedCode,
+      code: result.script.code.source[language],
       appliedTabCount: result.appliedTabCount,
       applySuccess: result.applySuccess,
       staleSkipCount: result.staleSkipCount,

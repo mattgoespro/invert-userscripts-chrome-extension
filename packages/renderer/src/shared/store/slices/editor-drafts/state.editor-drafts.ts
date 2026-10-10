@@ -30,9 +30,14 @@ export type RemoteDraftConflict = {
   buffers: RemoteDraftConflictBuffer[];
 };
 
+export interface PendingDraftConflict extends RemoteDraftConflict {
+  /** Identity of this observed conflict, assigned by enqueueConflict. */
+  conflictId: string;
+}
+
 export type EditorDraftsState = {
   drafts: Record<string, EditorDraft>;
-  pendingConflicts: Record<string, RemoteDraftConflict>;
+  pendingConflicts: Record<string, PendingDraftConflict>;
 };
 
 export const initialState: EditorDraftsState = {
@@ -76,8 +81,18 @@ export function bumpDraftRevision(
   existing: EditorDraft,
   script: Userscript
 ): EditorDraft {
+  const next = draftFromScript(script);
+  // Keep request ownership across our own storage echo, so a later local
+  // artifact failure can still restore dirty. Real remote changes reset it.
+  for (const buffer of Object.keys(
+    existing.lastSaveRequestId
+  ) as DraftBuffer[]) {
+    if (next[buffer] === existing.lastSynced[buffer]) {
+      next.lastSaveRequestId[buffer] = existing.lastSaveRequestId[buffer];
+    }
+  }
   return {
-    ...draftFromScript(script),
+    ...next,
     revision: existing.revision + 1,
   };
 }
