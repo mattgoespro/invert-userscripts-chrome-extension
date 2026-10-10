@@ -25,4 +25,5 @@ try {
   console.log("Extension copied successfully.");
 } catch (error) {
   console.error("Error copying extension:", error);
+  process.exitCode = 1;
 }
