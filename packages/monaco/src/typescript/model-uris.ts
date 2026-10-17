@@ -1,4 +1,4 @@
-import { getScriptModulePath, UserscriptSourceLanguage } from "@shared/model";
+import { UserscriptSourceLanguage } from "@shared/model";
 
 /**
  * Map source language identifiers to file extensions recognised by
@@ -13,19 +13,19 @@ export type ScriptEditorKind = "main" | "types" | "styles";
 
 /**
  * Canonical workspace model id for a script editor buffer
- * (`scripts/<modulePath>/main|types.d|styles`).
+ * (`userscripts/<immutable-id>/main|types.d|styles`). Public import aliases are separate.
  */
 export function buildScriptModelId(
   script: { id: string; moduleName?: string },
   editor: ScriptEditorKind
 ): string {
-  const modulePath = getScriptModulePath(script);
+  const modulePath = encodeURIComponent(script.id);
 
   if (editor === "types") {
-    return `scripts/${modulePath}/types.d`;
+    return `userscripts/${modulePath}/types.d`;
   }
 
-  return `scripts/${modulePath}/${editor}`;
+  return `userscripts/${modulePath}/${editor}`;
 }
 
 /**

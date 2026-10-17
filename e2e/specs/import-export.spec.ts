@@ -50,9 +50,25 @@ test.describe("Scripts — import / export", () => {
     // Open import dialog via the actions menu
     await scripts.openImportDialog();
 
-    // The import dialog has a file input; use setInputFiles
-    const fileInput = optionsPage.locator("input[type='file']");
-    await fileInput.setInputFiles(FIXTURE_FILE);
+    const fileField = optionsPage.getByRole("textbox", {
+      name: "Select userscripts file",
+    });
+    const selectButton = optionsPage.getByRole("button", {
+      name: "Select",
+      exact: true,
+    });
+    const fieldHeight = await fileField.evaluate(
+      (element) => element.offsetHeight
+    );
+    const buttonHeight = await selectButton.evaluate(
+      (element) => element.offsetHeight
+    );
+    expect(buttonHeight).toBe(fieldHeight);
+
+    const chooserPromise = optionsPage.waitForEvent("filechooser");
+    await fileField.click();
+    const chooser = await chooserPromise;
+    await chooser.setFiles(FIXTURE_FILE);
 
     // Wait for file validation to pass (button becomes enabled)
     const importButton = optionsPage.getByRole("button", { name: /^Import$/i });

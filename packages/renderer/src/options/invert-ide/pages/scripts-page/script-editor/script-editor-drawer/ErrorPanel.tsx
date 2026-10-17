@@ -74,17 +74,11 @@ function ErrorItem({ error, onClick }: ErrorItemProps) {
           <Typography variant="caption" className="font-mono text-text-muted">
             {languageLabel}
           </Typography>
-          <Typography
-            variant="caption"
-            className="font-mono text-text-muted-faint"
-          >
+          <Typography variant="caption" className="font-mono text-text-muted">
             Line {error.line}:{error.column}
           </Typography>
           {error.code && (
-            <Typography
-              variant="caption"
-              className="font-mono text-text-muted-faint"
-            >
+            <Typography variant="caption" className="font-mono text-text-muted">
               [{error.code}]
             </Typography>
           )}

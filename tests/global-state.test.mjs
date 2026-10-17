@@ -6,6 +6,13 @@ import {
 } from "../packages/shared/src/storage/global-state.storage.ts";
 
 describe("mergeGlobalState", () => {
+  it("defaults script ordering to Name and restores Created", () => {
+    assert.equal(mergeGlobalState({}).scriptListSort, "name");
+    assert.equal(
+      mergeGlobalState({ scriptListSort: "created" }).scriptListSort,
+      "created"
+    );
+  });
   it("returns defaults when nothing is stored", () => {
     assert.deepEqual(mergeGlobalState(undefined), DEFAULT_GLOBAL_STATE);
     assert.deepEqual(mergeGlobalState(null), DEFAULT_GLOBAL_STATE);

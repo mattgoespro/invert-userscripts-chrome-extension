@@ -1,11 +1,15 @@
 import { Userscripts } from "@shared/model";
 import { ChromeSyncStorage } from "@shared/storage";
 import { matchesUrlPattern } from "@shared/url-matching";
+import { isInjectablePage } from "@shared/injection-eligibility";
 
 export function countMatchingScripts(
   url: string,
   scriptsMap: Userscripts
 ): number {
+  if (!isInjectablePage(url)) {
+    return 0;
+  }
   return Object.values(scriptsMap).filter((script) =>
     matchesUrlPattern(url, script.urlPatterns)
   ).length;
@@ -25,18 +29,28 @@ export async function updateBadgeForTab(
   scriptsMap?: Userscripts
 ): Promise<void> {
   try {
-    const resolvedScriptsMap =
-      scriptsMap ?? (await ChromeSyncStorage.getAllScripts());
-    const matchingCount = countMatchingScripts(url, resolvedScriptsMap);
+    const eligible = isInjectablePage(url);
+    const matchingCount = eligible
+      ? countMatchingScripts(
+          url,
+          scriptsMap ?? (await ChromeSyncStorage.getAllScripts())
+        )
+      : 0;
 
     await chrome.action.setBadgeText({
       tabId,
-      text: matchingCount > 0 ? String(matchingCount) : "",
+      text: eligible ? (matchingCount > 0 ? String(matchingCount) : "") : "–",
     });
 
     await chrome.action.setBadgeBackgroundColor({
       tabId,
-      color: "#FBBF24",
+      color: eligible ? "#FBBF24" : "#6B7280",
+    });
+    await chrome.action.setTitle({
+      tabId,
+      title: eligible
+        ? "Invert IDE Userscripts"
+        : "Invert IDE — Scripts cannot run on this page",
     });
   } catch (error) {
     console.error("Error updating badge for tab:", error);

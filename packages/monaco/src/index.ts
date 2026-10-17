@@ -4,3 +4,4 @@ export * from "./typescript/cdn-types";
 export * from "./typescript/defaults";
 export * from "./typescript/module-specifier-completion";
 export * from "./typescript/vfs";
+export * from "./typescript/language-service";

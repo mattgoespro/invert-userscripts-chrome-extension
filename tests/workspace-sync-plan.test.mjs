@@ -93,17 +93,17 @@ describe("workspace projection", () => {
     assert.deepEqual(
       files(plan).map((file) => file.uri),
       [
-        "file:///scripts/active/main.ts",
-        "file:///scripts/active/types.d.ts",
-        "file:///scripts/active/styles.scss",
-        "file:///scripts/exported/main.ts",
-        "file:///scripts/exported/types.d.ts",
-        "file:///scripts/ambient/main.ts",
-        "file:///scripts/ambient/styles.scss",
+        "file:///userscripts/active/main.ts",
+        "file:///userscripts/active/types.d.ts",
+        "file:///userscripts/active/styles.scss",
+        "file:///userscripts/exported/main.ts",
+        "file:///userscripts/exported/types.d.ts",
+        "file:///userscripts/ambient/main.ts",
+        "file:///userscripts/ambient/styles.scss",
       ]
     );
     assert.deepEqual(files(plan).at(-1), {
-      uri: "file:///scripts/ambient/styles.scss",
+      uri: "file:///userscripts/ambient/styles.scss",
       language: "scss",
       contents: ".dirty {}",
       preserveAttachedBuffer: true,
@@ -183,12 +183,12 @@ describe("workspace projection", () => {
     const selected = projectWorkspace(input, first.signature);
     assert.ok(
       files(selected).some(
-        (file) => file.uri === "file:///scripts/b/types.d.ts"
+        (file) => file.uri === "file:///userscripts/b/types.d.ts"
       )
     );
     assert.ok(
       !files(selected).some(
-        (file) => file.uri === "file:///scripts/a/styles.scss"
+        (file) => file.uri === "file:///userscripts/a/styles.scss"
       )
     );
     input.drafts.a = draftFromScript(a);
@@ -197,7 +197,7 @@ describe("workspace projection", () => {
     const exported = projectWorkspace(input, selected.signature);
     assert.ok(
       files(exported).some(
-        (file) => file.uri === "file:///scripts/a/types.d.ts"
+        (file) => file.uri === "file:///userscripts/a/types.d.ts"
       )
     );
     input.drafts.a.scss = ".edited {}";

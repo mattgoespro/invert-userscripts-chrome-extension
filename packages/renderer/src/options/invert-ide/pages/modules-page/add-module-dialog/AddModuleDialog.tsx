@@ -28,6 +28,7 @@ export function AddModuleDialog({
   const [name, setName] = useState("");
   const [url, setUrl] = useState("");
   const [packageName, setPackageName] = useState("");
+  const [typeVersion, setTypeVersion] = useState("");
   const [validation, setValidation] = useState<ValidationState>({
     validating: false,
   });
@@ -38,6 +39,7 @@ export function AddModuleDialog({
     setName("");
     setUrl("");
     setPackageName("");
+    setTypeVersion("");
     setValidation({ validating: false });
   }, []);
 
@@ -67,7 +69,10 @@ export function AddModuleDialog({
     // Validate types if package name is provided
     let typesError: string | undefined;
     if (trimmedPackageName) {
-      typesError = await validateTypesUrl(trimmedPackageName);
+      typesError = await validateTypesUrl(
+        trimmedPackageName,
+        typeVersion.trim()
+      );
       if (typesError) {
         setValidation({ validating: false, typesError });
         return;
@@ -80,11 +85,12 @@ export function AddModuleDialog({
       url: trimmedUrl,
       enabled: true,
       ...(trimmedPackageName ? { packageName: trimmedPackageName } : {}),
+      ...(typeVersion.trim() ? { typeVersion: typeVersion.trim() } : {}),
     };
 
     onSubmit(newModule);
     resetForm();
-  }, [name, url, packageName, resetForm, onSubmit]);
+  }, [name, url, packageName, typeVersion, resetForm, onSubmit]);
 
   const hasErrors = !!(validation.cdnError || validation.typesError);
   const canSubmit =
@@ -146,12 +152,18 @@ export function AddModuleDialog({
                 {validation.typesError}
               </span>
             )}
-            <span className="font-mono text-[10px] text-text-muted-faint">
+            <span className="font-mono text-xs text-text-muted">
               Used to provide TypeScript intellisense via @types/*
             </span>
           </div>
         </div>
 
+        <Input
+          label="Declaration version (optional)"
+          placeholder="e.g. 3.5.32; empty uses latest"
+          value={typeVersion}
+          onChange={(event) => setTypeVersion(event.target.value)}
+        />
         {hasErrors && (
           <div className="flex items-center gap-xs rounded-default border border-error-border bg-error-surface px-3 py-2">
             <span className="font-mono text-xs text-error-accent">

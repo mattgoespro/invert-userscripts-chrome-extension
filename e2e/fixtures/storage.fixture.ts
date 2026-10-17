@@ -35,10 +35,32 @@ export const test = extensionTest.extend<StorageFixtures>({
       await page.waitForTimeout(600);
 
       await page.evaluate(async () => {
+        await chrome.storage.local.set({ publicationBackend: "legacy" });
         await Promise.all([
           chrome.storage.sync.clear(),
           chrome.storage.local.clear(),
         ]);
+        if (
+          !(await indexedDB.databases()).some(
+            (database) => database.name === "invert-ide-documents"
+          )
+        ) {
+          return;
+        }
+        const open = indexedDB.open("invert-ide-documents", 1);
+        const db = await new Promise<IDBDatabase>((resolve, reject) => {
+          open.onsuccess = () => resolve(open.result);
+          open.onerror = () => reject(open.error);
+        });
+        if (db.objectStoreNames.contains("repository")) {
+          await new Promise<void>((resolve, reject) => {
+            const transaction = db.transaction("repository", "readwrite");
+            transaction.objectStore("repository").clear();
+            transaction.oncomplete = () => resolve();
+            transaction.onerror = () => reject(transaction.error);
+          });
+        }
+        db.close();
       });
     };
 

@@ -1,4 +1,6 @@
 import { captureEditorSave } from "@/shared/services/draft-save-lifecycle";
+import { flushScriptModelsToDraft } from "@/shared/store/select-userscript";
+import { store } from "@/shared/store/store";
 import { FormatterLanguage } from "@/sandbox/formatter";
 import { useToast } from "@/shared/components/toast/ToastProvider";
 import { useAppDispatch, useAppSelector } from "@/shared/store/hooks";
@@ -203,6 +205,11 @@ export function CodeEditor(props: CodeEditorProps) {
         }
 
         const applyFormattedCode = captureEditorSave(editorInstance);
+        // Capture all buffers before a focused save; Redux may still be catching up.
+        const sessionScript = store.getState().userscripts.scripts[scriptId];
+        if (sessionScript) {
+          dispatch(flushScriptModelsToDraft(sessionScript));
+        }
         const code = editorInstance.getValue();
         const autoFormat = settings?.autoFormat ?? false;
 

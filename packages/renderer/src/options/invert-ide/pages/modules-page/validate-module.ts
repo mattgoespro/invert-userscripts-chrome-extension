@@ -20,11 +20,12 @@ export async function validateCdnUrl(url: string): Promise<string | undefined> {
  * DefinitelyTyped (unpkg, then jsDelivr).
  */
 export async function validateTypesUrl(
-  packageName: string
+  packageName: string,
+  version?: string
 ): Promise<string | undefined> {
   try {
     const response = await fetch(
-      `https://unpkg.com/@types/${packageName}/index.d.ts`,
+      `https://unpkg.com/@types/${packageName}${version ? "@" + version : ""}/index.d.ts`,
       { method: "HEAD" }
     );
 
@@ -37,7 +38,7 @@ export async function validateTypesUrl(
 
   try {
     const response = await fetch(
-      `https://cdn.jsdelivr.net/npm/@types/${packageName}/index.d.ts`,
+      `https://cdn.jsdelivr.net/npm/@types/${packageName}${version ? "@" + version : ""}/index.d.ts`,
       { method: "HEAD" }
     );
 

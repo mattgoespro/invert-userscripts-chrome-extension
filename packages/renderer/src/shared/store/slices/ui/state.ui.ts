@@ -3,9 +3,11 @@ import {
   GlobalStateManager,
   GlobalStateSizes,
   ScriptEditorDrawerTab,
+  ScriptListSort,
 } from "@shared/storage";
 
 export type UiState = {
+  scriptListSort: ScriptListSort;
   hydrated: boolean;
   activeSidebarTab: AppSidebarTab;
   selectedScriptId: string | null;
@@ -17,6 +19,7 @@ export type UiState = {
 const defaults = GlobalStateManager.defaultState;
 
 export const initialUiState: UiState = {
+  scriptListSort: defaults.scriptListSort ?? "name",
   hydrated: false,
   activeSidebarTab: defaults.activeSidebarTab ?? "scripts",
   selectedScriptId: defaults.selectedScriptId ?? null,

@@ -1,3 +1,5 @@
+import { runPublicationEffect } from "../../publication/effects";
+import { isTrustedExtensionSender } from "@shared/publication/protocol";
 import type {
   ApplyScriptsResponse,
   RuntimePortMessageEvent,
@@ -28,64 +30,62 @@ async function refreshBadgesForOpenTabs(): Promise<void> {
 
 export const onMessage = (
   message: RuntimePortMessageEvent,
-  _sender: chrome.runtime.MessageSender,
+  sender: chrome.runtime.MessageSender,
   sendResponse: (response?: unknown) => void
 ) => {
-  void (async () => {
-    switch (message.type) {
-      case "applyScripts": {
-        const result = await applyScriptsToMatchingTabs(message.data.scriptIds);
-        await refreshBadgesForOpenTabs();
-        const response: ApplyScriptsResponse = {
-          success: result.success,
-          appliedTabCount: result.appliedTabCount,
-          staleSkipCount: result.staleSkipCount,
-        };
-        sendResponse(response);
-        break;
-      }
-      case "setEnabled": {
-        const { scriptId, enabled } = message.data;
-
-        if (enabled) {
-          const result = await applyScriptsToMatchingTabs([scriptId]);
-          await refreshBadgesForOpenTabs();
-          const response: ApplyScriptsResponse = {
-            success: result.success,
-            appliedTabCount: result.appliedTabCount,
-            staleSkipCount: result.staleSkipCount,
-          };
-          sendResponse(response);
-        } else {
-          const result = await removeScriptFromMatchingTabs(scriptId);
-          await refreshBadgesForOpenTabs();
-          const response: ApplyScriptsResponse = {
-            success: true,
-            appliedTabCount: 0,
-            removedTabCount: result.removedTabCount,
-          };
-          sendResponse(response);
-        }
-        break;
-      }
-      case "refreshTabs": {
-        // Deprecated: apply all scripts to matching tabs only (no unrelated inject).
-        const result = await applyScriptsToMatchingTabs([]);
-        await refreshBadgesForOpenTabs();
-        const response: ApplyScriptsResponse = {
-          success: result.success,
-          appliedTabCount: result.appliedTabCount,
-          staleSkipCount: result.staleSkipCount,
-        };
-        sendResponse(response);
-        break;
-      }
-      default: {
-        sendResponse({ success: false });
-        break;
-      }
+  if (!["applyScripts", "setEnabled", "refreshTabs"].includes(message?.type)) {
+    return;
+  }
+  if (!isTrustedExtensionSender(sender, chrome.runtime.id)) {
+    sendResponse({
+      success: false,
+      appliedTabCount: 0,
+      message: "Untrusted script command sender.",
+    });
+    return false;
+  }
+  if (
+    message.type === "applyScripts" &&
+    (!Array.isArray(message.data?.scriptIds) ||
+      !message.data.scriptIds.every((id) => typeof id === "string"))
+  ) {
+    sendResponse({ success: false, appliedTabCount: 0 });
+    return false;
+  }
+  if (
+    message.type === "setEnabled" &&
+    (typeof message.data?.scriptId !== "string" ||
+      typeof message.data.enabled !== "boolean")
+  ) {
+    sendResponse({ success: false, appliedTabCount: 0 });
+    return false;
+  }
+  const requestId =
+    message.type === "refreshTabs"
+      ? crypto.randomUUID()
+      : (message.data.requestId ?? crypto.randomUUID());
+  void runPublicationEffect(requestId, async () => {
+    let response: ApplyScriptsResponse;
+    if (message.type === "setEnabled" && !message.data.enabled) {
+      const result = await removeScriptFromMatchingTabs(message.data.scriptId);
+      response = {
+        success: true,
+        appliedTabCount: 0,
+        removedTabCount: result.removedTabCount,
+      };
+    } else {
+      const ids =
+        message.type === "applyScripts"
+          ? message.data.scriptIds
+          : message.type === "setEnabled"
+            ? [message.data.scriptId]
+            : [];
+      response = await applyScriptsToMatchingTabs(ids);
     }
-  })();
-
+    await refreshBadgesForOpenTabs();
+    return response;
+  }).then(sendResponse, (error) =>
+    sendResponse({ success: false, appliedTabCount: 0, message: String(error) })
+  );
   return true;
 };

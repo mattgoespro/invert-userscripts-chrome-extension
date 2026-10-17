@@ -6,9 +6,8 @@ import {
 } from "./helpers/chrome-sync-mock.mjs";
 
 const mock = installChromeSyncMock();
-const { ChromeSyncStorage } = await import(
-  "../packages/shared/src/storage/sync.storage.ts"
-);
+const { LegacyChromeSyncStorage: ChromeSyncStorage } =
+  await import("../packages/shared/src/storage/sync.storage.ts");
 
 test.beforeEach(() => {
   mock.reset();
@@ -31,7 +30,10 @@ test("ChromeSyncStorage round-trips a small userscript through sync storage", as
   assert.equal(Object.keys(loaded).length, 1);
   assert.equal(loaded[script.id].name, script.name);
   assert.equal(loaded[script.id].enabled, true);
-  assert.equal(loaded[script.id].code.source.typescript, "export const answer = 42;");
+  assert.equal(
+    loaded[script.id].code.source.typescript,
+    "export const answer = 42;"
+  );
   assert.equal(loaded[script.id].code.source.scss, ".root { color: red; }");
   assert.deepEqual(loaded[script.id].urlPatterns, ["https://example.com/*"]);
   assert.equal(loaded[script.id].runAt, "afterPageLoad");

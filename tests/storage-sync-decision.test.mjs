@@ -37,10 +37,10 @@ describe("decideStorageSyncAction", () => {
     assert.equal(decision.action, "remove");
   });
 
-  it("syncs from remote when there is no local draft", () => {
+  it("syncs only the entity when there is no open draft", () => {
     const remote = buildUserscriptFixture({ id: "remote-only" });
     const decision = decideStorageSyncAction("remote-only", undefined, remote);
-    assert.equal(decision.action, "sync");
+    assert.equal(decision.action, "sync-entity");
     assert.equal(decision.script.id, "remote-only");
   });
 
@@ -64,7 +64,10 @@ describe("decideStorageSyncAction", () => {
 
     const decision = decideStorageSyncAction("s1", local, remote);
     assert.equal(decision.action, "sync");
-    assert.equal(decision.script.code.source.typescript, "export const remote = 1;");
+    assert.equal(
+      decision.script.code.source.typescript,
+      "export const remote = 1;"
+    );
   });
 
   it("reports conflict when a dirty buffer differs from remote", () => {
@@ -106,10 +109,7 @@ describe("decideStorageSyncAction", () => {
     const decision = decideStorageSyncAction("s1", draft, script);
     assert.equal(decision.action, "sync-entity");
     // Entity keeps the remote/persisted snapshot — not the dirty draft buffer.
-    assert.equal(
-      decision.script.code.source.typescript,
-      "export const v = 1;"
-    );
+    assert.equal(decision.script.code.source.typescript, "export const v = 1;");
     assert.equal(decision.script.name, "Renamed");
   });
 

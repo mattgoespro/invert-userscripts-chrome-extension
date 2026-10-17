@@ -7,6 +7,7 @@ import {
 } from "@shared/model";
 import { isCompiledArtifactFresh } from "@shared/compile-metadata";
 import { matchesUrlPattern } from "@shared/url-matching";
+import { isInjectablePage } from "@shared/injection-eligibility";
 import { getSharedImportModuleNames } from "@shared/shared-module-imports";
 import { resolveWorkspaceScriptClosure } from "@shared/workspace-closure";
 
@@ -20,6 +21,9 @@ export function selectMatchingScriptsForInjection(
   url: string,
   timing: Userscript["runAt"]
 ): Userscript[] {
+  if (!isInjectablePage(url)) {
+    return [];
+  }
   return Object.values(scriptsMap).filter(
     (script) =>
       script.enabled &&

@@ -1,6 +1,6 @@
 import type * as monaco from "monaco-editor";
-import { extractFileDependencies } from "./cdn-type-deps";
 import { addTypeLib } from "./defaults";
+import { resolveTypePackage } from "./type-package-resolver";
 
 /**
  * Dependency-aware automatic type acquisition (ATA) for CDN global modules.
@@ -19,12 +19,6 @@ import { addTypeLib } from "./defaults";
 
 type PackageFiles = Record<string, string>;
 
-const CDN_BASES = [
-  "https://unpkg.com/@types/",
-  "https://cdn.jsdelivr.net/npm/@types/",
-];
-
-const MAX_FILES_PER_PACKAGE = 50;
 const MAX_TRANSITIVE_PACKAGES = 10;
 
 // ── IndexedDB cache ───────────────────────────────────────────────────────────
@@ -38,6 +32,8 @@ interface CachedPackage {
   fetchedAt: number;
   /** null marks a confirmed "no types available" so we don't refetch. */
   files: PackageFiles | null;
+  resolvedVersion?: string;
+  dependencies?: Record<string, string>;
 }
 
 const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
@@ -118,127 +114,112 @@ async function writeCachedPackage(entry: CachedPackage): Promise<void> {
   });
 }
 
-// ── Fetch + dependency walk ───────────────────────────────────────────────────
-
-async function fetchTypeFile(
+// Versioned acquisition with shared requests, cancellation, and explicit limits.
+const inFlight = new Map<string, Promise<CachedPackage>>();
+const cancellableFlights = new WeakMap<
+  AbortSignal,
+  Map<string, Promise<CachedPackage>>
+>();
+async function acquireCachedPackage(
   packageName: string,
-  filePath: string
-): Promise<string | null> {
-  for (const base of CDN_BASES) {
-    try {
-      const response = await fetch(`${base}${packageName}/${filePath}`);
-
-      if (response.ok) {
-        return await response.text();
-      }
-    } catch {
-      // Fall through to the next CDN.
-    }
+  version: string,
+  signal?: AbortSignal
+): Promise<CachedPackage> {
+  const key = "resolver-v2:" + packageName + "@" + version;
+  const cached = await readCachedPackage(key);
+  if (cached) {
+    return cached;
   }
-
-  return null;
+  if (signal && !cancellableFlights.has(signal)) {
+    cancellableFlights.set(signal, new Map());
+  }
+  const flights = signal ? cancellableFlights.get(signal)! : inFlight;
+  if (flights.has(key)) {
+    return flights.get(key)!;
+  }
+  const pending = (async () => {
+    const result = await resolveTypePackage({ packageName, version, signal });
+    const entry: CachedPackage = {
+      packageName: key,
+      fetchedAt: Date.now(),
+      files: result
+        ? {
+            ...result.files,
+            "package.json": JSON.stringify({
+              name: "@types/" + packageName,
+              types: result.entry,
+            }),
+          }
+        : null,
+      resolvedVersion: result?.version,
+      dependencies: result?.dependencies,
+    };
+    await writeCachedPackage(entry);
+    return entry;
+  })().finally(() => {
+    if (flights.get(key) === pending) {
+      flights.delete(key);
+    }
+  });
+  flights.set(key, pending);
+  return pending;
 }
-
-/**
- * Fetches a single `@types` package and its intra-package file graph.
- * Returns the fetched files plus any transitive `@types` package names it
- * references, or `null` when the package has no published types.
- */
-async function fetchPackageFileGraph(
-  packageName: string
-): Promise<{ files: PackageFiles; transitivePackages: string[] } | null> {
-  const entry = await fetchTypeFile(packageName, "index.d.ts");
-
-  if (entry === null) {
-    return null;
-  }
-
-  const files: PackageFiles = { "index.d.ts": entry };
-  const transitivePackages = new Set<string>();
-  const queue = [...extractFileDependencies("index.d.ts", entry).files];
-
-  for (const pkg of extractFileDependencies("index.d.ts", entry).packages) {
-    transitivePackages.add(pkg);
-  }
-
-  while (
-    queue.length > 0 &&
-    Object.keys(files).length < MAX_FILES_PER_PACKAGE
-  ) {
-    const filePath = queue.shift()!;
-
-    if (files[filePath] !== undefined) {
-      continue;
-    }
-
-    const contents = await fetchTypeFile(packageName, filePath);
-
-    if (contents === null) {
-      continue;
-    }
-
-    files[filePath] = contents;
-
-    const deps = extractFileDependencies(filePath, contents);
-    queue.push(...deps.files.filter((f) => files[f] === undefined));
-
-    for (const pkg of deps.packages) {
-      transitivePackages.add(pkg);
-    }
-  }
-
-  return { files, transitivePackages: [...transitivePackages] };
-}
-
-/**
- * Resolves the complete set of type files for a package, following transitive
- * `@types` references. Results are cached in IndexedDB per package.
- */
 export async function acquirePackageTypes(
-  rootPackageName: string
+  rootPackageName: string,
+  version = "latest",
+  signal?: AbortSignal
 ): Promise<Map<string, PackageFiles>> {
   const resolved = new Map<string, PackageFiles>();
-  const queue = [rootPackageName];
-  const visited = new Set<string>();
-
-  while (queue.length > 0 && visited.size < MAX_TRANSITIVE_PACKAGES) {
-    const packageName = queue.shift()!;
-
-    if (visited.has(packageName)) {
-      continue;
-    }
-
-    visited.add(packageName);
-
-    const cached = await readCachedPackage(packageName);
-
-    if (cached) {
-      if (cached.files) {
-        resolved.set(packageName, cached.files);
-
-        // Re-derive transitive package references from cached contents.
-        for (const [filePath, contents] of Object.entries(cached.files)) {
-          queue.push(...extractFileDependencies(filePath, contents).packages);
-        }
+  const queue = [{ packageName: rootPackageName, version }];
+  const visited = new Map<string, string>();
+  let totalBytes = 0;
+  while (queue.length) {
+    signal?.throwIfAborted();
+    const next = queue.shift()!;
+    if (visited.has(next.packageName)) {
+      const previous = visited.get(next.packageName);
+      if (
+        previous !== next.version &&
+        previous !== "*" &&
+        next.version !== "*"
+      ) {
+        throw new Error(
+          "Incompatible declaration requirements for " +
+            next.packageName +
+            ": " +
+            previous +
+            " and " +
+            next.version
+        );
       }
-
       continue;
     }
-
-    const result = await fetchPackageFileGraph(packageName);
-
-    await writeCachedPackage({
-      packageName,
-      fetchedAt: Date.now(),
-      files: result?.files ?? null,
-    });
-
-    if (result) {
-      resolved.set(packageName, result.files);
-      queue.push(...result.transitivePackages);
+    if (visited.size >= MAX_TRANSITIVE_PACKAGES) {
+      throw new Error("Declaration package limit exceeded.");
+    }
+    visited.set(next.packageName, next.version);
+    const cached = await acquireCachedPackage(
+      next.packageName,
+      next.version,
+      signal
+    );
+    if (!cached.files) {
+      continue;
+    }
+    totalBytes += Object.values(cached.files).reduce(
+      (sum, text) => sum + new TextEncoder().encode(text).length,
+      0
+    );
+    if (totalBytes > 5 * 1024 * 1024) {
+      throw new Error("Declaration byte limit exceeded.");
+    }
+    resolved.set(next.packageName, cached.files);
+    for (const [packageName, range] of Object.entries(
+      cached.dependencies ?? {}
+    )) {
+      queue.push({ packageName, version: range });
     }
   }
-
   return resolved;
 }
 
@@ -247,16 +228,11 @@ export async function acquirePackageTypes(
 export interface CdnModuleInfo {
   id: string;
   packageName: string;
+  typeVersion?: string;
 }
-
-interface CdnLibEntry {
-  disposables: monaco.IDisposable[];
-  packageName: string;
-}
-
-const cdnLibEntries = new Map<string, CdnLibEntry>();
 
 let syncGeneration = 0;
+let acquisitionController: AbortController | undefined;
 
 /**
  * Syncs CDN module type registrations with the provided list. Callers should
@@ -268,57 +244,62 @@ let syncGeneration = 0;
  * files are registered as soon as they resolve. Disposes registrations for
  * modules no longer in the list (e.g. deleted from storage).
  */
+const registeredFiles = new Map<
+  string,
+  { contents: string; disposable: monaco.IDisposable }
+>();
 export async function syncCdnModuleLibs(
   modules: CdnModuleInfo[]
 ): Promise<void> {
   const generation = ++syncGeneration;
-  const currentIds = new Set(modules.map((m) => m.id));
-
-  for (const [id, entry] of cdnLibEntries) {
-    if (!currentIds.has(id)) {
-      entry.disposables.forEach((d) => d.dispose());
-      cdnLibEntries.delete(id);
-    }
-  }
-
-  await Promise.all(
+  acquisitionController?.abort();
+  const controller = new AbortController();
+  acquisitionController = controller;
+  const packages = await Promise.all(
     modules
       .filter((module) => module.packageName)
-      .map(async (module) => {
-        const existing = cdnLibEntries.get(module.id);
-
-        if (existing && existing.packageName === module.packageName) {
-          return;
-        }
-
-        const packages = await acquirePackageTypes(module.packageName);
-
-        // A newer sync superseded this one while fetching.
-        if (generation !== syncGeneration) {
-          return;
-        }
-
-        if (existing) {
-          existing.disposables.forEach((d) => d.dispose());
-        }
-
-        const disposables: monaco.IDisposable[] = [];
-
-        for (const [packageName, files] of packages) {
-          for (const [filePath, contents] of Object.entries(files)) {
-            disposables.push(
-              addTypeLib(
-                contents,
-                `file:///node_modules/@types/${packageName}/${filePath}`
-              )
-            );
-          }
-        }
-
-        cdnLibEntries.set(module.id, {
-          disposables,
-          packageName: module.packageName,
-        });
-      })
+      .map((module) =>
+        acquirePackageTypes(
+          module.packageName,
+          module.typeVersion,
+          controller.signal
+        )
+      )
   );
+  if (generation !== syncGeneration) {
+    return;
+  }
+  const desired = new Map<string, string>();
+  for (const packageSet of packages) {
+    for (const [packageName, files] of packageSet) {
+      const path = packageName.startsWith("@")
+        ? packageName.slice(1).replace("/", "__")
+        : packageName;
+      for (const [file, contents] of Object.entries(files)) {
+        const uri = `file:///node_modules/@types/${path}/${file}`;
+        if (desired.has(uri) && desired.get(uri) !== contents) {
+          throw new Error(
+            "Configured modules require incompatible declarations for " +
+              packageName
+          );
+        }
+        desired.set(uri, contents);
+      }
+    }
+  }
+  // Single ownership avoids one module disposing another module's shared declarations.
+  for (const [uri, entry] of registeredFiles) {
+    if (desired.get(uri) !== entry.contents) {
+      entry.disposable.dispose();
+      registeredFiles.delete(uri);
+    }
+  }
+  for (const [uri, contents] of desired) {
+    if (!registeredFiles.has(uri)) {
+      registeredFiles.set(uri, {
+        contents,
+        disposable: addTypeLib(contents, uri),
+      });
+    }
+  }
 }

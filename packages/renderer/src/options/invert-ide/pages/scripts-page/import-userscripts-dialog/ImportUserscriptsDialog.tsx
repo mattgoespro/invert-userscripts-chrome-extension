@@ -165,15 +165,25 @@ export function ImportUserscriptsDialog({
         />
 
         <div className="flex flex-col gap-sm">
-          <div className="flex items-end gap-sm">
+          <div className="flex items-center gap-sm">
             <Input
-              className="flex-1"
+              className="flex-1 [&_input]:cursor-pointer [&_input::placeholder]:text-text-muted [&_input:disabled]:cursor-not-allowed"
+              aria-label="Select userscripts file"
+              aria-describedby="userscripts-import-caption"
               value={selectedPath}
               placeholder="No userscripts file selected"
               readOnly
-              disabled
+              disabled={importing || validating}
+              onClick={handleSelectClick}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  handleSelectClick();
+                }
+              }}
             />
             <Button
+              className="h-(--input-height) py-0"
               variant="secondary"
               onClick={handleSelectClick}
               disabled={importing || validating}
@@ -184,7 +194,10 @@ export function ImportUserscriptsDialog({
               {validating ? "Validating..." : "Select"}
             </Button>
           </div>
-          <span className="font-mono text-[10px] text-text-muted-faint">
+          <span
+            id="userscripts-import-caption"
+            className="font-mono text-xs text-text-muted"
+          >
             Choose a JSON export file containing userscripts to append to this
             workspace.
           </span>

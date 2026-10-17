@@ -12,7 +12,7 @@ export {
  * The workspace virtual file system.
  *
  * Open script files are real Monaco text models at canonical
- * `file:///scripts/<module>/...` URIs. The workspace service keeps a `main.ts`
+ * `file:///userscripts/<immutable-id>/...` URIs; stock TypeScript paths map public aliases. The workspace service keeps a `main.ts`
  * model for every userscript, plus `types.d.ts` for the active script and for
  * any types pane that is a module. Because with eager model sync, the worker
  * sees these models as actual program files:

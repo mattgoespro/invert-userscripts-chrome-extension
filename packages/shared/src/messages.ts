@@ -5,9 +5,9 @@ type RuntimePortMessagePayloads = {
    */
   refreshTabs: never;
   /** Re-inject the given scripts (and shared-module consumers) into matching open tabs. */
-  applyScripts: { scriptIds: string[] };
+  applyScripts: { scriptIds: string[]; requestId?: string };
   /** Apply or tear down a script on matching open tabs after an enable/disable change. */
-  setEnabled: { scriptId: string; enabled: boolean };
+  setEnabled: { scriptId: string; enabled: boolean; requestId?: string };
 };
 
 export type RuntimePortMessageName = keyof RuntimePortMessagePayloads;
@@ -36,6 +36,8 @@ export type RuntimePortMessageEvent<
 }[T];
 
 export type ApplyScriptsResponse = {
+  status?: "unknown";
+  message?: string;
   success: boolean;
   appliedTabCount: number;
   removedTabCount?: number;

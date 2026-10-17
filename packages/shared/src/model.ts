@@ -1,4 +1,5 @@
 import type { EditorThemeName } from "./editor-theme";
+import type { ModuleManifest } from "./modules/manifest";
 
 export type AppThemeName =
   | "graphite"
@@ -17,6 +18,8 @@ export type UserscriptSourceLanguage = "typescript" | "scss";
 export type UserscriptCompiledLanguage = "javascript" | "css";
 
 export interface Userscript {
+  /** Local repository revision; omitted from portable legacy serialization. */
+  storageRevision?: string;
   id: string;
   name: string;
   enabled: boolean;
@@ -46,6 +49,7 @@ export type Userscripts = Record<string, Userscript>;
 export type GlobalModules = Record<string, GlobalModule>;
 
 export interface GlobalModule {
+  typeVersion?: string;
   id: string;
   name: string;
   url: string;
@@ -63,6 +67,7 @@ export interface EditorSettings {
 }
 
 export interface UserscriptCompileResult {
+  manifest?: ModuleManifest;
   success: boolean;
   code?: string;
   error?: Error;
@@ -72,6 +77,8 @@ export interface UserscriptCompileResult {
  * Compiled code stored separately in Chrome local storage.
  */
 export interface CompiledCodeBuildMetadata {
+  compilerContractVersion?: number;
+  sourceDigest?: string;
   version: 1;
   minifyCompiledOutput: boolean;
   /** Hash of the TypeScript/SCSS/shared identity that produced this artifact. */
@@ -79,6 +86,7 @@ export interface CompiledCodeBuildMetadata {
 }
 
 export interface CompiledCodeEntry {
+  manifest?: ModuleManifest;
   javascript: string;
   css: string;
   build?: CompiledCodeBuildMetadata;

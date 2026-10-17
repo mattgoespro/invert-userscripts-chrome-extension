@@ -4,6 +4,7 @@ type CssBookmarks = Record<string, string>;
 
 let memoryBookmarks: CssBookmarks | null = null;
 let loadPromise: Promise<CssBookmarks> | null = null;
+let mutations = Promise.resolve();
 
 function bookmarkKey(tabId: number, scriptId: string): string {
   return `${tabId}:${scriptId}`;
@@ -18,13 +19,13 @@ async function readBookmarks(): Promise<CssBookmarks> {
     loadPromise = chrome.storage.session
       .get(SESSION_KEY)
       .then((result) => {
-        memoryBookmarks = (result[SESSION_KEY] as CssBookmarks | undefined) ?? {};
+        memoryBookmarks =
+          (result[SESSION_KEY] as CssBookmarks | undefined) ?? {};
         return memoryBookmarks;
       })
       .catch((error) => {
         console.warn("Failed to load CSS inject bookmarks:", error);
-        memoryBookmarks = {};
-        return memoryBookmarks;
+        throw error;
       })
       .finally(() => {
         loadPromise = null;
@@ -35,12 +36,12 @@ async function readBookmarks(): Promise<CssBookmarks> {
 }
 
 async function writeBookmarks(bookmarks: CssBookmarks): Promise<void> {
-  memoryBookmarks = bookmarks;
-
   try {
     await chrome.storage.session.set({ [SESSION_KEY]: bookmarks });
+    memoryBookmarks = bookmarks;
   } catch (error) {
     console.warn("Failed to persist CSS inject bookmarks:", error);
+    throw error;
   }
 }
 
@@ -48,48 +49,45 @@ export async function getCssBookmark(
   tabId: number,
   scriptId: string
 ): Promise<string | undefined> {
+  await mutations;
   const bookmarks = await readBookmarks();
   return bookmarks[bookmarkKey(tabId, scriptId)];
 }
 
-export async function setCssBookmark(
+function mutateBookmarks(
+  change: (bookmarks: CssBookmarks) => void
+): Promise<void> {
+  const task = mutations.then(async () => {
+    const bookmarks = { ...(await readBookmarks()) };
+    change(bookmarks);
+    await writeBookmarks(bookmarks);
+  });
+  mutations = task.catch(() => {});
+  return task;
+}
+export function setCssBookmark(
   tabId: number,
   scriptId: string,
   css: string
 ): Promise<void> {
-  const bookmarks = { ...(await readBookmarks()) };
-  bookmarks[bookmarkKey(tabId, scriptId)] = css;
-  await writeBookmarks(bookmarks);
+  return mutateBookmarks((bookmarks) => {
+    bookmarks[bookmarkKey(tabId, scriptId)] = css;
+  });
 }
-
-export async function clearCssBookmark(
+export function clearCssBookmark(
   tabId: number,
   scriptId: string
 ): Promise<void> {
-  const bookmarks = { ...(await readBookmarks()) };
-  const key = bookmarkKey(tabId, scriptId);
-
-  if (!(key in bookmarks)) {
-    return;
-  }
-
-  delete bookmarks[key];
-  await writeBookmarks(bookmarks);
+  return mutateBookmarks((bookmarks) => {
+    delete bookmarks[bookmarkKey(tabId, scriptId)];
+  });
 }
-
-export async function clearCssBookmarksForTab(tabId: number): Promise<void> {
-  const prefix = `${tabId}:`;
-  const bookmarks = { ...(await readBookmarks()) };
-  let changed = false;
-
-  for (const key of Object.keys(bookmarks)) {
-    if (key.startsWith(prefix)) {
-      delete bookmarks[key];
-      changed = true;
+export function clearCssBookmarksForTab(tabId: number): Promise<void> {
+  return mutateBookmarks((bookmarks) => {
+    for (const key of Object.keys(bookmarks)) {
+      if (key.startsWith(`${tabId}:`)) {
+        delete bookmarks[key];
+      }
     }
-  }
-
-  if (changed) {
-    await writeBookmarks(bookmarks);
-  }
+  });
 }

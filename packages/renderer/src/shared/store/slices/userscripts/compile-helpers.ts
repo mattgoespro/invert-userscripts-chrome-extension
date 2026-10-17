@@ -6,12 +6,16 @@ import {
 import {
   buildCompiledCodeEntry,
   hashUserscriptCompileSources,
+  digestUserscriptCompileSources,
 } from "@shared/compile-metadata";
 import type { CompiledCodeEntry, Userscript } from "@shared/model";
 import type { RootState } from "../../store";
 
 export function getBuildOptions(state: RootState) {
-  return getCompiledOutputBuildOptions(state.settings.editorSettings);
+  return {
+    ...getCompiledOutputBuildOptions(state.settings.editorSettings),
+    compilerContractVersion: 2,
+  };
 }
 
 export async function compileJavascriptOrThrow(
@@ -55,13 +59,24 @@ export async function compileAllOutputsOrThrow(
   script: Userscript,
   state: RootState
 ): Promise<CompiledCodeEntry> {
-  const [javascript, css] = await Promise.all([
-    compileJavascriptOrThrow(script, state),
+  const [result, css] = await Promise.all([
+    buildUserscriptJavascript(
+      script,
+      script.code.source.typescript,
+      getBuildOptions(state)
+    ),
     compileStylesheetOrThrow(script, state),
   ]);
 
-  return buildCompiledCodeEntry(javascript, css, {
-    ...getBuildOptions(state),
-    sourceHash: hashUserscriptCompileSources(script),
-  });
+  if (!result.success) {
+    throw result.error ?? new Error("JavaScript compilation failed.");
+  }
+  return {
+    ...buildCompiledCodeEntry(result.code ?? "", css, {
+      ...getBuildOptions(state),
+      sourceHash: hashUserscriptCompileSources(script),
+      sourceDigest: await digestUserscriptCompileSources(script),
+    }),
+    manifest: result.manifest,
+  };
 }

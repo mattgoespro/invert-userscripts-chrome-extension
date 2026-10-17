@@ -102,7 +102,7 @@ export async function expandProblemsDrawer(page: Page) {
     timeout: 15_000,
   });
 
-  await page.getByText("problems", { exact: true }).click();
+  await page.getByRole("tab", { name: /^problems(?:\s+\d+)?$/ }).click();
 }
 
 /**

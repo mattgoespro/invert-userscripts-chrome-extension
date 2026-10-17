@@ -15,7 +15,7 @@ import {
   UserscriptsTransferFile,
 } from "@/shared/store/slices/userscripts/transfer.userscripts";
 import { LoaderCircleIcon, PlusIcon } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Group, Panel } from "react-resizable-panels";
 import { ScriptEditor } from "./script-editor/ScriptEditor";
 import { ScriptList } from "@/shared/components/script-list/ScriptList";
@@ -25,7 +25,9 @@ import {
 } from "@/shared/store/slices/userscripts/thunks.userscripts";
 import {
   selectPanelSizes,
-  updatePanelSizes,
+  selectScriptListSort,
+  setScriptListSort,
+  updatePanelSizesIfChanged,
 } from "@/shared/store/slices/ui";
 import { ImportUserscriptsDialog } from "./import-userscripts-dialog/ImportUserscriptsDialog";
 import { ScriptsActionsMenu } from "./scripts-actions-menu/ScriptsActionsMenu";
@@ -40,6 +42,19 @@ export function ScriptsPage() {
   const scripts = useAppSelector(selectAllUserscripts);
   const selectedScript = useAppSelector(selectCurrentUserscript);
   const panelSizes = useAppSelector(selectPanelSizes);
+  const sortBy = useAppSelector(selectScriptListSort);
+  const sortedScripts = useMemo(
+    () =>
+      Object.values(scripts ?? {}).sort((a, b) =>
+        sortBy === "created"
+          ? a.createdAt - b.createdAt
+          : a.name.localeCompare(b.name, undefined, {
+              sensitivity: "base",
+              numeric: true,
+            })
+      ),
+    [scripts, sortBy]
+  );
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
 
@@ -131,7 +146,9 @@ export function ScriptsPage() {
           const sidebarWidth = layout["scripts-sidebar"];
           if (sidebarWidth != null) {
             dispatch(
-              updatePanelSizes({ scriptListSidebarWidth: sidebarWidth })
+              updatePanelSizesIfChanged({
+                scriptListSidebarWidth: sidebarWidth,
+              })
             );
           }
         }}
@@ -143,15 +160,17 @@ export function ScriptsPage() {
           className="min-h-0"
         >
           <div className="flex h-full min-h-0 flex-col bg-surface-raised">
-            <div className="flex items-center justify-between border-b border-border p-md">
-              <Typography variant="subtitle">
-                <span className="mr-2 font-mono text-sm text-text-muted-faint">
+            <div className="@container flex items-center justify-between gap-2xs border-b border-border p-md">
+              <Typography variant="subtitle" className="min-w-0 truncate">
+                <span className="mr-2 hidden font-mono text-sm text-text-muted-faint @[12rem]:inline">
                   //
                 </span>
                 Scripts
               </Typography>
-              <div className="flex items-center gap-2xs">
+              <div className="flex shrink-0 items-center gap-2xs">
                 <ScriptsActionsMenu
+                  sortBy={sortBy}
+                  onSortChange={(value) => dispatch(setScriptListSort(value))}
                   onImportClick={() => setImportDialogOpen(true)}
                   onExportClick={onExportScripts}
                 />
@@ -166,7 +185,10 @@ export function ScriptsPage() {
             </div>
             <div className="relative min-h-0 flex-1">
               <div className="flex h-full flex-col">
-                <ScriptList onScriptSelected={onScriptSelected} />
+                <ScriptList
+                  scripts={sortedScripts}
+                  onScriptSelected={onScriptSelected}
+                />
               </div>
               {isImporting && (
                 <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-sm bg-[rgba(12,14,18,0.88)]">

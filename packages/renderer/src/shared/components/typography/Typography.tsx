@@ -13,8 +13,7 @@ const typographyVariants = cva("m-0", {
         "font-mono text-[10px] font-semibold text-text-muted uppercase tracking-[0.05em] leading-[1.4]",
       body: "font-body text-sm font-normal text-text-muted leading-normal",
       button: "font-mono text-sm font-medium text-foreground leading-normal",
-      caption:
-        "font-body text-xs font-normal text-text-muted-strong leading-[1.4]",
+      caption: "font-body text-xs font-normal text-text-muted leading-[1.4]",
       code: "font-mono text-sm font-normal text-foreground leading-[1.6] tracking-[-0.01em]",
     },
   },

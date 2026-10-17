@@ -4,10 +4,25 @@ import {
   type CompiledCodeEntry,
   type EditorSettings,
 } from "./model";
+import { sha256 } from "./storage/sync/revision-codec";
 
 export interface CompiledOutputBuildOptions {
+  compilerContractVersion?: number;
+  sourceDigest?: string;
   minifyCompiledOutput: boolean;
   sourceHash?: string;
+}
+export function digestUserscriptCompileSources(
+  script: UserscriptCompileSnapshot
+): Promise<string> {
+  return sha256(
+    JSON.stringify([
+      script.code.source.typescript,
+      script.code.source.scss,
+      Boolean(script.shared),
+      getScriptModulePath(script),
+    ])
+  );
 }
 
 export function getCompiledOutputBuildOptions(
@@ -62,6 +77,10 @@ export function createCompiledCodeBuildMetadata(
 ): CompiledCodeBuildMetadata {
   return {
     version: 1,
+    ...(options.compilerContractVersion
+      ? { compilerContractVersion: options.compilerContractVersion }
+      : {}),
+    ...(options.sourceDigest ? { sourceDigest: options.sourceDigest } : {}),
     minifyCompiledOutput: options.minifyCompiledOutput,
     ...(options.sourceHash ? { sourceHash: options.sourceHash } : {}),
   };
@@ -99,6 +118,18 @@ export function isCompiledCodeBuildCurrent(
   entry: CompiledCodeEntry | null | undefined,
   options: CompiledOutputBuildOptions
 ): boolean {
+  if (
+    options.compilerContractVersion !== undefined &&
+    entry?.build?.compilerContractVersion !== options.compilerContractVersion
+  ) {
+    return false;
+  }
+  if (
+    options.sourceDigest !== undefined &&
+    entry?.build?.sourceDigest !== options.sourceDigest
+  ) {
+    return false;
+  }
   if (
     entry?.build?.version !== 1 ||
     entry.build.minifyCompiledOutput !== options.minifyCompiledOutput

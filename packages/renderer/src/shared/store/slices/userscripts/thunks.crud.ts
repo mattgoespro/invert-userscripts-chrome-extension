@@ -12,6 +12,7 @@ import {
 } from "../../../services/userscript-publication";
 import { uuid } from "@shared/utils";
 import { sendSetEnabledMessage } from "./messaging";
+import type { RootState } from "../../store";
 import { DefaultNewUserscriptName } from "./state.userscripts";
 
 export const createUserscript = createAsyncThunk(
@@ -79,14 +80,18 @@ export const deleteUserscript = createAsyncThunk(
 
 export const toggleUserscript = createAsyncThunk(
   "userscripts/toggleUserscript",
-  async (scriptId: string, { dispatch }) => {
+  async (scriptId: string, { dispatch, getState }) => {
+    const desiredEnabled = !(getState() as RootState).userscripts.scripts[
+      scriptId
+    ]?.enabled;
     const { script: updatedScript, applyResult } = await publishEnabledToggle(
       scriptId,
       ChromeSyncStorage,
       (script) => {
         dispatch(acceptPublishedScript({ script, kind: "toggled" }));
       },
-      sendSetEnabledMessage
+      sendSetEnabledMessage,
+      desiredEnabled
     );
 
     return {

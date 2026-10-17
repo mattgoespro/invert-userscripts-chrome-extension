@@ -1,14 +1,12 @@
+import { analyzeUserscriptModule } from "@/sandbox/compiler";
+import type { ModuleManifest } from "@shared/modules/manifest";
 import {
   buildScriptFileUri,
   ensureTypescriptDefaults,
-  refreshTypescriptDiagnosticsIfProgramFilesChanged,
   registerModuleSpecifierCompletion,
-  syncAmbientTypeDefinitionLibs,
-  syncCdnModuleLibs,
-  syncModulePackageJsons,
-  syncWorkspaceModels,
   type SharedModuleSpecifierInfo,
   type WorkspaceFile,
+  reconcileLanguageWorkspace,
 } from "@packages/monaco";
 import { getScriptModulePath } from "@shared/model";
 import type { AppStore, RootState } from "../store/store";
@@ -42,6 +40,7 @@ function selectModuleInfos(state: RootState): SharedModuleSpecifierInfo[] {
   return Object.values(state.userscripts.scripts ?? {}).map((script) => ({
     moduleName: getScriptModulePath(script),
     scriptName: script.name,
+    shared: script.shared,
   }));
 }
 
@@ -62,8 +61,47 @@ export function startWorkspaceService(store: AppStore): () => void {
 
   let scheduled: ReturnType<typeof setTimeout> | null = null;
   let lastSignature = "";
-  let lastCurrentScriptId =
-    store.getState().userscripts.currentScriptId ?? null;
+  const manifests: Record<string, ModuleManifest> = {};
+  const pendingAnalysis = new Map<string, string>();
+  let analysisTimer: ReturnType<typeof setTimeout> | undefined;
+  const analyze = () => {
+    const state = store.getState();
+    for (const script of Object.values(state.userscripts.scripts ?? {})) {
+      const source =
+        state.editorDrafts.drafts[script.id]?.typescript ??
+        script.code.source.typescript;
+      if (
+        manifests[script.id]?.source === source ||
+        pendingAnalysis.get(script.id) === source
+      ) {
+        continue;
+      }
+      pendingAnalysis.set(script.id, source);
+      void analyzeUserscriptModule(source).then(
+        (manifest) => {
+          if (!running || pendingAnalysis.get(script.id) !== source) {
+            return;
+          }
+          pendingAnalysis.delete(script.id);
+          manifests[script.id] = manifest;
+          sync();
+        },
+        (error) => {
+          if (pendingAnalysis.get(script.id) === source) {
+            pendingAnalysis.delete(script.id);
+          }
+          console.warn("Module analysis failed:", error);
+        }
+      );
+    }
+    for (const id of Object.keys(manifests)) {
+      if (!state.userscripts.scripts[id]) {
+        delete manifests[id];
+        pendingAnalysis.delete(id);
+      }
+    }
+  };
+  let lastState = store.getState();
 
   const sync = () => {
     scheduled = null;
@@ -75,6 +113,7 @@ export function startWorkspaceService(store: AppStore): () => void {
         drafts: state.editorDrafts.drafts,
         currentScriptId: state.userscripts.currentScriptId,
         modules: state.modules.modules ?? {},
+        manifests,
       },
       lastSignature
     );
@@ -90,27 +129,35 @@ export function startWorkspaceService(store: AppStore): () => void {
         uri: buildScriptFileUri(script, editor),
       })
     );
-    syncModulePackageJsons(projection.modulePaths);
-    syncWorkspaceModels(files);
-    refreshTypescriptDiagnosticsIfProgramFilesChanged(
-      files
-        .filter((file) => file.language === "typescript")
-        .map((file) => file.uri)
-    );
-    // Clear ambient copies left by older sessions; type panes are real models.
-    syncAmbientTypeDefinitionLibs([]);
-
-    void syncCdnModuleLibs(projection.cdnModules).catch((error) => {
-      console.warn("CDN type acquisition failed:", error);
+    reconcileLanguageWorkspace({
+      files,
+      modulePaths: projection.modulePaths,
+      cdnModules: projection.cdnModules,
+      aliases: Object.values(state.userscripts.scripts ?? {}).map((script) => ({
+        id: script.id,
+        modulePath: getScriptModulePath(script),
+      })),
     });
   };
 
   const unsubscribe = store.subscribe(() => {
-    const nextId = store.getState().userscripts.currentScriptId ?? null;
+    const nextState = store.getState();
+    const previousState = lastState;
+    lastState = nextState;
+    if (
+      nextState.userscripts.scripts === previousState.userscripts.scripts &&
+      nextState.userscripts.currentScriptId ===
+        previousState.userscripts.currentScriptId &&
+      nextState.editorDrafts.drafts === previousState.editorDrafts.drafts &&
+      nextState.modules.modules === previousState.modules.modules
+    ) {
+      return;
+    }
 
-    if (nextId !== lastCurrentScriptId) {
-      lastCurrentScriptId = nextId;
-
+    if (
+      nextState.userscripts.currentScriptId !==
+      previousState.userscripts.currentScriptId
+    ) {
       if (scheduled != null) {
         clearTimeout(scheduled);
         scheduled = null;
@@ -121,12 +168,17 @@ export function startWorkspaceService(store: AppStore): () => void {
     }
 
     scheduled ??= setTimeout(sync, SYNC_DEBOUNCE_MS);
+    clearTimeout(analysisTimer);
+    analysisTimer = setTimeout(analyze, 150);
   });
 
   sync();
+  analyze();
 
   return () => {
     unsubscribe();
+    clearTimeout(analysisTimer);
+    pendingAnalysis.clear();
 
     if (scheduled != null) {
       clearTimeout(scheduled);

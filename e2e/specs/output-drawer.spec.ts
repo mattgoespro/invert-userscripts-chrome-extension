@@ -1,5 +1,6 @@
 import { test, expect, buildUserscript } from "../fixtures";
 import { ScriptsPage } from "../page-objects";
+import { installReduxAudit, readReduxActions } from "../helpers/redux-audit";
 
 test("drawer collapse actions only dispatch when the collapsed state changes", async ({
   optionsPage,
@@ -16,19 +17,15 @@ test("drawer collapse actions only dispatch when the collapsed state changes", a
       outputDrawerCollapsed: false,
     },
   });
+  await installReduxAudit(optionsPage);
   await optionsPage.reload();
   await new ScriptsPage(optionsPage).selectScript(script.name);
   await expect(optionsPage.getByTitle("Collapse drawer")).toBeVisible();
 
-  let collapseActions = 0;
-  optionsPage.on("console", (message) => {
-    if (
-      message.type() === "startGroupCollapsed" &&
-      message.text().includes("ui/setOutputDrawerCollapsed")
-    ) {
-      collapseActions += 1;
-    }
-  });
+  const collapseActions = async (): Promise<number> =>
+    (await readReduxActions(optionsPage)).filter(
+      (action) => action.type === "ui/setOutputDrawerCollapsed"
+    ).length;
 
   const resizeViewport = async (): Promise<void> => {
     // Docked DevTools resizing changes the page viewport in the same way.
@@ -50,24 +47,24 @@ test("drawer collapse actions only dispatch when the collapsed state changes", a
   };
 
   await resizeViewport();
-  expect(collapseActions).toBe(0);
+  expect(await collapseActions()).toBe(0);
   await expect(optionsPage.getByTitle("Collapse drawer")).toBeVisible();
 
   await optionsPage.getByTitle("Collapse drawer").click();
   await expect(optionsPage.getByTitle("Expand drawer")).toBeVisible();
   // Also proves the action observer is active, so zero counts are meaningful.
-  await expect.poll(() => collapseActions).toBe(1);
+  await expect.poll(collapseActions).toBe(1);
 
   await resizeViewport();
-  expect(collapseActions).toBe(1);
+  expect(await collapseActions()).toBe(1);
   await expect(optionsPage.getByTitle("Expand drawer")).toBeVisible();
 
   await optionsPage.getByTitle("Expand drawer").click();
   await expect(optionsPage.getByTitle("Collapse drawer")).toBeVisible();
-  await expect.poll(() => collapseActions).toBe(2);
+  await expect.poll(collapseActions).toBe(2);
 
   await resizeViewport();
-  expect(collapseActions).toBe(2);
+  expect(await collapseActions()).toBe(2);
 
   const separator = optionsPage.locator(
     '#script-editor-outer-panels > [role="separator"]'
@@ -83,7 +80,7 @@ test("drawer collapse actions only dispatch when the collapsed state changes", a
   await optionsPage.mouse.move(x, y - 50, { steps: 10 });
   await optionsPage.mouse.up();
   await expect(optionsPage.getByTitle("Collapse drawer")).toBeVisible();
-  expect(collapseActions).toBe(2);
+  expect(await collapseActions()).toBe(2);
 
   const drawer = await optionsPage.getByTestId("output-drawer").boundingBox();
   if (!drawer) {
@@ -94,5 +91,5 @@ test("drawer collapse actions only dispatch when the collapsed state changes", a
   await optionsPage.mouse.move(x, drawer.y + drawer.height - 36, { steps: 10 });
   await optionsPage.mouse.up();
   await expect(optionsPage.getByTitle("Expand drawer")).toBeVisible();
-  await expect.poll(() => collapseActions).toBe(3);
+  await expect.poll(collapseActions).toBe(3);
 });

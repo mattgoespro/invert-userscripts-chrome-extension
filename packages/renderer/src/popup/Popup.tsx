@@ -1,9 +1,11 @@
 import { IconButton } from "@/shared/components/icon-button/IconButton";
+import { RuntimeCapabilityNotice } from "@/shared/components/runtime-capability/RuntimeCapabilityNotice";
 import { ScriptList } from "@/shared/components/script-list/ScriptList";
 import { Typography } from "@/shared/components/typography/Typography";
 import { selectAllUserscripts } from "@/shared/store/slices/userscripts/selectors";
 import { loadUserscripts } from "@/shared/store/slices/userscripts/thunks.load";
 import { matchesUrlPattern } from "@shared/url-matching";
+import { isInjectablePage } from "@shared/injection-eligibility";
 import { ExternalLinkIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -37,7 +39,7 @@ export function Popup() {
   }, [dispatch]);
 
   const matchingScripts = useMemo(() => {
-    if (!activeTabUrl) {
+    if (!activeTabUrl || !isInjectablePage(activeTabUrl)) {
       return [];
     }
 
@@ -53,7 +55,7 @@ export function Popup() {
   if (isLoading) {
     return (
       <div className="flex h-full items-center justify-center bg-surface-base">
-        <Typography variant="caption" className="text-text-muted-faint">
+        <Typography variant="caption" className="text-text-muted">
           Loading...
         </Typography>
       </div>
@@ -62,6 +64,7 @@ export function Popup() {
 
   return (
     <div className="flex h-full flex-col bg-surface-base">
+      <RuntimeCapabilityNotice />
       <div className="flex items-center justify-between border-b border-border p-md">
         <Typography variant="subtitle">
           <span className="mr-2 font-mono text-sm text-text-muted-faint">
@@ -81,7 +84,7 @@ export function Popup() {
         <>
           <ScriptList scripts={matchingScripts} />
           <div className="border-t border-border px-md py-sm">
-            <Typography variant="caption" className="text-text-muted-faint">
+            <Typography variant="caption" className="text-text-muted">
               {matchingScripts.length} script
               {matchingScripts.length !== 1 ? "s" : ""} matching
             </Typography>
@@ -89,8 +92,10 @@ export function Popup() {
         </>
       ) : (
         <div className="flex flex-1 items-center justify-center p-lg">
-          <Typography variant="caption" className="text-text-muted-faint">
-            No scripts match this page
+          <Typography variant="caption" className="text-text-muted">
+            {activeTabUrl && isInjectablePage(activeTabUrl)
+              ? "No scripts match this page"
+              : "Scripts cannot run on this page"}
           </Typography>
         </div>
       )}

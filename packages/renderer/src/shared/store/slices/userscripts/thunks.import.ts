@@ -11,6 +11,11 @@ import type { RootState } from "../../store";
 import { compileAllOutputsOrThrow } from "./compile-helpers";
 import { sendApplyScriptsMessage } from "./messaging";
 import type { UserscriptsTransferFile } from "./transfer.userscripts";
+import {
+  transactionalEnabled,
+  commitRepository,
+} from "@shared/publication/client";
+import type { DocumentWrite } from "@shared/publication/contracts";
 
 export const importUserscripts = createAsyncThunk<
   Userscript[],
@@ -91,28 +96,68 @@ export const importUserscripts = createAsyncThunk<
     importedScripts.map((script) => compileAllOutputsOrThrow(script, state))
   );
 
-  await Promise.all(
-    importedScripts.map(async (script, index) => {
-      const compiledEntry = compiledEntries[index];
+  if (await transactionalEnabled()) {
+    const outcome = await commitRepository({
+      requestId: crypto.randomUUID(),
+      writes: importedScripts.map(
+        (script, index): DocumentWrite => ({
+          id: script.id,
+          expectedRevision: null,
+          script,
+          artifact: compiledEntries[index],
+        })
+      ),
+    });
+    if (outcome.status === "committed") {
+      for (const document of outcome.documents) {
+        const artifact =
+          compiledEntries[
+            importedScripts.findIndex(
+              (script) => script.id === document.script.id
+            )
+          ];
+        dispatch(
+          acceptPublishedScript({
+            script: {
+              ...document.script,
+              storageRevision: document.revision,
+              code: {
+                source: document.script.code.source,
+                compiled: {
+                  javascript: artifact.javascript,
+                  css: artifact.css,
+                },
+              },
+            },
+            kind: "imported",
+          })
+        );
+      }
+    }
+  } else {
+    await Promise.all(
+      importedScripts.map(async (script, index) => {
+        const compiledEntry = compiledEntries[index];
 
-      script.code.compiled.javascript = compiledEntry.javascript;
-      script.code.compiled.css = compiledEntry.css;
+        script.code.compiled.javascript = compiledEntry.javascript;
+        script.code.compiled.css = compiledEntry.css;
 
-      await publishImportedScript(
-        script,
-        compiledEntry,
-        {
-          sourceStorage: ChromeSyncStorage,
-          compiledStorage: CompiledCodeStorage,
-        },
-        (published) => {
-          dispatch(
-            acceptPublishedScript({ script: published, kind: "imported" })
-          );
-        }
-      );
-    })
-  );
+        await publishImportedScript(
+          script,
+          compiledEntry,
+          {
+            sourceStorage: ChromeSyncStorage,
+            compiledStorage: CompiledCodeStorage,
+          },
+          (published) => {
+            dispatch(
+              acceptPublishedScript({ script: published, kind: "imported" })
+            );
+          }
+        );
+      })
+    );
+  }
 
   const applyResult = await sendApplyScriptsMessage(
     importedScripts.map((script) => script.id)

@@ -1,6 +1,10 @@
 import { useEffect, useRef } from "react";
 import * as monaco from "monaco-editor";
-import { useAppDispatch } from "@/shared/store/hooks";
+import { useAppDispatch, useAppStore } from "@/shared/store/hooks";
+import {
+  areScriptErrorsEqual,
+  type DiagnosticError,
+} from "@/shared/store/slices/workspace/error-comparison";
 import { setScriptErrors } from "@/shared/store/slices/workspace";
 import { CompilationError } from "@shared/errors";
 import { uuid } from "@shared/utils";
@@ -19,6 +23,7 @@ export function useEditorErrorTracking(
   language: CompilationError["language"]
 ) {
   const dispatch = useAppDispatch();
+  const store = useAppStore();
   const prevHintsHashRef = useRef("");
 
   useEffect(() => {
@@ -42,8 +47,7 @@ export function useEditorErrorTracking(
           })
         : monaco.editor.getModelMarkers({ resource: model.uri });
 
-      const errors: CompilationError[] = markers.map((marker) => ({
-        id: uuid(),
+      const errors: DiagnosticError[] = markers.map((marker) => ({
         scriptId,
         language,
         message: marker.message,
@@ -57,10 +61,23 @@ export function useEditorErrorTracking(
         column: marker.startColumn,
         endLine: marker.endLineNumber,
         endColumn: marker.endColumn,
-        timestamp: Date.now(),
       }));
 
-      dispatch(setScriptErrors({ scriptId, language, errors }));
+      const previous =
+        store.getState().workspace.scriptErrors[scriptId]?.[language];
+      if (!areScriptErrorsEqual(previous, errors)) {
+        dispatch(
+          setScriptErrors({
+            scriptId,
+            language,
+            errors: errors.map((error) => ({
+              ...error,
+              id: uuid(),
+              timestamp: Date.now(),
+            })),
+          })
+        );
+      }
 
       if (isTypescriptModel) {
         // Markers with severity below Warning (Hint = 1, Info = 2) have no
@@ -121,5 +138,5 @@ export function useEditorErrorTracking(
         monaco.editor.setModelMarkers(model, "invert-ide", []);
       }
     };
-  }, [scriptId, model, language, dispatch]);
+  }, [scriptId, model, language, dispatch, store]);
 }

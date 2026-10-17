@@ -35,7 +35,10 @@ export function ModuleCard({
       </Typography>
       {module.packageName && (
         <span className="flex shrink-0 items-center gap-1 font-mono text-[10px] text-text-muted-faint">
-          <span>@types/{module.packageName}</span>
+          <span>
+            @types/{module.packageName}
+            {module.typeVersion ? "@" + module.typeVersion : ""}
+          </span>
           {typesValidation?.status === "checking" && (
             <LoaderCircleIcon
               size={12}

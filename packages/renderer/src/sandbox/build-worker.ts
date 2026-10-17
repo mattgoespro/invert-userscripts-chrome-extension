@@ -1,7 +1,9 @@
 import { transpileModule } from "typescript";
 import { TypeScriptCompilerOptions } from "@shared/typescript";
 import { prepareCompiledJavascript } from "@shared/compiled-output";
-import { minify as minifyJavascript } from "terser";
+import { minifyUserscript } from "./minifier";
+import { analyzeModule, getAsyncCompletionExpression } from "./module-analysis";
+import type { ModuleManifest } from "@shared/modules/manifest";
 
 interface BuildWorkerRequest {
   type: "compile";
@@ -10,9 +12,11 @@ interface BuildWorkerRequest {
   shared?: boolean;
   moduleName?: string;
   minify?: boolean;
+  analysisOnly?: boolean;
 }
 
 interface BuildWorkerResponse {
+  manifest?: ModuleManifest;
   type: "compile-result" | "worker-ready";
   id?: string;
   success?: boolean;
@@ -35,6 +39,16 @@ self.addEventListener("message", (event: MessageEvent<BuildWorkerRequest>) => {
 
   void (async () => {
     try {
+      if (event.data.analysisOnly) {
+        self.postMessage({
+          type: "compile-result",
+          id,
+          success: true,
+          code: "",
+          manifest: analyzeModule(sourceCode),
+        } satisfies BuildWorkerResponse);
+        return;
+      }
       const transpiled = transpileModule(sourceCode, {
         compilerOptions: TypeScriptCompilerOptions,
       });
@@ -45,21 +59,18 @@ self.addEventListener("message", (event: MessageEvent<BuildWorkerRequest>) => {
       });
 
       if (minify) {
-        const result = await minifyJavascript(code, {
-          compress: true,
-          ecma: 2020,
-          format: { comments: false },
-          mangle: true,
-        });
-
-        code = result.code ?? code;
+        code = await minifyUserscript(code);
       }
+      // Drop only the outer expression's trailing semicolon/comments so the
+      // execution adapter can chain completion without reparsing program text.
+      code = getAsyncCompletionExpression(code) ?? code;
 
       const response: BuildWorkerResponse = {
         type: "compile-result",
         id,
         success: true,
         code,
+        manifest: analyzeModule(sourceCode, code),
       };
 
       self.postMessage(response);

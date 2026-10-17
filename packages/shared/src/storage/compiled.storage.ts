@@ -1,4 +1,10 @@
 import { CompiledCodeEntry } from "../model";
+import {
+  transactionalEnabled,
+  readRepository,
+  commitRepository,
+  writeLegacy,
+} from "../publication/client";
 
 const COMPILED_KEY_PREFIX = "compiled:";
 
@@ -11,7 +17,7 @@ const COMPILED_KEY_PREFIX = "compiled:";
  *
  * Keys are stored as `compiled:{scriptId}` to avoid collisions.
  */
-export class CompiledCodeStorage {
+export class LegacyCompiledCodeStorage {
   /**
    * Persists compiled JavaScript and CSS for a single userscript.
    * @param scriptId - The userscript ID
@@ -113,6 +119,60 @@ export class CompiledCodeStorage {
 
     if (orphanedKeys.length > 0) {
       await chrome.storage.local.remove(orphanedKeys);
+    }
+  }
+}
+
+export class CompiledCodeStorage extends LegacyCompiledCodeStorage {
+  static async getAllCompiledCode(): Promise<
+    Record<string, CompiledCodeEntry>
+  > {
+    return (await transactionalEnabled())
+      ? (await readRepository()).artifacts
+      : super.getAllCompiledCode();
+  }
+  static async getCompiledCode(id: string): Promise<CompiledCodeEntry | null> {
+    return (await transactionalEnabled())
+      ? ((await this.getAllCompiledCode())[id] ?? null)
+      : super.getCompiledCode(id);
+  }
+  static async getCompiledCodeForScripts(
+    ids: string[]
+  ): Promise<Record<string, CompiledCodeEntry>> {
+    if (!(await transactionalEnabled())) {
+      return super.getCompiledCodeForScripts(ids);
+    }
+    const entries = await this.getAllCompiledCode();
+    return Object.fromEntries(
+      ids.filter((id) => entries[id]).map((id) => [id, entries[id]])
+    );
+  }
+  static async saveCompiledCode(
+    id: string,
+    artifact: CompiledCodeEntry
+  ): Promise<void> {
+    if (!(await transactionalEnabled())) {
+      return writeLegacy({ kind: "saveArtifact", id, artifact });
+    }
+    const snapshot = await readRepository();
+    const document = snapshot.documents.find((item) => item.script.id === id);
+    if (!document) {
+      throw new Error("Compiled source was deleted: " + id);
+    }
+    await commitRepository({
+      requestId: crypto.randomUUID(),
+      writes: [{ id, expectedRevision: document.revision, artifact }],
+    });
+  }
+  static async deleteCompiledCode(id: string): Promise<void> {
+    // Source deletion removes its artifact in the same repository transaction.
+    if (!(await transactionalEnabled())) {
+      await writeLegacy({ kind: "deleteArtifact", id });
+    }
+  }
+  static async cleanupOrphaned(ids: Set<string>): Promise<void> {
+    if (!(await transactionalEnabled())) {
+      await writeLegacy({ kind: "cleanupArtifacts", ids: [...ids] });
     }
   }
 }

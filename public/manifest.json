@@ -1,6 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/chrome-manifest.json",
   "manifest_version": 3,
+  "minimum_chrome_version": "135",
   "name": "Invert IDE Userscripts",
   "description": "A Chrome extension that provides an integrated browser IDE for bundling and injecting TypeScript userscripts.",
   "version": "1.0.0",
@@ -24,7 +25,14 @@
   "background": {
     "service_worker": "background.js"
   },
-  "permissions": ["storage", "activeTab", "scripting", "webNavigation"],
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting",
+    "webNavigation",
+    "userScripts",
+    "alarms"
+  ],
   "host_permissions": ["<all_urls>"],
   "options_page": "options.html",
   "web_accessible_resources": [

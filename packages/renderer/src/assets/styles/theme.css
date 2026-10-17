@@ -26,6 +26,8 @@
   --color-accent-muted: var(--accent-muted);
   --color-accent-subtle: var(--accent-subtle);
   --color-accent-border: var(--accent-border);
+  --color-secondary: var(--secondary);
+  --color-secondary-subtle: var(--secondary-subtle);
   --color-danger: var(--danger);
 
   --color-foreground: var(--foreground);

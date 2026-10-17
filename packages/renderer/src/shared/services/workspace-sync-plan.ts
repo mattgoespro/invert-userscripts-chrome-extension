@@ -17,6 +17,7 @@ export interface WorkspaceProjectionInput {
   drafts: Record<string, EditorDraft>;
   currentScriptId: string | null | undefined;
   modules: GlobalModules;
+  manifests?: Record<string, import("@shared/modules/manifest").ModuleManifest>;
 }
 
 export interface WorkspaceModel extends Omit<WorkspaceFile, "uri"> {
@@ -28,7 +29,7 @@ export interface WorkspaceProjection {
   signature: string;
   models: WorkspaceModel[];
   modulePaths: string[];
-  cdnModules: Array<{ id: string; packageName: string }>;
+  cdnModules: Array<{ id: string; packageName: string; typeVersion?: string }>;
 }
 
 /** The desired workspace, without subscriptions or Monaco effects. */
@@ -42,6 +43,7 @@ export function projectWorkspace(
     ? scriptsMap[currentScriptId]
     : undefined;
   const closureIds = resolveWorkspaceScriptClosure(currentScript, scriptsMap, {
+    manifests: input.manifests,
     getTypescriptSource: (script) =>
       getDraftBuffer(script, drafts[script.id], "typescript").contents,
   });
@@ -100,7 +102,15 @@ export function projectWorkspace(
     modulePaths: scripts.map((script) => getScriptModulePath(script)),
     cdnModules: Object.values(modules).flatMap((module) =>
       referencedModuleIds.has(module.id) && module.packageName
-        ? [{ id: module.id, packageName: module.packageName }]
+        ? [
+            {
+              id: module.id,
+              packageName: module.packageName,
+              ...(module.typeVersion
+                ? { typeVersion: module.typeVersion }
+                : {}),
+            },
+          ]
         : []
     ),
   };

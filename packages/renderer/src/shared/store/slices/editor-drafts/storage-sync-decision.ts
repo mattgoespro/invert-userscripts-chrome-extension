@@ -10,7 +10,7 @@ export type StorageSyncDecision =
   | { action: "keep-dirty-orphan" }
   | { action: "remove" }
   | { action: "sync"; script: Userscript }
-  /** Update the entity from remote; leave a dirty draft overlay untouched. */
+  /** Update the entity only; leave an absent or dirty draft untouched. */
   | { action: "sync-entity"; script: Userscript }
   | { action: "conflict"; conflict: RemoteDraftConflict };
 
@@ -20,7 +20,7 @@ export type StorageSyncDecision =
  *
  * - Missing remote + dirty local → keep the orphan draft (user still editing)
  * - Missing remote + clean/absent local → remove the draft
- * - Present remote + no local → sync from remote
+ * - Present remote + no local → sync entity only (drafts are created on open)
  * - Present remote + dirty conflict → enqueue conflict
  * - Present remote + dirty, no conflict → sync entity only (remote snapshot);
  *   draft buffers stay as the open overlay (never merged onto the entity)
@@ -40,7 +40,7 @@ export function decideStorageSyncAction(
   }
 
   if (!localDraft) {
-    return { action: "sync", script: remoteScript };
+    return { action: "sync-entity", script: remoteScript };
   }
 
   const conflict = detectDraftConflict(scriptId, localDraft, remoteScript);

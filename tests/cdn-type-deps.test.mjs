@@ -7,25 +7,16 @@ import {
 
 describe("normalizeRelativePath", () => {
   it("resolves sibling and parent paths and appends .d.ts", () => {
-    assert.equal(
-      normalizeRelativePath("index.d.ts", "./foo"),
-      "foo.d.ts"
-    );
+    assert.equal(normalizeRelativePath("index.d.ts", "./foo"), "foo.d.ts");
     assert.equal(
       normalizeRelativePath("lib/index.d.ts", "./nested/bar"),
       "lib/nested/bar.d.ts"
     );
-    assert.equal(
-      normalizeRelativePath("lib/sub/a.d.ts", "../b"),
-      "lib/b.d.ts"
-    );
+    assert.equal(normalizeRelativePath("lib/sub/a.d.ts", "../b"), "lib/b.d.ts");
   });
 
   it("preserves existing .d.ts and .ts suffixes", () => {
-    assert.equal(
-      normalizeRelativePath("index.d.ts", "./foo.d.ts"),
-      "foo.d.ts"
-    );
+    assert.equal(normalizeRelativePath("index.d.ts", "./foo.d.ts"), "foo.d.ts");
     assert.equal(normalizeRelativePath("index.d.ts", "./foo.ts"), "foo.ts");
   });
 
@@ -70,14 +61,10 @@ describe("extractFileDependencies", () => {
     ].join("\n");
 
     const deps = extractFileDependencies("pkg/index.d.ts", contents);
-    assert.deepEqual(deps.files.sort(), [
-      "b.d.ts",
-      "pkg/a.d.ts",
-      "pkg/c.d.ts",
-    ]);
+    assert.deepEqual(deps.files.sort(), ["b.d.ts", "pkg/a.d.ts", "pkg/c.d.ts"]);
   });
 
-  it("ignores non-relative and bare package imports", () => {
+  it("collects bare declaration dependencies for transitive acquisition", () => {
     const contents = [
       'import type { X } from "lodash";',
       'export * from "react";',
@@ -85,6 +72,6 @@ describe("extractFileDependencies", () => {
 
     const deps = extractFileDependencies("index.d.ts", contents);
     assert.deepEqual(deps.files, []);
-    assert.deepEqual(deps.packages, []);
+    assert.deepEqual(deps.packages, ["lodash", "react"]);
   });
 });

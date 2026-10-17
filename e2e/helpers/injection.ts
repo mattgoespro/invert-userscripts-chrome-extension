@@ -2,14 +2,21 @@ import type { BrowserContext, Page } from "@playwright/test";
 import { expect } from "../fixtures";
 import type { Userscript } from "@shared/model";
 import { hashUserscriptCompileSources } from "@shared/compile-metadata";
+import { getScriptModulePath } from "@shared/model";
+import { createHash } from "node:crypto";
+import { analyzeModule } from "../../packages/renderer/src/sandbox/module-analysis";
+import type { ModuleManifest } from "@shared/modules/manifest";
 
 export type CompiledSeed = {
+  manifest?: ModuleManifest;
   javascript: string;
   css: string;
   build?: {
     version: 1;
     minifyCompiledOutput: boolean;
     sourceHash?: string;
+    sourceDigest?: string;
+    compilerContractVersion?: number;
   };
 };
 
@@ -21,10 +28,22 @@ export function buildCompiledLocalEntry(
     [`compiled:${script.id}`]: {
       javascript: entry.javascript,
       css: entry.css,
+      manifest: analyzeModule(script.code.source.typescript, entry.javascript),
       build: {
         version: 1,
         minifyCompiledOutput: false,
         sourceHash: hashUserscriptCompileSources(script),
+        sourceDigest: createHash("sha256")
+          .update(
+            JSON.stringify([
+              script.code.source.typescript,
+              script.code.source.scss,
+              Boolean(script.shared),
+              getScriptModulePath(script),
+            ])
+          )
+          .digest("hex"),
+        compilerContractVersion: 2,
       },
     },
   };

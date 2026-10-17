@@ -1,5 +1,11 @@
-import { expandAffectedScriptIds } from "@shared/apply-scope";
-import { isCompiledArtifactFresh } from "@shared/compile-metadata";
+import { runPublicationEffect } from "../publication/effects";
+import { executeUserScript } from "./user-scripts-executor";
+import { resolveModuleGraph, affectedConsumers } from "@shared/modules/graph";
+import type { ModuleManifest } from "@shared/modules/manifest";
+import {
+  isCompiledArtifactFresh,
+  digestUserscriptCompileSources,
+} from "@shared/compile-metadata";
 import {
   GlobalModule,
   GlobalModules,
@@ -9,18 +15,11 @@ import {
 import { ChromeSyncStorage, CompiledCodeStorage } from "@shared/storage";
 import { hydrateUserscriptWithCompiled } from "@shared/userscript-hydrate";
 import {
-  collectCompiledCodeScriptIds,
   collectEnabledCdnModuleIds,
-  collectSharedScriptIdsToInject,
   selectMatchingScriptsForInjection,
-  sharedDependenciesAreFresh,
 } from "./injection-plan";
-import {
-  runIsolatedInjectTasks,
-  shouldAwaitInjectedEvalResult,
-  type IsolatedInjectTask,
-} from "./inject-helpers";
 import { matchesUrlPattern } from "@shared/url-matching";
+import { isInjectablePage } from "@shared/injection-eligibility";
 import {
   clearCssBookmark,
   clearCssBookmarksForTab,
@@ -28,6 +27,41 @@ import {
   setCssBookmark,
 } from "./css-bookmarks";
 
+const tabQueues = new Map<number, Promise<unknown>>();
+const tabEpochs = new Map<number, number>();
+interface PinnedDocument {
+  documentId: string;
+  url: string;
+  epoch: number;
+}
+async function pinDocument(
+  tabId: number,
+  url?: string
+): Promise<PinnedDocument> {
+  const frame = await chrome.webNavigation.getFrame({ tabId, frameId: 0 });
+  if (!frame?.documentId || (url && frame.url !== url)) {
+    throw new Error("The target document changed before injection.");
+  }
+  return {
+    documentId: frame.documentId,
+    url: frame.url,
+    epoch: tabEpochs.get(tabId) ?? 0,
+  };
+}
+function inTab<T>(tabId: number, operation: () => Promise<T>): Promise<T> {
+  const task = (tabQueues.get(tabId) ?? Promise.resolve())
+    .catch(() => {})
+    .then(operation);
+  tabQueues.set(tabId, task);
+  void task
+    .finally(() => {
+      if (tabQueues.get(tabId) === task) {
+        tabQueues.delete(tabId);
+      }
+    })
+    .catch(() => {});
+  return task;
+}
 export interface RuntimeInjectionState {
   scriptsMap: Userscripts;
   modulesMap?: GlobalModules;
@@ -55,36 +89,16 @@ export async function loadRuntimeInjectionState(
 async function executeInlineMainWorldScript(
   tabId: number,
   code: string,
-  injectImmediately = false
+  injectImmediately = false,
+  documentId?: string,
+  awaitCompletion = false
 ): Promise<void> {
-  if (!code.trim()) {
-    return;
-  }
-
-  const awaitCompletion = shouldAwaitInjectedEvalResult(code);
-
-  await chrome.scripting.executeScript({
-    target: { tabId },
-    world: "MAIN",
+  await executeUserScript({
+    tabId,
+    code,
     injectImmediately,
-    func: async (payload: string, awaitResult: boolean) => {
-      // Indirect eval runs in the page global scope. The function is injected
-      // by chrome.scripting, so it is not subject to the page's CSP (unlike a
-      // page-created <script> element).
-      const result: unknown = (0, eval)(payload);
-
-      if (
-        awaitResult &&
-        result !== null &&
-        result !== undefined &&
-        typeof result === "object" &&
-        "then" in result &&
-        typeof result.then === "function"
-      ) {
-        await result;
-      }
-    },
-    args: [code, awaitCompletion],
+    documentId,
+    awaitCompletion,
   });
 }
 
@@ -102,115 +116,178 @@ async function injectResolvedScripts(
   tabId: number,
   scripts: Userscript[],
   injectionState: RuntimeInjectionState,
-  injectImmediately = false
+  injectImmediately = false,
+  pinned?: PinnedDocument
 ): Promise<InjectResolvedResult> {
-  if (scripts.length === 0) {
+  if (!scripts.length) {
     return { injectedCount: 0, failedCount: 0 };
   }
-
+  pinned ??= await pinDocument(tabId);
+  const document = pinned;
   const { scriptsMap, minifyCompiledOutput } = injectionState;
-  const compiledCodeMap = await CompiledCodeStorage.getCompiledCodeForScripts(
-    collectCompiledCodeScriptIds(scripts, scriptsMap)
-  );
-
-  const resolvedScripts = scripts.filter((script) => {
-    const entry = compiledCodeMap[script.id];
-
+  const compiled = await CompiledCodeStorage.getAllCompiledCode();
+  for (const [id, entry] of Object.entries(compiled)) {
     if (
-      !isCompiledArtifactFresh(script, entry, minifyCompiledOutput) ||
-      !sharedDependenciesAreFresh(
-        script,
-        scriptsMap,
-        compiledCodeMap,
-        minifyCompiledOutput
+      scriptsMap[id] &&
+      entry.build?.sourceDigest &&
+      entry.build.sourceDigest !==
+        (await digestUserscriptCompileSources(scriptsMap[id]))
+    ) {
+      delete compiled[id];
+    }
+  }
+  const manifests: Record<string, ModuleManifest> = {};
+  for (const [id, entry] of Object.entries(compiled)) {
+    if (entry.manifest) {
+      manifests[id] = entry.manifest;
+    }
+  }
+  let modules = injectionState.modulesMap;
+  const completed = new Set<string>();
+  const failed = new Set<string>();
+  let injectedCount = 0;
+  let failedCount = 0;
+  const run = async (
+    label: string,
+    operation: () => Promise<void>
+  ): Promise<boolean> => {
+    if (failed.has(label)) {
+      return false;
+    }
+    if (completed.has(label)) {
+      return true;
+    }
+    try {
+      await operation();
+      completed.add(label);
+      return true;
+    } catch (error) {
+      failed.add(label);
+      console.error("Injection failed:", label, error);
+      return false;
+    }
+  };
+  for (const script of scripts.filter((item) => !item.shared)) {
+    // Old cached entries are rebuildable; never execute a guessed dependency graph.
+    const graph = resolveModuleGraph([script.id], scriptsMap, manifests);
+    if (
+      graph.errors.length ||
+      graph.orderedIds.some(
+        (id) =>
+          !isCompiledArtifactFresh(
+            scriptsMap[id],
+            compiled[id],
+            minifyCompiledOutput
+          )
       )
     ) {
       console.warn(
-        `Skipping "${script.name}" until compiled output and shared modules are current.`
+        "Skipping stale/unresolved script:",
+        script.name,
+        graph.errors
       );
-      return false;
-    }
-
-    return true;
-  });
-
-  if (resolvedScripts.length === 0) {
-    return { injectedCount: 0, failedCount: 0 };
-  }
-
-  const pageScripts = resolvedScripts.filter((script) => !script.shared);
-  const sharedIds = collectSharedScriptIdsToInject(pageScripts, scriptsMap);
-  const sharedScripts = sharedIds
-    .map((sharedId) => scriptsMap[sharedId])
-    .filter((script): script is Userscript => Boolean(script));
-
-  let modulesMap = injectionState.modulesMap;
-  const tasks: IsolatedInjectTask[] = [];
-  const cdnSources = [...pageScripts, ...sharedScripts];
-
-  if (cdnSources.some((script) => script.globalModules?.length > 0)) {
-    modulesMap = modulesMap ?? (await ChromeSyncStorage.getAllModules());
-
-    for (const moduleId of collectEnabledCdnModuleIds(cdnSources, modulesMap)) {
-      const module = modulesMap[moduleId];
-
-      if (module) {
-        tasks.push({
-          label: `cdn:${module.name}`,
-          run: () => injectCdnModule(tabId, module, injectImmediately),
-        });
-      }
-    }
-  }
-
-  for (const sharedId of sharedIds) {
-    const shared = scriptsMap[sharedId];
-    const sharedEntry = compiledCodeMap[sharedId];
-
-    if (!shared || !sharedEntry) {
       continue;
     }
-
-    tasks.push({
-      label: `shared:${shared.name}`,
-      run: () =>
-        injectSharedScript(
+    const sources = graph.orderedIds.map((id) => scriptsMap[id]);
+    if (sources.some((item) => item.globalModules.length)) {
+      modules ??= await ChromeSyncStorage.getAllModules();
+    }
+    const assertCurrent = async (): Promise<void> => {
+      const frame = await chrome.webNavigation.getFrame({ tabId, frameId: 0 });
+      if (
+        frame?.documentId !== document.documentId ||
+        (tabEpochs.get(tabId) ?? 0) !== document.epoch
+      ) {
+        throw new Error("The target document changed.");
+      }
+      const current = await loadRuntimeInjectionState(true);
+      if (
+        !current.scriptsMap[script.id]?.enabled ||
+        current.minifyCompiledOutput !== minifyCompiledOutput ||
+        sources.some(
+          (source) =>
+            JSON.stringify(current.scriptsMap[source.id]) !==
+            JSON.stringify(scriptsMap[source.id])
+        ) ||
+        collectEnabledCdnModuleIds(sources, modules ?? {}).some(
+          (id) =>
+            JSON.stringify(current.modulesMap?.[id]) !==
+            JSON.stringify(modules?.[id])
+        )
+      ) {
+        throw new Error(
+          "The saved script or its dependencies changed before execution."
+        );
+      }
+    };
+    let ready = true;
+    for (const moduleId of collectEnabledCdnModuleIds(sources, modules ?? {})) {
+      if (
+        !(await run("cdn:" + moduleId, async () => {
+          await assertCurrent();
+          await injectCdnModule(
+            tabId,
+            modules![moduleId],
+            injectImmediately,
+            document.documentId,
+            assertCurrent
+          );
+        }))
+      ) {
+        ready = false;
+      }
+    }
+    for (const id of graph.orderedIds.filter((id) => id !== script.id)) {
+      if (!ready) {
+        break;
+      }
+      ready = await run("shared:" + id, async () => {
+        await assertCurrent();
+        await injectSharedScript(
           tabId,
-          hydrateUserscriptWithCompiled(shared, sharedEntry),
-          injectImmediately
-        ),
-    });
-  }
-
-  for (const script of pageScripts) {
-    tasks.push({
-      label: `userscript:${script.name}`,
-      run: () =>
-        injectScript(
+          hydrateUserscriptWithCompiled(scriptsMap[id], compiled[id]),
+          injectImmediately,
+          document.documentId,
+          compiled[id]?.manifest?.awaitCompletion
+        );
+      });
+    }
+    if (!ready) {
+      failedCount++;
+      continue;
+    }
+    const hydrated = hydrateUserscriptWithCompiled(script, compiled[script.id]);
+    if (
+      await run("script:" + script.id, async () => {
+        await assertCurrent();
+        await injectScript(
           tabId,
-          hydrateUserscriptWithCompiled(script, compiledCodeMap[script.id]),
-          injectImmediately
-        ),
-    });
-  }
-
-  for (const script of pageScripts) {
-    tasks.push({
-      label: `css:${script.name}`,
-      run: () =>
-        injectStylesheet(
+          hydrated,
+          injectImmediately,
+          document.documentId,
+          compiled[script.id]?.manifest?.awaitCompletion
+        );
+      })
+    ) {
+      injectedCount++;
+    } else {
+      failedCount++;
+    }
+    if (
+      !(await run("css:" + script.id, async () => {
+        await assertCurrent();
+        await injectStylesheet(
           tabId,
-          hydrateUserscriptWithCompiled(script, compiledCodeMap[script.id])
-        ),
-    });
+          hydrated,
+          document.documentId,
+          assertCurrent
+        );
+      }))
+    ) {
+      failedCount++;
+    }
   }
-
-  const { succeeded, failed } = await runIsolatedInjectTasks(tasks);
-
-  return {
-    injectedCount: succeeded,
-    failedCount: failed.length,
-  };
+  return { injectedCount, failedCount };
 }
 
 export async function injectMatchingScripts(
@@ -219,6 +296,9 @@ export async function injectMatchingScripts(
   timing: "beforePageLoad" | "afterPageLoad",
   injectionState?: RuntimeInjectionState
 ): Promise<void> {
+  if (!isInjectablePage(url)) {
+    return;
+  }
   try {
     const state = injectionState ?? (await loadRuntimeInjectionState());
     const matchingScripts = selectMatchingScriptsForInjection(
@@ -226,17 +306,34 @@ export async function injectMatchingScripts(
       url,
       timing
     );
+    if (matchingScripts.length === 0) {
+      return;
+    }
+    const pinned = await pinDocument(tabId, url);
 
-    const result = await injectResolvedScripts(
-      tabId,
-      matchingScripts,
-      state,
-      timing === "beforePageLoad"
+    const result = await runPublicationEffect(
+      "navigation:" + pinned.documentId + ":" + timing,
+      async () => {
+        const injected = await inTab(tabId, () =>
+          injectResolvedScripts(
+            tabId,
+            matchingScripts,
+            state,
+            timing === "beforePageLoad",
+            pinned
+          )
+        );
+        return {
+          success: injected.failedCount === 0,
+          appliedTabCount: injected.injectedCount > 0 ? 1 : 0,
+          failedCount: injected.failedCount,
+        };
+      }
     );
 
-    if (result.failedCount > 0) {
+    if (!result.success) {
       console.error(
-        `Finished injecting into tab ${tabId} with ${result.failedCount} failed step(s).`
+        `Finished injecting into tab ${tabId} with failed step(s).`
       );
     }
   } catch (error) {
@@ -256,11 +353,17 @@ export async function applyScriptsToMatchingTabs(scriptIds: string[]): Promise<{
 }> {
   const injectionState = await loadRuntimeInjectionState(true);
   const { scriptsMap } = injectionState;
-
+  const entries = await CompiledCodeStorage.getAllCompiledCode();
+  const manifests: Record<string, ModuleManifest> = {};
+  for (const [id, entry] of Object.entries(entries)) {
+    if (entry.manifest) {
+      manifests[id] = entry.manifest;
+    }
+  }
   const affectedIds =
     scriptIds.length === 0
       ? Object.keys(scriptsMap)
-      : expandAffectedScriptIds(scriptIds, scriptsMap);
+      : affectedConsumers(scriptIds, scriptsMap, manifests);
 
   const affectedScripts = affectedIds
     .map((id) => scriptsMap[id])
@@ -278,7 +381,7 @@ export async function applyScriptsToMatchingTabs(scriptIds: string[]): Promise<{
   let staleSkipCount = 0;
 
   for (const tab of tabs) {
-    if (!tab.id || !tab.url) {
+    if (!tab.id || !tab.url || !isInjectablePage(tab.url)) {
       continue;
     }
 
@@ -298,18 +401,24 @@ export async function applyScriptsToMatchingTabs(scriptIds: string[]): Promise<{
         (script) => script.runAt === "afterPageLoad"
       );
 
-      const beforeResult = await injectResolvedScripts(
-        tab.id,
-        before,
-        injectionState,
-        true
-      );
-      const afterResult = await injectResolvedScripts(
-        tab.id,
-        after,
-        injectionState,
-        false
-      );
+      const pinned = await pinDocument(tab.id, tab.url);
+      const [beforeResult, afterResult] = await inTab(tab.id, async () => {
+        const beforeResult = await injectResolvedScripts(
+          tab.id,
+          before,
+          injectionState,
+          true,
+          pinned
+        );
+        const afterResult = await injectResolvedScripts(
+          tab.id,
+          after,
+          injectionState,
+          false,
+          pinned
+        );
+        return [beforeResult, afterResult];
+      });
 
       const injectedCount =
         beforeResult.injectedCount + afterResult.injectedCount;
@@ -347,7 +456,7 @@ export async function removeScriptFromMatchingTabs(
   const scriptsMap = await ChromeSyncStorage.getAllScripts();
   const script = scriptsMap[scriptId];
 
-  if (!script) {
+  if (!script || script.enabled) {
     return { removedTabCount: 0 };
   }
 
@@ -355,7 +464,7 @@ export async function removeScriptFromMatchingTabs(
   let removedTabCount = 0;
 
   for (const tab of tabs) {
-    if (!tab.id || !tab.url) {
+    if (!tab.id || !tab.url || !isInjectablePage(tab.url)) {
       continue;
     }
 
@@ -363,21 +472,31 @@ export async function removeScriptFromMatchingTabs(
       continue;
     }
 
-    await removeInjectedStylesheet(tab.id, scriptId);
-    removedTabCount += 1;
+    await inTab(tab.id, async () => {
+      const current = (await ChromeSyncStorage.getAllScripts())[scriptId];
+      if (!current || current.enabled) {
+        return;
+      }
+      const pinned = await pinDocument(tab.id!, tab.url);
+      await removeInjectedStylesheet(tab.id!, scriptId, pinned.documentId);
+      removedTabCount++;
+    });
   }
 
   return { removedTabCount };
 }
 
 export async function prepareTabForInjection(tabId: number): Promise<void> {
+  tabEpochs.set(tabId, (tabEpochs.get(tabId) ?? 0) + 1);
   await clearCssBookmarksForTab(tabId);
 }
 
 export async function injectScript(
   tabId: number,
   script: Userscript,
-  injectImmediately = false
+  injectImmediately = false,
+  documentId?: string,
+  awaitCompletion = false
 ): Promise<void> {
   const jsCode = script.code?.compiled?.javascript ?? "";
 
@@ -385,31 +504,43 @@ export async function injectScript(
     return;
   }
 
-  await executeInlineMainWorldScript(tabId, jsCode, injectImmediately);
+  await executeInlineMainWorldScript(
+    tabId,
+    jsCode,
+    injectImmediately,
+    documentId,
+    awaitCompletion
+  );
   console.log(`Injected script: ${script.name} into tab ${tabId}`);
 }
 
 async function injectSharedScript(
   tabId: number,
   script: Userscript,
-  injectImmediately = false
+  injectImmediately = false,
+  documentId?: string,
+  awaitCompletion = false
 ): Promise<void> {
   await executeInlineMainWorldScript(
     tabId,
     script.code.compiled.javascript,
-    injectImmediately
+    injectImmediately,
+    documentId,
+    awaitCompletion
   );
   console.log(`Injected shared script: ${script.name} into tab ${tabId}`);
 }
 
 /**
- * Fetch CDN source with extension host permissions, then evaluate it in the
- * page MAIN world so page CSP cannot block a `<script src>`.
+ * Fetch CDN source with extension host permissions, then execute it through
+ * the permission-gated userScripts API in the originating MAIN document.
  */
 async function injectCdnModule(
   tabId: number,
   module: GlobalModule,
-  injectImmediately = false
+  injectImmediately = false,
+  documentId?: string,
+  assertCurrent?: () => Promise<void>
 ): Promise<void> {
   const response = await fetch(module.url, {
     signal: AbortSignal.timeout(30_000),
@@ -422,13 +553,20 @@ async function injectCdnModule(
   }
 
   const source = await response.text();
-  await executeInlineMainWorldScript(tabId, source, injectImmediately);
+  await assertCurrent?.();
+  await executeInlineMainWorldScript(
+    tabId,
+    source,
+    injectImmediately,
+    documentId
+  );
   console.log(`Injected CDN module: ${module.name} into tab ${tabId}`);
 }
 
 async function removeInjectedStylesheet(
   tabId: number,
-  scriptId: string
+  scriptId: string,
+  documentId?: string
 ): Promise<void> {
   const previousCss = await getCssBookmark(tabId, scriptId);
 
@@ -438,14 +576,24 @@ async function removeInjectedStylesheet(
 
   try {
     await chrome.scripting.removeCSS({
-      target: { tabId },
+      target: { tabId, ...(documentId ? { documentIds: [documentId] } : {}) },
       css: previousCss,
     });
   } catch (error) {
-    console.warn(
-      `Failed to remove stylesheet for script ${scriptId} from tab ${tabId}:`,
-      error
+    const frame = documentId
+      ? await chrome.webNavigation
+          .getFrame({ tabId, frameId: 0 })
+          .catch((): null => null)
+      : null;
+    const replaced = Boolean(
+      frame?.documentId && frame.documentId !== documentId
     );
+    const closed =
+      error instanceof Error &&
+      /No tab with id|Invalid tab ID/i.test(error.message);
+    if (!replaced && !closed) {
+      throw error;
+    }
   }
 
   await clearCssBookmark(tabId, scriptId);
@@ -457,7 +605,9 @@ async function removeInjectedStylesheet(
  */
 async function injectStylesheet(
   tabId: number,
-  script: Userscript
+  script: Userscript,
+  documentId?: string,
+  assertCurrent?: () => Promise<void>
 ): Promise<void> {
   const cssCode = script.code?.compiled?.css ?? "";
   const previousCss = await getCssBookmark(tabId, script.id);
@@ -467,28 +617,84 @@ async function injectStylesheet(
   }
 
   if (previousCss) {
-    try {
-      await chrome.scripting.removeCSS({
-        target: { tabId },
-        css: previousCss,
-      });
-    } catch (error) {
-      console.warn(
-        `Failed to remove previous stylesheet for ${script.name}:`,
-        error
-      );
-    }
-    await clearCssBookmark(tabId, script.id);
+    await removeInjectedStylesheet(tabId, script.id, documentId);
   }
 
   if (!cssCode) {
     return;
   }
 
+  await assertCurrent?.();
   await chrome.scripting.insertCSS({
-    target: { tabId },
+    target: { tabId, ...(documentId ? { documentIds: [documentId] } : {}) },
     css: cssCode,
   });
   await setCssBookmark(tabId, script.id, cssCode);
   console.log(`Injected stylesheet: ${script.name} into tab ${tabId}`);
+}
+
+/** Retryable stylesheet reconciliation deliberately executes no JavaScript. */
+export async function reconcileStylesForScripts(ids: string[]): Promise<void> {
+  const tabs = await chrome.tabs.query({});
+  const failures: unknown[] = [];
+  for (const tab of tabs) {
+    if (!tab.id || !tab.url || !/^(?:https?|file):/.test(tab.url)) {
+      continue;
+    }
+    try {
+      await inTab(tab.id, async () => {
+        for (const id of ids) {
+          const state = await loadRuntimeInjectionState();
+          const source = state.scriptsMap[id];
+          const artifact = await CompiledCodeStorage.getCompiledCode(id);
+          const desired = Boolean(
+            source?.enabled &&
+            !source.shared &&
+            matchesUrlPattern(tab.url!, source.urlPatterns) &&
+            isCompiledArtifactFresh(
+              source,
+              artifact,
+              state.minifyCompiledOutput
+            ) &&
+            (!artifact.build?.sourceDigest ||
+              artifact.build.sourceDigest ===
+                (await digestUserscriptCompileSources(source)))
+          );
+          if (!desired && !(await getCssBookmark(tab.id!, id))) {
+            continue;
+          }
+          const pinned = await pinDocument(tab.id!, tab.url);
+          if (desired) {
+            await injectStylesheet(
+              tab.id!,
+              hydrateUserscriptWithCompiled(source, artifact!),
+              pinned.documentId,
+              async () => {
+                const current = (await ChromeSyncStorage.getAllScripts())[id];
+                if (JSON.stringify(current) !== JSON.stringify(source)) {
+                  throw new Error(
+                    "Stylesheet intent changed during reconciliation."
+                  );
+                }
+              }
+            );
+          } else {
+            await removeInjectedStylesheet(tab.id!, id, pinned.documentId);
+          }
+        }
+      });
+    } catch (error) {
+      failures.push(error);
+    }
+  }
+  if (failures.length) {
+    throw new Error(
+      "Stylesheet reconciliation has pending target failures: " +
+        failures
+          .map((error) =>
+            error instanceof Error ? error.message : String(error)
+          )
+          .join("; ")
+    );
+  }
 }

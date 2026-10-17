@@ -11,6 +11,7 @@ export function publicationContext(
   getState: () => RootState
 ): PublicationContext {
   return {
+    requiresModuleAnalysis: true,
     sourceStorage: ChromeSyncStorage,
     compiledStorage: CompiledCodeStorage,
     getLocalScripts: () => getState().userscripts.scripts ?? {},

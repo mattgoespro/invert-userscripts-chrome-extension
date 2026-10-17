@@ -1,6 +1,8 @@
+import { transactionalEnabled } from "../publication/client";
 export type AppSidebarTab = "scripts" | "modules" | "settings";
 
 export type ScriptEditorDrawerTab = "javascript" | "css" | "errors";
+export type ScriptListSort = "name" | "created";
 
 export interface GlobalStateSizes {
   /**
@@ -28,6 +30,7 @@ export interface GlobalStateSizes {
 }
 
 export interface GlobalState {
+  scriptListSort?: ScriptListSort;
   /**
    * The currently active sidebar navigation tab.
    */
@@ -51,6 +54,7 @@ export interface GlobalState {
 }
 
 export const DEFAULT_GLOBAL_STATE: GlobalState = {
+  scriptListSort: "name",
   activeSidebarTab: "scripts",
   selectedScriptId: null,
   outputDrawerCollapsed: false,
@@ -96,6 +100,17 @@ export class GlobalStateManager {
    * Retrieves the persisted UI state from `chrome.storage.sync`.
    */
   static async get(): Promise<GlobalState> {
+    if (await transactionalEnabled()) {
+      const key = this.localKey();
+      const local = await chrome.storage.local.get(key);
+      if (local[key]) {
+        return mergeGlobalState(local[key]);
+      }
+      const legacy = await chrome.storage.sync.get(this.storageKey);
+      const state = mergeGlobalState(legacy[this.storageKey]);
+      await chrome.storage.local.set({ [key]: state });
+      return state;
+    }
     const result = await chrome.storage.sync.get<{ globalState: GlobalState }>([
       this.storageKey,
     ]);
@@ -108,6 +123,21 @@ export class GlobalStateManager {
    * Overwrites the entire UI state in chrome.storage.sync.
    */
   static async save(state: GlobalState): Promise<void> {
+    if (await transactionalEnabled()) {
+      await chrome.storage.local.set({ [this.localKey()]: state });
+      return;
+    }
     await chrome.storage.sync.set({ [this.storageKey]: state });
+  }
+  private static localKey(): string {
+    if (typeof sessionStorage === "undefined") {
+      return "globalState";
+    }
+    let id = sessionStorage.getItem("invert-layout-session");
+    if (!id) {
+      id = crypto.randomUUID();
+      sessionStorage.setItem("invert-layout-session", id);
+    }
+    return "globalState:" + id;
   }
 }

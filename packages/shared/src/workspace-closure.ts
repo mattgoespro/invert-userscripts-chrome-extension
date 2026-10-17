@@ -3,6 +3,7 @@ import { getScriptModulePath } from "./model";
 import { getSharedImportModuleNames } from "./shared-module-imports";
 
 export type WorkspaceClosureOptions = {
+  manifests?: Record<string, import("./modules/manifest").ModuleManifest>;
   /**
    * Optional source provider (e.g. draft buffer). Defaults to saved TypeScript.
    * Closure edges are always derived from imports in this source — persisted
@@ -61,7 +62,15 @@ export function resolveWorkspaceScriptClosure(
 
     seen.add(scriptId);
 
-    for (const modulePath of getSharedImportModuleNames(getSource(script))) {
+    const manifest = options?.manifests?.[scriptId];
+    const paths = options?.manifests
+      ? manifest?.source === getSource(script)
+        ? manifest.imports.flatMap((edge) =>
+            edge.modulePath ? [edge.modulePath] : []
+          )
+        : []
+      : getSharedImportModuleNames(getSource(script));
+    for (const modulePath of paths) {
       const dependencyId = sharedByModulePath.get(modulePath);
 
       if (dependencyId) {

@@ -29,6 +29,7 @@
     "unpack": "tsx scripts/unpack.ts",
     "preunpack": "rm -rf dist && npm run build",
     "build:examples": "tsc -p examples/tsconfig.json",
+    "export:examples": "tsx scripts/export-example-userscripts.ts",
     "check:manifest": "node scripts/check-manifest.mjs"
   },
   "dependencies": {

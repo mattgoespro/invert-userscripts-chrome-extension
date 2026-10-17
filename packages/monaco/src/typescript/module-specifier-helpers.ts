@@ -4,6 +4,7 @@
  */
 
 export interface SharedModuleSpecifierInfo {
+  shared?: boolean;
   moduleName: string;
   scriptName: string;
 }
@@ -81,7 +82,11 @@ export function getModuleSpecifierSuggestions(
       label: `${info.moduleName}/${entry}`,
       insertText: `${info.moduleName}/${entry}`,
       detail: info.scriptName,
-      documentation: `Userscript: ${info.scriptName}`,
+      documentation:
+        `Userscript: ${info.scriptName}` +
+        (info.shared === false
+          ? " — Editor reference; set a module name to make it runnable as a shared dependency."
+          : ""),
     }))
   );
 }

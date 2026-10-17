@@ -12,6 +12,13 @@ import {
   serializeUserscript,
   type StoredUserscriptPayload,
 } from "./userscript-payload";
+import {
+  transactionalEnabled,
+  readRepository,
+  commitRepository,
+  writeLegacy,
+} from "../publication/client";
+import type { CompiledCodeEntry } from "../model";
 
 type StoredUserscriptEncoding = "gzip-base64" | "utf8-base64";
 
@@ -34,7 +41,7 @@ const USERSCRIPT_CHUNK_SEPARATOR = ":chunk:";
 const USERSCRIPT_STORAGE_VERSION = 2;
 const USERSCRIPT_INLINE_DATA_LIMIT = 6000;
 
-export class ChromeSyncStorage {
+export class LegacyChromeSyncStorage {
   public static readonly defaultSettings: EditorSettings = {
     theme: "invert-dark",
     appTheme: "graphite",
@@ -455,5 +462,141 @@ export class ChromeSyncStorage {
     }
 
     return bytes;
+  }
+}
+
+/** Compatibility facade. Legacy records remain readable for migration/recovery. */
+export class ChromeSyncStorage extends LegacyChromeSyncStorage {
+  static async getAllScripts(): Promise<Userscripts> {
+    if (!(await transactionalEnabled())) {
+      return super.getAllScripts();
+    }
+    const snapshot = await readRepository();
+    return Object.fromEntries(
+      snapshot.documents.map((document) => [
+        document.script.id,
+        {
+          ...document.script,
+          storageRevision: document.revision,
+        },
+      ])
+    );
+  }
+  static async tryPublishScript(
+    script: Userscript,
+    artifact?: CompiledCodeEntry,
+    artifactOnly = false
+  ): Promise<Userscript | false> {
+    if (!(await transactionalEnabled())) {
+      return false;
+    }
+    const outcome = await commitRepository({
+      requestId: crypto.randomUUID(),
+      writes: [
+        {
+          id: script.id,
+          expectedRevision: script.storageRevision ?? null,
+          script: artifactOnly ? undefined : script,
+          artifact,
+        },
+      ],
+    });
+    if (outcome.status !== "committed") {
+      throw new Error("Document commit was rejected.");
+    }
+    const document = outcome.documents[0];
+    return document
+      ? { ...document.script, storageRevision: document.revision }
+      : script;
+  }
+  static async saveScript(script: Userscript): Promise<void> {
+    if (!(await this.tryPublishScript(script))) {
+      await writeLegacy({ kind: "saveScript", script });
+    }
+  }
+  static async updateScript(
+    id: string,
+    updates: Partial<Omit<Userscript, "id">>
+  ): Promise<void> {
+    if (!(await transactionalEnabled())) {
+      return writeLegacy({ kind: "updateScript", id, updates });
+    }
+    const script = (await this.getAllScripts())[id];
+    if (!script) {
+      throw new Error("Userscript not found: " + id);
+    }
+    await this.tryPublishScript({ ...script, ...updates });
+  }
+  static async deleteScript(id: string): Promise<void> {
+    if (!(await transactionalEnabled())) {
+      return writeLegacy({ kind: "deleteScript", id });
+    }
+    const snapshot = await readRepository();
+    const document = snapshot.documents.find((item) => item.script.id === id);
+    if (document) {
+      await commitRepository({
+        requestId: crypto.randomUUID(),
+        writes: [{ id, expectedRevision: document.revision, deleted: true }],
+      });
+    }
+  }
+  static async hasScriptManifest(id: string): Promise<boolean> {
+    if (!(await transactionalEnabled())) {
+      return super.hasScriptManifest(id);
+    }
+    return Boolean((await this.getAllScripts())[id]);
+  }
+  static async getAllModules(): Promise<GlobalModules> {
+    return (await transactionalEnabled())
+      ? (await readRepository()).modules
+      : super.getAllModules();
+  }
+  static async saveModule(module: GlobalModule): Promise<void> {
+    if (!(await transactionalEnabled())) {
+      return writeLegacy({ kind: "saveModule", module });
+    }
+    const snapshot = await readRepository();
+    await commitRepository({
+      requestId: crypto.randomUUID(),
+      writes: [],
+      modules: {
+        expectedRevision: snapshot.moduleRevision,
+        value: { ...snapshot.modules, [module.id]: module },
+      },
+    });
+  }
+  static async deleteModule(id: string): Promise<void> {
+    if (!(await transactionalEnabled())) {
+      return writeLegacy({ kind: "deleteModule", id });
+    }
+    const snapshot = await readRepository();
+    const modules = { ...snapshot.modules };
+    delete modules[id];
+    await commitRepository({
+      requestId: crypto.randomUUID(),
+      writes: [],
+      modules: { expectedRevision: snapshot.moduleRevision, value: modules },
+    });
+  }
+  static async getEditorSettings(): Promise<EditorSettings> {
+    return (await transactionalEnabled())
+      ? { ...this.defaultSettings, ...(await readRepository()).settings }
+      : super.getEditorSettings();
+  }
+  static async saveEditorSettings(
+    updates: Partial<EditorSettings>
+  ): Promise<void> {
+    if (!(await transactionalEnabled())) {
+      return writeLegacy({ kind: "saveSettings", settings: updates });
+    }
+    const snapshot = await readRepository();
+    await commitRepository({
+      requestId: crypto.randomUUID(),
+      writes: [],
+      settings: {
+        expectedRevision: snapshot.settingsRevision,
+        value: { ...snapshot.settings, ...updates },
+      },
+    });
   }
 }

@@ -8,6 +8,7 @@ import os from "os";
 import path from "path";
 
 const EXTENSION_DIST_PATH = path.resolve(import.meta.dirname, "../../dist");
+const extensionIds = new WeakMap<BrowserContext, string>();
 
 /**
  * Test-scoped fixtures (a new instance per test).
@@ -43,6 +44,7 @@ export const extensionTest = test.extend<
 
       const context = await chromium.launchPersistentContext(userDataDir, {
         headless: false,
+        bypassCSP: false,
         args: [
           ...(headless ? ["--headless=new"] : []),
           "--no-first-run",
@@ -51,6 +53,22 @@ export const extensionTest = test.extend<
           `--load-extension=${EXTENSION_DIST_PATH}`,
         ],
       });
+      // Use Chrome's actual permission control; no feature flag bypasses enablement.
+      const worker =
+        context.serviceWorkers()[0] ??
+        (await context.waitForEvent("serviceworker"));
+      const id = new URL(worker.url()).host;
+      extensionIds.set(context, id);
+      const details = await context.newPage();
+      await details.goto("chrome://extensions/?id=" + id);
+      const allow = details.getByRole("button", {
+        name: /^Allow User Scripts/,
+      });
+      await allow.waitFor();
+      if ((await allow.getAttribute("aria-pressed")) !== "true") {
+        await allow.click();
+      }
+      await details.close();
 
       await use(context);
       await context.close();
@@ -59,6 +77,11 @@ export const extensionTest = test.extend<
   ],
   extensionId: [
     async ({ extensionContext }, use) => {
+      const known = extensionIds.get(extensionContext);
+      if (known) {
+        await use(known);
+        return;
+      }
       // Prefer an already-registered SW. Avoid leaving a dangling waitForEvent
       // (it rejects when the worker context closes and fails the run).
       let serviceWorker = extensionContext.serviceWorkers()[0];

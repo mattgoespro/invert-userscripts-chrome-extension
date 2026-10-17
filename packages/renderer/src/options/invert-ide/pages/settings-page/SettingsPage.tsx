@@ -18,6 +18,7 @@ import { AppThemeName } from "@shared/model";
 import { SettingsSection } from "./SettingsSection";
 import { StorageUsagePanel } from "./StorageUsagePanel";
 import { ThemePreview } from "./theme-preview/ThemePreview";
+import { DocumentStoragePanel } from "./DocumentStoragePanel";
 
 export function Settings() {
   const dispatch = useAppDispatch();
@@ -87,10 +88,8 @@ export function Settings() {
   if (isLoading) {
     return (
       <div className="flex-1 p-(--page-padding)">
-        <div className="mb-lg flex items-center gap-1 border-b border-border pb-sm">
-          <span className="font-mono text-[1.25rem] text-syntax-param">
-            config.
-          </span>
+        <div className="mb-lg flex items-baseline border-b border-border pb-sm">
+          <span className="font-mono text-sm text-syntax-param">config.</span>
           <Typography variant="subtitle">Settings</Typography>
         </div>
         <div className="flex items-center justify-center p-2xl">
@@ -104,10 +103,8 @@ export function Settings() {
 
   return (
     <div className="flex-1 p-(--page-padding)">
-      <div className="mb-lg flex items-center gap-1 border-b border-border pb-sm">
-        <span className="font-mono text-[1.25rem] text-syntax-param">
-          config.
-        </span>
+      <div className="mb-lg flex items-baseline border-b border-border pb-sm">
+        <span className="font-mono text-sm text-syntax-param">config.</span>
         <Typography variant="subtitle">Settings</Typography>
       </div>
       <SettingsSection title="Application Theme">
@@ -168,6 +165,9 @@ export function Settings() {
       </SettingsSection>
       <SettingsSection title="Storage Quota">
         <StorageUsagePanel />
+      </SettingsSection>
+      <SettingsSection title="Document storage and sync">
+        <DocumentStoragePanel />
       </SettingsSection>
     </div>
   );

@@ -215,10 +215,10 @@ function StorageMeter({
       </div>
 
       <div className="mt-2 flex items-center justify-between gap-sm">
-        <Typography variant="caption" className="text-text-muted-strong">
+        <Typography variant="caption" className="text-text-muted">
           {formatPercent(bytes, quotaBytes)} of {formatBytes(quotaBytes)}
         </Typography>
-        <Typography variant="caption" className="text-text-muted-strong">
+        <Typography variant="caption" className="text-text-muted">
           {formatBytes(Math.max(0, quotaBytes - bytes))} free
         </Typography>
       </div>
@@ -321,7 +321,7 @@ export function StorageUsagePanel() {
                 {formatBytes(snapshot.syncUserscriptBytes)}
               </Typography>
             </div>
-            <Typography variant="caption" className="text-text-muted-strong">
+            <Typography variant="caption" className="text-text-muted">
               {snapshot.syncUserscriptManifestCount} manifests,{" "}
               {snapshot.syncUserscriptChunkCount} overflow chunks
             </Typography>
@@ -363,7 +363,7 @@ export function StorageUsagePanel() {
                 {formatBytes(snapshot.localCompiledBytes)}
               </Typography>
             </div>
-            <Typography variant="caption" className="text-text-muted-strong">
+            <Typography variant="caption" className="text-text-muted">
               {snapshot.localCompiledEntryCount} compiled userscript records
             </Typography>
             <div className="mt-1 flex items-center justify-between gap-sm border-t border-border-subtle pt-2.5">

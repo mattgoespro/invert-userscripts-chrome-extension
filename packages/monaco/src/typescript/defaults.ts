@@ -45,7 +45,7 @@ export function ensureTypescriptDefaults(): void {
     // by moduleDetection, so a types pane without exports stays ambient/global.
     moduleDetection: 3 /* ts.ModuleDetectionKind.Force */,
     // Resolve `import { x } from "scripts/<module>/main"` against the real
-    // source models living at `file:///scripts/<module>/main.ts` — the
+    // source models living at stable `file:///userscripts/<id>/main.ts` — the
     // "file:///" baseUrl anchors the `paths` patterns at the virtual FS root.
     baseUrl: "file:///",
     paths: { "scripts/*/*": ["scripts/*/*"] },
@@ -133,43 +133,57 @@ async function syncTypescriptWorkerProgram(): Promise<void> {
  * of a relative path. Content is static per module path — it only changes when
  * a script is renamed, never per keystroke.
  */
-const modulePackageJsonEntries = new Map<string, monaco.IDisposable>();
-
-function buildModulePackageJson(modulePath: string): string {
-  return JSON.stringify({
-    name: `scripts/${modulePath}`,
-    exports: {
-      "./main": "./main.ts",
-      "./types": "./types.d.ts",
-    },
-  });
+const modulePackageJsonEntries = new Map<
+  string,
+  { contents: string; disposable: monaco.IDisposable }
+>();
+let moduleAliasSignature = "";
+export interface ScriptModuleAlias {
+  id: string;
+  modulePath: string;
 }
-
-export function syncModulePackageJsons(modulePaths: string[]): void {
-  const desired = new Set(modulePaths);
-
-  for (const [modulePath, disposable] of modulePackageJsonEntries) {
-    if (!desired.has(modulePath)) {
-      disposable.dispose();
-      modulePackageJsonEntries.delete(modulePath);
-    }
+export function syncModulePackageJsons(
+  modulePaths: string[],
+  aliases?: ScriptModuleAlias[]
+): void {
+  const mappings =
+    aliases ??
+    modulePaths.map((modulePath) => ({ id: modulePath, modulePath }));
+  const signature = JSON.stringify(mappings);
+  if (signature === moduleAliasSignature) {
+    return;
   }
-
-  for (const modulePath of desired) {
-    if (modulePackageJsonEntries.has(modulePath)) {
-      continue;
-    }
-
-    const disposable = tsContribution.typescriptDefaults.addExtraLib(
-      buildModulePackageJson(modulePath),
-      `file:///scripts/${modulePath}/package.json`
+  moduleAliasSignature = signature;
+  const paths: Record<string, string[]> = {};
+  const desired = new Map<string, string>();
+  for (const { id, modulePath } of mappings) {
+    const directory = "userscripts/" + encodeURIComponent(id);
+    paths["scripts/" + modulePath + "/*"] = [directory + "/*"];
+    desired.set(
+      "file:///" + directory + "/package.json",
+      JSON.stringify({
+        name: "scripts/" + modulePath,
+        exports: { "./main": "./main.ts", "./types": "./types.d.ts" },
+      })
     );
-
-    modulePackageJsonEntries.set(modulePath, disposable);
+  }
+  const defaults = tsContribution.typescriptDefaults;
+  defaults.setCompilerOptions({ ...defaults.getCompilerOptions(), paths });
+  for (const [uri, entry] of modulePackageJsonEntries) {
+    if (desired.get(uri) !== entry.contents) {
+      entry.disposable.dispose();
+      modulePackageJsonEntries.delete(uri);
+    }
+  }
+  for (const [uri, contents] of desired) {
+    if (!modulePackageJsonEntries.has(uri)) {
+      modulePackageJsonEntries.set(uri, {
+        contents,
+        disposable: defaults.addExtraLib(contents, uri),
+      });
+    }
   }
 }
-
-// ── Ambient Type Definition Libs ──────────────────────────────────────────────
 
 export interface AmbientTypeDefinitionLibInfo {
   id: string;

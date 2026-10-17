@@ -290,7 +290,8 @@ describe("stored script reconciliation", () => {
       result.syncedScripts[0].code.compiled.javascript,
       "compiled a"
     );
-    assert.deepEqual(h.events, [["sync", "a"]]);
+    assert.deepEqual(h.events, []);
+    assert.deepEqual(h.drafts, {});
   });
 });
 

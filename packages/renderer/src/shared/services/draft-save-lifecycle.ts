@@ -12,6 +12,8 @@ import {
 } from "../store/slices/editor-drafts/state.editor-drafts";
 
 export interface PersistScriptBuffersArgs {
+  expectedRevision?: string;
+  expectedSource?: Record<DraftBuffer, string>;
   scriptId: string;
   focusedBuffer?: {
     buffer: DraftBuffer;
@@ -45,7 +47,8 @@ export interface DraftSaveContext {
   sourceStorage: Pick<
     typeof ChromeSyncStorage,
     "getAllScripts" | "saveScript" | "updateScript"
-  >;
+  > &
+    Partial<Pick<typeof ChromeSyncStorage, "tryPublishScript">>;
   compiledStorage: Pick<
     typeof CompiledCodeStorage,
     "getCompiledCode" | "saveCompiledCode"
@@ -87,6 +90,13 @@ export async function persistDraftSave(
   return publishDraft(
     {
       ...args,
+      expectedRevision:
+        args.expectedRevision ??
+        (args.conflictId
+          ? state.editorDrafts.pendingConflicts?.[args.scriptId]?.remoteScript
+              .storageRevision
+          : draft.baseSavedRevision),
+      expectedSource: { ...draft.lastSynced },
       conflictId:
         args.conflictId === undefined
           ? (state.editorDrafts.pendingConflicts?.[args.scriptId]?.conflictId ??
@@ -110,6 +120,12 @@ export function completeDraftSave(
   const draft = state.drafts[script.id];
   if (!draft) {
     return;
+  }
+  if (
+    script.storageRevision &&
+    BUFFERS.some((buffer) => draft.lastSaveRequestId[buffer] === requestId)
+  ) {
+    draft.baseSavedRevision = script.storageRevision;
   }
   let changed = false;
   for (const buffer of BUFFERS) {

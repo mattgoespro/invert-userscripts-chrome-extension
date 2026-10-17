@@ -1,6 +1,7 @@
 import { test, expect, buildUserscript } from "../fixtures";
 import { buildUserscriptSyncManifest } from "../fixtures/userscript-storage";
 import { waitForTypescriptEditorText } from "../helpers/monaco";
+import { readStoredUserscripts } from "../helpers/chrome-sync";
 import { OptionsPage, ScriptsPage } from "../page-objects";
 
 test.describe("Scripts — draft sync", () => {
@@ -74,9 +75,13 @@ test.describe("Scripts — draft sync", () => {
     await options.waitForReady();
     await scripts.selectScript("RenamedMetadataSafety");
 
-    await waitForTypescriptEditorText(optionsPage, "stored = 1");
+    await waitForTypescriptEditorText(optionsPage, "unsaved = 99");
     const reloadedText = await scripts.getTypescriptEditorText();
-    expect(reloadedText).not.toContain("unsaved = 99");
+    expect(reloadedText).toContain("unsaved = 99");
+    const persisted = await readStoredUserscripts(optionsPage);
+    expect(persisted.find((item) => item.id === script.id)?.typescript).toBe(
+      "export const stored = 1;"
+    );
   });
 
   test("unsaved edits survive switching away and back", async ({

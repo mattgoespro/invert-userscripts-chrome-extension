@@ -77,6 +77,8 @@
   --accent-muted: var(--base-accent-muted);
   --accent-subtle: var(--base-accent-subtle);
   --accent-border: var(--base-accent-border);
+  --secondary: var(--base-blue);
+  --secondary-subtle: color-mix(in srgb, var(--secondary) 10%, transparent);
   --danger: var(--base-danger);
 
   --foreground: var(--base-white);

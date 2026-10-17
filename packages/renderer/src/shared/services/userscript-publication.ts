@@ -1,7 +1,9 @@
 import type { ApplyScriptsResponse } from "@shared/messages";
+import { applyAfterCommit } from "./script-application-service";
 import {
   buildCompiledCodeEntry,
   hashUserscriptCompileSources,
+  digestUserscriptCompileSources,
   isCompiledCodeBuildCurrent,
   isUserscriptCompileSnapshotStale,
   type CompiledOutputBuildOptions,
@@ -35,7 +37,8 @@ interface PublicationStorage {
   sourceStorage: Pick<
     typeof ChromeSyncStorage,
     "getAllScripts" | "saveScript" | "updateScript"
-  >;
+  > &
+    Partial<Pick<typeof ChromeSyncStorage, "tryPublishScript">>;
   compiledStorage: Pick<
     typeof CompiledCodeStorage,
     "getCompiledCode" | "saveCompiledCode"
@@ -43,6 +46,7 @@ interface PublicationStorage {
 }
 
 export interface PublicationContext extends PublicationStorage {
+  requiresModuleAnalysis?: boolean;
   getLocalScripts(): Userscripts;
   getBuildOptions(): CompiledOutputBuildOptions;
   compileAll(script: Userscript): Promise<CompiledCodeEntry>;
@@ -163,6 +167,8 @@ async function saveDraftSnapshot(
     applyTabs = true,
     compile = true,
     conflictId = null,
+    expectedRevision,
+    expectedSource,
   }: PersistScriptBuffersArgs,
   context: DraftSaveContext,
   snapshot: Record<DraftBuffer, string>,
@@ -182,6 +188,19 @@ async function saveDraftSnapshot(
       compiled: { ...entity.code.compiled },
     },
   };
+  if (expectedRevision && expectedRevision !== script.storageRevision) {
+    const current = {
+      ...script.code.source,
+      typeDefinitions: script.typeDefinitions ?? "",
+    };
+    // Metadata-only commits do not invalidate the source baseline.
+    if (
+      !expectedSource ||
+      BUFFERS.some((buffer) => expectedSource[buffer] !== current[buffer])
+    ) {
+      script.storageRevision = expectedRevision;
+    }
+  }
   const duplicate = findDuplicateModulePathScript(
     Object.values(scriptsMap).map(normalizeUserscript),
     script
@@ -231,26 +250,35 @@ async function saveDraftSnapshot(
     });
   }
   const storageSafe = toStorageSafeUserscript(script);
-  if (storedEntry) {
+  const atomic = await context.sourceStorage.tryPublishScript?.(
+    storageSafe,
+    compile ? compiledEntry : undefined
+  );
+  if (!atomic && storedEntry) {
     await context.sourceStorage.updateScript(scriptId, storageSafe);
-  } else {
+  } else if (!atomic) {
     await context.sourceStorage.saveScript(storageSafe);
   }
-  if (compile && compiledEntry) {
+  if (!atomic && compile && compiledEntry) {
     await context.compiledStorage.saveCompiledCode(scriptId, compiledEntry);
+  }
+  if (atomic) {
+    script.storageRevision = atomic.storageRevision;
   }
   const published = compiledEntry
     ? mergeCompiledCode(script, compiledEntry)
     : script;
   context.acceptPublished?.(published);
   const applyResult = applyTabs
-    ? await context.apply([scriptId])
-    : { appliedTabCount: 0, success: true, staleSkipCount: 0 };
+    ? await applyAfterCommit([scriptId], context.apply)
+    : { appliedTabCount: 0, status: "not-requested", staleSkipCount: 0 };
   return {
     script: published,
     conflictId,
     appliedTabCount: applyResult.appliedTabCount,
-    applySuccess: applyResult.success,
+    applySuccess:
+      applyResult.status === "applied" ||
+      applyResult.status === "not-requested",
     staleSkipCount: applyResult.staleSkipCount ?? 0,
   };
 }
@@ -306,6 +334,12 @@ export function publishMetadata(
     const buildOptions = {
       ...context.getBuildOptions(),
       sourceHash: hashUserscriptCompileSources(normalizedScript),
+      ...(context.requiresModuleAnalysis
+        ? {
+            sourceDigest:
+              await digestUserscriptCompileSources(normalizedScript),
+          }
+        : {}),
     };
 
     let pendingCompiled: CompiledCodeEntry | undefined;
@@ -319,7 +353,10 @@ export function publishMetadata(
     ) {
       const javascript = await context.compileJavascript(normalizedScript);
       const css = compiledEntry?.css ?? normalizedScript.code.compiled.css;
-      pendingCompiled = buildCompiledCodeEntry(javascript, css, buildOptions);
+      pendingCompiled = {
+        ...buildCompiledCodeEntry(javascript, css, buildOptions),
+        manifest: compiledEntry?.manifest,
+      };
       normalizedScript.code.compiled.javascript = javascript;
       normalizedScript.code.compiled.css = css;
     }
@@ -357,7 +394,11 @@ export function publishMetadata(
       );
     }
 
-    if (!sourceChanged && pendingCompiled) {
+    if (
+      !context.sourceStorage.tryPublishScript &&
+      !sourceChanged &&
+      pendingCompiled
+    ) {
       await context.compiledStorage.saveCompiledCode(
         normalizedScript.id,
         pendingCompiled
@@ -376,12 +417,24 @@ export function publishMetadata(
       typeDefinitions: latestStored.typeDefinitions,
     });
 
-    if (latestEntry) {
+    const atomic = await context.sourceStorage.tryPublishScript?.(
+      storageSafe,
+      !sourceChanged ? pendingCompiled : undefined
+    );
+    if (
+      !atomic &&
+      !sourceChanged &&
+      pendingCompiled &&
+      context.sourceStorage.tryPublishScript
+    ) {
+      await context.compiledStorage.saveCompiledCode(id, pendingCompiled);
+    }
+    if (!atomic && latestEntry) {
       await context.sourceStorage.updateScript(
         normalizedScript.id,
         storageSafe
       );
-    } else {
+    } else if (!atomic) {
       await context.sourceStorage.saveScript(storageSafe);
     }
 
@@ -398,6 +451,7 @@ export function publishMetadata(
 
     const published: Userscript = {
       ...persistCandidate,
+      ...(atomic ? { storageRevision: atomic.storageRevision } : {}),
       code: {
         source: latestStored.code.source,
         compiled: {
@@ -427,6 +481,7 @@ export function rebuildArtifact(
     const compiled = await context.compiledStorage.getCompiledCode(id);
     if (
       scope === "stale" &&
+      (!context.requiresModuleAnalysis || Boolean(compiled?.manifest)) &&
       isCompiledCodeBuildCurrent(compiled, {
         ...context.getBuildOptions(),
         sourceHash: hashUserscriptCompileSources(script),
@@ -462,20 +517,32 @@ export function rebuildArtifact(
     if (isUserscriptCompileSnapshotStale(script, latest)) {
       return undefined;
     }
-    await context.compiledStorage.saveCompiledCode(id, compiledEntry);
+    const atomic = await context.sourceStorage.tryPublishScript?.(
+      { ...latest, sharedScripts: script.sharedScripts },
+      compiledEntry,
+      true
+    );
+    if (!atomic) {
+      await context.compiledStorage.saveCompiledCode(id, compiledEntry);
+    }
     const nextSharedScripts = script.sharedScripts ?? [];
     if (
-      previousSharedScripts.length !== nextSharedScripts.length ||
-      previousSharedScripts.some(
-        (value, index) => value !== nextSharedScripts[index]
-      )
+      !atomic &&
+      (previousSharedScripts.length !== nextSharedScripts.length ||
+        previousSharedScripts.some(
+          (value, index) => value !== nextSharedScripts[index]
+        ))
     ) {
       await context.sourceStorage.updateScript(id, {
         sharedScripts: nextSharedScripts,
       });
     }
     const published = mergeCompiledCode(
-      { ...latest, sharedScripts: nextSharedScripts },
+      {
+        ...latest,
+        sharedScripts: nextSharedScripts,
+        ...(atomic ? { storageRevision: atomic.storageRevision } : {}),
+      },
       compiledEntry
     );
     // Accept while this publication still owns the script. Batch tab
@@ -493,6 +560,16 @@ export function publishImportedScript(
   acceptPublished: (script: Userscript) => void = () => {}
 ): Promise<void> {
   return publishInOrder(script.id, async () => {
+    if (
+      await context.sourceStorage.tryPublishScript?.(
+        toStorageSafeUserscript(script),
+        compiled
+      )
+    ) {
+      deletedSourceIds.delete(script.id);
+      acceptPublished(script);
+      return;
+    }
     const writes = [
       context.sourceStorage.saveScript(toStorageSafeUserscript(script)),
       context.compiledStorage.saveCompiledCode(script.id, compiled),
@@ -546,7 +623,8 @@ export function publishEnabledToggle(
   ) => Promise<ApplyScriptsResponse> = async () => ({
     success: true,
     appliedTabCount: 0,
-  })
+  }),
+  desiredEnabled?: boolean
 ): Promise<{ script: Userscript; applyResult: ApplyScriptsResponse }> {
   return publishInOrder(id, async () => {
     const entry = (await sourceStorage.getAllScripts())[id];
@@ -554,8 +632,46 @@ export function publishEnabledToggle(
       throw new Error(`Userscript not found: ${id}`);
     }
     const script = normalizeUserscript(entry);
-    const updatedScript = { ...script, enabled: !script.enabled };
-    await sourceStorage.saveScript(toStorageSafeUserscript(updatedScript));
+    let updatedScript = {
+      ...script,
+      enabled: desiredEnabled ?? !script.enabled,
+    };
+    if (sourceStorage.tryPublishScript) {
+      let committed = false;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          const result = await sourceStorage.tryPublishScript(
+            toStorageSafeUserscript(updatedScript)
+          );
+          if (result) {
+            updatedScript = result;
+            committed = true;
+          }
+          break;
+        } catch (error) {
+          if (
+            !(error instanceof Error) ||
+            !error.message.includes("Another window") ||
+            attempt === 2
+          ) {
+            throw error;
+          }
+          const latest = (await sourceStorage.getAllScripts())[id];
+          if (!latest) {
+            throw error;
+          }
+          updatedScript = {
+            ...normalizeUserscript(latest),
+            enabled: updatedScript.enabled,
+          };
+        }
+      }
+      if (!committed) {
+        await sourceStorage.saveScript(toStorageSafeUserscript(updatedScript));
+      }
+    } else {
+      await sourceStorage.saveScript(toStorageSafeUserscript(updatedScript));
+    }
     acceptPublished(updatedScript);
     // A delayed disable must finish removing CSS before a later enable applies.
     const applyResult = await apply(id, updatedScript.enabled);

@@ -1,8 +1,15 @@
 import { createAction, createAsyncThunk } from "@reduxjs/toolkit/react";
-import type { Userscript } from "@shared/model";
-import { ChromeSyncStorage } from "@shared/storage";
+import type { Userscript, CompiledCodeEntry } from "@shared/model";
+import { ChromeSyncStorage, CompiledCodeStorage } from "@shared/storage";
+import {
+  hashUserscriptCompileSources,
+  isCompiledCodeBuildCurrent,
+} from "@shared/compile-metadata";
 import type { RootState } from "../../store";
-import { rebuildArtifact } from "../../../services/userscript-publication";
+import {
+  observePublishedScripts,
+  rebuildArtifact,
+} from "../../../services/userscript-publication";
 import { publicationContext } from "./publication-context";
 import { sendApplyScriptsMessage } from "./messaging";
 
@@ -17,18 +24,42 @@ export const rebuildCompiledUserscripts = createAsyncThunk<
 >(
   "userscripts/rebuildCompiledUserscripts",
   async (args, { getState, dispatch }) => {
-    const ids = Object.keys(await ChromeSyncStorage.getAllScripts());
     const context = publicationContext(getState);
+    const scope = args?.scope ?? "stale";
+    // Discover candidates in bulk. Actual rebuilds still acquire publication
+    // ownership and reread live source/cache before compiling or accepting output.
+    const ids = await observePublishedScripts(
+      undefined,
+      async () => {
+        const [scripts, compiled] = await Promise.all([
+          ChromeSyncStorage.getAllScripts(),
+          scope === "stale"
+            ? CompiledCodeStorage.getAllCompiledCode()
+            : Promise.resolve<Record<string, CompiledCodeEntry>>({}),
+        ]);
+        return { scripts, compiled };
+      },
+      ({ scripts, compiled }) => {
+        const options = context.getBuildOptions();
+        return Object.values(scripts)
+          .filter(
+            (script) =>
+              scope === "all" ||
+              (context.requiresModuleAnalysis &&
+                !compiled[script.id]?.manifest) ||
+              !isCompiledCodeBuildCurrent(compiled[script.id], {
+                ...options,
+                sourceHash: hashUserscriptCompileSources(script),
+              })
+          )
+          .map((script) => script.id);
+      }
+    );
     const rebuiltScripts: Userscript[] = [];
     for (const id of ids) {
-      const script = await rebuildArtifact(
-        id,
-        args?.scope ?? "stale",
-        context,
-        (published) => {
-          dispatch(acceptRebuiltArtifact(published));
-        }
-      );
+      const script = await rebuildArtifact(id, scope, context, (published) => {
+        dispatch(acceptRebuiltArtifact(published));
+      });
       if (script) {
         rebuiltScripts.push(script);
       }

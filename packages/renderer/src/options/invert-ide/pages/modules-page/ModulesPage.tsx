@@ -38,7 +38,10 @@ export function ModulesPage() {
   const typedModulesFingerprint = useMemo(
     () =>
       typedModules
-        .map((module) => `${module.id}:${module.packageName}`)
+        .map(
+          (module) =>
+            `${module.id}:${module.packageName}:${module.typeVersion ?? "latest"}`
+        )
         .sort()
         .join("|"),
     [typedModules]
@@ -66,7 +69,10 @@ export function ModulesPage() {
 
     const results = await Promise.all(
       withTypes.map(async (module) => {
-        const error = await validateTypesUrl(module.packageName);
+        const error = await validateTypesUrl(
+          module.packageName,
+          module.typeVersion
+        );
         return {
           id: module.id,
           status: (error

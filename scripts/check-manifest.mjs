@@ -23,7 +23,8 @@ const requiredFiles = [
 
 /** Soft budgets for lean surfaces (options/Monaco intentionally larger). */
 const sizeBudgets = {
-  "background.js": 50 * 1024,
+  // Transactional publication/sync/CSS recovery cost: docs/architecture/refactor-validation.md.
+  "background.js": 54 * 1024,
   "popup.js": 400 * 1024,
 };
 
@@ -64,9 +65,7 @@ for (const [file, budget] of Object.entries(sizeBudgets)) {
       `${file} is ${size} bytes (budget ${budget}). Investigate popup/background regressions.`
     );
   } else {
-    console.log(
-      `ok  ${file}: ${size} bytes (budget ${budget})`
-    );
+    console.log(`ok  ${file}: ${size} bytes (budget ${budget})`);
   }
 }
 

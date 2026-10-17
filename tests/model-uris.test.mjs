@@ -6,32 +6,32 @@ import {
   buildScriptModelId,
 } from "../packages/monaco/src/typescript/model-uris.ts";
 
-test("buildScriptModelId uses sanitized moduleName for main and styles", () => {
+test("buildScriptModelId uses stable script identity for main and styles", () => {
   assert.equal(
     buildScriptModelId({ id: "script-1", moduleName: "Dom Utils" }, "main"),
-    "scripts/dom-utils/main"
+    "userscripts/script-1/main"
   );
   assert.equal(
     buildScriptModelId({ id: "script-1", moduleName: "Dom Utils" }, "styles"),
-    "scripts/dom-utils/styles"
+    "userscripts/script-1/styles"
   );
 });
 
 test("buildScriptModelId uses types.d suffix for declaration buffers", () => {
   assert.equal(
     buildScriptModelId({ id: "script-1", moduleName: "helpers" }, "types"),
-    "scripts/helpers/types.d"
+    "userscripts/script-1/types.d"
   );
 });
 
 test("buildScriptModelId falls back to script id when moduleName sanitizes empty", () => {
   assert.equal(
     buildScriptModelId({ id: "script-42", moduleName: "@@@" }, "main"),
-    "scripts/script-42/main"
+    "userscripts/script-42/main"
   );
   assert.equal(
     buildScriptModelId({ id: "script-42" }, "types"),
-    "scripts/script-42/types.d"
+    "userscripts/script-42/types.d"
   );
 });
 
@@ -51,14 +51,21 @@ test("buildScriptFileUri builds canonical Monaco URIs per editor kind", () => {
 
   assert.equal(
     buildScriptFileUri(script, "main"),
-    "file:///scripts/shared-lib/main.ts"
+    "file:///userscripts/script-1/main.ts"
   );
   assert.equal(
     buildScriptFileUri(script, "types"),
-    "file:///scripts/shared-lib/types.d.ts"
+    "file:///userscripts/script-1/types.d.ts"
   );
   assert.equal(
     buildScriptFileUri(script, "styles"),
-    "file:///scripts/shared-lib/styles.scss"
+    "file:///userscripts/script-1/styles.scss"
+  );
+});
+
+test("alias changes leave editing model identity and undo history attached", () => {
+  assert.equal(
+    buildScriptFileUri({ id: "a", moduleName: "before" }, "main"),
+    buildScriptFileUri({ id: "a", moduleName: "after" }, "main")
   );
 });

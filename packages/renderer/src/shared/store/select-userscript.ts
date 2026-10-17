@@ -1,13 +1,11 @@
-import {
-  buildScriptFileUri,
-  type ScriptEditorKind,
-} from "@packages/monaco";
+import { buildScriptFileUri, type ScriptEditorKind } from "@packages/monaco";
 import type { Userscript } from "@shared/model";
 import * as monaco from "monaco-editor";
 import { ensureDraft, flushModelToDraft } from "./slices/editor-drafts";
 import type { DraftBuffer } from "./slices/editor-drafts/state.editor-drafts";
 import { setCurrentUserscript } from "./slices/userscripts";
 import type { AppDispatch, RootState } from "./store";
+import { captureSessionBuffers } from "../services/editor-session-service";
 
 const SCRIPT_BUFFERS: Array<{
   editor: ScriptEditorKind;
@@ -24,22 +22,27 @@ const SCRIPT_BUFFERS: Array<{
  * overwrite dirty attached buffers, and editors do not flush on unmount.
  */
 export function flushScriptModelsToDraft(script: Userscript) {
-  return (dispatch: AppDispatch) => {
-    dispatch(ensureDraft(script));
+  return (dispatch: AppDispatch, getState: () => RootState) => {
+    if (!getState().editorDrafts.drafts[script.id]) {
+      dispatch(ensureDraft(script));
+    }
 
-    for (const { editor, buffer } of SCRIPT_BUFFERS) {
-      const uri = buildScriptFileUri(script, editor);
-      const model = monaco.editor.getModel(monaco.Uri.parse(uri));
-
-      if (!model || model.isDisposed()) {
-        continue;
-      }
-
+    const draft = getState().editorDrafts.drafts[script.id];
+    const capture = captureSessionBuffers(draft, (buffer) => {
+      const editor = SCRIPT_BUFFERS.find(
+        (item) => item.buffer === buffer
+      )!.editor;
+      const model = monaco.editor.getModel(
+        monaco.Uri.parse(buildScriptFileUri(script, editor))
+      );
+      return model && !model.isDisposed() ? model : null;
+    });
+    for (const { buffer } of SCRIPT_BUFFERS) {
       dispatch(
         flushModelToDraft({
           scriptId: script.id,
           buffer,
-          code: model.getValue(),
+          code: capture.buffers[buffer],
         })
       );
     }
@@ -66,7 +69,7 @@ export function selectUserscript(scriptId: string) {
 
     const next = state.userscripts.scripts?.[scriptId];
 
-    if (next) {
+    if (next && !getState().editorDrafts.drafts[next.id]) {
       dispatch(ensureDraft(next));
     }
 

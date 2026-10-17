@@ -1,6 +1,5 @@
 import { configureStore, createListenerMiddleware } from "@reduxjs/toolkit";
 import { createLogger } from "redux-logger";
-import type { Userscript } from "@shared/model";
 import { GlobalStateManager } from "@shared/storage";
 import editorDraftsReducer from "./slices/editor-drafts";
 import {
@@ -24,12 +23,9 @@ import uiReducer, {
 import { loadUserscripts } from "./slices/userscripts/thunks.load";
 import workspaceReducer from "./slices/workspace";
 
-const nodeEnv = (
-  globalThis as typeof globalThis & {
-    process?: { env?: { NODE_ENV?: string } };
-  }
-).process?.env?.NODE_ENV;
-const isDevelopment = nodeEnv === undefined || nodeEnv === "development";
+// Webpack replaces this expression; the renderer has no Node runtime.
+declare const process: { env: { NODE_ENV: string } };
+const isDevelopment = process.env.NODE_ENV === "development";
 
 const listenerMiddleware = createListenerMiddleware();
 
@@ -58,8 +54,7 @@ function restoreSelectedUserscript(listenerApi: {
 
   const currentId = state.userscripts.currentScriptId;
 
-  // loadUserscripts.fulfilled clears currentScriptId when the prior id is gone;
-  // only select when nothing valid is current.
+  // Only select when nothing valid is current.
   if (currentId && scripts[currentId]) {
     const current = scripts[currentId];
 
@@ -75,7 +70,7 @@ function restoreSelectedUserscript(listenerApi: {
     restoredId && scripts[restoredId] ? restoredId : scriptIds[0];
   const target = scripts[targetId];
 
-  if (target) {
+  if (target && !state.editorDrafts.drafts[targetId]) {
     listenerApi.dispatch(ensureDraft(target));
   }
 
@@ -113,12 +108,10 @@ listenerMiddleware.startListening({
 listenerMiddleware.startListening({
   actionCreator: setCurrentUserscript,
   effect: (action, listenerApi) => {
-    const state = listenerApi.getState() as {
-      userscripts: { scripts: Record<string, Userscript | undefined> };
-    };
+    const state = listenerApi.getState() as RootState;
     const script = state.userscripts.scripts[action.payload.id];
 
-    if (script) {
+    if (script && !state.editorDrafts.drafts[script.id]) {
       listenerApi.dispatch(ensureDraft(script));
     }
   },

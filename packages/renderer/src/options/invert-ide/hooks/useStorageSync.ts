@@ -4,6 +4,8 @@ import { getAffectedScriptIdsFromStorageChanges } from "@/shared/store/slices/ed
 import { refreshScriptsFromStorage } from "@/shared/store/slices/editor-drafts/thunks.storage-sync";
 import { rebuildCompiledUserscripts } from "@/shared/store/slices/userscripts/thunks.userscripts";
 import { useEffect } from "react";
+import { loadModules } from "@/shared/store/slices/modules";
+import { loadSettings } from "@/shared/store/slices/settings/thunks.settings";
 
 /**
  * Keep IDE drafts/entities reconciled with chrome.storage.sync.
@@ -56,11 +58,20 @@ export function useStorageSync() {
     };
 
     chrome.storage.onChanged.addListener(onStorageChanged);
+    const onPublication = (message: { type?: string }) => {
+      if (message?.type === "publicationCommitted") {
+        void coordinator.requestRefresh();
+        void dispatch(loadModules());
+        void dispatch(loadSettings());
+      }
+    };
+    chrome.runtime.onMessage.addListener(onPublication);
     document.addEventListener("visibilitychange", onVisibilityChange);
 
     return () => {
       coordinator.dispose();
       chrome.storage.onChanged.removeListener(onStorageChanged);
+      chrome.runtime.onMessage.removeListener(onPublication);
       document.removeEventListener("visibilitychange", onVisibilityChange);
     };
   }, [dispatch]);

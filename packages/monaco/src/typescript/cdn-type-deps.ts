@@ -3,7 +3,7 @@ const TRIPLE_SLASH_PATH_PATTERN =
 const TRIPLE_SLASH_TYPES_PATTERN =
   /^\s*\/\/\/\s*<reference\s+types\s*=\s*["']([^"']+)["']/gm;
 const RELATIVE_SPECIFIER_PATTERN =
-  /(?:^|\n)\s*(?:import|export)\b[^\n]*?from\s*["'](\.[^"']+)["']|(?:^|\n)\s*import\s*\(\s*["'](\.[^"']+)["']\s*\)/g;
+  /(?:^|\n)\s*(?:import|export)\b[^;]*?from\s*["']([^"']+)["']|\bimport\s*\(\s*["']([^"']+)["']\s*\)/g;
 
 /**
  * Resolves a relative path against a `.d.ts` file path inside an `@types`
@@ -61,7 +61,11 @@ export function extractFileDependencies(
     const specifier = match[1] ?? match[2];
 
     if (specifier) {
-      files.add(normalizeRelativePath(filePath, specifier));
+      if (specifier.startsWith(".")) {
+        files.add(normalizeRelativePath(filePath, specifier));
+      } else {
+        packages.add(specifier.startsWith("node:") ? "node" : specifier);
+      }
     }
   }
 

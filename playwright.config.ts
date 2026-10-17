@@ -15,7 +15,7 @@ export default defineConfig({
     {
       name: "chromium",
       use: {
-        bypassCSP: true, // Allow the extension to load its scripts without CSP issues
+        bypassCSP: false, // Match the persistent extension fixture: compatibility requires enforced CSP
         viewport: null,
       },
     },

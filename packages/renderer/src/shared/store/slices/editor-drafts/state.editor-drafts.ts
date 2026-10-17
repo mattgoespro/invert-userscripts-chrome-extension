@@ -3,6 +3,7 @@ import { Userscript } from "@shared/model";
 export type DraftBuffer = "typescript" | "scss" | "typeDefinitions";
 
 export type EditorDraft = {
+  baseSavedRevision?: string;
   typescript: string;
   scss: string;
   typeDefinitions: string;
@@ -51,6 +52,9 @@ export function draftFromScript(script: Userscript): EditorDraft {
   const typeDefinitions = script.typeDefinitions ?? "";
 
   return {
+    ...(script.storageRevision
+      ? { baseSavedRevision: script.storageRevision }
+      : {}),
     typescript,
     scss,
     typeDefinitions,

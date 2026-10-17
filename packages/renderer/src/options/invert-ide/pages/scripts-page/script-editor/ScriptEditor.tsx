@@ -26,7 +26,7 @@ import {
   selectOutputDrawerCollapsed,
   selectPanelSizes,
   setOutputDrawerCollapsed,
-  updatePanelSizes,
+  updatePanelSizesIfChanged,
 } from "@/shared/store/slices/ui";
 import { UserscriptSourceLanguage } from "@shared/model";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -79,12 +79,12 @@ export function ScriptEditor() {
   useEditorErrorTracking(scriptId, scssModel, "scss");
 
   useEffect(() => {
-    if (!script) {
+    if (!script || draft) {
       return;
     }
 
     dispatch(ensureDraft(script));
-  }, [dispatch, script]);
+  }, [dispatch, script, draft]);
 
   const buildJavascript = useCallback(async (): Promise<string> => {
     if (!script) {
@@ -185,7 +185,7 @@ export function ScriptEditor() {
               const sourceSize = layout["source-panels"];
               if (sourceSize != null) {
                 dispatch(
-                  updatePanelSizes({
+                  updatePanelSizesIfChanged({
                     scriptCompiledOutputDrawerSplit: sourceSize,
                   })
                 );
@@ -207,7 +207,7 @@ export function ScriptEditor() {
                   const tsSize = layout["typescript-editor"];
                   if (tsSize != null) {
                     dispatch(
-                      updatePanelSizes({
+                      updatePanelSizesIfChanged({
                         scriptCodeEditorHorizontalSplit: tsSize,
                       })
                     );
@@ -234,7 +234,7 @@ export function ScriptEditor() {
                       const sourceSize = layout["typescript-source"];
                       if (sourceSize != null) {
                         dispatch(
-                          updatePanelSizes({
+                          updatePanelSizesIfChanged({
                             scriptTypeDefinitionsVerticalSplit: sourceSize,
                           })
                         );
@@ -250,7 +250,7 @@ export function ScriptEditor() {
                         <div className="pointer-events-none absolute top-2 right-6 z-10 select-none">
                           <Typography
                             variant="caption"
-                            className="font-mono font-bold text-text-muted-faint"
+                            className="font-mono font-bold text-text-muted"
                           >
                             // script.ts
                           </Typography>
@@ -281,7 +281,7 @@ export function ScriptEditor() {
                         <div className="pointer-events-none absolute top-2 right-6 z-10 select-none">
                           <Typography
                             variant="caption"
-                            className="font-mono font-bold text-text-muted-faint"
+                            className="font-mono font-bold text-text-muted"
                           >
                             // types.d.ts
                           </Typography>
@@ -310,7 +310,7 @@ export function ScriptEditor() {
                     <div className="pointer-events-none absolute top-2 right-6 z-10 select-none">
                       <Typography
                         variant="caption"
-                        className="font-mono font-bold text-text-muted-faint"
+                        className="font-mono font-bold text-text-muted"
                       >
                         // styles.scss
                       </Typography>
@@ -363,7 +363,7 @@ export function ScriptEditor() {
           </Group>
         ) : (
           <div className="flex h-full items-center justify-center">
-            <Typography variant="caption" className="text-text-muted-faint">
+            <Typography variant="caption" className="text-text-muted">
               Loading editor environment...
             </Typography>
           </div>

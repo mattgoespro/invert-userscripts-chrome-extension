@@ -18,8 +18,7 @@ test.describe("Settings", () => {
 
     await settings.setAppTheme("Obsidian");
 
-    const theme = await settings.getDocumentTheme();
-    expect(theme).toBe("obsidian");
+    await expect.poll(() => settings.getDocumentTheme()).toBe("obsidian");
   });
 
   test("app theme defaults to graphite (no data-theme attribute)", async ({

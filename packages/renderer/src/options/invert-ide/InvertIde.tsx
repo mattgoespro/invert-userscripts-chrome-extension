@@ -1,4 +1,6 @@
 import { startIdeWorkspace } from "@/shared/services/ide-workspace-lifetime";
+import { LanguageAcquisitionNotice } from "./components/LanguageAcquisitionNotice";
+import { RuntimeCapabilityNotice } from "@/shared/components/runtime-capability/RuntimeCapabilityNotice";
 import { ConflictDialog } from "@/options/invert-ide/components/conflict-dialog/ConflictDialog";
 import { useStorageSync } from "@/options/invert-ide/hooks/useStorageSync";
 import { SassCompiler, initializeBuildWorker } from "@/sandbox/compiler";
@@ -21,6 +23,10 @@ import {
 } from "@/shared/store/slices/ui";
 import { startWorkspaceService } from "@/shared/services/workspace-service";
 import { store } from "@/shared/store/store";
+import {
+  restoreDraftRecovery,
+  startDraftRecovery,
+} from "@/shared/services/draft-recovery-service";
 import { useCallback, useEffect, useState } from "react";
 import { Sidebar } from "./components/sidebar/Sidebar";
 import type { AppSidebarTab } from "@shared/storage";
@@ -59,8 +65,16 @@ export function InvertIde() {
           dispatch(loadSettings()).unwrap(),
           dispatch(loadModules()).unwrap(),
         ]);
+        await restoreDraftRecovery(store);
       },
-      attachWorkspace: () => startWorkspaceService(store),
+      attachWorkspace: () => {
+        const stopWorkspace = startWorkspaceService(store);
+        const stopRecovery = startDraftRecovery(store);
+        return () => {
+          stopRecovery();
+          stopWorkspace();
+        };
+      },
       rebuildStaleArtifacts: async () => {
         await dispatch(rebuildCompiledUserscripts({ scope: "stale" })).unwrap();
       },
@@ -107,6 +121,8 @@ export function InvertIde() {
 
   return (
     <div className="relative flex h-full flex-col overflow-hidden bg-surface-base">
+      <RuntimeCapabilityNotice />
+      <LanguageAcquisitionNotice />
       <div className="relative flex min-w-0 flex-1">
         <Sidebar active={activeSidebarTab} onNavigate={onNavigate} />
         <div className="relative flex min-w-0 flex-1 *:animate-page-reveal">

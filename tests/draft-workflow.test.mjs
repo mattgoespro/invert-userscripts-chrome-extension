@@ -163,7 +163,11 @@ function harness(count = 1) {
     {
       "@reduxjs/toolkit/react": redux,
       "./actions.publication": publicationActions,
-      "@shared/storage": { ChromeSyncStorage: sourceStorage },
+      "@shared/storage": {
+        ChromeSyncStorage: sourceStorage,
+        CompiledCodeStorage: compiledStorage,
+      },
+      "@shared/compile-metadata": compileMetadata,
       "../../../services/userscript-publication": publication,
       "./publication-context": { publicationContext },
       "./messaging": { sendApplyScriptsMessage: apply },
@@ -212,6 +216,7 @@ function harness(count = 1) {
   const { importUserscripts } = loadModule(
     "shared/store/slices/userscripts/thunks.import.ts",
     {
+      "@shared/publication/client": { transactionalEnabled: async () => false },
       "@reduxjs/toolkit/react": redux,
       "./actions.publication": publicationActions,
       "../../../services/userscript-publication": publication,
@@ -495,6 +500,109 @@ describe("ordered editor saves", () => {
 });
 
 describe("derived result acceptance", () => {
+  it("bulk-checks current artifacts without per-script source or cache reads", async () => {
+    const h = harness(11);
+    for (const script of h.scripts) {
+      h.artifacts[script.id] = compileMetadata.buildCompiledCodeEntry(
+        "cached",
+        "",
+        {
+          ...h.options,
+          sourceHash: compileMetadata.hashUserscriptCompileSources(script),
+        }
+      );
+    }
+    let sourceReads = 0,
+      cacheReads = 0,
+      individualReads = 0;
+    const getSources = h.sourceStorage.getAllScripts;
+    const getCache = h.compiledStorage.getAllCompiledCode;
+    h.sourceStorage.getAllScripts = async () => {
+      sourceReads++;
+      return getSources();
+    };
+    h.compiledStorage.getAllCompiledCode = async () => {
+      cacheReads++;
+      return getCache();
+    };
+    h.compiledStorage.getCompiledCode = async () => {
+      individualReads++;
+      assert.fail("current cache needs no per-script reads");
+    };
+    const rebuilt = await h.store
+      .dispatch(h.thunks.rebuildCompiledUserscripts({ scope: "stale" }))
+      .unwrap();
+    assert.equal(rebuilt.length, 0);
+    assert.equal(sourceReads, 1);
+    assert.equal(cacheReads, 1);
+    assert.equal(individualReads, 0);
+  });
+
+  it("rechecks stale candidates and compiles changed source and changed build options", async () => {
+    const h = harness(3);
+    for (const script of h.scripts) {
+      h.artifacts[script.id] = compileMetadata.buildCompiledCodeEntry(
+        "cached",
+        "",
+        {
+          ...h.options,
+          sourceHash: compileMetadata.hashUserscriptCompileSources(script),
+        }
+      );
+    }
+    h.sources[h.scripts[1].id].code.source.typescript = "changed remote source";
+    h.artifacts[h.scripts[2].id].build.minifyCompiledOutput =
+      !h.options.minifyCompiledOutput;
+    const rebuilt = await h.store
+      .dispatch(h.thunks.rebuildCompiledUserscripts({ scope: "stale" }))
+      .unwrap();
+    assert.deepEqual(
+      Array.from(rebuilt, (script) => script.id),
+      [h.scripts[1].id, h.scripts[2].id]
+    );
+    assert.equal(h.artifacts[h.scripts[0].id].javascript, "cached");
+    assert.match(
+      h.artifacts[h.scripts[1].id].javascript,
+      /changed remote source/
+    );
+    assert.equal(
+      h.artifacts[h.scripts[2].id].build.minifyCompiledOutput,
+      h.options.minifyCompiledOutput
+    );
+  });
+
+  it("retries bulk cache discovery when a save publishes during its storage read", async () => {
+    const h = harness(),
+      entered = deferred(),
+      release = deferred();
+    h.artifacts[h.id] = compileMetadata.buildCompiledCodeEntry("cached", "", {
+      ...h.options,
+      sourceHash: compileMetadata.hashUserscriptCompileSources(h.scripts[0]),
+    });
+    const getCache = h.compiledStorage.getAllCompiledCode;
+    let reads = 0;
+    h.compiledStorage.getAllCompiledCode = async () => {
+      const snapshot = await getCache();
+      if (++reads === 1) {
+        entered.resolve();
+        await release.promise;
+      }
+      return snapshot;
+    };
+    const rebuilding = h.store
+      .dispatch(h.thunks.rebuildCompiledUserscripts({ scope: "stale" }))
+      .unwrap();
+    await entered.promise;
+    h.edit("typescript", "newer saved source");
+    await h.save({ applyTabs: false });
+    release.resolve();
+    const rebuilt = await rebuilding;
+    assert.equal(reads, 2);
+    assert.equal(rebuilt.length, 0);
+    assert.equal(h.sources[h.id].code.source.typescript, "newer saved source");
+    assert.match(h.artifacts[h.id].javascript, /newer saved source/);
+  });
+
   it("cannot resurrect a deletion while a rebuild waits for tab application", async () => {
     const h = harness(),
       entered = deferred(),
@@ -748,16 +856,17 @@ describe("conflict observation ownership", () => {
     for (const script of h.scripts) {
       h.enqueue(script.id);
     }
-    let applies = 0;
-    h.effects.apply = async () => {
-      if (++applies === 2) {
-        throw Error("apply failed");
+    let writes = 0;
+    const saveArtifact = h.compiledStorage.saveCompiledCode;
+    h.compiledStorage.saveCompiledCode = async (...args) => {
+      if (++writes === 2) {
+        throw Error("artifact failed");
       }
-      return { success: true, appliedTabCount: 0 };
+      return saveArtifact(...args);
     };
     await assert.rejects(
       h.store.dispatch(h.conflicts.keepAllLocalConflictsAndPersist()).unwrap(),
-      { message: "apply failed" }
+      { message: "artifact failed" }
     );
     assert.equal(h.calls.length, 2);
     assert.deepEqual(
@@ -945,10 +1054,16 @@ it("ordered toggles leave CSS installed after an older disable is delayed", asyn
   const sourceReads = ChromeSyncStorage.getAllScripts;
   const moduleReads = ChromeSyncStorage.getAllModules;
   const settingsReads = ChromeSyncStorage.getEditorSettings;
-  const artifactReads = CompiledCodeStorage.getCompiledCodeForScripts;
+  const artifactReads = CompiledCodeStorage.getAllCompiledCode;
   let stylesheetPresent = true,
     queries = 0;
   globalThis.chrome = {
+    webNavigation: {
+      getFrame: async () => ({
+        documentId: "test-document",
+        url: "https://example.com/",
+      }),
+    },
     tabs: {
       query: async () => {
         if (++queries === 1) {
@@ -974,11 +1089,21 @@ it("ordered toggles leave CSS installed after an older disable is delayed", asyn
   ChromeSyncStorage.getEditorSettings = async () => ({
     minifyCompiledOutput: false,
   });
-  CompiledCodeStorage.getCompiledCodeForScripts = async () => ({
-    [h.id]: compileMetadata.buildCompiledCodeEntry("", "body{color:red}", {
-      minifyCompiledOutput: false,
-      sourceHash: compileMetadata.hashUserscriptCompileSources(h.sources[h.id]),
-    }),
+  CompiledCodeStorage.getAllCompiledCode = async () => ({
+    [h.id]: {
+      ...compileMetadata.buildCompiledCodeEntry("", "body{color:red}", {
+        minifyCompiledOutput: false,
+        sourceHash: compileMetadata.hashUserscriptCompileSources(
+          h.sources[h.id]
+        ),
+      }),
+      manifest: {
+        version: 1,
+        source: h.sources[h.id].code.source.typescript,
+        imports: [],
+        diagnostics: [],
+      },
+    },
   });
   try {
     await setCssBookmark(123, h.id, "body{color:red}");
@@ -1009,6 +1134,6 @@ it("ordered toggles leave CSS installed after an older disable is delayed", asyn
     ChromeSyncStorage.getAllScripts = sourceReads;
     ChromeSyncStorage.getAllModules = moduleReads;
     ChromeSyncStorage.getEditorSettings = settingsReads;
-    CompiledCodeStorage.getCompiledCodeForScripts = artifactReads;
+    CompiledCodeStorage.getAllCompiledCode = artifactReads;
   }
 });

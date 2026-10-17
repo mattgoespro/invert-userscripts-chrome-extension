@@ -1,6 +1,7 @@
 import type { CompilerEvents, CompilerTransport } from "./compiler-requests";
 
 interface JavascriptInput {
+  analysisOnly?: boolean;
   sourceCode: string;
   shared?: boolean;
   moduleName?: string;
@@ -13,6 +14,7 @@ interface SassInput {
 }
 
 interface CompilerResponse {
+  manifest?: import("@shared/modules/manifest").ModuleManifest;
   type: string;
   id?: string;
   success?: boolean;
@@ -37,7 +39,11 @@ export function connectBuildWorker(
       events.result(
         event.data.id,
         event.data.success
-          ? { success: true, code: event.data.code }
+          ? {
+              success: true,
+              code: event.data.code,
+              manifest: event.data.manifest,
+            }
           : {
               success: false,
               error: new Error(event.data.error ?? "Unknown compilation error"),

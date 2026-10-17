@@ -1,6 +1,7 @@
 import { CompilationError } from "@shared/errors";
 import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { initialState, type WorkspaceState } from "./workspace.state";
+import { areScriptErrorsEqual } from "./error-comparison";
 
 const EMPTY_ERRORS: CompilationError[] = [];
 
@@ -37,6 +38,14 @@ const workspaceSlice = createSlice({
       }>
     ) => {
       const scriptErrors = state.scriptErrors[action.payload.scriptId] ?? {};
+      if (
+        areScriptErrorsEqual(
+          scriptErrors[action.payload.language],
+          action.payload.errors
+        )
+      ) {
+        return;
+      }
 
       scriptErrors[action.payload.language] = action.payload.errors;
       state.scriptErrors[action.payload.scriptId] = scriptErrors;

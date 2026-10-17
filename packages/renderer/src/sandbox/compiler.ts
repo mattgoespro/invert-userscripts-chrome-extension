@@ -75,3 +75,14 @@ export class SassCompiler {
 export function initializeBuildWorker(): Promise<void> {
   return javascript.initialize();
 }
+
+/** Source analysis uses the existing worker without transpiling or minifying. */
+export async function analyzeUserscriptModule(
+  sourceCode: string
+): Promise<import("@shared/modules/manifest").ModuleManifest> {
+  const result = await javascript.request({ sourceCode, analysisOnly: true });
+  if (!result.success || !result.manifest) {
+    throw result.error ?? new Error("Module analysis failed.");
+  }
+  return result.manifest;
+}

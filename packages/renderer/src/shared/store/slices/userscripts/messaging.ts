@@ -16,7 +16,7 @@ export async function sendApplyScriptsMessage(
   const message: RuntimePortMessageEvent<"applyScripts"> = {
     source: "options",
     type: "applyScripts",
-    data: { scriptIds },
+    data: { scriptIds, requestId: crypto.randomUUID() },
   };
 
   try {
@@ -38,7 +38,7 @@ export async function sendSetEnabledMessage(
   const message: RuntimePortMessageEvent<"setEnabled"> = {
     source: "options",
     type: "setEnabled",
-    data: { scriptId, enabled },
+    data: { scriptId, enabled, requestId: crypto.randomUUID() },
   };
 
   try {
@@ -77,11 +77,13 @@ export function describeApplyResult(result: {
   success: boolean;
   appliedTabCount: number;
   staleSkipCount?: number;
+  message?: string;
 }): { variant: "info" | "error"; message: string } {
   if (!result.success) {
     return {
       variant: "error",
-      message: formatApplyFailureToast(result.appliedTabCount),
+      message:
+        result.message ?? formatApplyFailureToast(result.appliedTabCount),
     };
   }
 

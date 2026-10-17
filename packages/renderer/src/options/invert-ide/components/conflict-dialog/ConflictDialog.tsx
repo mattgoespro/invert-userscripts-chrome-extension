@@ -95,8 +95,8 @@ export function ConflictDialog() {
       <div className="flex flex-col gap-md">
         <Typography variant="body" className="text-text-muted">
           Another browser or tab updated saved script content while you have
-          unsaved local edits. Keep local writes your draft to sync (overwriting
-          remote). Take remote loads the synced version into the editor. Closing
+          unsaved local edits. Keep local saves your draft against this observed
+          version. Take remote loads the saved version into the editor. Closing
           this dialog keeps all local drafts.
         </Typography>
 
@@ -117,7 +117,7 @@ export function ConflictDialog() {
                 <div key={entry.buffer} className="mb-sm last:mb-0">
                   <Typography
                     variant="caption"
-                    className="mb-1 block text-text-muted-strong"
+                    className="mb-1 block text-text-muted"
                   >
                     {BUFFER_LABELS[entry.buffer]}
                   </Typography>
