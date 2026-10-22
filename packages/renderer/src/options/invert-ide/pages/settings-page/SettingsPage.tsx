@@ -1,4 +1,6 @@
 import { Checkbox } from "@/shared/components/checkbox/Checkbox";
+import { Button } from "@/shared/components/button/Button";
+import { useState } from "react";
 import { useToast } from "@/shared/components/toast/ToastProvider";
 import { Input } from "@/shared/components/input/Input";
 import { Select } from "@/shared/components/select/Select";
@@ -26,6 +28,7 @@ export function Settings() {
   const settings = useAppSelector(selectEditorSettings);
   const isLoading = useAppSelector(selectIsLoading);
   const monacoReady = useAppSelector(selectMonacoReady);
+  const [advanced, setAdvanced] = useState(false);
 
   const handleThemeChange = (theme: EditorThemeName) => {
     dispatch(updateSettings({ theme }));
@@ -49,6 +52,10 @@ export function Settings() {
 
   const handleAutoFormatChange = (autoFormat: boolean) => {
     dispatch(updateSettings({ autoFormat }));
+  };
+
+  const handleErrorLensChange = (errorLens: boolean): void => {
+    dispatch(updateSettings({ errorLens }));
   };
 
   const handleMinifyCompiledOutputChange = async (
@@ -87,8 +94,8 @@ export function Settings() {
 
   if (isLoading) {
     return (
-      <div className="flex-1 p-(--page-padding)">
-        <div className="mb-lg flex items-baseline border-b border-border pb-sm">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden p-(--page-padding)">
+        <div className="mb-lg flex shrink-0 items-baseline border-b border-border pb-sm">
           <span className="font-mono text-sm text-syntax-param">config.</span>
           <Typography variant="subtitle">Settings</Typography>
         </div>
@@ -102,73 +109,126 @@ export function Settings() {
   }
 
   return (
-    <div className="flex-1 p-(--page-padding)">
-      <div className="mb-lg flex items-baseline border-b border-border pb-sm">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden p-(--page-padding)">
+      <div className="mb-lg flex shrink-0 items-baseline border-b border-border pb-sm">
         <span className="font-mono text-sm text-syntax-param">config.</span>
         <Typography variant="subtitle">Settings</Typography>
       </div>
-      <SettingsSection title="Application Theme">
-        <Select
-          label="Theme"
-          value={settings.appTheme ?? "graphite"}
-          onChange={handleAppThemeChange}
-          options={AppThemes.map((theme) => ({
-            label: theme.displayName,
-            value: theme.name,
-          }))}
-        />
-      </SettingsSection>
-      <SettingsSection title="Editor Appearance">
-        <Select
-          label="Theme"
-          value={settings.theme}
-          onChange={handleThemeChange}
-          options={getEditorThemeOptions()}
-        />
-        <div className="pt-1">
-          {monacoReady && <ThemePreview theme={settings.theme} />}
+      <section
+        aria-label="Settings content"
+        tabIndex={0}
+        className="scrollbar-thin-6 min-h-0 flex-1 [scrollbar-gutter:stable] overflow-x-hidden overflow-y-auto overscroll-contain pr-sm focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent"
+      >
+        <SettingsSection title="Application Theme">
+          <Select
+            label="Theme"
+            value={settings.appTheme ?? "graphite"}
+            onChange={handleAppThemeChange}
+            options={AppThemes.map((theme) => ({
+              label: theme.displayName,
+              value: theme.name,
+            }))}
+          />
+        </SettingsSection>
+        <SettingsSection title="Editor Appearance">
+          <Select
+            label="Theme"
+            value={settings.theme}
+            onChange={handleThemeChange}
+            options={getEditorThemeOptions()}
+          />
+          <div className="pt-1">
+            {monacoReady && <ThemePreview theme={settings.theme} />}
+          </div>
+          <Input
+            type="number"
+            label="Font Size"
+            value={settings.fontSize}
+            onChange={(event) =>
+              handleFontSizeChange(parseInt(event.target.value))
+            }
+            min="8"
+            max="32"
+          />
+          <fieldset aria-describedby="error-lens-description">
+            <legend className="mb-2 font-mono text-xs text-label-fg uppercase">
+              Error Lens
+            </legend>
+            <p
+              id="error-lens-description"
+              className="mb-3 font-mono text-base text-text-muted"
+            >
+              Highlight problem lines and show diagnostic messages inline.
+            </p>
+            <div className="flex gap-5">
+              <label className="flex cursor-pointer items-center gap-2 font-mono text-base text-foreground">
+                <input
+                  type="radio"
+                  name="error-lens"
+                  value="on"
+                  className="accent-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                  checked={settings.errorLens ?? true}
+                  onChange={() => handleErrorLensChange(true)}
+                />
+                On
+              </label>
+              <label className="flex cursor-pointer items-center gap-2 font-mono text-base text-foreground">
+                <input
+                  type="radio"
+                  name="error-lens"
+                  value="off"
+                  className="accent-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                  checked={settings.errorLens === false}
+                  onChange={() => handleErrorLensChange(false)}
+                />
+                Off
+              </label>
+            </div>
+          </fieldset>
+        </SettingsSection>
+        <SettingsSection title="Formatting">
+          <Input
+            type="number"
+            label="Tab Size"
+            value={settings.tabSize}
+            onChange={(event) =>
+              handleTabSizeChange(parseInt(event.target.value))
+            }
+            min="2"
+            max="8"
+          />
+          <Checkbox
+            label="Format on save"
+            checked={settings.autoFormat}
+            onChange={handleAutoFormatChange}
+          />
+        </SettingsSection>
+        <SettingsSection title="Build Output">
+          <Checkbox
+            label="Minify compiled JavaScript and CSS"
+            checked={settings.minifyCompiledOutput ?? false}
+            onChange={handleMinifyCompiledOutputChange}
+          />
+        </SettingsSection>
+        <Button
+          variant="link"
+          size="sm"
+          aria-expanded={advanced}
+          aria-controls="advanced-settings"
+          onClick={() => setAdvanced((value) => !value)}
+          className="mb-sm"
+        >
+          Advanced
+        </Button>
+        <div id="advanced-settings" hidden={!advanced}>
+          <SettingsSection title="Document storage and sync">
+            <DocumentStoragePanel />
+          </SettingsSection>
+          <SettingsSection title="Storage Quota">
+            <StorageUsagePanel />
+          </SettingsSection>
         </div>
-        <Input
-          type="number"
-          label="Font Size"
-          value={settings.fontSize}
-          onChange={(event) =>
-            handleFontSizeChange(parseInt(event.target.value))
-          }
-          min="8"
-          max="32"
-        />
-      </SettingsSection>
-      <SettingsSection title="Formatting">
-        <Input
-          type="number"
-          label="Tab Size"
-          value={settings.tabSize}
-          onChange={(event) =>
-            handleTabSizeChange(parseInt(event.target.value))
-          }
-          min="2"
-          max="8"
-        />
-        <Checkbox
-          label="Format on save"
-          checked={settings.autoFormat}
-          onChange={handleAutoFormatChange}
-        />
-      </SettingsSection>
-      <SettingsSection title="Build Output">
-        <Checkbox
-          label="Minify compiled JavaScript and CSS"
-          checked={settings.minifyCompiledOutput ?? false}
-          onChange={handleMinifyCompiledOutputChange}
-        />
-      </SettingsSection>
-      <SettingsSection title="Storage Quota">
-        <StorageUsagePanel />
-      </SettingsSection>
-      <SettingsSection title="Document storage and sync">
-        <DocumentStoragePanel />
-      </SettingsSection>
+      </section>
     </div>
   );
 }

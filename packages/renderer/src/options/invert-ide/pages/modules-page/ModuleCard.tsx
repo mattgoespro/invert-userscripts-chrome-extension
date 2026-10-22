@@ -71,7 +71,12 @@ export function ModuleCard({
       <span className="min-w-0 flex-1 truncate font-mono text-xs text-text-muted">
         {module.url}
       </span>
-      <IconButton icon={DeleteIcon} variant="danger" onClick={onDelete} />
+      <IconButton
+        icon={DeleteIcon}
+        variant="danger"
+        title="Delete module"
+        onClick={onDelete}
+      />
     </div>
   );
 }

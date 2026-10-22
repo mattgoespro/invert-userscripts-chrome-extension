@@ -1,7 +1,7 @@
 import fs from "fs-extra";
 import path from "path";
 import os from "os";
-import packageJson from "../package.json";
+import packageJson from "../package.json" with { type: "json" };
 import tsconfig from "../tsconfig.json" with { type: "json" };
 
 const destinationDir = path.join(

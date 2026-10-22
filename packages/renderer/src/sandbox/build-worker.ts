@@ -4,6 +4,7 @@ import { prepareCompiledJavascript } from "@shared/compiled-output";
 import { minifyUserscript } from "./minifier";
 import { analyzeModule, getAsyncCompletionExpression } from "./module-analysis";
 import type { ModuleManifest } from "@shared/modules/manifest";
+import { buildOwnDeclarations } from "./declaration-analysis";
 
 interface BuildWorkerRequest {
   type: "compile";
@@ -13,6 +14,7 @@ interface BuildWorkerRequest {
   moduleName?: string;
   minify?: boolean;
   analysisOnly?: boolean;
+  declarationsOnly?: boolean;
 }
 
 interface BuildWorkerResponse {
@@ -39,6 +41,15 @@ self.addEventListener("message", (event: MessageEvent<BuildWorkerRequest>) => {
 
   void (async () => {
     try {
+      if (event.data.declarationsOnly) {
+        self.postMessage({
+          type: "compile-result",
+          id,
+          success: true,
+          code: buildOwnDeclarations(sourceCode),
+        } satisfies BuildWorkerResponse);
+        return;
+      }
       if (event.data.analysisOnly) {
         self.postMessage({
           type: "compile-result",

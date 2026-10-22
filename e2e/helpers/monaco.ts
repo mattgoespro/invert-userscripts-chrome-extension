@@ -6,7 +6,7 @@ export function editorNeedle(code: string): string {
     return `${match[1]} = ${match[2].trim()}`;
   }
 
-  return code.trim();
+  return normalizeMonacoText(code);
 }
 export function normalizeMonacoText(text: string): string {
   return text
@@ -34,15 +34,18 @@ export async function replaceMonacoEditorContent(
  * Trigger the CodeEditor Ctrl+S handler. Playwright's keyboard shortcut does
  * not always reach the editor root listener, so dispatch the event directly.
  */
-export async function saveMonacoEditor(page: Page) {
-  await page.evaluate(() => {
+export async function saveMonacoEditor(
+  page: Page,
+  source: "typescript-source" | "typescript-definitions" = "typescript-source"
+) {
+  await page.evaluate((testId) => {
     const monacoEditor = document.querySelector(
-      "[data-testid='typescript-source'] .monaco-editor"
+      `[data-testid='${testId}'] .monaco-editor`
     );
     const editorRoot = monacoEditor?.parentElement;
 
     if (!editorRoot) {
-      throw new Error("[e2e] Could not find TypeScript editor root element.");
+      throw new Error(`[e2e] Could not find ${testId} editor root element.`);
     }
 
     editorRoot.dispatchEvent(
@@ -54,7 +57,7 @@ export async function saveMonacoEditor(page: Page) {
         cancelable: true,
       })
     );
-  });
+  }, source);
 }
 
 export async function readTypescriptEditorText(page: Page): Promise<string> {

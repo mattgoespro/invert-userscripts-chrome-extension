@@ -78,12 +78,13 @@ function restoreSelectedUserscript(listenerApi: {
 }
 
 listenerMiddleware.startListening({
-  predicate: (_action, currentState, previousState) => {
+  predicate: (action, currentState, previousState) => {
     const current = currentState as { ui: UiState };
     const previous = previousState as { ui: UiState };
 
     return (
       current.ui.hydrated &&
+      action.type !== hydrateUi.fulfilled.type &&
       current.ui !== previous.ui &&
       // Hydrate itself writes the loaded snapshot; don't echo it back immediately.
       previous.ui.hydrated

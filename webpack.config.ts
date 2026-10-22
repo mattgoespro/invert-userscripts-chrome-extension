@@ -8,6 +8,7 @@ import webpack from "webpack";
 import packageJson from "./package.json" with { type: "json" };
 import ForkTsCheckerWebpackPlugin from "fork-ts-checker-webpack-plugin";
 import { ChromeExtensionReloaderWebpackPlugin } from "./plugins/index.ts";
+import { configureDriveManifest } from "./plugins/drive-manifest.ts";
 
 const __dirname = import.meta.dirname;
 
@@ -193,7 +194,7 @@ export default (
               manifest.description = packageJson.description;
               manifest.version = packageJson.version;
 
-              return JSON.stringify(manifest);
+              return JSON.stringify(configureDriveManifest(manifest));
             },
           },
           {

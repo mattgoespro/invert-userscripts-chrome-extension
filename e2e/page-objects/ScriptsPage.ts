@@ -195,6 +195,11 @@ export class ScriptsPage {
     const expected = code.replace(/\s+/g, " ").trim();
     await waitForStoredTypescript(this.page, { includes: expected });
     await waitForTypescriptEditorText(this.page, editorNeedle(code));
+    // A successful storage write alone does not prove save completion: a
+    // programmatic formatting update must not immediately dirty the model again.
+    await expect(
+      this.scriptListPanel.locator(".border-l-accent .animate-pulse-indicator")
+    ).toBeHidden();
   }
 
   /** Replace TypeScript editor contents without saving. */

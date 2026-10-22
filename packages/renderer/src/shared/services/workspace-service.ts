@@ -1,4 +1,7 @@
-import { analyzeUserscriptModule } from "@/sandbox/compiler";
+import {
+  analyzeTypeDeclarations,
+  analyzeUserscriptModule,
+} from "@/sandbox/compiler";
 import type { ModuleManifest } from "@shared/modules/manifest";
 import {
   buildScriptFileUri,
@@ -24,9 +27,9 @@ import { projectWorkspace } from "./workspace-sync-plan";
  *   pane is always mounted; offscreen types panes are mounted only when they
  *   are modules (`import`/`export`), so adding or removing `export` remounts
  *   them on the next draft sync.
- * - Static package.json extra libs for every script. Type panes are never
- *   extra-libbed: unexported names are own-script ambient globals; exported
- *   names are import-only via `scripts/<m>/types`.
+ * - Static package.json extra libs and owner-local declaration augmentations.
+ *   Adding exports to a pane enables external imports without removing its
+ *   implicit names from the owning main module.
  * - CDN `@types` only for modules referenced by the active closure and dirty
  *   drafts.
  *
@@ -63,10 +66,38 @@ export function startWorkspaceService(store: AppStore): () => void {
   let lastSignature = "";
   const manifests: Record<string, ModuleManifest> = {};
   const pendingAnalysis = new Map<string, string>();
+  const declarations: Record<string, { source: string; contents: string }> = {};
+  const pendingDeclarations = new Map<string, string>();
   let analysisTimer: ReturnType<typeof setTimeout> | undefined;
   const analyze = () => {
     const state = store.getState();
     for (const script of Object.values(state.userscripts.scripts ?? {})) {
+      const types =
+        state.editorDrafts.drafts[script.id]?.typeDefinitions ??
+        script.typeDefinitions ??
+        "";
+      if (
+        declarations[script.id]?.source !== types &&
+        pendingDeclarations.get(script.id) !== types
+      ) {
+        pendingDeclarations.set(script.id, types);
+        void analyzeTypeDeclarations(types).then(
+          (contents) => {
+            if (!running || pendingDeclarations.get(script.id) !== types) {
+              return;
+            }
+            pendingDeclarations.delete(script.id);
+            declarations[script.id] = { source: types, contents };
+            sync();
+          },
+          (error) => {
+            if (pendingDeclarations.get(script.id) === types) {
+              pendingDeclarations.delete(script.id);
+            }
+            console.warn("Declaration analysis failed:", error);
+          }
+        );
+      }
       const source =
         state.editorDrafts.drafts[script.id]?.typescript ??
         script.code.source.typescript;
@@ -100,6 +131,12 @@ export function startWorkspaceService(store: AppStore): () => void {
         pendingAnalysis.delete(id);
       }
     }
+    for (const id of Object.keys(declarations)) {
+      if (!state.userscripts.scripts[id]) {
+        delete declarations[id];
+        pendingDeclarations.delete(id);
+      }
+    }
   };
   let lastState = store.getState();
 
@@ -114,6 +151,7 @@ export function startWorkspaceService(store: AppStore): () => void {
         currentScriptId: state.userscripts.currentScriptId,
         modules: state.modules.modules ?? {},
         manifests,
+        declarations,
       },
       lastSignature
     );
@@ -131,6 +169,7 @@ export function startWorkspaceService(store: AppStore): () => void {
     );
     reconcileLanguageWorkspace({
       files,
+      typeDefinitionLibs: projection.typeDefinitionLibs,
       modulePaths: projection.modulePaths,
       cdnModules: projection.cdnModules,
       aliases: Object.values(state.userscripts.scripts ?? {}).map((script) => ({
@@ -179,6 +218,7 @@ export function startWorkspaceService(store: AppStore): () => void {
     unsubscribe();
     clearTimeout(analysisTimer);
     pendingAnalysis.clear();
+    pendingDeclarations.clear();
 
     if (scheduled != null) {
       clearTimeout(scheduled);

@@ -183,7 +183,6 @@ export function ImportUserscriptsDialog({
               }}
             />
             <Button
-              className="h-(--input-height) py-0"
               variant="secondary"
               onClick={handleSelectClick}
               disabled={importing || validating}

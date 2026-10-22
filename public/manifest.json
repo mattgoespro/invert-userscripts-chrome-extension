@@ -27,6 +27,8 @@
   },
   "permissions": [
     "storage",
+    "identity",
+    "unlimitedStorage",
     "activeTab",
     "scripting",
     "webNavigation",

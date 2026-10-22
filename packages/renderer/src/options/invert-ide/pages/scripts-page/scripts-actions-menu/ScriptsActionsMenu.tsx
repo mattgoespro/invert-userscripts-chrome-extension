@@ -201,7 +201,8 @@ export function ScriptsActionsMenu({
                 <Button
                   size="sm"
                   variant="secondary"
-                  className="w-full justify-start"
+                  fullWidth
+                  className="justify-start"
                   onClick={() => handleAction(onImportClick)}
                 >
                   <UploadIcon size={12} />
@@ -210,7 +211,8 @@ export function ScriptsActionsMenu({
                 <Button
                   size="sm"
                   variant="secondary"
-                  className="w-full justify-start"
+                  fullWidth
+                  className="justify-start"
                   onClick={() => handleAction(onExportClick)}
                 >
                   <DownloadIcon size={12} />

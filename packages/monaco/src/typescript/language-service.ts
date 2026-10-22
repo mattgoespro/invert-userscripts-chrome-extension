@@ -10,6 +10,7 @@ export interface LanguageWorkspaceProjection {
   modulePaths: string[];
   aliases?: { id: string; modulePath: string }[];
   cdnModules: CdnModuleInfo[];
+  typeDefinitionLibs?: import("./defaults").AmbientTypeDefinitionLibInfo[];
 }
 let lastCdnSignature = "";
 let acquisitionError = "";
@@ -48,7 +49,7 @@ export function reconcileLanguageWorkspace(
       .filter((file) => file.language === "typescript")
       .map((file) => file.uri)
   );
-  syncAmbientTypeDefinitionLibs([]);
+  syncAmbientTypeDefinitionLibs(projection.typeDefinitionLibs ?? []);
   const signature = JSON.stringify(projection.cdnModules);
   if (signature === lastCdnSignature) {
     return;

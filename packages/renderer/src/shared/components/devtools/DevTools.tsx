@@ -82,13 +82,14 @@ export function DevTools() {
       style={{ left: position.x, bottom: position.y }}
     >
       <button
+        type="button"
         className={clsx(
-          "flex h-8 w-8 items-center justify-center p-0",
-          "rounded-default cursor-grab touch-none transition-colors duration-150 select-none",
+          "flex size-(--button-height-lg) items-center justify-center p-0",
+          "cursor-grab touch-none rounded-default transition-colors duration-150 select-none",
           "active:cursor-grabbing",
           open
-            ? "border-accent-border text-accent bg-accent-subtle border"
-            : "border-border bg-surface-raised text-text-muted hover:border-accent-border hover:text-foreground border"
+            ? "border border-accent-border bg-accent-subtle text-accent"
+            : "border border-border bg-surface-raised text-text-muted hover:border-accent-border hover:text-foreground"
         )}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
@@ -102,12 +103,12 @@ export function DevTools() {
         <div
           className={clsx(
             "absolute bottom-[calc(100%+8px)] left-0 min-w-60",
-            "bg-surface-raised border-border rounded-default flex flex-col border",
+            "flex flex-col rounded-default border border-border bg-surface-raised",
             "animate-devtools-reveal overflow-hidden"
           )}
         >
-          <div className="text-text-muted-strong border-border-subtle border-b px-3.5 py-2.5 text-[10px] font-semibold tracking-[0.06em] uppercase">
-            <span className="text-text-muted-faint font-normal">{"// "}</span>
+          <div className="border-b border-border-subtle px-3.5 py-2.5 text-[10px] font-semibold tracking-[0.06em] text-text-muted-strong uppercase">
+            <span className="font-normal text-text-muted-faint">{"// "}</span>
             devtools
           </div>
           <div className="flex flex-col gap-0.5 p-1.5">

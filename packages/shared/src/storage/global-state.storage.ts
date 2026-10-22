@@ -1,4 +1,5 @@
 import { transactionalEnabled } from "../publication/client";
+import { repositoryRequest } from "../publication/client";
 export type AppSidebarTab = "scripts" | "modules" | "settings";
 
 export type ScriptEditorDrawerTab = "javascript" | "css" | "errors";
@@ -100,6 +101,12 @@ export class GlobalStateManager {
    * Retrieves the persisted UI state from `chrome.storage.sync`.
    */
   static async get(): Promise<GlobalState> {
+    if ((await chrome.storage.local.get("driveSyncEnabled")).driveSyncEnabled) {
+      const result = await repositoryRequest<{ layout: GlobalState | null }>({
+        type: "publication.drive.layout.read",
+      });
+      return mergeGlobalState(result.layout);
+    }
     if (await transactionalEnabled()) {
       const key = this.localKey();
       const local = await chrome.storage.local.get(key);
@@ -123,8 +130,18 @@ export class GlobalStateManager {
    * Overwrites the entire UI state in chrome.storage.sync.
    */
   static async save(state: GlobalState): Promise<void> {
+    if ((await chrome.storage.local.get("driveSyncEnabled")).driveSyncEnabled) {
+      await repositoryRequest({
+        type: "publication.drive.layout.write",
+        value: state,
+      });
+      return;
+    }
     if (await transactionalEnabled()) {
-      await chrome.storage.local.set({ [this.localKey()]: state });
+      await chrome.storage.local.set({
+        [this.localKey()]: state,
+        "globalState:last": state,
+      });
       return;
     }
     await chrome.storage.sync.set({ [this.storageKey]: state });

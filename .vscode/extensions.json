@@ -22,6 +22,7 @@
     "davidanson.vscode-markdownlint",
     "bradlc.vscode-tailwindcss",
     "ms-playwright.playwright",
-    "bierner.markdown-mermaid"
+    "bierner.markdown-mermaid",
+    "avifenesh.agnix"
   ]
 }

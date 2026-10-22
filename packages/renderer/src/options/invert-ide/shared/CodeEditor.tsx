@@ -16,6 +16,7 @@ import {
 } from "@packages/monaco";
 import * as monaco from "monaco-editor";
 import { useEffect, useRef } from "react";
+import { attachErrorLens } from "./error-lens";
 
 export type CodeEditorProps = {
   modelId: string;
@@ -65,6 +66,7 @@ export function CodeEditor(props: CodeEditorProps) {
 
   const editorRootRef = useRef<HTMLDivElement>(null);
   const editorInstanceRef = useRef<monaco.editor.IStandaloneCodeEditor>(null);
+  const errorLensRef = useRef<monaco.IDisposable>(null);
   const onCodeModifiedRef = useRef(onCodeModified);
   const onEditorReadyRef = useRef(onEditorReady);
   const isWorkspaceModel = scriptId != null;
@@ -111,6 +113,8 @@ export function CodeEditor(props: CodeEditorProps) {
     editorInstanceRef.current = editorInstance;
 
     return () => {
+      errorLensRef.current?.dispose();
+      errorLensRef.current = null;
       const model = editorInstance.getModel();
       const modelUri =
         model && !model.isDisposed() ? model.uri.toString() : null;
@@ -125,6 +129,18 @@ export function CodeEditor(props: CodeEditorProps) {
       }
     };
   }, []);
+
+  useEffect(() => {
+    const editor = editorInstanceRef.current;
+    if (!editor || !editable || settings.errorLens === false) {
+      return;
+    }
+    errorLensRef.current = attachErrorLens(editor);
+    return () => {
+      errorLensRef.current?.dispose();
+      errorLensRef.current = null;
+    };
+  }, [editable, settings.errorLens]);
 
   useEffect(() => {
     onCodeModifiedRef.current = onCodeModified;
@@ -204,6 +220,14 @@ export function CodeEditor(props: CodeEditorProps) {
           return;
         }
 
+        const autoFormat = settings?.autoFormat ?? false;
+        // Prettier emits LF. Normalize the model before capturing save versions
+        // and draft text: edit operations otherwise retain CRLF and their change
+        // event makes the freshly saved LF baseline look like another edit.
+        const model = editorInstance.getModel();
+        if (autoFormat && model?.getEOL() === "\r\n") {
+          model.pushEOL(monaco.editor.EndOfLineSequence.LF);
+        }
         const applyFormattedCode = captureEditorSave(editorInstance);
         // Capture all buffers before a focused save; Redux may still be catching up.
         const sessionScript = store.getState().userscripts.scripts[scriptId];
@@ -211,7 +235,6 @@ export function CodeEditor(props: CodeEditorProps) {
           dispatch(flushScriptModelsToDraft(sessionScript));
         }
         const code = editorInstance.getValue();
-        const autoFormat = settings?.autoFormat ?? false;
 
         const result = onSave
           ? await onSave({

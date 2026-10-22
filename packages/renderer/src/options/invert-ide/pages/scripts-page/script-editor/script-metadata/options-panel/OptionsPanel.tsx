@@ -13,7 +13,11 @@ import { useAppSelector } from "@/shared/store/hooks";
 import { getDraftOrSavedSource } from "@/shared/store/slices/editor-drafts";
 import { selectEnabledModules } from "@/shared/store/slices/modules";
 import { selectSharedUserscripts } from "@/shared/store/slices/userscripts";
-import { getScriptModulePath, sanitizeModuleName, Userscript } from "@shared/model";
+import {
+  getScriptModulePath,
+  sanitizeModuleName,
+  Userscript,
+} from "@shared/model";
 import { getSharedImportModuleNames } from "@shared/shared-module-imports";
 import {
   EllipsisVerticalIcon,
@@ -225,11 +229,7 @@ export function OptionsPanel({
           </PanelSection>
           <PanelDivider />
           <PanelSection>
-            <Button
-              variant="danger"
-              className="w-full justify-center gap-2 px-3 py-2 text-xs"
-              onClick={handleDelete}
-            >
+            <Button variant="danger" fullWidth onClick={handleDelete}>
               <Trash2Icon size={13} />
               Delete script
             </Button>

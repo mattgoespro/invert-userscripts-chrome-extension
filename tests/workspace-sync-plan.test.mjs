@@ -223,6 +223,38 @@ describe("workspace projection", () => {
 });
 
 describe("workspace invalidation", () => {
+  it("accepts only current owner declaration analysis and removes it with the script", () => {
+    const script = buildUserscriptFixture({
+      id: "owner",
+      typeDefinitions: "export type T = number;",
+    });
+    const input = projectionInput([script], {
+      declarations: {
+        owner: {
+          source: script.typeDefinitions,
+          contents: "export {}; declare module './main' { type T = number; }",
+        },
+      },
+    });
+    const first = projectWorkspace(input);
+    assert.equal(
+      first.typeDefinitionLibs[0].filePath,
+      "file:///userscripts/owner/own.d.ts"
+    );
+    assert.equal(projectWorkspace(input, first.signature), null);
+    const draft = draftFromScript(script);
+    draft.typeDefinitions = "export type T = string;";
+    draft.dirty.typeDefinitions = true;
+    input.drafts.owner = draft;
+    assert.deepEqual(projectWorkspace(input).typeDefinitionLibs, []);
+    input.declarations.owner = {
+      source: draft.typeDefinitions,
+      contents: "export {}; declare module './main' { type T = string; }",
+    };
+    assert.equal(projectWorkspace(input).typeDefinitionLibs.length, 1);
+    delete input.scripts.owner;
+    assert.deepEqual(projectWorkspace(input).typeDefinitionLibs, []);
+  });
   it("includes SCSS and CDN associations even when timestamps are unchanged", () => {
     const script = buildUserscriptFixture();
     const input = projectionInput([script], {

@@ -1,9 +1,9 @@
-import type { RepositorySnapshot } from "@shared/publication/contracts";
-import { buildUserscriptsTransferFile } from "@/shared/store/slices/userscripts/transfer.userscripts";
 import { useEffect, useState } from "react";
 import { Button } from "@/shared/components/button/Button";
 import { repositoryRequest } from "@shared/publication/client";
+import { DriveSyncPanel } from "./drive-sync-panel/DriveSyncPanel";
 interface StorageStatus {
+  driveSyncEnabled?: boolean;
   pendingStyles?: number;
   publicationCssStatus?: { status: string; message?: string };
   publicationBackend?: string;
@@ -52,10 +52,13 @@ export function DocumentStoragePanel() {
   };
   return (
     <div className="flex flex-col gap-sm text-sm text-text-muted-strong">
-      <p>
-        Saved scripts continue syncing between browsers. Local document storage
-        lets saving succeed while sync is unavailable.
-      </p>
+      <DriveSyncPanel />
+      {!status?.driveSyncEnabled && (
+        <p>
+          Saved scripts continue syncing between browsers. Local document
+          storage lets saving succeed while sync is unavailable.
+        </p>
+      )}
       {status?.publicationBackend !== "transactional" ? (
         <Button
           disabled={busy}
@@ -67,51 +70,55 @@ export function DocumentStoragePanel() {
         </Button>
       ) : (
         <>
-          <p>
-            Local document storage active. {status.pending} revision(s) waiting
-            to sync.
-          </p>
-          {Boolean(status.pendingStyles) && (
-            <p>
-              {status.pendingStyles} stylesheet update(s) pending.{" "}
-              {status.publicationCssStatus?.message}
-            </p>
-          )}
-          <p>
-            {status.publicationSyncStatus?.message ??
-              status.publicationSyncStatus?.status ??
-              "Sync is ready."}
-          </p>
-          <Button
-            disabled={busy}
-            variant="secondary"
-            onClick={() =>
-              void run(() =>
-                repositoryRequest({ type: "publication.retrySync" })
-              )
-            }
-          >
-            Retry sync
-          </Button>
-          {!status.verifiedSync && (
+          {!status.driveSyncEnabled && (
             <>
               <p>
-                Enable verified sync after updating this extension on every
-                browser you sync with. Older extension versions cannot write the
-                new revision format safely.
+                Local document storage active. {status.pending} revision(s)
+                waiting to sync.
+              </p>
+              {Boolean(status.pendingStyles) && (
+                <p>
+                  {status.pendingStyles} stylesheet update(s) pending.{" "}
+                  {status.publicationCssStatus?.message}
+                </p>
+              )}
+              <p>
+                {status.publicationSyncStatus?.message ??
+                  status.publicationSyncStatus?.status ??
+                  "Sync is ready."}
               </p>
               <Button
                 disabled={busy}
+                variant="secondary"
                 onClick={() =>
                   void run(() =>
-                    repositoryRequest({
-                      type: "publication.enableVerifiedSync",
-                    })
+                    repositoryRequest({ type: "publication.retrySync" })
                   )
                 }
               >
-                All my browsers are updated — enable verified sync
+                Retry sync
               </Button>
+              {!status.verifiedSync && (
+                <>
+                  <p>
+                    Enable verified sync after updating this extension on every
+                    browser you sync with. Older extension versions cannot write
+                    the new revision format safely.
+                  </p>
+                  <Button
+                    disabled={busy}
+                    onClick={() =>
+                      void run(() =>
+                        repositoryRequest({
+                          type: "publication.enableVerifiedSync",
+                        })
+                      )
+                    }
+                  >
+                    All my browsers are updated — enable verified sync
+                  </Button>
+                </>
+              )}
             </>
           )}
           {Object.entries(status.conflicts ?? {}).map(([id, versions]) => (
@@ -179,55 +186,6 @@ export function DocumentStoragePanel() {
           ))}
         </>
       )}
-      <Button
-        variant="secondary"
-        disabled={busy}
-        onClick={() =>
-          void run(async () => {
-            const snapshot = await repositoryRequest<RepositorySnapshot>({
-              type: "publication.read",
-            });
-            const local = await chrome.storage.local.get(null);
-            const recovery = Object.fromEntries(
-              Object.entries(local).filter(([key]) =>
-                key.startsWith("draft-recovery:")
-              )
-            );
-            const legacy = await chrome.storage.sync.get(null);
-            const blob = new Blob(
-              [
-                JSON.stringify(
-                  {
-                    ...buildUserscriptsTransferFile(
-                      Object.fromEntries(
-                        snapshot.documents.map((document) => [
-                          document.script.id,
-                          document.script,
-                        ])
-                      )
-                    ),
-                    version: 1,
-                    snapshot,
-                    recovery,
-                    legacy,
-                  },
-                  null,
-                  2
-                ),
-              ],
-              { type: "application/json" }
-            );
-            const url = URL.createObjectURL(blob);
-            const anchor = document.createElement("a");
-            anchor.href = url;
-            anchor.download = "invert-document-recovery.json";
-            anchor.click();
-            URL.revokeObjectURL(url);
-          })
-        }
-      >
-        Download local recovery snapshot
-      </Button>
       {error && (
         <p role="alert" className="text-error-accent">
           {error}

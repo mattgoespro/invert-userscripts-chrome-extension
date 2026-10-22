@@ -118,8 +118,9 @@ export function ThemeSwitcher() {
               </div>
             )}
             <button
+              type="button"
               className={clsx(
-                "flex items-center gap-2.5 rounded-[3px] border-none px-2.5 py-2",
+                "flex h-(--button-height) items-center gap-2.5 rounded-default border-none px-2.5 py-0",
                 "cursor-pointer text-left font-mono text-base",
                 "transition-colors duration-100",
                 theme.id === activeTheme

@@ -48,6 +48,7 @@ export class LegacyChromeSyncStorage {
     fontSize: 11,
     tabSize: 2,
     autoFormat: true,
+    errorLens: true,
     minifyCompiledOutput: false,
   };
 

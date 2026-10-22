@@ -54,6 +54,9 @@ export async function enableVerifiedReplication(
 export async function flushSync(
   repository: IndexedDocumentRepository
 ): Promise<void> {
+  if ((await chrome.storage.local.get("driveSyncEnabled")).driveSyncEnabled) {
+    return;
+  }
   if (schemaTransition) {
     await schemaTransition;
     return flushSync(repository);

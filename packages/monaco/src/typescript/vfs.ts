@@ -17,8 +17,9 @@ export {
  * any types pane that is a module. Because with eager model sync, the worker
  * sees these models as actual program files:
  * `import { x } from "scripts/<module>/main"` resolves through the
- * `baseUrl`/`paths` mapping straight to the dependency's real source — no
- * generated declaration files, no suppression listeners.
+ * `baseUrl`/`paths` mapping straight to the dependency's real source. Owner-local
+ * declaration extra libs supplement each main module without rewriting these
+ * editable models or suppressing diagnostics.
  *
  * Monaco's own model registry (keyed by URI) is the single source of truth;
  * this module only tracks which URIs the workspace owns so orphaned models can

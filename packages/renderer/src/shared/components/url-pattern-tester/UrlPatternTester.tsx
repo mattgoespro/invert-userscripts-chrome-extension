@@ -75,7 +75,11 @@ export function UrlPatternTester({ patterns, onClose }: UrlPatternTesterProps) {
             <Globe className="h-5 w-5 text-accent" />
             <Typography variant="title">URL Pattern Tester</Typography>
           </div>
-          <IconButton icon={XIcon} onClick={onClose} />
+          <IconButton
+            icon={XIcon}
+            title="Close URL pattern tester"
+            onClick={onClose}
+          />
         </div>
         <div className="flex flex-col gap-xs">
           <Typography

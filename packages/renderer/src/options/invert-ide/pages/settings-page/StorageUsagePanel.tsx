@@ -28,11 +28,11 @@ const FALLBACK_LOCAL_QUOTA_BYTES = 10 * 1024 * 1024;
 
 function formatBytes(bytes: number): string {
   if (bytes >= 1024 * 1024) {
-    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+    return `${(bytes / (1024 * 1024)).toFixed(2)} MiB`;
   }
 
   if (bytes >= 1024) {
-    return `${(bytes / 1024).toFixed(2)} KB`;
+    return `${(bytes / 1024).toFixed(2)} KiB`;
   }
 
   return `${bytes} B`;
@@ -186,7 +186,7 @@ function StorageMeter({
   description,
 }: MeterProps) {
   const percent = clampPercent(bytes, quotaBytes);
-  const barWidth = percent > 0 ? Math.max(percent, 2) : 0;
+  const barWidth = percent;
 
   return (
     <div className="rounded-default border border-border-subtle bg-surface-base p-md">
@@ -289,20 +289,25 @@ export function StorageUsagePanel() {
 
   return (
     <div className="flex flex-col gap-md">
+      <p className="text-sm text-text-muted-strong">
+        These figures cover Chrome storage only. With Drive sync enabled,
+        scripts, settings, layout, compiled output and the upload queue live in
+        IndexedDB. IndexedDB and Google Drive usage are not included here.
+      </p>
       <div className="xl:grid-cols-2 grid gap-sm">
         <StorageMeter
           label="chrome.storage.sync"
           bytes={snapshot.syncTotalBytes}
           quotaBytes={snapshot.syncQuotaBytes}
           toneClassName="bg-accent"
-          description="Source code, userscript metadata, modules, settings, and layout state."
+          description="Native Chrome Sync records (legacy storage; unused for new Drive-backed data)."
         />
         <StorageMeter
           label="chrome.storage.local"
           bytes={snapshot.localTotalBytes}
           quotaBytes={snapshot.localQuotaBytes}
           toneClassName="bg-syntax-param"
-          description="Compiled JavaScript and CSS artifacts plus any future local-only data."
+          description="Extension flags, sync status and legacy caches. Excludes IndexedDB."
         />
       </div>
 

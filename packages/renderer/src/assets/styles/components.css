@@ -160,6 +160,49 @@
     height: 3px;
   }
 
+  /* --- Editor error lens (uses the active Monaco theme's diagnostic colors) --- */
+  /* Monaco's unlayered token colors would otherwise override this layer. */
+  .monaco-editor .error-lens-error {
+    color: var(--vscode-editorError-foreground) !important;
+  }
+
+  .monaco-editor .error-lens-warning {
+    color: var(--vscode-editorWarning-foreground) !important;
+  }
+
+  .monaco-editor .error-lens-line-error {
+    background: color-mix(
+      in srgb,
+      var(--vscode-editorError-foreground) 12%,
+      transparent
+    );
+  }
+
+  .monaco-editor .error-lens-line-warning {
+    background: color-mix(
+      in srgb,
+      var(--vscode-editorWarning-foreground) 12%,
+      transparent
+    );
+  }
+
+  .monaco-editor .error-lens-gutter {
+    box-shadow: inset 2px 0 currentColor;
+  }
+
+  .monaco-editor .error-lens-message {
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    overflow: hidden;
+    padding-left: 1em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-style: normal;
+    cursor: default;
+    user-select: none;
+  }
+
   /* --- Theme Preview (force-hide cursor in read-only editor) --- */
   .theme-preview--editor .cursor,
   .theme-preview--editor .cursors-layer {

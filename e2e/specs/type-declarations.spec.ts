@@ -4,8 +4,6 @@ import {
   expectCannotFindName,
   expectNoEditorProblems,
   listQuickFixTitles,
-  replaceMonacoEditorContent,
-  waitForTypeDefinitionsEditorText,
   waitForTypescriptEditorText,
 } from "../helpers/monaco";
 import { OptionsPage, ScriptsPage } from "../page-objects";
@@ -41,7 +39,7 @@ const prettyStringifyTypes = [
   "};",
 ].join("\n");
 
-/** Module pane: import-only via `scripts/<m>/types`, including the owner. */
+/** Exported declarations remain implicit in the owner and importable elsewhere. */
 const prettyStringifyExportedTypes = [
   prettyStringifyTypeJsdoc,
   "export type PrettyStringifyOptions = {",
@@ -138,21 +136,9 @@ async function seedScripts(
   await optionsPage.reload();
 }
 
-function expectAutoImportFrom(titles: string[], specifier: string) {
-  expect(
-    titles.some(
-      (title) =>
-        title.includes(`Add import from "${specifier}"`) ||
-        title.includes(`Add import from '${specifier}'`)
-    ),
-    `Expected an auto-import quick-fix from ${specifier}.\nFixes:\n${titles.join("\n") || "(none)"}`
-  ).toBe(true);
-}
-
 /**
- * Unexported types-pane names are own-script ambient globals. `export type`
- * is import-only via `scripts/<m>/types`. Other scripts never see unexported
- * names as free identifiers.
+ * Every types-pane declaration belongs to its own main editor. Export controls
+ * imports from other scripts; it must never remove the owner's implicit types.
  */
 test.describe("Scripts — type declaration resolution", () => {
   test.describe.configure({ timeout: 60_000 });
@@ -225,7 +211,7 @@ test.describe("Scripts — type declaration resolution", () => {
     await expectNoEditorProblems(optionsPage);
   });
 
-  test("own type pane export type is import-only", async ({
+  test("own exported type resolves without adding an import", async ({
     optionsPage,
     clearStorage,
     seedStorage,
@@ -250,13 +236,7 @@ test.describe("Scripts — type declaration resolution", () => {
       { timeout: 15_000 }
     );
     await waitForTypescriptEditorText(optionsPage, "PrettyStringifyOptions");
-    await expectCannotFindName(optionsPage, "PrettyStringifyOptions");
-
-    const titles = await listQuickFixTitles(
-      optionsPage,
-      "PrettyStringifyOptions"
-    );
-    expectAutoImportFrom(titles, "./types");
+    await expectNoEditorProblems(optionsPage);
   });
 
   test("unexported types pane is not visible in another userscript", async ({
@@ -317,6 +297,8 @@ test.describe("Scripts — type declaration resolution", () => {
     await waitForTypescriptEditorText(optionsPage, "PrettyStringifyOptions");
     await waitForTypescriptEditorText(optionsPage, "pretty-stringify");
     await expectNoEditorProblems(optionsPage);
+    await scripts.selectScript(prettyStringify.name, "prettyStringify");
+    await expectNoEditorProblems(optionsPage);
   });
 
   test("adding export to an offscreen types pane enables auto-import", async ({
@@ -325,7 +307,13 @@ test.describe("Scripts — type declaration resolution", () => {
     seedStorage,
   }) => {
     test.setTimeout(90_000);
-    const prettyStringify = buildPrettyStringify();
+    // Keep the declaration on the first line for a keyboard-only gesture;
+    // Monaco virtualizes lines outside the declarations pane's viewport.
+    const prettyStringify = buildPrettyStringify(
+      ["type PrettyStringifyOptions = {", prettyStringifyTypeBody, "};"].join(
+        "\n"
+      )
+    );
     const logger = buildLogger({
       typeDefinitions: "",
       typescript: loggerUnresolvedTypeSource,
@@ -352,20 +340,21 @@ test.describe("Scripts — type declaration resolution", () => {
 
     await scripts.selectScript("Pretty Stringify | Utility", "prettyStringify");
 
-    const exportedTypesOneLiner =
-      "export type PrettyStringifyOptions = { quoteStrings?: boolean };";
-
     const typesEditor = optionsPage
       .locator("[data-testid='typescript-definitions'] .monaco-editor")
       .first();
-    await replaceMonacoEditorContent(typesEditor, exportedTypesOneLiner);
-    await waitForTypeDefinitionsEditorText(
-      optionsPage,
-      "export type PrettyStringifyOptions"
-    );
-    // Draft sync is debounced (~50ms); wait for Redux before the script-switch
-    // sync reads typeDefinitions to decide whether to mount the offscreen pane.
-    await optionsPage.waitForTimeout(300);
+    await expectNoEditorProblems(optionsPage);
+    await typesEditor.click();
+    await optionsPage.keyboard.press("Control+Home");
+    await optionsPage.keyboard.insertText("export ");
+    // Monaco's wrapped glyph layout is not a source-text API. The dirty state,
+    // clean owner and canonical auto-import below verify this unsaved edit.
+    await expect(
+      scripts.scriptListPanel.locator(
+        ".border-l-accent .animate-pulse-indicator"
+      )
+    ).toBeVisible();
+    await expectNoEditorProblems(optionsPage);
 
     await scripts.selectScript("Logger | Utility", "PrettyStringifyOptions");
 
@@ -389,5 +378,50 @@ test.describe("Scripts — type declaration resolution", () => {
         { timeout: 25_000 }
       )
       .toBe(true);
+    await optionsPage.keyboard.press("Escape");
+    await scripts.selectScript(prettyStringify.name, "prettyStringify");
+    await expectNoEditorProblems(optionsPage);
   });
+
+  for (const explicitImport of [false, true]) {
+    test(`imported dependencies, exported interfaces and private peers resolve in a previously unopened owner (explicit import=${explicitImport})`, async ({
+      optionsPage,
+      clearStorage,
+      seedStorage,
+    }) => {
+      const dependency = buildPrettyStringify(
+        "export interface Base { label: string }"
+      );
+      dependency.code.source.typescript = "export const base = 1;";
+      const owner = buildLogger({
+        typeDefinitions: [
+          'import type { Base } from "scripts/pretty-stringify/types";',
+          "interface Private { count: number }",
+          "export interface T extends Base, Private {}",
+          "export type Generic<V = T> = { value: V };",
+          "declare function createValue(): T;",
+        ].join("\n"),
+        typescript: [
+          ...(explicitImport ? ['import type { T } from "./types";'] : []),
+          'const own: T = { label: "owner", count: 1 };',
+          "const wrapped: Generic = { value: own };",
+          "const privateValue: Private = { count: 2 };",
+          "const created: T = createValue();",
+          "void wrapped; void privateValue; void created;",
+        ].join("\n"),
+      });
+      await seedScripts(
+        optionsPage,
+        clearStorage,
+        seedStorage,
+        [dependency, owner],
+        dependency
+      );
+      const options = new OptionsPage(optionsPage);
+      const scripts = new ScriptsPage(optionsPage);
+      await options.waitForReady();
+      await scripts.selectScript(owner.name, "wrapped");
+      await expectNoEditorProblems(optionsPage);
+    });
+  }
 });

@@ -60,6 +60,14 @@ Treat `webpack.config.ts` as a coupled extension build manifest. Entry points, c
 
 ## Code Quality & Linting
 
+### UI action controls
+
+Use `Button` for actions and `IconButton` for icon actions. Their shared `size`
+presets in `packages/renderer/src/shared/components/button/presets.ts` own height, padding and type size;
+choose a preset instead of overriding those properties in JSX. Use `fullWidth`
+for deliberate full-width actions. Supply an accessible label for icon actions.
+Native buttons inside specialized widgets declare `type="button"` explicitly.
+
 ### ESLint Configuration
 
 The project uses ESLint flat config with a shared base and package-specific extensions:

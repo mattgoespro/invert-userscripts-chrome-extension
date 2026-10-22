@@ -72,7 +72,7 @@ export function isEditorSettings(value: unknown): value is EditorSettings {
     ["theme", "appTheme"].every(
       (key) => value[key] === undefined || typeof value[key] === "string"
     ) &&
-    ["autoFormat", "minifyCompiledOutput"].every(
+    ["autoFormat", "errorLens", "minifyCompiledOutput"].every(
       (key) => value[key] === undefined || typeof value[key] === "boolean"
     )
   );

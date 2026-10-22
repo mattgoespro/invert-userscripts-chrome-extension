@@ -1,5 +1,6 @@
 import { TypeScriptCompilerOptions } from "@shared/typescript";
 import * as monaco from "monaco-editor";
+import { userscriptWindowDeclarations } from "./window-globals";
 
 /**
  * The TypeScript contribution module is imported directly by its ESM subpath.
@@ -64,6 +65,10 @@ export function ensureTypescriptDefaults(): void {
   tsContribution.typescriptDefaults.setDiagnosticsOptions({
     onlyVisible: true,
   });
+  tsContribution.typescriptDefaults.addExtraLib(
+    userscriptWindowDeclarations,
+    "file:///invert-ide-window-globals.d.ts"
+  );
 }
 
 let lastProgramFileSignature = "";
@@ -203,9 +208,9 @@ const ambientTypeDefinitionEntries = new Map<
 >();
 
 /**
- * Syncs leftover type-definition extra libs. Type panes are real `types.d.ts`
- * models now; `WorkspaceService` calls this with an empty list so older
- * `types.ambient.d.ts` copies cannot leak globals.
+ * Reconciles owner-local declaration augmentations. The real `types.d.ts`
+ * models retain public exports; these extra libs bind each pane's declarations
+ * to its own main module, without publishing a workspace-wide global copy.
  */
 export function syncAmbientTypeDefinitionLibs(
   libs: AmbientTypeDefinitionLibInfo[]

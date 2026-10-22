@@ -4,6 +4,7 @@ export type StoredUserscriptSummary = {
   id: string;
   name: string;
   typescript: string;
+  typeDefinitions: string;
   enabled: boolean;
 };
 
@@ -20,6 +21,7 @@ export async function readStoredUserscripts(
       id: string;
       name: string;
       typescript: string;
+      typeDefinitions: string;
       enabled: boolean;
     }> = [];
 
@@ -73,6 +75,7 @@ export async function readStoredUserscripts(
       return JSON.parse(new TextDecoder().decode(decodedBytes)) as {
         name?: string;
         enabled?: true;
+        typeDefinitions?: string;
         code?: { source?: { typescript?: string } };
       };
     };
@@ -101,6 +104,7 @@ export async function readStoredUserscripts(
         id: scriptId,
         name: payload.name ?? "",
         typescript: payload.code?.source?.typescript ?? "",
+        typeDefinitions: payload.typeDefinitions ?? "",
         enabled: payload.enabled === true,
       });
     }

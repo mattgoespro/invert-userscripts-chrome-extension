@@ -4,6 +4,22 @@ import type {
   CommitOutcome,
 } from "./contracts";
 export type RepositoryRequest =
+  | { type: "publication.drive.status" }
+  | { type: "publication.drive.connect" }
+  | { type: "publication.drive.disconnect" }
+  | { type: "publication.drive.sync" }
+  | { type: "publication.drive.download" }
+  | { type: "publication.drive.layout.read" }
+  | {
+      type: "publication.drive.layout.write";
+      value: import("../storage/global-state.storage").GlobalState;
+    }
+  | {
+      type: "publication.drive.resolve";
+      kind: import("../storage/drive-sync").DrivePreference;
+      revision: string;
+      generation: number;
+    }
   | {
       type: "publication.legacyWrite";
       command: import("./legacy-mutation").LegacyMutation;

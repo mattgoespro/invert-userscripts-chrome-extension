@@ -19,7 +19,8 @@ export function DevToolsItem({
   return (
     <div className="relative font-mono">
       <button
-        className="flex w-full cursor-pointer items-center gap-2 rounded-[3px] border-none bg-transparent px-2.5 py-2 text-left font-mono text-base font-medium tracking-[0.02em] text-text-muted transition-colors duration-100 select-none hover:bg-hover-overlay hover:text-foreground"
+        type="button"
+        className="flex h-(--button-height) w-full cursor-pointer items-center gap-2 rounded-default border-none bg-transparent px-2.5 py-0 text-left font-mono text-(length:--button-font-size) font-medium text-text-muted transition-colors duration-150 select-none hover:bg-hover-overlay hover:text-foreground"
         onClick={() => setExpanded((prev) => !prev)}
         title={`${name} (devtool)`}
       >

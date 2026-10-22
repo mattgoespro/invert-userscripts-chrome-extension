@@ -17,8 +17,8 @@
     "developer tools"
   ],
   "scripts": {
-    "build": "webpack --mode production",
-    "dev": "webpack --mode development --watch",
+    "build": "node scripts/webpack.mjs --mode production",
+    "dev": "node scripts/webpack.mjs --mode development --watch",
     "lint": "eslint packages plugins examples",
     "test": "node --import ./tests/register-ts-node.mjs --import ./tests/register-aliases.mjs --test tests/*.test.mjs",
     "format": "prettier --write .",

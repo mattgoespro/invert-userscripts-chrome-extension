@@ -1,9 +1,19 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  isEditorSettings,
   isPublicationCommand,
   isTrustedExtensionSender,
 } from "../packages/shared/src/publication/protocol.ts";
+
+test("Error Lens settings accept booleans and existing settings, rejecting invalid values", () => {
+  assert.equal(isEditorSettings({}), true);
+  assert.equal(isEditorSettings({ errorLens: true }), true);
+  assert.equal(isEditorSettings({ errorLens: false }), true);
+  for (const errorLens of ["false", 0, null]) {
+    assert.equal(isEditorSettings({ errorLens }), false);
+  }
+});
 test("mutation protocol rejects malformed changes and page callers despite claimed sources", () => {
   assert.equal(
     isPublicationCommand({

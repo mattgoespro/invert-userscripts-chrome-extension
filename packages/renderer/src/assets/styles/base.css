@@ -147,6 +147,11 @@
   --toast-error-border: var(--error-border);
 
   --input-height: 1.75rem;
+  --button-height-sm: 24px;
+  --button-height: var(--input-height);
+  --button-height-lg: 32px;
+  --button-font-size: var(--text-base);
+  --dialog-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(0, 0, 0, 0.2);
   --page-padding: var(--spacing-lg);
   --section-padding: var(--spacing-lg);
   --section-gap: var(--spacing-md);

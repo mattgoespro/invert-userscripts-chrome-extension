@@ -1,6 +1,7 @@
-import { PropsWithChildren, useCallback, useEffect, useRef } from "react";
+import { PropsWithChildren, useEffect, useRef } from "react";
 import { X } from "lucide-react";
 import clsx from "clsx";
+import { IconButton } from "../icon-button/IconButton";
 
 type DialogProps = PropsWithChildren<{
   open: boolean;
@@ -8,6 +9,7 @@ type DialogProps = PropsWithChildren<{
   title: string;
   className?: string;
   minWidth?: string;
+  dismissOnBackdrop?: boolean;
 }>;
 
 export function Dialog({
@@ -16,72 +18,75 @@ export function Dialog({
   title,
   className,
   minWidth,
+  dismissOnBackdrop = true,
   children,
 }: DialogProps) {
-  const overlayRef = useRef<HTMLDivElement>(null);
-
-  const handleOverlayClick = useCallback(
-    (event: React.MouseEvent<HTMLDivElement>) => {
-      if (event.target === overlayRef.current) {
-        onClose();
-      }
-    },
-    [onClose]
-  );
+  const dialogRef = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
-    if (!open) {
+    const dialog = dialogRef.current;
+    if (!open || !dialog) {
       return;
     }
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        onClose();
-      }
+    // Native modality covers the viewport, traps focus, and makes the page inert.
+    dialog.showModal();
+    return () => {
+      dialog.close();
     };
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [open, onClose]);
+  }, [open]);
 
   if (!open) {
     return null;
   }
 
   return (
-    <div
-      ref={overlayRef}
-      className="fixed inset-0 z-100 flex animate-backdrop-enter items-center justify-center bg-black/50"
-      onClick={handleOverlayClick}
+    <dialog
+      ref={dialogRef}
+      className={clsx(
+        "fixed inset-0 m-auto flex max-h-[80dvh] max-w-[calc(100vw-32px)] flex-col overflow-hidden p-0 text-foreground",
+        "rounded-default border border-accent-border bg-surface-overlay shadow-(--dialog-shadow) backdrop:bg-black/65",
+        className
+      )}
+      style={
+        minWidth
+          ? { minWidth: `min(${minWidth}, calc(100vw - 32px))` }
+          : undefined
+      }
+      aria-label={title}
+      onCancel={(event) => {
+        event.preventDefault();
+        onClose();
+      }}
+      onClick={(event) => {
+        if (!dismissOnBackdrop || event.target !== event.currentTarget) {
+          return;
+        }
+        const rect = event.currentTarget.getBoundingClientRect();
+        if (
+          event.clientX < rect.left ||
+          event.clientX > rect.right ||
+          event.clientY < rect.top ||
+          event.clientY > rect.bottom
+        ) {
+          onClose();
+        }
+      }}
     >
-      <div
-        className={clsx(
-          "flex max-h-[80vh] animate-dialog-enter flex-col overflow-hidden",
-          "rounded-default border border-accent-border bg-surface-overlay",
-          "shadow-[0_8px_32px_rgba(0,0,0,0.6),0_0_0_1px_rgba(0,0,0,0.2)]",
-          className
-        )}
-        style={minWidth ? { minWidth } : undefined}
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-      >
-        <div className="flex items-center justify-between border-b border-border-subtle px-md py-sm">
-          <span className="font-mono text-[10px] font-semibold tracking-[0.06em] text-text-muted-strong uppercase">
-            {title}
-          </span>
-          <button
-            className="flex h-5 w-5 cursor-pointer items-center justify-center rounded-default border-none bg-transparent p-0 text-text-muted transition-colors duration-150 hover:bg-hover-overlay hover:text-foreground"
-            onClick={onClose}
-            aria-label="Close dialog"
-          >
-            <X size={14} />
-          </button>
-        </div>
-        <div className="flex flex-1 flex-col overflow-y-auto p-md">
-          {children}
-        </div>
+      <div className="flex items-center justify-between border-b border-border-subtle px-md py-sm">
+        <span className="font-mono text-[10px] font-semibold tracking-[0.06em] text-text-muted-strong uppercase">
+          {title}
+        </span>
+        <IconButton
+          icon={X}
+          size="sm"
+          variant="ghost"
+          onClick={onClose}
+          aria-label="Close dialog"
+        />
       </div>
-    </div>
+      <div className="flex flex-1 flex-col overflow-y-auto p-md">
+        {children}
+      </div>
+    </dialog>
   );
 }

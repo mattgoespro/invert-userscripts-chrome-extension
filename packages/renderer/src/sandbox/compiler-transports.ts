@@ -2,6 +2,7 @@ import type { CompilerEvents, CompilerTransport } from "./compiler-requests";
 
 interface JavascriptInput {
   analysisOnly?: boolean;
+  declarationsOnly?: boolean;
   sourceCode: string;
   shared?: boolean;
   moduleName?: string;

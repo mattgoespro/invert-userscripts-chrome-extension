@@ -123,9 +123,9 @@ export function InvertIde() {
     <div className="relative flex h-full flex-col overflow-hidden bg-surface-base">
       <RuntimeCapabilityNotice />
       <LanguageAcquisitionNotice />
-      <div className="relative flex min-w-0 flex-1">
+      <div className="relative flex min-h-0 min-w-0 flex-1">
         <Sidebar active={activeSidebarTab} onNavigate={onNavigate} />
-        <div className="relative flex min-w-0 flex-1 *:animate-page-reveal">
+        <div className="relative flex min-h-0 min-w-0 flex-1 *:animate-page-reveal">
           {activeSidebarTab === "scripts" && <ScriptsPage />}
           {activeSidebarTab === "modules" && <ModulesPage />}
           {activeSidebarTab === "settings" && <Settings />}

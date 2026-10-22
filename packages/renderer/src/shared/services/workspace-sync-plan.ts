@@ -18,6 +18,7 @@ export interface WorkspaceProjectionInput {
   currentScriptId: string | null | undefined;
   modules: GlobalModules;
   manifests?: Record<string, import("@shared/modules/manifest").ModuleManifest>;
+  declarations?: Record<string, { source: string; contents: string }>;
 }
 
 export interface WorkspaceModel extends Omit<WorkspaceFile, "uri"> {
@@ -30,6 +31,7 @@ export interface WorkspaceProjection {
   models: WorkspaceModel[];
   modulePaths: string[];
   cdnModules: Array<{ id: string; packageName: string; typeVersion?: string }>;
+  typeDefinitionLibs: Array<{ id: string; filePath: string; contents: string }>;
 }
 
 /** The desired workspace, without subscriptions or Monaco effects. */
@@ -99,6 +101,23 @@ export function projectWorkspace(
 
   const desired = {
     models,
+    typeDefinitionLibs: scripts.flatMap((script) => {
+      const declaration = input.declarations?.[script.id];
+      const source = getDraftBuffer(
+        script,
+        drafts[script.id],
+        "typeDefinitions"
+      );
+      return declaration?.source === source.contents && declaration.contents
+        ? [
+            {
+              id: script.id,
+              filePath: `file:///userscripts/${encodeURIComponent(script.id)}/own.d.ts`,
+              contents: declaration.contents,
+            },
+          ]
+        : [];
+    }),
     modulePaths: scripts.map((script) => getScriptModulePath(script)),
     cdnModules: Object.values(modules).flatMap((module) =>
       referencedModuleIds.has(module.id) && module.packageName

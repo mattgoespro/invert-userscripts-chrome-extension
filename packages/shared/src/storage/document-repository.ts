@@ -11,6 +11,7 @@ import type {
 import type { CausalRevision } from "./sync/replication";
 import { mergeSyncRevision } from "./sync/replication";
 import type { ApplyScriptsResponse } from "../messages";
+import { captureDriveMutation, type DriveState } from "./drive-sync";
 export interface PendingRevision {
   id: string;
   revision: string;
@@ -19,6 +20,7 @@ export interface PendingRevision {
   conflictReason?: string;
 }
 export interface RepositoryState extends Omit<RepositorySnapshot, "documents"> {
+  drive?: DriveState;
   cssOutbox: Record<string, string>;
   effects: Record<
     string,
@@ -177,6 +179,7 @@ export function applyMutation(
     next.preferenceOutbox.settings = next.settingsRevision;
   }
   next.generation++;
+  captureDriveMutation(state, next, command);
   const outcome: CommitOutcome = {
     status: "committed",
     requestId: command.requestId,

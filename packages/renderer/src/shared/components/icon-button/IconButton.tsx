@@ -7,9 +7,10 @@ import {
 import { LucideIcon } from "lucide-react";
 import { cva, type VariantProps } from "class-variance-authority";
 import clsx from "clsx";
+import { iconButtonSizes, iconGlyphSizes } from "../button/presets";
 
 const iconButtonVariants = cva(
-  "flex items-center justify-center bg-transparent border border-transparent rounded-default cursor-pointer text-text-muted transition-colors duration-150 active:scale-95 focus-visible:outline-none focus-visible:border-accent-border",
+  "inline-flex shrink-0 items-center justify-center p-0 bg-transparent border border-transparent rounded-default cursor-pointer text-text-muted transition-colors duration-150 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent",
   {
     variants: {
       variant: {
@@ -21,11 +22,7 @@ const iconButtonVariants = cva(
         danger:
           "hover:bg-error-surface hover:border-danger hover:text-error-accent",
       },
-      size: {
-        sm: "p-1.5",
-        md: "p-2",
-        lg: "p-1",
-      },
+      size: iconButtonSizes,
     },
     defaultVariants: {
       variant: "primary",
@@ -33,8 +30,6 @@ const iconButtonVariants = cva(
     },
   }
 );
-
-const ICON_SIZES = { sm: 16, md: 24, lg: 32 } as const;
 
 type IconButtonProps = PropsWithChildren<
   {
@@ -44,17 +39,31 @@ type IconButtonProps = PropsWithChildren<
 >;
 
 export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
-  ({ children, variant, icon, size = "md", className, ...rest }, ref) => {
+  (
+    {
+      children,
+      variant,
+      icon,
+      size = "md",
+      type = "button",
+      className,
+      ...rest
+    },
+    ref
+  ) => {
     return (
       <button
         ref={ref}
         {...rest}
+        type={type}
+        aria-label={rest["aria-label"] ?? rest.title}
         className={clsx(iconButtonVariants({ variant, size }), className)}
       >
         {icon &&
           createElement(icon, {
-            size: ICON_SIZES[size ?? "md"],
+            size: iconGlyphSizes[size ?? "md"],
             className: "shrink-0",
+            "aria-hidden": true,
           })}
         {children}
       </button>

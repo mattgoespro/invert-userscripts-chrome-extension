@@ -54,6 +54,7 @@ function ErrorItem({ error, onClick }: ErrorItemProps) {
 
   return (
     <button
+      type="button"
       onClick={onClick}
       className={clsx(
         "flex w-full cursor-pointer items-start gap-sm rounded-default border p-sm text-left transition-colors duration-150",

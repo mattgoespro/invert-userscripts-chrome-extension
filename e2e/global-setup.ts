@@ -1,6 +1,7 @@
 import { chromium } from "@playwright/test";
 import fs from "fs";
 import path from "path";
+import { createHash } from "node:crypto";
 
 export default async function globalSetup() {
   const manifestPath = path.resolve(
@@ -13,6 +14,13 @@ export default async function globalSetup() {
       "[e2e] dist/manifest.json not found.\nRun `pnpm run build` before running the e2e suite."
     );
   }
+
+  const optionsPath = path.join(path.dirname(manifestPath), "options.js");
+  const optionsHash = createHash("sha256")
+    .update(fs.readFileSync(optionsPath))
+    .digest("hex");
+  console.log(`[e2e] Extension build: ${path.dirname(manifestPath)}`);
+  console.log(`[e2e] options.js SHA-256: ${optionsHash}`);
 
   try {
     const executablePath = chromium.executablePath();

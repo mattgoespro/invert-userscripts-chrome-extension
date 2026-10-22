@@ -32,7 +32,12 @@ export function SidebarNavButton({
   title,
 }: SidebarNavButtonProps) {
   return (
-    <button className={sidebarNavButtonVariants({ active })} onClick={onClick} title={title}>
+    <button
+      type="button"
+      className={sidebarNavButtonVariants({ active })}
+      onClick={onClick}
+      title={title}
+    >
       {createElement(icon as React.ElementType, { size: 20 })}
     </button>
   );

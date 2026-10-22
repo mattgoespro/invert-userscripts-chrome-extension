@@ -1,11 +1,11 @@
 ---
-name: "Webpack Build Conventions"
-description: "Use when editing webpack.config.ts for the Chrome extension build: entry coordination, tsconfig loader routing, Monaco bundling, copied assets, and dev reloader exclusions."
+name: tooling
+description: Use this skill when editing the extension build tooling.
 ---
 
-# Webpack Build Conventions
+# tooling
 
-Instructions when editing webpack.config.ts for the Chrome extension build: entry coordination, tsconfig loader routing, Monaco bundling, copied assets, and dev reloader exclusions.
+# Webpack Build Conventions
 
 Treat `webpack.config.ts` as one coordinated extension build definition rather than a set of isolated knobs.
 

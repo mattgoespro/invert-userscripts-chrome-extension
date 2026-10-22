@@ -16,14 +16,16 @@ before enabling injection. SCSS and global module imports start empty.
 
 ## Refactor validation and recovery
 
-Run `pnpm test`, `pnpm exec tsc --noEmit`, `pnpm exec tsc -p tsconfig.tools.json --noEmit`, and `pnpm lint` before building. On PowerShell:
+Run `pnpm test`, `pnpm exec tsc --noEmit`, `pnpm exec tsc -p tsconfig.tools.json --noEmit`, and `pnpm lint` before building. The build/dev scripts configure the TypeScript Webpack loader automatically:
 
 ```powershell
-$env:TS_NODE_PROJECT = 'tsconfig.tools.json'
-$env:NODE_OPTIONS = '--loader ts-node/esm'
 pnpm build
 pnpm check:manifest
 pnpm e2e:headless
 ```
+
+Shared Drive identity is in [config/google-drive.json](../config/google-drive.json).
+Its public key and extension ID are included; fill only `clientId` to enable OAuth.
+See [configuration instructions](../config/README.md).
 
 The unpacked build requires Chrome 135+ and enabled User Scripts access. Local document storage and verified sync are separate Settings activations. Recovery snapshots include importer-compatible saved source plus supplemental legacy/draft/module/settings data. See [delivery evidence and recovery procedure](../docs/architecture/refactor-validation.md). Protocol simulation in disposable browsers does not replace signed-in Chrome Sync release acceptance.

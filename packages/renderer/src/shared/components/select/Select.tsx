@@ -19,7 +19,7 @@ const selectToggleVariants = cva(
 );
 
 const selectOptionVariants = cva(
-  "flex items-center gap-2 w-full py-1.75 px-2.5 border-none rounded-[calc(var(--geometry-border-radius)-2px)] cursor-pointer font-mono text-base font-medium tracking-[0.02em] text-left whitespace-nowrap overflow-hidden text-ellipsis transition-colors duration-120 active:bg-active-overlay",
+  "flex items-center gap-2 w-full h-(--button-height) py-0 px-2.5 border-none rounded-[calc(var(--geometry-border-radius)-2px)] cursor-pointer font-mono text-base font-medium tracking-[0.02em] text-left whitespace-nowrap overflow-hidden text-ellipsis transition-colors duration-120 active:bg-active-overlay",
   {
     variants: {
       selected: {
@@ -149,7 +149,7 @@ export function Select<T>({ label, options, value, onChange }: SelectProps<T>) {
           className={clsx(
             "absolute top-[calc(100%+6px)] left-0 max-h-70 w-full min-w-45",
             "flex flex-col rounded-default border border-accent-border bg-surface-panel",
-            "scrollbar-track-transparent scrollbar-thumb-transparent hover:scrollbar-thumb-hover-overlay z-100 scrollbar-thin overflow-scroll",
+            "z-100 scrollbar-thin scrollbar-thumb-transparent scrollbar-track-transparent overflow-scroll hover:scrollbar-thumb-hover-overlay",
             "shadow-[0_8px_32px_rgba(0,0,0,0.4),0_0_0_1px_var(--border-subtle)]",
             "origin-top animate-select-reveal"
           )}

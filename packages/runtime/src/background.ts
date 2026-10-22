@@ -26,13 +26,26 @@ import {
   ingestPortablePreferences,
   ingestLegacySync,
 } from "./sync/sync-service";
+import { initializeDriveSync } from "./drive/bootstrap";
+import { driveConfigured } from "./drive/transport";
 installRepositoryTransport(handleRepositoryRequest);
+initializeDriveSync(
+  documentRepository,
+  () => handleRepositoryRequest({ type: "publication.activate" }),
+  () => {
+    notifyPublication();
+    void reconcilePendingCss(documentRepository).catch(console.error);
+  }
+);
 chrome.runtime.onMessage.addListener(onPublicationMessage);
 chrome.storage.onChanged.addListener((_changes, area) => {
   if (area === "sync") {
     void chrome.storage.local
-      .get(["publicationBackend", "verifiedSync"])
+      .get(["publicationBackend", "verifiedSync", "driveSyncEnabled"])
       .then(async (flags) => {
+        if (flags.driveSyncEnabled || driveConfigured()) {
+          return;
+        }
         if (
           flags.publicationBackend === "transactional" &&
           flags.verifiedSync
@@ -99,8 +112,11 @@ chrome.tabs.onRemoved.addListener(onTabRemoved);
 
 // Every worker generation repairs missed observations and resumes CSS, never JavaScript.
 void chrome.storage.local
-  .get(["publicationBackend", "verifiedSync"])
+  .get(["publicationBackend", "verifiedSync", "driveSyncEnabled"])
   .then(async (flags) => {
+    if (flags.driveSyncEnabled || driveConfigured()) {
+      return;
+    }
     if (flags.publicationBackend !== "transactional") {
       return;
     }

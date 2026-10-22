@@ -6,6 +6,7 @@ import { rebuildCompiledUserscripts } from "@/shared/store/slices/userscripts/th
 import { useEffect } from "react";
 import { loadModules } from "@/shared/store/slices/modules";
 import { loadSettings } from "@/shared/store/slices/settings/thunks.settings";
+import { hydrateUi } from "@/shared/store/slices/ui";
 
 /**
  * Keep IDE drafts/entities reconciled with chrome.storage.sync.
@@ -42,6 +43,10 @@ export function useStorageSync() {
         return;
       }
 
+      if (changes.editorSettings) {
+        void dispatch(loadSettings());
+      }
+
       const affectedIds = getAffectedScriptIdsFromStorageChanges(changes);
 
       if (affectedIds.length === 0) {
@@ -59,6 +64,9 @@ export function useStorageSync() {
 
     chrome.storage.onChanged.addListener(onStorageChanged);
     const onPublication = (message: { type?: string }) => {
+      if (message?.type === "driveRestored") {
+        void dispatch(hydrateUi());
+      }
       if (message?.type === "publicationCommitted") {
         void coordinator.requestRefresh();
         void dispatch(loadModules());

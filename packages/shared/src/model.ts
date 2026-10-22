@@ -63,6 +63,7 @@ export interface EditorSettings {
   fontSize?: number;
   tabSize?: number;
   autoFormat?: boolean;
+  errorLens?: boolean;
   minifyCompiledOutput?: boolean;
 }
 

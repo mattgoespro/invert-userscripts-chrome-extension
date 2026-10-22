@@ -125,7 +125,7 @@ function coalesceLoggerOptions(options: LoggerOptions): LoggerOptions {
  *
  * @param name the log message prefix
  */
-function createLogger(name: string, options: LoggerOptions): Logger {
+function createLogger(name: string, options: LoggerOptions={}): Logger {
   const coercedOptions = coalesceLoggerOptions(options);
 
   const createLogMessage: CreateLogMessageFn = (

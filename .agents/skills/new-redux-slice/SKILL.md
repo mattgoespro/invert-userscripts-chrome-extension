@@ -1,4 +1,9 @@
-# new-redux-sliace
+---
+name: new-redux-slice
+description: Use this skill to create a new Redux slice for the extension state management system.
+---
+
+# new-redux-slice
 
 Each slice lives in its own subdirectory under `packages/renderer/src/shared/store/slices/`:
 

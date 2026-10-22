@@ -1,3 +1,8 @@
+---
+name: new-react-component
+description: Use this skill to create a new React component for the extension renderer.
+---
+
 # new-react-component
 
 The following information must be provided:
@@ -98,10 +103,10 @@ Follow these rules from the project conventions:
 
 Reference these existing components as examples of the pattern:
 
-- [ImportUserscriptsDialog.tsx](../../packages/renderer/src/options/invert-ide/pages/scripts-page/import-userscripts-dialog/ImportUserscriptsDialog.tsx) — feature-local dialog placement
-- [Button.tsx](../../packages/renderer/src/shared/components/button/Button.tsx) — CVA with variants
-- [EditorPanel.tsx](../../packages/renderer/src/shared/components/editor-panel/EditorPanel.tsx) — simple without CVA
-- [IconButton.tsx](../../packages/renderer/src/shared/components/icon-button/IconButton.tsx) — CVA with `forwardRef`
+- [ImportUserscriptsDialog.tsx](../../../packages/renderer/src/options/invert-ide/pages/scripts-page/import-userscripts-dialog/ImportUserscriptsDialog.tsx) — feature-local dialog placement
+- [Button.tsx](../../../packages/renderer/src/shared/components/button/Button.tsx) — CVA with variants
+- [EditorPanel.tsx](../../../packages/renderer/src/shared/components/editor-panel/EditorPanel.tsx) — simple without CVA
+- [IconButton.tsx](../../../packages/renderer/src/shared/components/icon-button/IconButton.tsx) — CVA with `forwardRef`
 
 ## After Creation
 

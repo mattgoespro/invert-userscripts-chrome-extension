@@ -3,6 +3,7 @@ import { X } from "lucide-react";
 import { cva } from "class-variance-authority";
 import clsx from "clsx";
 import type { ToastItem, ToastVariant } from "./model";
+import { IconButton } from "../icon-button/IconButton";
 
 type ToastProps = {
   toast: ToastItem;
@@ -89,27 +90,27 @@ export function Toast({ toast, onDismiss }: ToastProps) {
         )}
       />
 
-      <div className="gap-sm py-sm pr-md flex items-start pl-[calc(var(--spacing-md)+3px)]">
-        <div className="gap-2xs flex min-w-0 flex-1 flex-col">
+      <div className="flex items-start gap-sm py-sm pr-md pl-[calc(var(--spacing-md)+3px)]">
+        <div className="flex min-w-0 flex-1 flex-col gap-2xs">
           <span className="inline-flex items-center gap-1.5 font-mono text-[0.6875rem] leading-[1.4] font-medium tracking-[0.02em] uppercase select-none">
             <span className="text-syntax-comment italic opacity-60">//</span>
             <span className={variantLabelColor[variant]}>
               {variantLabel[variant]}
             </span>
           </span>
-          <span className="text-toast-fg font-mono text-xs leading-normal wrap-break-word">
+          <span className="font-mono text-xs leading-normal wrap-break-word text-toast-fg">
             {toast.message}
           </span>
         </div>
 
         {toast.dismissible && (
-          <button
-            className="rounded-default text-text-muted hover:text-foreground hover:bg-hover-overlay mt-px flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center border-none bg-transparent p-0 transition-[color,background-color] duration-150"
+          <IconButton
+            icon={X}
+            size="sm"
+            variant="ghost"
             onClick={startDismiss}
             aria-label="Dismiss"
-          >
-            <X size={14} />
-          </button>
+          />
         )}
       </div>
 
@@ -117,7 +118,7 @@ export function Toast({ toast, onDismiss }: ToastProps) {
         <div className="h-0.5 bg-transparent">
           <div
             className={clsx(
-              "animate-toast-drain h-full w-full origin-left opacity-60",
+              "h-full w-full origin-left animate-toast-drain opacity-60",
               variantAccent[variant]
             )}
             style={{ animationDuration: `${toast.duration}ms` }}

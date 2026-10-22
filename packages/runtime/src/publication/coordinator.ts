@@ -1,4 +1,6 @@
 import { reconcilePendingCss } from "./css-reconciliation";
+import { handleDriveRequest, scheduleDriveSync } from "../drive/runtime";
+import { captureDriveScript } from "@shared/storage/drive-sync";
 import { findDuplicateModulePathScript } from "@shared/model";
 import { applyLegacyMutation } from "@shared/publication/legacy-mutation";
 import { IndexedDocumentRepository } from "@shared/storage/indexeddb/repository";
@@ -27,6 +29,9 @@ export function notifyPublication(): void {
 export async function handleRepositoryRequest(
   request: RepositoryRequest
 ): Promise<unknown> {
+  if (request.type.startsWith("publication.drive.")) {
+    return handleDriveRequest(request);
+  }
   if (request.type === "publication.activate") {
     if (
       (await chrome.storage.local.get("publicationBackend"))
@@ -86,6 +91,7 @@ export async function handleRepositoryRequest(
       "verifiedSync",
       "publicationSyncStatus",
       "publicationCssStatus",
+      "driveSyncEnabled",
     ]);
     return {
       ...local,
@@ -187,11 +193,13 @@ export async function handleRepositoryRequest(
       state.outbox[revision] = { ...selected, revision, parents };
       state.syncHeads[request.id] = [revision];
       state.generation++;
+      captureDriveScript(state, request.id);
       return { state, value: undefined };
     });
     notifyPublication();
     void reconcilePendingCss(documentRepository).catch(console.error);
     void flushSync(documentRepository).catch(console.error);
+    scheduleDriveSync();
     return { status: "resolved" };
   }
   if (
@@ -247,6 +255,7 @@ export async function handleRepositoryRequest(
       notifyPublication();
       void reconcilePendingCss(documentRepository).catch(console.error);
       void flushSync(documentRepository).catch(console.error);
+      scheduleDriveSync();
     }
     return result;
   });
