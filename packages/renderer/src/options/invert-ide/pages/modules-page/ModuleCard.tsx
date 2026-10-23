@@ -1,13 +1,8 @@
 import { Checkbox } from "@/shared/components/checkbox/Checkbox";
 import { IconButton } from "@/shared/components/icon-button/IconButton";
-import { Typography } from "@/shared/components/typography/Typography";
 import { GlobalModule } from "@shared/model";
-import {
-  CheckCircle2,
-  DeleteIcon,
-  LoaderCircleIcon,
-  XCircle,
-} from "lucide-react";
+import { LoaderCircleIcon, Trash2Icon } from "lucide-react";
+import clsx from "clsx";
 
 export type TypesValidationStatus = {
   status: "idle" | "checking" | "ok" | "error";
@@ -16,67 +11,113 @@ export type TypesValidationStatus = {
 
 type ModuleCardProps = {
   module: GlobalModule;
+  usedBy: number;
   typesValidation?: TypesValidationStatus;
   onToggle: () => void;
   onDelete: () => void;
 };
 
+function TypesCell({
+  module,
+  typesValidation,
+}: {
+  module: GlobalModule;
+  typesValidation?: TypesValidationStatus;
+}) {
+  if (!module.packageName) {
+    return <span className="text-text-muted-strong">No types</span>;
+  }
+
+  const label = `@types/${module.packageName}${module.typeVersion ? "@" + module.typeVersion : ""}`;
+
+  return (
+    <span className="flex min-w-0 flex-col">
+      <span
+        className="truncate font-mono text-xs text-text-muted"
+        title={label}
+      >
+        {label}
+      </span>
+      {typesValidation?.status === "checking" && (
+        <span
+          className="flex items-center gap-1 text-xs text-text-muted-strong"
+          aria-label="Checking types"
+        >
+          <LoaderCircleIcon size={11} className="animate-spin" aria-hidden />
+          Checking…
+        </span>
+      )}
+      {typesValidation?.status === "ok" && (
+        <span
+          className="text-xs text-success"
+          title="Types OK"
+          aria-label="Types reachable"
+        >
+          Types found
+        </span>
+      )}
+      {typesValidation?.status === "error" && (
+        <span
+          className="truncate text-xs text-error-accent"
+          title={typesValidation.error}
+        >
+          {typesValidation.error ?? "Types unreachable"}
+        </span>
+      )}
+    </span>
+  );
+}
+
+/** One row of the modules table. */
 export function ModuleCard({
   module,
+  usedBy,
   typesValidation,
   onToggle,
   onDelete,
 }: ModuleCardProps) {
   return (
-    <div className="flex items-center gap-sm rounded-default border border-border bg-surface-raised px-md py-sm transition-colors duration-150 hover:border-accent-muted">
-      <Checkbox checked={module.enabled} onChange={onToggle} />
-      <Typography variant="code" className="shrink-0 text-sm text-syntax-type">
-        {module.name}
-      </Typography>
-      {module.packageName && (
-        <span className="flex shrink-0 items-center gap-1 font-mono text-[10px] text-text-muted-faint">
-          <span>
-            @types/{module.packageName}
-            {module.typeVersion ? "@" + module.typeVersion : ""}
-          </span>
-          {typesValidation?.status === "checking" && (
-            <LoaderCircleIcon
-              size={12}
-              className="animate-spin text-text-muted"
-              aria-label="Checking types"
-            />
+    <tr
+      data-testid="module-row"
+      className="border-t border-border-subtle align-middle transition-colors duration-150 hover:bg-hover-overlay"
+    >
+      <td className="px-md py-2">
+        <Checkbox checked={module.enabled} onChange={onToggle} />
+      </td>
+      <td className="px-md py-2">
+        <span
+          className={clsx(
+            "block truncate font-semibold",
+            module.enabled ? "text-foreground" : "text-text-muted-strong"
           )}
-          {typesValidation?.status === "ok" && (
-            <span title="Types OK" className="inline-flex">
-              <CheckCircle2
-                size={12}
-                className="text-accent"
-                aria-label="Types reachable"
-              />
-            </span>
-          )}
-          {typesValidation?.status === "error" && (
-            <span
-              className="flex max-w-48 items-center gap-1 truncate text-error-accent"
-              title={typesValidation.error}
-            >
-              <XCircle size={12} className="shrink-0" aria-hidden />
-              <span className="truncate">
-                {typesValidation.error ?? "Types unreachable"}
-              </span>
-            </span>
-          )}
+          data-testid="module-name"
+        >
+          {module.name}
         </span>
-      )}
-      <span className="min-w-0 flex-1 truncate font-mono text-xs text-text-muted">
-        {module.url}
-      </span>
-      <IconButton
-        icon={DeleteIcon}
-        variant="danger"
-        title="Delete module"
-        onClick={onDelete}
-      />
-    </div>
+      </td>
+      <td className="px-md py-2">
+        <span
+          className="block truncate font-mono text-xs text-text-muted"
+          title={module.url}
+        >
+          {module.url}
+        </span>
+      </td>
+      <td className="px-md py-2">
+        <TypesCell module={module} typesValidation={typesValidation} />
+      </td>
+      <td className="px-md py-2 text-text-muted">
+        {usedBy === 0 ? "Unused" : `${usedBy} script${usedBy === 1 ? "" : "s"}`}
+      </td>
+      <td className="px-sm py-2 text-right">
+        <IconButton
+          icon={Trash2Icon}
+          variant="danger"
+          size="sm"
+          title={`Delete ${module.name}`}
+          onClick={onDelete}
+        />
+      </td>
+    </tr>
   );
 }

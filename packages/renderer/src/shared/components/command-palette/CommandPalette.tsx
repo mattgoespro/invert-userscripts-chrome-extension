@@ -5,6 +5,24 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CommandPaletteInput } from "./CommandPaletteInput";
 import { CommandPaletteResults } from "./CommandPaletteResults";
 import { useCommandList } from "@/shared/contexts/command-registry.context";
+import type { CommandCategory } from "@/shared/command-palette/command.types";
+import type { CommandGroup } from "./CommandPaletteResults";
+
+const CATEGORY_ORDER: CommandCategory[] = [
+  "search",
+  "script",
+  "editor",
+  "settings",
+  "navigation",
+];
+
+const CATEGORY_LABELS: Record<CommandCategory, string> = {
+  search: "Scripts",
+  script: "Actions",
+  editor: "Editor",
+  settings: "Settings",
+  navigation: "Go to",
+};
 
 interface CommandPaletteProps {
   open: boolean;
@@ -35,31 +53,42 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
     return commands.filter((cmd) => (cmd.when ? cmd.when() : true));
   }, [commands]);
 
-  const { recentCommands, allCommands, flatResults } = useMemo(() => {
-    if (query.trim()) {
-      const results = fuzzysort
-        .go(query, visibleCommands, {
-          keys: ["label", "keywords"],
-          limit: 50,
-          threshold: -10000,
-        })
-        .map((result) => result.obj);
+  const { groups, flatResults } = useMemo(() => {
+    const ordered = query.trim()
+      ? fuzzysort
+          .go(query, visibleCommands, {
+            keys: ["label", "keywords"],
+            limit: 50,
+            threshold: -10000,
+          })
+          .map((result) => result.obj)
+      : visibleCommands;
 
-      return {
-        recentCommands: [] as Command[],
-        allCommands: results,
-        flatResults: results,
-      };
+    const recent = query.trim()
+      ? []
+      : recentCommandIds
+          .map((id) => commandMap.get(id))
+          .filter((cmd): cmd is Command => cmd !== undefined);
+
+    const resultGroups: CommandGroup[] = [];
+    if (recent.length > 0) {
+      resultGroups.push({ label: "Recent", commands: recent });
+    }
+    for (const category of CATEGORY_ORDER) {
+      const commandsInCategory = ordered.filter(
+        (cmd) => cmd.category === category
+      );
+      if (commandsInCategory.length > 0) {
+        resultGroups.push({
+          label: CATEGORY_LABELS[category],
+          commands: commandsInCategory,
+        });
+      }
     }
 
-    const recent = recentCommandIds
-      .map((id) => commandMap.get(id))
-      .filter((cmd): cmd is Command => cmd !== undefined);
-
     return {
-      recentCommands: recent,
-      allCommands: visibleCommands,
-      flatResults: [...recent, ...visibleCommands],
+      groups: resultGroups,
+      flatResults: resultGroups.flatMap((group) => group.commands),
     };
   }, [query, visibleCommands, recentCommandIds, commandMap]);
 
@@ -127,26 +156,30 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
   }
 
   return (
-    <div className="fixed inset-0 z-1000 flex animate-fade-in items-start justify-center bg-black/45 pt-[10vh]">
+    <div className="fixed inset-0 z-1000 flex animate-fade-in items-start justify-center bg-scrim pt-[12vh]">
       <div
         ref={paletteRef}
         role="dialog"
         aria-label="Command palette"
-        className="flex w-full max-w-150 animate-dialog-enter flex-col overflow-hidden rounded-md border border-border bg-surface-raised shadow-[0_16px_48px_rgba(0,0,0,0.55)]"
+        className="flex w-full max-w-160 animate-dialog-enter flex-col overflow-hidden rounded-panel border border-border bg-surface-raised shadow-(--dialog-shadow)"
         onKeyDown={handleKeyDown}
       >
         <CommandPaletteInput
           value={query}
           onChange={setQuery}
-          placeholder="Type a command to search..."
+          placeholder="Search scripts, actions and settings"
         />
         <CommandPaletteResults
-          recentCommands={recentCommands}
-          allCommands={allCommands}
+          groups={groups}
           selectedIndex={selectedIndex}
           onSelect={executeCommand}
           onHover={setSelectedIndex}
         />
+        <div className="flex gap-lg border-t border-border-subtle bg-surface-chrome px-md py-1.5 text-[11px] text-text-muted-strong">
+          <span>Enter to run</span>
+          <span>Up and Down to move</span>
+          <span>Esc to close</span>
+        </div>
       </div>
     </div>
   );

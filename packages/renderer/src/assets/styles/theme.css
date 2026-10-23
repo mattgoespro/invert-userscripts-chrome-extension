@@ -29,16 +29,23 @@
   --color-secondary: var(--secondary);
   --color-secondary-subtle: var(--secondary-subtle);
   --color-danger: var(--danger);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-on-accent: var(--on-accent);
+  --color-selected: var(--selected);
+  --color-selected-strong: var(--selected-strong);
 
   --color-foreground: var(--foreground);
   --color-border: var(--border);
   --color-border-subtle: var(--border-subtle);
 
+  --color-surface-chrome: var(--surface-chrome);
   --color-surface-base: var(--surface-base);
   --color-surface-raised: var(--surface-raised);
   --color-surface-overlay: var(--surface-overlay);
   --color-surface-panel: var(--surface-panel);
   --color-surface-input: var(--surface-input);
+  --color-scrim: var(--scrim);
 
   --color-text-muted: var(--text-muted);
   --color-text-muted-faint: var(--text-muted-faint);
@@ -83,12 +90,13 @@
 
   /* Border radius */
   --radius-default: var(--geometry-border-radius);
+  --radius-panel: var(--geometry-border-radius-lg);
 }
 
 @theme {
   /* Typography */
-  --font-heading: "Outfit", "Open Sans", sans-serif;
-  --font-body: "Open Sans", sans-serif;
+  --font-heading: "Schibsted Grotesk", "Segoe UI", sans-serif;
+  --font-body: "Schibsted Grotesk", "Segoe UI", sans-serif;
   --font-mono: "JetBrains Mono", monospace;
 
   /* Spacing */

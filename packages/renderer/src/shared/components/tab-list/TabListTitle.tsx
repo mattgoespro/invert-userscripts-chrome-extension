@@ -12,8 +12,8 @@ export function TabListTitle({
   return (
     <span
       className={clsx(
-        "text-text-muted font-mono text-(length:--typography-label-font-size)",
-        "pr-sm border-border border-r tracking-[0.03em] select-none",
+        "font-mono text-(length:--typography-label-font-size) text-text-muted",
+        "border-r border-border pr-sm tracking-[0.03em] select-none",
         className
       )}
       {...rest}

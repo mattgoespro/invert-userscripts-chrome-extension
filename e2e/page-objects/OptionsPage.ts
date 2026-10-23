@@ -29,7 +29,7 @@ export class OptionsPage {
   }
 
   async clickTab(tab: SidebarTab) {
-    await this.page.getByTitle(TAB_TITLES[tab]).click();
+    await this.page.getByTitle(TAB_TITLES[tab], { exact: true }).click();
   }
 
   /** Reload the page and wait for the sidebar to be ready. */

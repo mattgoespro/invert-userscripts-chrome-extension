@@ -113,7 +113,7 @@ for (const backend of ["legacy", "transactional"] as const) {
         "Type 'number' is not assignable to type 'string'"
       );
       await scripts.replaceTypescriptCode(consumerSource);
-      await expect(problems).toContainText("No errors or warnings");
+      await expect(problems).toContainText("No problems in this script");
 
       await scripts.selectScript(owner.name, "makeValue");
       await saveMonacoEditor(optionsPage, "typescript-definitions");

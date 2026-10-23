@@ -36,15 +36,18 @@ export class SettingsPage {
     await container.locator("button").filter({ hasText: exactRegex }).click();
   }
 
-  /** Change the Application Theme. */
+  /** Change the app theme by clicking its card in the theme picker. */
   async setAppTheme(displayName: string) {
-    const container = this.getSelectContainer("Theme", 0);
-    await this.chooseSelectOption(container, displayName);
+    await this.page
+      .getByRole("radiogroup", { name: "App theme" })
+      .getByRole("radio")
+      .filter({ has: this.page.getByText(displayName, { exact: true }) })
+      .click();
   }
 
   /** Change the Editor Theme. */
   async setEditorTheme(displayName: string) {
-    const container = this.getSelectContainer("Theme", 1);
+    const container = this.getSelectContainer("Editor theme", 0);
     await this.chooseSelectOption(container, displayName);
   }
 
@@ -70,7 +73,7 @@ export class SettingsPage {
     // Input is a sibling after the label (label + input pattern)
     const input = this.page
       .locator("div")
-      .filter({ has: this.page.getByText("Font Size", { exact: true }) })
+      .filter({ has: this.page.getByText("Font size", { exact: true }) })
       .first()
       .locator("input");
     await input.fill(String(size));

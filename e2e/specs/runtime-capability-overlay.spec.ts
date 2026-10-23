@@ -25,8 +25,8 @@ test("permission notice overlays the whole IDE, supports editing, and closes whe
       name: "Open extension details",
       exact: true,
     });
-    await expect(open).toHaveCSS("height", "28px");
-    await expect(open).toHaveCSS("font-size", "11px");
+    await expect(open).toHaveCSS("height", "32px");
+    await expect(open).toHaveCSS("font-size", "13px");
     await open.focus();
     await optionsPage.getByTitle("Settings", { exact: true }).focus();
     await expect(open).toBeFocused();
@@ -55,7 +55,7 @@ test("permission notice overlays the whole IDE, supports editing, and closes whe
     await expect(overlay).toBeHidden();
     await new OptionsPage(optionsPage).clickTab("settings");
     await expect(
-      optionsPage.getByRole("heading", { name: /Editor Appearance/ })
+      optionsPage.getByRole("heading", { name: "Editor theme", exact: true })
     ).toBeVisible();
 
     await optionsPage.reload();

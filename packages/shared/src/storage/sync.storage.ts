@@ -44,7 +44,7 @@ const USERSCRIPT_INLINE_DATA_LIMIT = 6000;
 export class LegacyChromeSyncStorage {
   public static readonly defaultSettings: EditorSettings = {
     theme: "invert-dark",
-    appTheme: "graphite",
+    appTheme: "cyanotype",
     fontSize: 11,
     tabSize: 2,
     autoFormat: true,

@@ -3,13 +3,13 @@ import { LucideIcon } from "lucide-react";
 import { cva } from "class-variance-authority";
 
 const sidebarNavButtonVariants = cva(
-  "flex items-center justify-center w-9 h-9 rounded-lg relative cursor-pointer transition-[background-color,color] duration-150",
+  "flex h-9 w-full items-center gap-2.5 rounded-default px-2.5 text-left cursor-pointer max-[1360px]:justify-center max-[1360px]:px-0 transition-[background-color,color] duration-150 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent",
   {
     variants: {
       active: {
-        true: "bg-accent-subtle text-accent border-0 border-l-[3px] border-l-accent hover:bg-accent-muted",
+        true: "bg-selected text-foreground font-semibold",
         false:
-          "bg-transparent border-0 border-l-[3px] border-l-transparent text-text-muted hover:bg-hover-overlay hover:text-text-muted-strong",
+          "bg-transparent text-text-muted hover:bg-hover-overlay hover:text-foreground",
       },
     },
     defaultVariants: {
@@ -22,7 +22,8 @@ type SidebarNavButtonProps = {
   icon: LucideIcon;
   onClick: () => void;
   active?: boolean;
-  title?: string;
+  title: string;
+  count?: number;
 };
 
 export function SidebarNavButton({
@@ -30,6 +31,7 @@ export function SidebarNavButton({
   onClick,
   active = false,
   title,
+  count,
 }: SidebarNavButtonProps) {
   return (
     <button
@@ -37,8 +39,21 @@ export function SidebarNavButton({
       className={sidebarNavButtonVariants({ active })}
       onClick={onClick}
       title={title}
+      aria-current={active ? "page" : undefined}
     >
-      {createElement(icon as React.ElementType, { size: 20 })}
+      {createElement(icon, {
+        size: 16,
+        className: "shrink-0",
+        "aria-hidden": true,
+      })}
+      <span className="min-w-0 flex-1 truncate text-base max-[1360px]:sr-only">
+        {title}
+      </span>
+      {count !== undefined && (
+        <span className="shrink-0 text-xs font-normal text-text-muted-strong tabular-nums max-[1360px]:hidden">
+          {count}
+        </span>
+      )}
     </button>
   );
 }

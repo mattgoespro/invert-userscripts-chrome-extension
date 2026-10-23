@@ -44,7 +44,7 @@ export function Dialog({
       ref={dialogRef}
       className={clsx(
         "fixed inset-0 m-auto flex max-h-[80dvh] max-w-[calc(100vw-32px)] flex-col overflow-hidden p-0 text-foreground",
-        "rounded-default border border-accent-border bg-surface-overlay shadow-(--dialog-shadow) backdrop:bg-black/65",
+        "rounded-panel border border-border bg-surface-raised shadow-(--dialog-shadow) backdrop:bg-scrim",
         className
       )}
       style={
@@ -72,10 +72,8 @@ export function Dialog({
         }
       }}
     >
-      <div className="flex items-center justify-between border-b border-border-subtle px-md py-sm">
-        <span className="font-mono text-[10px] font-semibold tracking-[0.06em] text-text-muted-strong uppercase">
-          {title}
-        </span>
+      <div className="flex items-center justify-between border-b border-border-subtle px-lg py-md">
+        <span className="text-sm font-semibold text-foreground">{title}</span>
         <IconButton
           icon={X}
           size="sm"
@@ -84,7 +82,7 @@ export function Dialog({
           aria-label="Close dialog"
         />
       </div>
-      <div className="flex flex-1 flex-col overflow-y-auto p-md">
+      <div className="flex flex-1 flex-col overflow-y-auto p-lg">
         {children}
       </div>
     </dialog>

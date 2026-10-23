@@ -1,15 +1,40 @@
-import { IconButton } from "@/shared/components/icon-button/IconButton";
+import { Button } from "@/shared/components/button/Button";
 import { RuntimeCapabilityNotice } from "@/shared/components/runtime-capability/RuntimeCapabilityNotice";
 import { ScriptList } from "@/shared/components/script-list/ScriptList";
 import { Typography } from "@/shared/components/typography/Typography";
 import { selectAllUserscripts } from "@/shared/store/slices/userscripts/selectors";
 import { loadUserscripts } from "@/shared/store/slices/userscripts/thunks.load";
+import { applyAppTheme } from "@/shared/utils/app-theme";
 import { matchesUrlPattern } from "@shared/url-matching";
 import { isInjectablePage } from "@shared/injection-eligibility";
-import { ExternalLinkIcon } from "lucide-react";
+import { ChromeSyncStorage } from "@shared/storage";
+import { NEW_SCRIPT_PATTERN_PARAM } from "@shared/constants";
+import { ExternalLinkIcon, PlusIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { PopupDispatch, PopupRootState } from "./popup-store";
+
+/** A pattern covering the whole site of an http(s) page, e.g. https://github.com/*. */
+function getSitePattern(url: string): string | null {
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+      return null;
+    }
+    return `${parsed.protocol}//${parsed.hostname}/*`;
+  } catch {
+    return null;
+  }
+}
+
+function getDisplayAddress(url: string): string {
+  try {
+    const parsed = new URL(url);
+    return `${parsed.hostname}${parsed.pathname === "/" ? "" : parsed.pathname}`;
+  } catch {
+    return url;
+  }
+}
 
 export function Popup() {
   const dispatch = useDispatch<PopupDispatch>();
@@ -21,7 +46,11 @@ export function Popup() {
 
   useEffect(() => {
     const initialize = async () => {
-      await dispatch(loadUserscripts());
+      const [settings] = await Promise.all([
+        ChromeSyncStorage.getEditorSettings().catch((): undefined => undefined),
+        dispatch(loadUserscripts()),
+      ]);
+      applyAppTheme(settings?.appTheme);
 
       const [tab] = await chrome.tabs.query({
         active: true,
@@ -38,26 +67,44 @@ export function Popup() {
     initialize();
   }, [dispatch]);
 
-  const matchingScripts = useMemo(() => {
-    if (!activeTabUrl || !isInjectablePage(activeTabUrl)) {
-      return [];
+  const canRunHere = !!activeTabUrl && isInjectablePage(activeTabUrl);
+
+  const { running, turnedOff } = useMemo(() => {
+    if (!activeTabUrl || !canRunHere) {
+      return { running: [], turnedOff: [] };
     }
 
-    return Object.values(scripts).filter((script) =>
+    const matching = Object.values(scripts).filter((script) =>
       matchesUrlPattern(activeTabUrl, script.urlPatterns)
     );
-  }, [scripts, activeTabUrl]);
+    return {
+      running: matching.filter((script) => script.enabled),
+      turnedOff: matching.filter((script) => !script.enabled),
+    };
+  }, [scripts, activeTabUrl, canRunHere]);
+
+  const matchingCount = running.length + turnedOff.length;
+  const sitePattern = activeTabUrl ? getSitePattern(activeTabUrl) : null;
+  const siteHost = sitePattern ? new URL(activeTabUrl).hostname : null;
 
   const onOpenIde = () => {
     chrome.runtime.openOptionsPage();
   };
 
+  const onCreateForSite = () => {
+    if (!sitePattern) {
+      return;
+    }
+    const url = new URL(chrome.runtime.getURL("options.html"));
+    url.searchParams.set(NEW_SCRIPT_PATTERN_PARAM, sitePattern);
+    void chrome.tabs.create({ url: url.toString() });
+    window.close();
+  };
+
   if (isLoading) {
     return (
       <div className="flex h-full items-center justify-center bg-surface-base">
-        <Typography variant="caption" className="text-text-muted">
-          Loading...
-        </Typography>
+        <Typography variant="body">Loading...</Typography>
       </div>
     );
   }
@@ -65,38 +112,65 @@ export function Popup() {
   return (
     <div className="flex h-full flex-col bg-surface-base">
       <RuntimeCapabilityNotice />
-      <div className="flex items-center justify-between border-b border-border p-md">
-        <Typography variant="subtitle">
-          <span className="mr-2 font-mono text-sm text-text-muted-faint">
-            //
+      <div className="flex items-center justify-between gap-sm border-b border-border bg-surface-chrome px-md py-sm">
+        <div className="flex min-w-0 flex-col">
+          <span className="font-heading text-[17px] leading-tight font-extrabold tracking-[-0.04em] text-foreground">
+            Invert
           </span>
-          Invert IDE
-        </Typography>
-        <IconButton
-          icon={ExternalLinkIcon}
+          {activeTabUrl && (
+            <span
+              className="truncate font-mono text-[11px] text-text-muted-strong"
+              title={activeTabUrl}
+            >
+              {getDisplayAddress(activeTabUrl)}
+            </span>
+          )}
+        </div>
+        <Button
+          variant="secondary"
           size="sm"
           onClick={onOpenIde}
           title="Open IDE"
-        />
+        >
+          <ExternalLinkIcon size={13} aria-hidden />
+          Open IDE
+        </Button>
       </div>
 
-      {matchingScripts.length > 0 ? (
+      {matchingCount > 0 ? (
         <>
-          <ScriptList scripts={matchingScripts} />
-          <div className="border-t border-border px-md py-sm">
-            <Typography variant="caption" className="text-text-muted">
-              {matchingScripts.length} script
-              {matchingScripts.length !== 1 ? "s" : ""} matching
+          <ScriptList
+            groups={[
+              ...(running.length > 0
+                ? [{ site: "Running on this page", scripts: running }]
+                : []),
+              ...(turnedOff.length > 0
+                ? [{ site: "Matches, but turned off", scripts: turnedOff }]
+                : []),
+            ]}
+          />
+          <div className="border-t border-border px-md py-1.5">
+            <Typography variant="caption" className="text-text-muted-strong">
+              {matchingCount} script{matchingCount !== 1 ? "s" : ""} matching
             </Typography>
           </div>
         </>
       ) : (
-        <div className="flex flex-1 items-center justify-center p-lg">
-          <Typography variant="caption" className="text-text-muted">
-            {activeTabUrl && isInjectablePage(activeTabUrl)
+        <div className="flex flex-1 items-center justify-center p-lg text-center">
+          <Typography variant="body">
+            {canRunHere
               ? "No scripts match this page"
               : "Scripts cannot run on this page"}
           </Typography>
+        </div>
+      )}
+
+      {sitePattern && siteHost && (
+        <div className="border-t border-border bg-surface-chrome p-sm">
+          <Button fullWidth onClick={onCreateForSite}>
+            <PlusIcon size={14} aria-hidden />
+            New script for {siteHost}
+          </Button>
         </div>
       )}
     </div>

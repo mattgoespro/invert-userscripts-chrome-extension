@@ -24,9 +24,10 @@ test.describe("Scripts — metadata", () => {
     // Re-select the script after reload so the metadata panel is rendered
     await scripts.selectScript("PatternScript");
 
-    // The URL pattern toggle should show the saved pattern count and summary
-    const toggle = optionsPage.locator("button").filter({ hasText: /urls:/ });
-    await expect(toggle).toContainText("example.com", { timeout: 10_000 });
+    // The editor header chips show the saved pattern
+    await expect(scripts.urlPatternSummary).toContainText("example.com", {
+      timeout: 10_000,
+    });
   });
 
   test("seeding a script with URL patterns shows them immediately", async ({
@@ -48,9 +49,13 @@ test.describe("Scripts — metadata", () => {
     await options.waitForReady();
     await scripts.selectScript("PatternsPreseeded");
 
-    // The toggle button should show a count
-    const toggle = optionsPage.locator("button").filter({ hasText: /urls:/ });
-    await expect(toggle).toContainText("[2]");
+    // The header shows a chip for each pattern
+    await expect(scripts.urlPatternSummary).toContainText(
+      "https://example.com/*"
+    );
+    await expect(scripts.urlPatternSummary).toContainText(
+      "https://github.com/*"
+    );
   });
 
   test("script marked as shared shows module name field", async ({
@@ -103,24 +108,24 @@ test.describe("Scripts — metadata", () => {
     await scripts.openOptionsPanel();
 
     const runAtSelect = optionsPage.getByTestId("run-at-select");
-    await runAtSelect.locator("button").first().click();
-    await runAtSelect
-      .locator("button")
-      .filter({ hasText: "After page load" })
-      .click();
+    await expect(
+      runAtSelect.getByRole("radio", { name: "Before page load" })
+    ).toHaveAttribute("aria-checked", "true");
+    await runAtSelect.getByRole("radio", { name: "After page load" }).click();
 
-    await expect(runAtSelect.locator("button").first()).toContainText(
-      "After page load",
-      { timeout: 10_000 }
-    );
+    await expect(
+      runAtSelect.getByRole("radio", { name: "After page load" })
+    ).toHaveAttribute("aria-checked", "true", { timeout: 10_000 });
 
     await optionsPage.reload();
     await options.waitForReady();
     await scripts.selectScript("RunAtScript");
     await scripts.openOptionsPanel();
     await expect(
-      optionsPage.getByTestId("run-at-select").locator("button").first()
-    ).toContainText("After page load", { timeout: 10_000 });
+      optionsPage
+        .getByTestId("run-at-select")
+        .getByRole("radio", { name: "After page load" })
+    ).toHaveAttribute("aria-checked", "true", { timeout: 10_000 });
   });
 
   test("new script defaults to matching all URLs and does not show the setup banner", async ({
@@ -136,7 +141,6 @@ test.describe("Scripts — metadata", () => {
     await options.waitForReady();
     await scripts.createScript();
     await expect(optionsPage.getByTestId("script-setup-banner")).toHaveCount(0);
-    const toggle = optionsPage.locator("button").filter({ hasText: /urls:/ });
-    await expect(toggle).toContainText("*://*/*");
+    await expect(scripts.urlPatternSummary).toContainText("*://*/*");
   });
 });

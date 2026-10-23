@@ -11,11 +11,11 @@ test("action buttons use compact presets and match adjacent inputs", async ({
   await options.waitForReady();
   await options.clickTab("modules");
   const add = optionsPage.getByRole("button", {
-    name: "+ Add Module",
+    name: "Add module",
     exact: true,
   });
-  await expect(add).toHaveCSS("height", "28px");
-  await expect(add).toHaveCSS("font-size", "11px");
+  await expect(add).toHaveCSS("height", "32px");
+  await expect(add).toHaveCSS("font-size", "13px");
   await expect(add).toHaveAttribute("type", "button");
   await add.click();
   const dialog = optionsPage.getByRole("dialog");
@@ -23,8 +23,8 @@ test("action buttons use compact presets and match adjacent inputs", async ({
     name: "Close dialog",
     exact: true,
   });
-  await expect(close).toHaveCSS("height", "24px");
-  await expect(close).toHaveCSS("width", "24px");
+  await expect(close).toHaveCSS("height", "26px");
+  await expect(close).toHaveCSS("width", "26px");
   await dialog.getByRole("button", { name: "Cancel", exact: true }).click();
 
   await options.clickTab("scripts");
@@ -33,7 +33,7 @@ test("action buttons use compact presets and match adjacent inputs", async ({
     name: "Select",
     exact: true,
   });
-  await expect(select).toHaveCSS("height", "28px");
+  await expect(select).toHaveCSS("height", "32px");
   const input = optionsPage.getByRole("textbox", {
     name: "Select userscripts file",
   });
@@ -51,7 +51,7 @@ test("action buttons use compact presets and match adjacent inputs", async ({
   const storage = optionsPage.getByRole("button", {
     name: /^(Connect|Disconnect)$/,
   });
-  await expect(storage).toHaveCSS("height", "28px");
+  await expect(storage).toHaveCSS("height", "32px");
   const dimensions = await storage.evaluate((node) => ({
     width: node.getBoundingClientRect().width,
     parent: node.parentElement!.getBoundingClientRect().width,

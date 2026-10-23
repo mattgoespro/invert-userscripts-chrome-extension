@@ -29,11 +29,55 @@ import {
 } from "@/shared/services/draft-recovery-service";
 import { useCallback, useEffect, useState } from "react";
 import { Sidebar } from "./components/sidebar/Sidebar";
+import { StatusBar } from "./components/status-bar/StatusBar";
 import type { AppSidebarTab } from "@shared/storage";
 import { ModulesPage } from "./pages/modules-page/ModulesPage";
 import { ScriptsPage } from "./pages/scripts-page/ScriptsPage";
 import { Settings } from "./pages/settings-page/SettingsPage";
 import { useRegisterCoreCommands } from "./hooks/useRegisterCoreCommands";
+import { applyAppTheme } from "@/shared/utils/app-theme";
+import { NEW_SCRIPT_PATTERN_PARAM } from "@shared/constants";
+import type { AppDispatch } from "@/shared/store/store";
+import { selectUserscript } from "@/shared/store/select-userscript";
+import {
+  createUserscript,
+  updateUserscript,
+} from "@/shared/store/slices/userscripts/thunks.userscripts";
+import { isValidUrlPattern } from "./pages/scripts-page/script-editor/script-metadata/url-patterns";
+
+/** Handles the popup's "New script for <site>" hand-off via the page URL. */
+async function createScriptFromLaunchParams(
+  dispatch: AppDispatch
+): Promise<void> {
+  const params = new URLSearchParams(window.location.search);
+  const pattern = params.get(NEW_SCRIPT_PATTERN_PARAM);
+  if (!pattern) {
+    return;
+  }
+
+  params.delete(NEW_SCRIPT_PATTERN_PARAM);
+  const query = params.toString();
+  window.history.replaceState(
+    null,
+    "",
+    window.location.pathname + (query ? `?${query}` : "")
+  );
+
+  if (!isValidUrlPattern(pattern)) {
+    return;
+  }
+
+  const script = await dispatch(createUserscript()).unwrap();
+  const host = new URL(pattern.replace("*://", "https://")).hostname;
+  await dispatch(
+    updateUserscript({
+      id: script.id,
+      updates: { name: `${host} script`, urlPatterns: [pattern] },
+    })
+  ).unwrap();
+  dispatch(selectUserscript(script.id));
+  dispatch(setActiveSidebarTab("scripts"));
+}
 
 export function InvertIde() {
   const dispatch = useAppDispatch();
@@ -80,6 +124,9 @@ export function InvertIde() {
       },
       markReady: () => {
         dispatch(setIdeReady(true));
+        void createScriptFromLaunchParams(dispatch).catch((error) =>
+          console.error("Failed to create script for site:", error)
+        );
       },
       reportError: (error) =>
         console.error("Failed to initialize IDE state:", error),
@@ -100,20 +147,8 @@ export function InvertIde() {
   }, []);
 
   useEffect(() => {
-    if (settings.appTheme) {
-      applyAppTheme(settings.appTheme);
-    }
+    applyAppTheme(settings.appTheme);
   }, [settings.appTheme]);
-
-  function applyAppTheme(themeId: string) {
-    const root = document.documentElement;
-
-    if (themeId === "graphite") {
-      root.removeAttribute("data-theme");
-    } else {
-      root.setAttribute("data-theme", themeId);
-    }
-  }
 
   function onNavigate(button: AppSidebarTab) {
     dispatch(setActiveSidebarTab(button));
@@ -124,13 +159,18 @@ export function InvertIde() {
       <RuntimeCapabilityNotice />
       <LanguageAcquisitionNotice />
       <div className="relative flex min-h-0 min-w-0 flex-1">
-        <Sidebar active={activeSidebarTab} onNavigate={onNavigate} />
+        <Sidebar
+          active={activeSidebarTab}
+          onNavigate={onNavigate}
+          onOpenCommandPalette={handleOpenCommandPalette}
+        />
         <div className="relative flex min-h-0 min-w-0 flex-1 *:animate-page-reveal">
           {activeSidebarTab === "scripts" && <ScriptsPage />}
           {activeSidebarTab === "modules" && <ModulesPage />}
           {activeSidebarTab === "settings" && <Settings />}
         </div>
       </div>
+      <StatusBar />
       <CommandPalette
         open={commandPaletteOpen}
         onClose={() => setCommandPaletteOpen(false)}

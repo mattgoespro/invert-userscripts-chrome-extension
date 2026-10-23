@@ -11,13 +11,13 @@ type ToastProps = {
 };
 
 const toastVariants = cva(
-  "relative flex flex-col min-w-70 max-w-90 border rounded-default shadow-(--toast-shadow) overflow-hidden pointer-events-auto",
+  "relative flex flex-col min-w-70 max-w-90 border rounded-default bg-surface-raised shadow-(--toast-shadow) overflow-hidden pointer-events-auto",
   {
     variants: {
       variant: {
-        info: "bg-toast-info-surface border-toast-info-border",
-        warning: "bg-toast-warning-surface border-toast-warning-border",
-        error: "bg-toast-error-surface border-toast-error-border",
+        info: "border-toast-info-border",
+        warning: "border-toast-warning-border",
+        error: "border-toast-error-border",
       },
       dismissing: {
         true: "animate-toast-slide-out",
@@ -32,9 +32,9 @@ const toastVariants = cva(
 );
 
 const variantLabel: Record<ToastVariant, string> = {
-  info: "info",
-  warning: "warn",
-  error: "error",
+  info: "Info",
+  warning: "Warning",
+  error: "Error",
 };
 
 const variantAccent: Record<ToastVariant, string> = {
@@ -92,13 +92,12 @@ export function Toast({ toast, onDismiss }: ToastProps) {
 
       <div className="flex items-start gap-sm py-sm pr-md pl-[calc(var(--spacing-md)+3px)]">
         <div className="flex min-w-0 flex-1 flex-col gap-2xs">
-          <span className="inline-flex items-center gap-1.5 font-mono text-[0.6875rem] leading-[1.4] font-medium tracking-[0.02em] uppercase select-none">
-            <span className="text-syntax-comment italic opacity-60">//</span>
+          <span className="inline-flex items-center text-xs leading-[1.4] font-semibold select-none">
             <span className={variantLabelColor[variant]}>
               {variantLabel[variant]}
             </span>
           </span>
-          <span className="font-mono text-xs leading-normal wrap-break-word text-toast-fg">
+          <span className="text-base leading-normal wrap-break-word text-toast-fg">
             {toast.message}
           </span>
         </div>

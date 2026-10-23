@@ -1,5 +1,7 @@
 import clsx from "clsx";
 import { useCallback, useEffect, useState } from "react";
+import { AppThemes, DefaultAppTheme } from "@shared/constants";
+import { applyAppTheme } from "@/shared/utils/app-theme";
 
 type ThemeOption = {
   id: string;
@@ -9,80 +11,30 @@ type ThemeOption = {
   group?: string;
 };
 
-const Themes: ThemeOption[] = [
-  { id: "graphite", label: "Graphite", accent: "#569cd6", surface: "#1e1e1e" },
-  { id: "obsidian", label: "Obsidian", accent: "#e2a555", surface: "#161616" },
-  // Graphite variants
-  {
-    id: "graphite-warm",
-    label: "Graphite Warm",
-    accent: "#d4a054",
-    surface: "#1e1e1e",
-    group: "graphite variants",
-  },
-  {
-    id: "graphite-dusk",
-    label: "Graphite Dusk",
-    accent: "#a088c8",
-    surface: "#1e1d20",
-    group: "graphite variants",
-  },
-  {
-    id: "graphite-ember",
-    label: "Graphite Ember",
-    accent: "#d4785a",
-    surface: "#1e1e1e",
-    group: "graphite variants",
-  },
-  // Obsidian variants
-  {
-    id: "obsidian-deep",
-    label: "Obsidian Deep",
-    accent: "#cc9650",
-    surface: "#101010",
-    group: "obsidian variants",
-  },
-  {
-    id: "obsidian-ember",
-    label: "Obsidian Ember",
-    accent: "#d4785a",
-    surface: "#151211",
-    group: "obsidian variants",
-  },
-  {
-    id: "obsidian-frost",
-    label: "Obsidian Frost",
-    accent: "#8aacc8",
-    surface: "#141618",
-    group: "obsidian variants",
-  },
-];
+const Themes: ThemeOption[] = AppThemes.map((theme) => ({
+  id: theme.name,
+  label: theme.displayName,
+  surface: theme.swatches[0],
+  accent: theme.swatches[3],
+  group: theme.family,
+}));
 
 const STORAGE_KEY = "invert-ide-devtools-theme";
-
-function applyTheme(themeId: string) {
-  const root = document.documentElement;
-  if (themeId === "graphite") {
-    root.removeAttribute("data-theme");
-  } else {
-    root.setAttribute("data-theme", themeId);
-  }
-}
 
 export function useActiveTheme() {
   const [activeTheme, setActiveTheme] = useState<string>(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
-    return stored ?? "graphite";
+    return stored ?? DefaultAppTheme;
   });
 
   useEffect(() => {
-    applyTheme(activeTheme);
+    applyAppTheme(activeTheme);
   }, [activeTheme]);
 
   const handleSelect = useCallback((themeId: string) => {
     setActiveTheme(themeId);
     localStorage.setItem(STORAGE_KEY, themeId);
-    applyTheme(themeId);
+    applyAppTheme(themeId);
   }, []);
 
   const activeOption = Themes.find((t) => t.id === activeTheme) ?? Themes[0];

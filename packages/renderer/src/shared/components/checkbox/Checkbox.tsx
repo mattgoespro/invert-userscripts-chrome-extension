@@ -18,7 +18,7 @@ export function Checkbox({ label, checked, onChange }: CheckboxProps) {
         onChange={handleChange}
       />
       {label && (
-        <span className="text-text-muted-strong ml-3 font-mono text-[13px] select-none">
+        <span className="ml-3 text-base text-text-muted select-none">
           {label}
         </span>
       )}

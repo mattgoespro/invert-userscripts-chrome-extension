@@ -127,7 +127,7 @@ export function AddModuleDialog({
               }}
             />
             {validation.cdnError && (
-              <span className="font-mono text-xs text-error-accent">
+              <span className="text-xs text-error-accent">
                 {validation.cdnError}
               </span>
             )}
@@ -148,11 +148,11 @@ export function AddModuleDialog({
               }}
             />
             {validation.typesError && (
-              <span className="font-mono text-xs text-error-accent">
+              <span className="text-xs text-error-accent">
                 {validation.typesError}
               </span>
             )}
-            <span className="font-mono text-xs text-text-muted">
+            <span className="text-xs text-text-muted">
               Used to provide TypeScript intellisense via @types/*
             </span>
           </div>
@@ -166,7 +166,7 @@ export function AddModuleDialog({
         />
         {hasErrors && (
           <div className="flex items-center gap-xs rounded-default border border-error-border bg-error-surface px-3 py-2">
-            <span className="font-mono text-xs text-error-accent">
+            <span className="text-xs text-error-accent">
               Fix the errors above to add this module.
             </span>
           </div>

@@ -7,9 +7,13 @@ import {
 } from "@/shared/store/slices/userscripts/messaging";
 import { toggleUserscript } from "@/shared/store/slices/userscripts/thunks.crud";
 import { Userscript } from "@shared/model";
+import { selectErrorCount } from "@/shared/store/slices/workspace";
+import { summarizeUrlPatterns } from "@/shared/utils/script-site";
 import { PackageIcon } from "lucide-react";
 import clsx from "clsx";
 import { useDispatch, useSelector } from "react-redux";
+
+type WorkspaceRoot = Parameters<typeof selectErrorCount>[0];
 
 type ScriptListItemProps = {
   script: Userscript;
@@ -39,6 +43,10 @@ export function ScriptListItem({
   // Shared by IDE store and compile-free popup store (both have thunk middleware).
   const dispatch = useDispatch() as unknown as ThunkDispatch;
   const isModified = useSelector(selectIsDraftDirty(script.id));
+  // The popup store has no workspace slice, so problems are only counted in the IDE.
+  const problemCount = useSelector((state: Partial<WorkspaceRoot>) =>
+    state.workspace ? selectErrorCount(state as WorkspaceRoot, script.id) : 0
+  );
   const { toast } = useToast();
 
   const onSelectScript = () => {
@@ -87,35 +95,54 @@ export function ScriptListItem({
   return (
     <div
       className={clsx(
-        "group mb-1.5 flex items-center rounded-default p-2 transition-colors duration-150",
+        "group grid cursor-default grid-cols-[minmax(0,1fr)_auto] items-center gap-x-sm border-l-[3px] py-1.5 pr-md pl-[calc(var(--spacing-md)-3px)] transition-colors duration-150",
         onScriptSelected && "cursor-pointer",
         active
-          ? "border border-l-[3px] border-accent-muted border-l-accent bg-accent-subtle"
-          : "border border-transparent bg-surface-overlay hover:border-border hover:bg-hover-overlay",
-        "focus:border-accent-border focus:outline-none"
+          ? "border-l-accent bg-selected"
+          : "border-l-transparent hover:bg-hover-overlay"
       )}
       onClick={() => onSelectScript()}
     >
-      {isModified && (
-        <div className="mr-3 h-2 w-2 shrink-0 animate-pulse-indicator rounded-full bg-accent" />
-      )}
-      {script.shared && (
-        <PackageIcon
-          size={12}
-          className="mr-2 shrink-0 text-syntax-keyword opacity-70"
-        />
-      )}
       <span
         className={clsx(
-          "flex-1 overflow-hidden font-mono text-base font-medium text-ellipsis whitespace-nowrap",
-          script.shared ? "text-syntax-keyword" : "text-syntax-function"
+          "overflow-hidden text-base text-ellipsis whitespace-nowrap",
+          active ? "font-semibold" : "font-medium",
+          script.enabled ? "text-foreground" : "text-text-muted-strong"
         )}
       >
         {script.name}
       </span>
-      <div className="flex items-center gap-2 opacity-70 transition-opacity duration-150 group-hover:opacity-100">
+      <div className="row-span-2 flex items-center gap-2">
+        {isModified && (
+          <span
+            className="h-2 w-2 shrink-0 animate-pulse-indicator rounded-full bg-accent"
+            title="Unsaved changes"
+          >
+            <span className="sr-only">Unsaved changes</span>
+          </span>
+        )}
+        {problemCount > 0 && (
+          <span
+            className="rounded-full bg-error-accent px-1.5 text-[11px] leading-4 font-bold text-on-accent tabular-nums"
+            title={`${problemCount} problem${problemCount === 1 ? "" : "s"}`}
+          >
+            {problemCount}
+          </span>
+        )}
         <Switch checked={script.enabled} onChange={() => onToggleScript()} />
       </div>
+      <p className="flex min-w-0 items-center gap-1 font-mono text-[11px] leading-4 text-text-muted-strong">
+        {script.shared && (
+          <PackageIcon
+            size={11}
+            className="shrink-0 text-syntax-keyword"
+            aria-label="Shared module"
+          />
+        )}
+        <span className="truncate">
+          {summarizeUrlPatterns(script.urlPatterns)}
+        </span>
+      </p>
     </div>
   );
 }

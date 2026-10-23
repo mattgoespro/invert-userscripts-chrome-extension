@@ -24,10 +24,10 @@ function ShortcutKeys({
         <kbd
           key={key}
           className={clsx(
-            "rounded-[3px] border px-1.5 py-px font-mono text-[11px] leading-none",
+            "rounded-[3px] border px-1.5 py-0.5 text-[11px] leading-none",
             selected
-              ? "border-accent-border bg-accent/15 text-foreground"
-              : "border-border bg-surface-input text-text-muted-faint"
+              ? "border-text-muted-faint text-foreground"
+              : "border-border text-text-muted-strong"
           )}
         >
           {key}
@@ -59,10 +59,10 @@ export function CommandPaletteItem({
       role="option"
       aria-selected={selected}
       className={clsx(
-        "flex h-7 cursor-pointer items-center gap-sm px-md font-mono text-[12px] transition-colors",
+        "flex h-8 cursor-pointer items-center gap-sm border-l-2 px-md text-base transition-colors",
         selected
-          ? "bg-accent/20 text-foreground"
-          : "text-text-muted hover:bg-hover-overlay"
+          ? "border-l-accent bg-selected text-foreground"
+          : "border-l-transparent text-text-muted hover:bg-hover-overlay"
       )}
       onClick={onSelect}
       onMouseEnter={onHover}
@@ -72,7 +72,7 @@ export function CommandPaletteItem({
           size={14}
           className={clsx(
             "shrink-0",
-            selected ? "text-foreground" : "text-text-muted-faint"
+            selected ? "text-foreground" : "text-text-muted-strong"
           )}
         />
       ) : (
@@ -80,6 +80,12 @@ export function CommandPaletteItem({
       )}
 
       <span className="min-w-0 flex-1 truncate">{command.label}</span>
+
+      {command.description && (
+        <span className="max-w-[45%] shrink-0 truncate font-mono text-[11px] text-text-muted-strong">
+          {command.description}
+        </span>
+      )}
 
       {command.shortcut && (
         <ShortcutKeys shortcut={command.shortcut} selected={selected} />

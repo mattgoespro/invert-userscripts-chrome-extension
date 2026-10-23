@@ -275,7 +275,7 @@ test("automatic Drive upload, offline save and clean-install hydration preserve 
     .click();
   await optionsPage
     .locator("label")
-    .filter({ hasText: /^Font Size$/ })
+    .filter({ hasText: /^Font size$/ })
     .locator("..")
     .getByRole("spinbutton")
     .fill("20");
@@ -489,9 +489,7 @@ test("automatic Drive upload, offline save and clean-install hydration preserve 
     await restarted.evaluate(() =>
       chrome.alarms.create("drive-sync", { when: Date.now() + 50 })
     );
-    await expect(restored.getByTitle("Modules")).toHaveClass(
-      /bg-accent-subtle/
-    );
+    await expect(restored.getByTitle("Modules")).toHaveClass(/bg-selected/);
     const layout = await restored.evaluate(() =>
       chrome.runtime.sendMessage({ type: "publication.drive.layout.read" })
     );
@@ -500,7 +498,7 @@ test("automatic Drive upload, offline save and clean-install hydration preserve 
     await expect(
       restored
         .locator("label")
-        .filter({ hasText: /^Font Size$/ })
+        .filter({ hasText: /^Font size$/ })
         .locator("..")
         .getByRole("spinbutton")
     ).toHaveValue("20");

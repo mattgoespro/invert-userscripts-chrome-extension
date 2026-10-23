@@ -1,66 +1,61 @@
 import { Command } from "@/shared/command-palette/command.types";
 import { CommandPaletteItem } from "./CommandPaletteItem";
 
+export interface CommandGroup {
+  label: string;
+  commands: Command[];
+}
+
 interface CommandPaletteResultsProps {
-  recentCommands: Command[];
-  allCommands: Command[];
+  groups: CommandGroup[];
   selectedIndex: number;
   onSelect: (command: Command) => void;
   onHover: (index: number) => void;
 }
 
 export function CommandPaletteResults({
-  recentCommands,
-  allCommands,
+  groups,
   selectedIndex,
   onSelect,
   onHover,
 }: CommandPaletteResultsProps) {
-  const hasRecent = recentCommands.length > 0;
-  const hasAll = allCommands.length > 0;
-
-  if (!hasRecent && !hasAll) {
+  if (groups.length === 0) {
     return (
-      <div className="flex items-center px-md py-sm">
-        <span className="font-mono text-[12px] text-text-muted-faint">
-          No matching commands
+      <div className="flex items-center px-md py-md">
+        <span className="text-base text-text-muted">
+          Nothing matches. Try a script name, a site or an action.
         </span>
       </div>
     );
   }
 
+  let flatIndex = 0;
+
   return (
     <div
       role="listbox"
       aria-label="Commands"
-      className="scrollbar-thin max-h-[min(50vh,420px)] overflow-y-auto py-xs"
+      className="scrollbar-thin max-h-[min(55vh,460px)] overflow-y-auto pb-xs"
     >
-      {recentCommands.map((command, index) => (
-        <CommandPaletteItem
-          key={`recent-${command.id}`}
-          command={command}
-          selected={index === selectedIndex}
-          onSelect={() => onSelect(command)}
-          onHover={() => onHover(index)}
-        />
+      {groups.map((group) => (
+        <div key={group.label} role="group" aria-label={group.label}>
+          <div className="px-md pt-sm pb-1 text-xs font-medium text-text-muted-strong">
+            {group.label}
+          </div>
+          {group.commands.map((command) => {
+            const index = flatIndex++;
+            return (
+              <CommandPaletteItem
+                key={`${group.label}-${command.id}`}
+                command={command}
+                selected={index === selectedIndex}
+                onSelect={() => onSelect(command)}
+                onHover={() => onHover(index)}
+              />
+            );
+          })}
+        </div>
       ))}
-
-      {hasRecent && hasAll && (
-        <div className="my-xs border-t border-border" role="separator" />
-      )}
-
-      {allCommands.map((command, index) => {
-        const flatIndex = recentCommands.length + index;
-        return (
-          <CommandPaletteItem
-            key={`all-${command.id}`}
-            command={command}
-            selected={flatIndex === selectedIndex}
-            onSelect={() => onSelect(command)}
-            onHover={() => onHover(flatIndex)}
-          />
-        );
-      })}
     </div>
   );
 }

@@ -34,14 +34,32 @@ export function DriveSyncPanel({
       data-testid="drive-sync-panel"
       aria-busy={busy}
       className={clsx(
-        "flex flex-col gap-sm rounded-default border border-border p-md text-sm text-text-muted-strong",
+        "flex flex-col gap-sm rounded-default border border-border bg-surface-base p-md text-base text-text-muted",
         className
       )}
     >
-      <p className="font-medium text-foreground">
+      <p className="text-xs font-medium text-text-muted-strong">
         Persistent Google Drive sync
       </p>
-      <p role="status" aria-live="polite">
+      <p
+        role="status"
+        aria-live="polite"
+        className={clsx(
+          "flex items-center gap-2 text-[15px] font-semibold",
+          status?.phase === "synced" ? "text-success" : "text-foreground"
+        )}
+      >
+        <span
+          aria-hidden
+          className={clsx(
+            "h-2 w-2 shrink-0 rounded-full",
+            status?.phase === "synced"
+              ? "bg-success"
+              : status?.phase === "conflict" || status?.phase === "error"
+                ? "bg-warning"
+                : "bg-text-muted-faint"
+          )}
+        />
         {status?.message ?? "Checking Drive sync…"}
       </p>
       {status?.accountLabel && <p>Account: {status.accountLabel}</p>}

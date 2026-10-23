@@ -8,7 +8,9 @@ export class PopupPage {
 
   /** Wait until the "Loading..." spinner is gone. */
   async waitForReady() {
-    await this.page.getByText("Loading...").waitFor({ state: "hidden", timeout: 10_000 });
+    await this.page
+      .getByText("Loading...")
+      .waitFor({ state: "hidden", timeout: 10_000 });
   }
 
   /** Get the "Open IDE" icon button. */
@@ -40,9 +42,8 @@ export class PopupPage {
 
   /** Get the names of all scripts listed in the popup. */
   async getScriptNames(): Promise<string[]> {
-    // The popup reuses the <ScriptList> component which renders script names as spans
-    const spans = this.page.locator("span[class*='font-mono']");
-    return spans.allTextContents();
+    // The popup reuses the <ScriptList> rows; the name is each row's direct span.
+    return this.page.locator(".group > span").allTextContents();
   }
 
   /** Toggle a script's enabled state in the popup by name. */

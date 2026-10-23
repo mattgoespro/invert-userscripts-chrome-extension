@@ -135,35 +135,51 @@ export class ScriptsPage {
     await expect(this.scriptListPanel).toContainText(name, { timeout: 15_000 });
   }
 
-  /** Open the URL pattern dropdown, add a pattern, and wait for it to be saved. */
+  /** The URL pattern chips in the editor header; opens Script details. */
+  get urlPatternSummary() {
+    return this.page.getByTestId("url-pattern-summary");
+  }
+
+  /** Add a URL pattern from the Script details panel and wait for it to be saved. */
   async addUrlPattern(pattern: string) {
-    // Click the toggle button to open the dropdown
-    const toggle = this.page.locator("button").filter({ hasText: /urls:/ });
-    await toggle.click();
+    await this.urlPatternSummary.click();
 
-    // The dropdown input placeholder changes based on count
-    const input = this.page
-      .getByPlaceholder("https://*.example.com/* — Enter to add")
-      .or(this.page.getByPlaceholder("Add pattern..."));
-
+    const input = this.page.getByRole("textbox", { name: "Add URL pattern" });
     await input.fill(pattern);
     await input.press("Enter");
 
-    // Wait for the updateUserscript thunk to complete:
-    // the [N] count badge appears after Redux accepts durable publication.
-    await expect(toggle).toContainText("[", { timeout: 15_000 });
+    // Wait for the updateUserscript thunk to complete: the header chips only
+    // show the pattern after Redux accepts durable publication.
+    await expect(this.urlPatternSummary).toContainText(pattern, {
+      timeout: 15_000,
+    });
   }
 
   // ─── Options Panel ────────────────────────────────────────────────────────
 
-  /** Open the ⋮ script options panel. */
-  async openOptionsPanel() {
-    await this.page.getByTitle("Script options").click();
+  /** The editor header toggle for the Script details panel. */
+  get scriptDetailsToggle() {
+    return this.page.getByRole("button", {
+      name: "Script details",
+      exact: true,
+    });
   }
 
-  /** Close the options panel by pressing Escape. */
+  /** Open the Script details panel (no-op when it is already open). */
+  async openOptionsPanel() {
+    if (
+      (await this.scriptDetailsToggle.getAttribute("aria-pressed")) !== "true"
+    ) {
+      await this.scriptDetailsToggle.click();
+    }
+    await expect(
+      this.page.getByRole("complementary", { name: "Script details" })
+    ).toBeVisible();
+  }
+
+  /** Close the Script details panel. */
   async closeOptionsPanel() {
-    await this.page.keyboard.press("Escape");
+    await this.page.getByTitle("Close details panel").click();
   }
 
   /** Set the module name for sharing (opens options panel, fills field, closes). */

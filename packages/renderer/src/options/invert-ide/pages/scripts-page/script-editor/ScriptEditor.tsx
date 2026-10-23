@@ -29,7 +29,15 @@ import {
   updatePanelSizesIfChanged,
 } from "@/shared/store/slices/ui";
 import { UserscriptSourceLanguage } from "@shared/model";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { selectScriptErrors } from "@/shared/store/slices/workspace";
+import type { CompilationError } from "@shared/errors";
+import { EditorPaneHeader } from "./EditorPaneHeader";
+import {
+  ScriptDetailsPanel,
+  type ScriptDetailsFocus,
+} from "./script-details/ScriptDetailsPanel";
+import { useScriptMetadataActions } from "./script-metadata/useScriptMetadataActions";
 import { Group, Panel, PanelImperativeHandle } from "react-resizable-panels";
 import { ScriptEditorDrawer } from "./script-editor-drawer/ScriptEditorDrawer";
 import { ScriptMetadata } from "./script-metadata/ScriptMetadata";
@@ -64,6 +72,57 @@ export function ScriptEditor() {
   const [scssModel, setScssModel] = useState<monaco.editor.ITextModel | null>(
     null
   );
+
+  const [focusedBuffer, setFocusedBuffer] = useState<EditorBuffer | null>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [detailsFocus, setDetailsFocus] = useState<{
+    target: ScriptDetailsFocus;
+    nonce: number;
+  } | null>(null);
+  const metadataActions = useScriptMetadataActions(script);
+  const scriptErrors = useAppSelector((state) =>
+    selectScriptErrors(state, scriptId)
+  );
+  const problemCounts = useMemo(() => {
+    const counts: Record<CompilationError["language"], number> = {
+      typescript: 0,
+      "type-definition": 0,
+      scss: 0,
+    };
+    for (const error of scriptErrors) {
+      counts[error.language] += 1;
+    }
+    return counts;
+  }, [scriptErrors]);
+
+  useEffect(() => {
+    const editors: [
+      EditorBuffer,
+      monaco.editor.IStandaloneCodeEditor | null,
+    ][] = [
+      ["typescript", tsEditorInstance],
+      ["typeDefinitions", typeDefinitionEditorInstance],
+      ["scss", scssEditorInstance],
+    ];
+    const disposables = editors.flatMap(([buffer, editor]) =>
+      editor
+        ? [
+            editor.onDidFocusEditorText(() => setFocusedBuffer(buffer)),
+            editor.onDidBlurEditorText(() =>
+              setFocusedBuffer((current) =>
+                current === buffer ? null : current
+              )
+            ),
+          ]
+        : []
+    );
+    return () => disposables.forEach((disposable) => disposable.dispose());
+  }, [tsEditorInstance, typeDefinitionEditorInstance, scssEditorInstance]);
+
+  const openDetails = useCallback((target: ScriptDetailsFocus) => {
+    setDetailsOpen(true);
+    setDetailsFocus({ target, nonce: Date.now() });
+  }, []);
 
   const drawerPanelRef = useRef<PanelImperativeHandle>(null);
   const drawerCollapsedRef = useRef(outputDrawerCollapsed);
@@ -166,207 +225,223 @@ export function ScriptEditor() {
 
   return (
     <div className="flex h-full min-w-0 flex-col overflow-hidden">
-      <div className="flex min-w-0 items-center gap-sm border-b border-border bg-surface-raised p-sm px-md">
-        <ScriptMetadata key={script.id} script={script} />
+      <div className="flex min-w-0 items-center border-b border-border bg-surface-raised px-md py-sm">
+        <ScriptMetadata
+          key={script.id}
+          script={script}
+          actions={metadataActions}
+          detailsOpen={detailsOpen}
+          onOpenDetails={openDetails}
+          onToggleDetails={() => setDetailsOpen((open) => !open)}
+        />
       </div>
-      <div className="min-h-0 min-w-0 flex-1 overflow-hidden">
-        {ideReady && monacoReady ? (
-          <Group
-            orientation="vertical"
-            id="script-editor-outer-panels"
-            defaultLayout={{
-              "source-panels": panelSizes.scriptCompiledOutputDrawerSplit,
-              "output-drawer": 100 - panelSizes.scriptCompiledOutputDrawerSplit,
-            }}
-            onLayoutChanged={(layout) => {
-              if (drawerPanelRef.current?.isCollapsed()) {
-                return;
-              }
-              const sourceSize = layout["source-panels"];
-              if (sourceSize != null) {
-                dispatch(
-                  updatePanelSizesIfChanged({
-                    scriptCompiledOutputDrawerSplit: sourceSize,
-                  })
-                );
-              }
-            }}
-          >
-            <Panel id="source-panels" minSize="20%">
-              <Group
-                orientation="horizontal"
-                id="script-editor-source-panels"
-                style={{ height: "100%" }}
-                defaultLayout={{
-                  "typescript-editor":
-                    panelSizes.scriptCodeEditorHorizontalSplit,
-                  "scss-editor":
-                    100 - panelSizes.scriptCodeEditorHorizontalSplit,
-                }}
-                onLayoutChanged={(layout) => {
-                  const tsSize = layout["typescript-editor"];
-                  if (tsSize != null) {
-                    dispatch(
-                      updatePanelSizesIfChanged({
-                        scriptCodeEditorHorizontalSplit: tsSize,
-                      })
-                    );
-                  }
-                }}
-              >
-                <Panel
-                  id="typescript-editor"
-                  data-testid="typescript-editor"
-                  minSize="20%"
-                  maxSize="80%"
-                >
-                  <Group
-                    orientation="vertical"
-                    id="script-editor-typescript-stack"
-                    style={{ height: "100%" }}
-                    defaultLayout={{
-                      "typescript-source":
-                        panelSizes.scriptTypeDefinitionsVerticalSplit,
-                      "typescript-definitions":
-                        100 - panelSizes.scriptTypeDefinitionsVerticalSplit,
-                    }}
-                    onLayoutChanged={(layout) => {
-                      const sourceSize = layout["typescript-source"];
-                      if (sourceSize != null) {
-                        dispatch(
-                          updatePanelSizesIfChanged({
-                            scriptTypeDefinitionsVerticalSplit: sourceSize,
-                          })
-                        );
-                      }
-                    }}
-                  >
-                    <Panel
-                      id="typescript-source"
-                      data-testid="typescript-source"
-                      minSize="35%"
-                    >
-                      <div className="relative flex h-full flex-col overflow-hidden bg-surface-base">
-                        <div className="pointer-events-none absolute top-2 right-6 z-10 select-none">
-                          <Typography
-                            variant="caption"
-                            className="font-mono font-bold text-text-muted"
-                          >
-                            // script.ts
-                          </Typography>
-                        </div>
-                        <div className="min-h-0 min-w-0 flex-1">
-                          <TypeScriptCodeEditor
-                            modelId={buildScriptModelId(script, "main")}
-                            scriptId={script.id}
-                            contents={typescriptSource}
-                            onCodeModified={(code) =>
-                              onCodeModified("typescript", code)
-                            }
-                            onEditorReady={(editor) => {
-                              setTsEditorInstance(editor);
-                              setTsModel(editor.getModel());
-                            }}
-                          />
-                        </div>
-                      </div>
-                    </Panel>
-                    <ResizeHandle direction="vertical" />
-                    <Panel
-                      id="typescript-definitions"
-                      data-testid="typescript-definitions"
-                      minSize="20%"
-                    >
-                      <div className="relative flex h-full flex-col overflow-hidden bg-surface-base">
-                        <div className="pointer-events-none absolute top-2 right-6 z-10 select-none">
-                          <Typography
-                            variant="caption"
-                            className="font-mono font-bold text-text-muted"
-                          >
-                            // types.d.ts
-                          </Typography>
-                        </div>
-                        <div className="min-h-0 min-w-0 flex-1">
-                          <TypeDefinitionCodeEditor
-                            modelId={buildScriptModelId(script, "types")}
-                            scriptId={script.id}
-                            contents={typeDefinitions}
-                            onCodeModified={(code) =>
-                              onCodeModified("typeDefinitions", code)
-                            }
-                            onEditorReady={(editor) => {
-                              setTypeDefinitionEditorInstance(editor);
-                              setTypeDefinitionModel(editor.getModel());
-                            }}
-                          />
-                        </div>
-                      </div>
-                    </Panel>
-                  </Group>
-                </Panel>
-                <ResizeHandle direction="horizontal" />
-                <Panel id="scss-editor" minSize="20%" maxSize="80%">
-                  <div className="relative flex h-full flex-col overflow-hidden bg-surface-base">
-                    <div className="pointer-events-none absolute top-2 right-6 z-10 select-none">
-                      <Typography
-                        variant="caption"
-                        className="font-mono font-bold text-text-muted"
-                      >
-                        // styles.scss
-                      </Typography>
-                    </div>
-                    <div className="min-h-0 min-w-0 flex-1">
-                      <CodeEditor
-                        modelId={buildScriptModelId(script, "styles")}
-                        scriptId={script.id}
-                        language="scss"
-                        contents={scssSource}
-                        onCodeModified={(code) => onCodeModified("scss", code)}
-                        onEditorReady={(editor) => {
-                          setScssEditorInstance(editor);
-                          setScssModel(editor.getModel());
-                        }}
-                      />
-                    </div>
-                  </div>
-                </Panel>
-              </Group>
-            </Panel>
-            <ResizeHandle direction="vertical" />
-            <Panel
-              panelRef={drawerPanelRef}
-              id="output-drawer"
-              data-testid="output-drawer"
-              minSize="15%"
-              maxSize="60%"
-              defaultSize={`${100 - panelSizes.scriptCompiledOutputDrawerSplit}%`}
-              collapsible
-              collapsedSize="36px"
-              onResize={onDrawerResize}
+      <div className="flex min-h-0 min-w-0 flex-1">
+        <div className="min-h-0 min-w-0 flex-1 overflow-hidden">
+          {ideReady && monacoReady ? (
+            <Group
+              orientation="vertical"
+              id="script-editor-outer-panels"
+              defaultLayout={{
+                "source-panels": panelSizes.scriptCompiledOutputDrawerSplit,
+                "output-drawer":
+                  100 - panelSizes.scriptCompiledOutputDrawerSplit,
+              }}
+              onLayoutChanged={(layout) => {
+                if (drawerPanelRef.current?.isCollapsed()) {
+                  return;
+                }
+                const sourceSize = layout["source-panels"];
+                if (sourceSize != null) {
+                  dispatch(
+                    updatePanelSizesIfChanged({
+                      scriptCompiledOutputDrawerSplit: sourceSize,
+                    })
+                  );
+                }
+              }}
             >
-              <div className="h-full overflow-hidden bg-surface-base">
-                <ScriptEditorDrawer
-                  script={script}
-                  javascript={liveJs}
-                  css={liveCss}
-                  isCollapsed={isDrawerCollapsed}
-                  onToggleCollapse={onToggleDrawer}
-                  editorInstances={{
-                    typescript: tsEditorInstance ?? undefined,
-                    "type-definition":
-                      typeDefinitionEditorInstance ?? undefined,
-                    scss: scssEditorInstance ?? undefined,
+              <Panel id="source-panels" minSize="20%">
+                <Group
+                  orientation="horizontal"
+                  id="script-editor-source-panels"
+                  style={{ height: "100%" }}
+                  defaultLayout={{
+                    "typescript-editor":
+                      panelSizes.scriptCodeEditorHorizontalSplit,
+                    "scss-editor":
+                      100 - panelSizes.scriptCodeEditorHorizontalSplit,
                   }}
-                />
-              </div>
-            </Panel>
-          </Group>
-        ) : (
-          <div className="flex h-full items-center justify-center">
-            <Typography variant="caption" className="text-text-muted">
-              Loading editor environment...
-            </Typography>
-          </div>
+                  onLayoutChanged={(layout) => {
+                    const tsSize = layout["typescript-editor"];
+                    if (tsSize != null) {
+                      dispatch(
+                        updatePanelSizesIfChanged({
+                          scriptCodeEditorHorizontalSplit: tsSize,
+                        })
+                      );
+                    }
+                  }}
+                >
+                  <Panel
+                    id="typescript-editor"
+                    data-testid="typescript-editor"
+                    minSize="20%"
+                    maxSize="80%"
+                  >
+                    <Group
+                      orientation="vertical"
+                      id="script-editor-typescript-stack"
+                      style={{ height: "100%" }}
+                      defaultLayout={{
+                        "typescript-source":
+                          panelSizes.scriptTypeDefinitionsVerticalSplit,
+                        "typescript-definitions":
+                          100 - panelSizes.scriptTypeDefinitionsVerticalSplit,
+                      }}
+                      onLayoutChanged={(layout) => {
+                        const sourceSize = layout["typescript-source"];
+                        if (sourceSize != null) {
+                          dispatch(
+                            updatePanelSizesIfChanged({
+                              scriptTypeDefinitionsVerticalSplit: sourceSize,
+                            })
+                          );
+                        }
+                      }}
+                    >
+                      <Panel
+                        id="typescript-source"
+                        data-testid="typescript-source"
+                        minSize="35%"
+                      >
+                        <div className="relative flex h-full flex-col overflow-hidden bg-surface-base">
+                          <EditorPaneHeader
+                            filename="main.ts"
+                            description="The script’s TypeScript source"
+                            dirty={!!draft?.dirty.typescript}
+                            problemCount={problemCounts.typescript}
+                            focused={focusedBuffer === "typescript"}
+                          />
+                          <div className="min-h-0 min-w-0 flex-1">
+                            <TypeScriptCodeEditor
+                              modelId={buildScriptModelId(script, "main")}
+                              scriptId={script.id}
+                              contents={typescriptSource}
+                              onCodeModified={(code) =>
+                                onCodeModified("typescript", code)
+                              }
+                              onEditorReady={(editor) => {
+                                setTsEditorInstance(editor);
+                                setTsModel(editor.getModel());
+                              }}
+                            />
+                          </div>
+                        </div>
+                      </Panel>
+                      <ResizeHandle direction="vertical" />
+                      <Panel
+                        id="typescript-definitions"
+                        data-testid="typescript-definitions"
+                        minSize="20%"
+                      >
+                        <div className="relative flex h-full flex-col overflow-hidden bg-surface-base">
+                          <EditorPaneHeader
+                            filename="types.d.ts"
+                            description="Type declarations other scripts can import"
+                            dirty={!!draft?.dirty.typeDefinitions}
+                            problemCount={problemCounts["type-definition"]}
+                            focused={focusedBuffer === "typeDefinitions"}
+                          />
+                          <div className="min-h-0 min-w-0 flex-1">
+                            <TypeDefinitionCodeEditor
+                              modelId={buildScriptModelId(script, "types")}
+                              scriptId={script.id}
+                              contents={typeDefinitions}
+                              onCodeModified={(code) =>
+                                onCodeModified("typeDefinitions", code)
+                              }
+                              onEditorReady={(editor) => {
+                                setTypeDefinitionEditorInstance(editor);
+                                setTypeDefinitionModel(editor.getModel());
+                              }}
+                            />
+                          </div>
+                        </div>
+                      </Panel>
+                    </Group>
+                  </Panel>
+                  <ResizeHandle direction="horizontal" />
+                  <Panel id="scss-editor" minSize="20%" maxSize="80%">
+                    <div className="relative flex h-full flex-col overflow-hidden bg-surface-base">
+                      <EditorPaneHeader
+                        filename="styles.scss"
+                        description="Styles injected alongside the script"
+                        dirty={!!draft?.dirty.scss}
+                        problemCount={problemCounts.scss}
+                        focused={focusedBuffer === "scss"}
+                      />
+                      <div className="min-h-0 min-w-0 flex-1">
+                        <CodeEditor
+                          modelId={buildScriptModelId(script, "styles")}
+                          scriptId={script.id}
+                          language="scss"
+                          contents={scssSource}
+                          onCodeModified={(code) =>
+                            onCodeModified("scss", code)
+                          }
+                          onEditorReady={(editor) => {
+                            setScssEditorInstance(editor);
+                            setScssModel(editor.getModel());
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </Panel>
+                </Group>
+              </Panel>
+              <ResizeHandle direction="vertical" />
+              <Panel
+                panelRef={drawerPanelRef}
+                id="output-drawer"
+                data-testid="output-drawer"
+                minSize="15%"
+                maxSize="60%"
+                defaultSize={`${100 - panelSizes.scriptCompiledOutputDrawerSplit}%`}
+                collapsible
+                collapsedSize="36px"
+                onResize={onDrawerResize}
+              >
+                <div className="h-full overflow-hidden bg-surface-base">
+                  <ScriptEditorDrawer
+                    script={script}
+                    javascript={liveJs}
+                    css={liveCss}
+                    isCollapsed={isDrawerCollapsed}
+                    onToggleCollapse={onToggleDrawer}
+                    editorInstances={{
+                      typescript: tsEditorInstance ?? undefined,
+                      "type-definition":
+                        typeDefinitionEditorInstance ?? undefined,
+                      scss: scssEditorInstance ?? undefined,
+                    }}
+                  />
+                </div>
+              </Panel>
+            </Group>
+          ) : (
+            <div className="flex h-full items-center justify-center">
+              <Typography variant="body">Loading the editor…</Typography>
+            </div>
+          )}
+        </div>
+        {detailsOpen && (
+          <ScriptDetailsPanel
+            key={script.id}
+            script={script}
+            actions={metadataActions}
+            focus={detailsFocus}
+            onClose={() => setDetailsOpen(false)}
+          />
         )}
       </div>
     </div>

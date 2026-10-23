@@ -7,7 +7,14 @@ export class ModulesPage {
   constructor(readonly page: Page) {}
 
   get addButton() {
-    return this.page.getByRole("button", { name: /\+ Add Module/i });
+    return this.page.getByRole("button", { name: "Add module", exact: true });
+  }
+
+  /** The modules table row for a module name. */
+  moduleRow(name: string) {
+    return this.page
+      .getByTestId("module-row")
+      .filter({ has: this.page.getByText(name, { exact: true }) });
   }
 
   /** Open the "Add Module" dialog. */
@@ -24,12 +31,13 @@ export class ModulesPage {
     await this.openAddModuleDialog();
 
     await this.page.getByPlaceholder("e.g. Moment.js").fill(name);
-    await this.page
-      .getByPlaceholder(/cdnjs|jsdelivr/i)
-      .fill(url);
+    await this.page.getByPlaceholder(/cdnjs|jsdelivr/i).fill(url);
 
     // Submit with the "Add Module" button inside the dialog
-    await this.page.getByRole("button", { name: /^Add Module$/i }).click();
+    await this.page
+      .getByRole("dialog")
+      .getByRole("button", { name: /^Add Module$/i })
+      .click();
   }
 
   /**
@@ -38,22 +46,16 @@ export class ModulesPage {
    */
   async deleteModule(name: string) {
     this.page.on("dialog", (dialog) => dialog.accept());
-    const card = this.page
-      .locator("div")
-      .filter({ has: this.page.getByText(name, { exact: true }) })
-      .first();
-    await card.getByRole("button").first().click();
+    await this.moduleRow(name)
+      .getByRole("button", { name: `Delete ${name}`, exact: true })
+      .click();
   }
 
   /**
    * Toggle the enabled/disabled checkbox for a module by name.
    */
   async toggleModule(name: string) {
-    const card = this.page
-      .locator("div")
-      .filter({ has: this.page.getByText(name, { exact: true }) })
-      .first();
-    await card.locator("input[type='checkbox']").click();
+    await this.moduleRow(name).locator("input[type='checkbox']").click();
   }
 
   /** Returns true if the module card for the given name is present. */
@@ -63,8 +65,6 @@ export class ModulesPage {
 
   /** Get all module card names. */
   async getModuleNames(): Promise<string[]> {
-    // Module name is rendered in a <span> with font-heading inside the card
-    const spans = this.page.locator("span[class*='font-heading']");
-    return spans.allTextContents();
+    return this.page.getByTestId("module-name").allTextContents();
   }
 }

@@ -204,10 +204,10 @@ export function ImportUserscriptsDialog({
 
         {errors.length > 0 && (
           <div className="flex flex-col gap-xs rounded-default border border-error-border bg-error-surface px-md py-sm">
-            <span className="font-mono text-[11px] font-semibold text-error-accent uppercase">
+            <span className="text-xs font-semibold text-error-accent">
               Validation errors
             </span>
-            <ul className="list-disc space-y-1 pl-4 font-mono text-xs text-error-accent">
+            <ul className="list-disc space-y-1 pl-4 text-xs text-error-accent">
               {errors.map((error) => (
                 <li key={error}>{error}</li>
               ))}
@@ -217,10 +217,10 @@ export function ImportUserscriptsDialog({
 
         {warnings.length > 0 && (
           <div className="flex flex-col gap-xs rounded-default border border-toast-warning-border bg-toast-warning-surface px-md py-sm">
-            <span className="font-mono text-[11px] font-semibold text-toast-warning-accent uppercase">
+            <span className="text-xs font-semibold text-toast-warning-accent">
               Import warnings
             </span>
-            <ul className="list-disc space-y-1 pl-4 font-mono text-xs text-toast-warning-accent">
+            <ul className="list-disc space-y-1 pl-4 text-xs text-toast-warning-accent">
               {warnings.map((warning) => (
                 <li key={warning}>{warning}</li>
               ))}
@@ -230,7 +230,7 @@ export function ImportUserscriptsDialog({
 
         {validatedFile && errors.length === 0 && (
           <div className="rounded-default border border-border bg-surface-base px-md py-sm">
-            <span className="font-mono text-[11px] text-text-muted-strong">
+            <span className="text-xs text-text-muted-strong">
               Ready to import {validatedFile.userscripts.length} userscript
               {validatedFile.userscripts.length === 1 ? "" : "s"}.
             </span>

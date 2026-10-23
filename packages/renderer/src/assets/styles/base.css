@@ -1,97 +1,104 @@
 /* =============================================================================
    CSS Custom Properties (Primitives + Semantic + Components + Typography)
+
+   Every app theme is built from the same short list of primitives. Each
+   theme is grounded in one material and follows the same rules:
+   - surfaces climb one ladder: chrome < panel < base < raised < overlay
+   - the accent is a signal, reserved for focus, unsaved work and the
+     primary action; selection uses its own quieter "selected" color
+   - muted text keeps at least 4.5:1 contrast, faint text at least 3:1
+   - success, warning and danger keep the same meaning in every theme
    ============================================================================= */
 
 /* =========================================================================
-   Primitive Tokens — Graphite Theme (Default)
+   Primitive Tokens — Cyanotype (default)
+   Deep Prussian blue with an amber safelight signal.
    ========================================================================= */
 :root {
-  /* Core Palette */
-  --base-white: #d4d4d4;
-  --base-grey: #858585;
-  --base-blue: #4fc1ff;
-  --base-gold: #569cd6;
-  --base-red: #f44747;
-
-  /* Surfaces */
-  --base-surface-base: #1e1e1e;
-  --base-surface-raised: #252526;
-  --base-surface-overlay: #2d2d30;
-  --base-surface-panel: #1a1a1c;
-  --base-surface-input: #1b1b1c;
-
-  /* Borders */
-  --base-border: #3e3e42;
-  --base-border-subtle: #333336;
+  color-scheme: dark;
 
   /* Text */
-  --base-text-muted: #a0a0a0;
-  --base-text-muted-faint: #5a5a5e;
-  --base-text-muted-strong: #858585;
+  --base-foreground: #e4ecf2;
+  --base-text-muted: #a9bccd;
+  --base-text-muted-strong: #8fa6bc;
+  --base-text-muted-faint: #6a86a0;
 
-  /* Accent */
-  --base-accent: #569cd6;
-  --base-accent-hover: #71abda;
-  --base-accent-muted: #569cd625;
-  --base-accent-subtle: #569cd612;
-  --base-accent-border: #569cd650;
+  /* Surfaces */
+  --base-surface-chrome: #0a1520;
+  --base-surface-panel: #0b1826;
+  --base-surface-base: #0e1b2a;
+  --base-surface-raised: #102235;
+  --base-surface-overlay: #17324b;
+  --base-surface-input: #0a1520;
 
-  /* Danger */
-  --base-danger: #f44747;
+  /* Borders */
+  --base-border: #1f3b56;
+  --base-border-subtle: #18304a;
 
-  /* Interactive Overlays */
-  --base-hover-overlay: rgba(255, 255, 255, 0.04);
-  --base-active-overlay: rgba(255, 255, 255, 0.07);
+  /* Signal and selection */
+  --base-accent: #f2a541;
+  --base-accent-hover: #f6b865;
+  --base-on-accent: #0e1b2a;
+  --base-selected: #1d3d5c;
+  --base-selected-strong: #3d7ab0;
+  --base-secondary: #9cc3e6;
 
-  /* Error States */
-  --base-error-accent: #f48771;
-  --base-error-accent-soft: rgba(244, 135, 113, 0.2);
-  --base-error-glow: rgba(244, 71, 71, 0.12);
-  --base-error-surface: #2d2020;
-  --base-error-surface-dark: #1e1616;
-  --base-error-text-muted: #858585;
-  --base-error-border: #5a3030;
+  /* Status */
+  --base-success: #7fd4b4;
+  --base-warning: #f2c14e;
+  --base-danger: #ff7a6b;
+  --base-info: #8fd3ff;
 
-  /* Syntax Highlighting */
-  --base-syntax-keyword: #c586c0;
-  --base-syntax-function: #dcdcaa;
-  --base-syntax-param: #9cdcfe;
-  --base-syntax-type: #4ec9b0;
-  --base-syntax-punctuation: #d4d4d499;
-  --base-syntax-comment: #6a9955;
+  /* Interactive overlays */
+  --base-hover-overlay: rgba(143, 166, 188, 0.08);
+  --base-active-overlay: rgba(143, 166, 188, 0.14);
+  --base-shadow: rgba(2, 8, 14, 0.55);
 
-  /* Component Primitives: Switch */
-  --base-switch-fg: #858585;
-  --base-switch-bg: #333336;
-  --base-switch-border: var(--base-border);
+  /* Error states */
+  --base-error-accent: #ff8a7a;
+  --base-error-surface: #2a1c26;
+  --base-error-surface-dark: #20151e;
+  --base-error-text-muted: #e8b9b2;
+  --base-error-border: #5a2e3a;
 
-  /* Component Primitives: Select */
-  --base-select-bg: var(--base-surface-input);
-  --base-select-border: var(--base-border);
+  /* Syntax */
+  --base-syntax-keyword: #c3a6ff;
+  --base-syntax-function: #8fd3ff;
+  --base-syntax-param: #b9d9f2;
+  --base-syntax-type: #f6d58e;
+  --base-syntax-punctuation: #e4ecf299;
+  --base-syntax-comment: #6a86a0;
 
   /* ===================================================================
      Semantic Tokens
      =================================================================== */
   --accent: var(--base-accent);
   --accent-hover: var(--base-accent-hover);
-  --accent-muted: var(--base-accent-muted);
-  --accent-subtle: var(--base-accent-subtle);
-  --accent-border: var(--base-accent-border);
-  --secondary: var(--base-blue);
+  --accent-muted: color-mix(in srgb, var(--accent) 22%, transparent);
+  --accent-subtle: color-mix(in srgb, var(--accent) 10%, transparent);
+  --accent-border: color-mix(in srgb, var(--accent) 45%, transparent);
+  --on-accent: var(--base-on-accent);
+  --selected: var(--base-selected);
+  --selected-strong: var(--base-selected-strong);
+  --secondary: var(--base-secondary);
   --secondary-subtle: color-mix(in srgb, var(--secondary) 10%, transparent);
   --danger: var(--base-danger);
+  --success: var(--base-success);
+  --warning: var(--base-warning);
 
-  --foreground: var(--base-white);
+  --foreground: var(--base-foreground);
   --border: var(--base-border);
   --border-subtle: var(--base-border-subtle);
 
+  --surface-chrome: var(--base-surface-chrome);
   --surface-base: var(--base-surface-base);
   --surface-raised: var(--base-surface-raised);
   --surface-overlay: var(--base-surface-overlay);
   --surface-panel: var(--base-surface-panel);
   --surface-input: var(--base-surface-input);
+  --scrim: color-mix(in srgb, var(--base-surface-chrome) 72%, transparent);
 
-  --text-base: 11px;
+  --text-base: 13px;
   --text-muted: var(--base-text-muted);
   --text-muted-faint: var(--base-text-muted-faint);
   --text-muted-strong: var(--base-text-muted-strong);
@@ -100,8 +107,8 @@
   --active-overlay: var(--base-active-overlay);
 
   --error-accent: var(--base-error-accent);
-  --error-accent-soft: var(--base-error-accent-soft);
-  --error-glow: var(--base-error-glow);
+  --error-accent-soft: color-mix(in srgb, var(--error-accent) 20%, transparent);
+  --error-glow: color-mix(in srgb, var(--danger) 12%, transparent);
   --error-surface: var(--base-error-surface);
   --error-surface-dark: var(--base-error-surface-dark);
   --error-text-muted: var(--base-error-text-muted);
@@ -114,48 +121,52 @@
   --syntax-punctuation: var(--base-syntax-punctuation);
   --syntax-comment: var(--base-syntax-comment);
 
-  --info: var(--base-blue);
-  --error: var(--base-red);
+  --info: var(--base-info);
+  --error: var(--base-danger);
 
-  --geometry-border-radius: 4px;
+  --geometry-border-radius: 6px;
+  --geometry-border-radius-lg: 12px;
 
   /* ===================================================================
      Component Tokens
      =================================================================== */
-  --label-foreground: var(--base-grey);
+  --label-foreground: var(--text-muted);
 
-  --switch-foreground: var(--base-switch-fg);
-  --switch-background: var(--base-switch-bg);
-  --switch-border: var(--base-switch-border);
+  --switch-foreground: var(--text-muted-faint);
+  --switch-background: var(--border-subtle);
+  --switch-border: var(--border);
+  --switch-on-background: var(--selected-strong);
+  --switch-on-foreground: var(--base-on-selected-strong, var(--foreground));
 
-  --select-background: var(--base-select-bg);
-  --select-border: var(--base-select-border);
+  --select-background: var(--surface-input);
+  --select-border: var(--border);
 
-  --toast-foreground: var(--base-white);
-  --toast-shadow: 0 4px 24px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(0, 0, 0, 0.2);
+  --toast-foreground: var(--foreground);
+  --toast-shadow: 0 8px 28px var(--base-shadow), 0 0 0 1px var(--border-subtle);
 
   --toast-info-accent: var(--info);
   --toast-info-surface: color-mix(in srgb, var(--info) 6%, transparent);
   --toast-info-border: color-mix(in srgb, var(--info) 18%, transparent);
 
-  --toast-warning-accent: var(--base-gold);
-  --toast-warning-surface: color-mix(in srgb, var(--base-gold) 6%, transparent);
-  --toast-warning-border: color-mix(in srgb, var(--base-gold) 18%, transparent);
+  --toast-warning-accent: var(--warning);
+  --toast-warning-surface: color-mix(in srgb, var(--warning) 6%, transparent);
+  --toast-warning-border: color-mix(in srgb, var(--warning) 18%, transparent);
 
   --toast-error-accent: var(--error-accent);
   --toast-error-surface: var(--error-surface);
   --toast-error-border: var(--error-border);
 
-  --input-height: 1.75rem;
-  --button-height-sm: 24px;
+  --input-height: 2rem;
+  --button-height-sm: 26px;
   --button-height: var(--input-height);
-  --button-height-lg: 32px;
+  --button-height-lg: 36px;
   --button-font-size: var(--text-base);
-  --dialog-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(0, 0, 0, 0.2);
-  --page-padding: var(--spacing-lg);
-  --section-padding: var(--spacing-lg);
-  --section-gap: var(--spacing-md);
-  --field-gap: var(--spacing-sm);
+  --dialog-shadow: 0 16px 48px var(--base-shadow), 0 0 0 1px var(--border);
+  --popover-shadow: 0 12px 32px var(--base-shadow), 0 0 0 1px var(--border);
+  --page-padding: var(--spacing-2xl);
+  --section-padding: var(--spacing-xl);
+  --section-gap: var(--spacing-lg);
+  --field-gap: var(--spacing-md);
 
   /* ===================================================================
      Typography Tokens
@@ -163,241 +174,445 @@
   --typography-label-font-size: 12px;
 }
 
+html,
+body {
+  background: var(--surface-base);
+  color: var(--foreground);
+}
+
+body {
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+}
+
 /* =========================================================================
-   Theme Overrides
+   Print — the light inverse of Cyanotype. Blue ink on paper.
    ========================================================================= */
+[data-theme="print"] {
+  color-scheme: light;
 
-[data-theme="graphite-warm"] {
-  --base-gold: #d4a054;
-  --base-red: #d46050;
-  --base-accent: #d4a054;
-  --base-accent-hover: #deb06a;
-  --base-accent-muted: #d4a05425;
-  --base-accent-subtle: #d4a05412;
-  --base-accent-border: #d4a05450;
-  --base-danger: #d46050;
-  --base-syntax-keyword: #c586c0;
-  --base-syntax-function: #d4a054;
-  --base-syntax-param: #9cdcfe;
-  --base-syntax-type: #4ec9b0;
-  --base-syntax-comment: #6a9955;
+  --base-foreground: #0e1b2a;
+  --base-text-muted: #3a5068;
+  --base-text-muted-strong: #4a6178;
+  --base-text-muted-faint: #587390;
+
+  --base-surface-chrome: #dce5eb;
+  --base-surface-panel: #e2eaf0;
+  --base-surface-base: #f4f7f9;
+  --base-surface-raised: #e9eff3;
+  --base-surface-overlay: #d3e1ec;
+  --base-surface-input: #fbfcfd;
+
+  --base-border: #c5d3de;
+  --base-border-subtle: #d5e0e8;
+
+  --base-accent: #b8650a;
+  --base-accent-hover: #9e5508;
+  --base-on-accent: #fbfcfd;
+  --base-selected: #cfe0ee;
+  --base-selected-strong: #2f6a9e;
+  --base-on-selected-strong: #fbfcfd;
+  --base-secondary: #2f6a9e;
+
+  --base-success: #1d7a55;
+  --base-warning: #8f5d00;
+  --base-danger: #c2412f;
+  --base-info: #1f5f9e;
+
+  --base-hover-overlay: rgba(14, 27, 42, 0.05);
+  --base-active-overlay: rgba(14, 27, 42, 0.09);
+  --base-shadow: rgba(14, 27, 42, 0.16);
+
+  --base-error-accent: #c2412f;
+  --base-error-surface: #fbe9e6;
+  --base-error-surface-dark: #f6dad5;
+  --base-error-text-muted: #7a3a32;
+  --base-error-border: #e9b3aa;
+
+  --base-syntax-keyword: #7a3ec8;
+  --base-syntax-function: #1f5f9e;
+  --base-syntax-param: #255e86;
+  --base-syntax-type: #8f5d00;
+  --base-syntax-punctuation: #0e1b2a99;
+  --base-syntax-comment: #6b8094;
 }
 
-[data-theme="graphite-dusk"] {
-  --base-white: #d2d0d6;
-  --base-grey: #82808a;
-  --base-blue: #a4a0e0;
-  --base-gold: #a088c8;
-  --base-red: #d06878;
-  --base-surface-base: #1e1d20;
-  --base-surface-raised: #252428;
-  --base-surface-overlay: #2d2c32;
-  --base-surface-panel: #1a191e;
-  --base-surface-input: #1a1a1d;
-  --base-border: #3c3a42;
-  --base-border-subtle: #323036;
-  --base-text-muted: #9e9aa4;
-  --base-text-muted-faint: #58545e;
-  --base-text-muted-strong: #82808a;
-  --base-accent: #a088c8;
-  --base-accent-hover: #b09ad4;
-  --base-accent-muted: #a088c825;
-  --base-accent-subtle: #a088c812;
-  --base-accent-border: #a088c850;
-  --base-danger: #d06878;
-  --base-error-accent: #e08080;
-  --base-error-accent-soft: rgba(224, 128, 128, 0.2);
-  --base-error-glow: rgba(208, 104, 120, 0.12);
-  --base-error-surface: #2a2024;
-  --base-error-surface-dark: #1e1618;
-  --base-error-text-muted: #82808a;
-  --base-error-border: #503040;
-  --base-syntax-keyword: #c586c0;
+/* =========================================================================
+   Graphite — pencil lead with a highlighter signal.
+   ========================================================================= */
+[data-theme="graphite"] {
+  --base-foreground: #d8dadf;
+  --base-text-muted: #a3a7ae;
+  --base-text-muted-strong: #8c9099;
+  --base-text-muted-faint: #70747c;
+
+  --base-surface-chrome: #161719;
+  --base-surface-panel: #18191b;
+  --base-surface-base: #1c1d20;
+  --base-surface-raised: #222327;
+  --base-surface-overlay: #2c2e33;
+  --base-surface-input: #161719;
+
+  --base-border: #34363c;
+  --base-border-subtle: #2b2d32;
+
+  --base-accent: #e8d25a;
+  --base-accent-hover: #f0de7c;
+  --base-on-accent: #1c1d20;
+  --base-selected: #2e3a48;
+  --base-selected-strong: #5c7fa3;
+  --base-secondary: #8fb4d9;
+
+  --base-success: #8bcf9f;
+  --base-warning: #e8b04a;
+  --base-danger: #f07a6e;
+  --base-info: #8fb4d9;
+
+  --base-hover-overlay: rgba(255, 255, 255, 0.04);
+  --base-active-overlay: rgba(255, 255, 255, 0.08);
+  --base-shadow: rgba(0, 0, 0, 0.55);
+
+  --base-error-accent: #f48771;
+  --base-error-surface: #2d2222;
+  --base-error-surface-dark: #221a1a;
+  --base-error-text-muted: #e0b4ac;
+  --base-error-border: #5a3434;
+
+  --base-syntax-keyword: #c9a0dc;
   --base-syntax-function: #dcdcaa;
-  --base-syntax-param: #b8b4ea;
-  --base-syntax-type: #4ec9b0;
-  --base-syntax-punctuation: #d2d0d699;
-  --base-syntax-comment: #626068;
-  --base-switch-fg: #82808a;
-  --base-switch-bg: #323036;
-}
-
-[data-theme="graphite-ember"] {
-  --base-gold: #d4785a;
-  --base-red: #d46050;
-  --base-accent: #d4785a;
-  --base-accent-hover: #de8c70;
-  --base-accent-muted: #d4785a25;
-  --base-accent-subtle: #d4785a12;
-  --base-accent-border: #d4785a50;
-  --base-danger: #d46050;
-  --base-syntax-keyword: #c586c0;
-  --base-syntax-function: #d4785a;
   --base-syntax-param: #9cdcfe;
   --base-syntax-type: #4ec9b0;
-  --base-syntax-comment: #6a9955;
+  --base-syntax-punctuation: #d8dadf99;
+  --base-syntax-comment: #7a8a74;
 }
 
+/* Graphite Warm — graphite on kraft paper, brass signal. */
+[data-theme="graphite-warm"] {
+  --base-foreground: #ddd6ce;
+  --base-text-muted: #aba298;
+  --base-text-muted-strong: #948b81;
+  --base-text-muted-faint: #776f66;
+
+  --base-surface-chrome: #181615;
+  --base-surface-panel: #1a1817;
+  --base-surface-base: #1f1d1b;
+  --base-surface-raised: #262321;
+  --base-surface-overlay: #312d29;
+  --base-surface-input: #181615;
+
+  --base-border: #3a3632;
+  --base-border-subtle: #302c29;
+
+  --base-accent: #d9a441;
+  --base-accent-hover: #e4b862;
+  --base-on-accent: #1f1d1b;
+  --base-selected: #3b342c;
+  --base-selected-strong: #8c7350;
+  --base-secondary: #c7b08a;
+
+  --base-success: #9cc58a;
+  --base-warning: #e3b754;
+  --base-danger: #e07862;
+  --base-info: #a9c7d8;
+
+  --base-hover-overlay: rgba(255, 245, 230, 0.04);
+  --base-active-overlay: rgba(255, 245, 230, 0.08);
+  --base-shadow: rgba(0, 0, 0, 0.55);
+
+  --base-error-accent: #e8866f;
+  --base-error-surface: #2e211d;
+  --base-error-surface-dark: #231915;
+  --base-error-text-muted: #dfb6a8;
+  --base-error-border: #5c3a30;
+
+  --base-syntax-keyword: #d49bb5;
+  --base-syntax-function: #e3c07a;
+  --base-syntax-param: #a9c7d8;
+  --base-syntax-type: #8fc4a8;
+  --base-syntax-punctuation: #ddd6ce99;
+  --base-syntax-comment: #7c7468;
+}
+
+/* Graphite Dusk — graphite at dusk, lilac signal. */
+[data-theme="graphite-dusk"] {
+  --base-foreground: #dad8e3;
+  --base-text-muted: #a7a3b8;
+  --base-text-muted-strong: #8f8ba1;
+  --base-text-muted-faint: #736f86;
+
+  --base-surface-chrome: #16151b;
+  --base-surface-panel: #18171d;
+  --base-surface-base: #1d1c22;
+  --base-surface-raised: #24232b;
+  --base-surface-overlay: #2f2d3a;
+  --base-surface-input: #16151b;
+
+  --base-border: #38364a;
+  --base-border-subtle: #2e2d3c;
+
+  --base-accent: #b69cf2;
+  --base-accent-hover: #c7b3f6;
+  --base-on-accent: #1d1c22;
+  --base-selected: #34304a;
+  --base-selected-strong: #7466b0;
+  --base-secondary: #a9b6f0;
+
+  --base-success: #8fd0b0;
+  --base-warning: #e8c06a;
+  --base-danger: #ee7f91;
+  --base-info: #a9b6f0;
+
+  --base-hover-overlay: rgba(240, 236, 255, 0.04);
+  --base-active-overlay: rgba(240, 236, 255, 0.08);
+  --base-shadow: rgba(0, 0, 0, 0.55);
+
+  --base-error-accent: #f08a9a;
+  --base-error-surface: #2c2029;
+  --base-error-surface-dark: #21171e;
+  --base-error-text-muted: #e2b6c2;
+  --base-error-border: #57324a;
+
+  --base-syntax-keyword: #e09edb;
+  --base-syntax-function: #f0c987;
+  --base-syntax-param: #b8b4ea;
+  --base-syntax-type: #7fd1c2;
+  --base-syntax-punctuation: #dad8e399;
+  --base-syntax-comment: #757189;
+}
+
+/* Graphite Ember — graphite with a glowing ember signal. */
+[data-theme="graphite-ember"] {
+  --base-foreground: #dcd7d4;
+  --base-text-muted: #a9a19d;
+  --base-text-muted-strong: #918985;
+  --base-text-muted-faint: #756d69;
+
+  --base-surface-chrome: #161515;
+  --base-surface-panel: #181717;
+  --base-surface-base: #1d1c1c;
+  --base-surface-raised: #242222;
+  --base-surface-overlay: #2f2b2a;
+  --base-surface-input: #161515;
+
+  --base-border: #393433;
+  --base-border-subtle: #2f2b2a;
+
+  --base-accent: #f08a4b;
+  --base-accent-hover: #f4a06c;
+  --base-on-accent: #1d1c1c;
+  --base-selected: #3a302c;
+  --base-selected-strong: #8f5e44;
+  --base-secondary: #e0b08f;
+
+  --base-success: #9ccb8f;
+  --base-warning: #e8be55;
+  --base-danger: #f06a7a;
+  --base-info: #b8c8d8;
+
+  --base-hover-overlay: rgba(255, 240, 230, 0.04);
+  --base-active-overlay: rgba(255, 240, 230, 0.08);
+  --base-shadow: rgba(0, 0, 0, 0.55);
+
+  --base-error-accent: #f2808e;
+  --base-error-surface: #2e1f22;
+  --base-error-surface-dark: #221719;
+  --base-error-text-muted: #e2b3b8;
+  --base-error-border: #5a3038;
+
+  --base-syntax-keyword: #d6a0d0;
+  --base-syntax-function: #f0a678;
+  --base-syntax-param: #b8d0e0;
+  --base-syntax-type: #8fc8b0;
+  --base-syntax-punctuation: #dcd7d499;
+  --base-syntax-comment: #7a706b;
+}
+
+/* =========================================================================
+   Obsidian — volcanic glass with a molten gold signal.
+   ========================================================================= */
 [data-theme="obsidian"] {
-  --base-white: #c8c8c8;
-  --base-grey: #6e6e6e;
-  --base-blue: #82aaff;
-  --base-gold: #e2a555;
-  --base-red: #d16969;
-  --base-surface-base: #161616;
-  --base-surface-raised: #1e1e1e;
-  --base-surface-overlay: #262626;
-  --base-surface-panel: #121212;
-  --base-surface-input: #131313;
-  --base-border: #333333;
-  --base-border-subtle: #282828;
-  --base-text-muted: #999999;
-  --base-text-muted-faint: #444444;
-  --base-text-muted-strong: #6e6e6e;
+  --base-foreground: #cdd3cf;
+  --base-text-muted: #9aa39e;
+  --base-text-muted-strong: #828b86;
+  --base-text-muted-faint: #66706b;
+
+  --base-surface-chrome: #0c0e0d;
+  --base-surface-panel: #0e100f;
+  --base-surface-base: #121413;
+  --base-surface-raised: #181b1a;
+  --base-surface-overlay: #222725;
+  --base-surface-input: #0c0e0d;
+
+  --base-border: #2a2f2d;
+  --base-border-subtle: #212624;
+
   --base-accent: #e2a555;
-  --base-accent-hover: #eab56e;
-  --base-accent-muted: #e2a55525;
-  --base-accent-subtle: #e2a55512;
-  --base-accent-border: #e2a55550;
-  --base-danger: #d16969;
-  --base-hover-overlay: rgba(255, 255, 255, 0.03);
-  --base-active-overlay: rgba(255, 255, 255, 0.06);
-  --base-error-accent: #e07070;
-  --base-error-accent-soft: rgba(224, 112, 112, 0.2);
-  --base-error-glow: rgba(209, 105, 105, 0.12);
-  --base-error-surface: #221c1c;
-  --base-error-surface-dark: #181414;
-  --base-error-text-muted: #6e6e6e;
-  --base-error-border: #442e2e;
+  --base-accent-hover: #eab872;
+  --base-on-accent: #121413;
+  --base-selected: #24302b;
+  --base-selected-strong: #4e7a66;
+  --base-secondary: #8fc2a8;
+
+  --base-success: #7fcb98;
+  --base-warning: #e8c15a;
+  --base-danger: #e57373;
+  --base-info: #8fc2c8;
+
+  --base-hover-overlay: rgba(230, 255, 240, 0.035);
+  --base-active-overlay: rgba(230, 255, 240, 0.07);
+  --base-shadow: rgba(0, 0, 0, 0.65);
+
+  --base-error-accent: #ea8080;
+  --base-error-surface: #241c1c;
+  --base-error-surface-dark: #1a1414;
+  --base-error-text-muted: #dcb0b0;
+  --base-error-border: #4a2f2f;
+
   --base-syntax-keyword: #c792ea;
-  --base-syntax-function: #e2a555;
+  --base-syntax-function: #e2c08d;
   --base-syntax-param: #89ddff;
   --base-syntax-type: #73c991;
-  --base-syntax-punctuation: #c8c8c899;
-  --base-syntax-comment: #555555;
-  --base-switch-fg: #6e6e6e;
-  --base-switch-bg: #282828;
+  --base-syntax-punctuation: #cdd3cf99;
+  --base-syntax-comment: #66706b;
 }
 
+/* Obsidian Deep — the darkest glass, muted gold signal. */
 [data-theme="obsidian-deep"] {
-  --base-white: #b8b8b8;
-  --base-grey: #606060;
-  --base-blue: #7a9ee0;
-  --base-gold: #cc9650;
-  --base-red: #c06060;
-  --base-surface-base: #101010;
-  --base-surface-raised: #171717;
-  --base-surface-overlay: #1e1e1e;
-  --base-surface-panel: #0c0c0c;
-  --base-surface-input: #0d0d0d;
-  --base-border: #2a2a2a;
-  --base-border-subtle: #212121;
-  --base-text-muted: #888888;
-  --base-text-muted-faint: #3a3a3a;
-  --base-text-muted-strong: #606060;
+  --base-foreground: #c2c8c5;
+  --base-text-muted: #8f9894;
+  --base-text-muted-strong: #7a837f;
+  --base-text-muted-faint: #5e6763;
+
+  --base-surface-chrome: #070808;
+  --base-surface-panel: #090a0a;
+  --base-surface-base: #0c0d0d;
+  --base-surface-raised: #121414;
+  --base-surface-overlay: #1b1f1f;
+  --base-surface-input: #070808;
+
+  --base-border: #232727;
+  --base-border-subtle: #1a1d1d;
+
   --base-accent: #cc9650;
-  --base-accent-hover: #d8a866;
-  --base-accent-muted: #cc965025;
-  --base-accent-subtle: #cc965012;
-  --base-accent-border: #cc965050;
-  --base-danger: #c06060;
-  --base-hover-overlay: rgba(255, 255, 255, 0.025);
-  --base-active-overlay: rgba(255, 255, 255, 0.05);
-  --base-error-accent: #d46868;
-  --base-error-accent-soft: rgba(212, 104, 104, 0.2);
-  --base-error-glow: rgba(192, 96, 96, 0.12);
-  --base-error-surface: #1c1616;
-  --base-error-surface-dark: #141010;
-  --base-error-text-muted: #606060;
-  --base-error-border: #3e2828;
+  --base-accent-hover: #d8aa6c;
+  --base-on-accent: #0c0d0d;
+  --base-selected: #1e2826;
+  --base-selected-strong: #47695c;
+  --base-secondary: #86b39d;
+
+  --base-success: #74be8e;
+  --base-warning: #d9b556;
+  --base-danger: #da6d6d;
+  --base-info: #86b3b8;
+
+  --base-hover-overlay: rgba(230, 255, 240, 0.03);
+  --base-active-overlay: rgba(230, 255, 240, 0.06);
+  --base-shadow: rgba(0, 0, 0, 0.7);
+
+  --base-error-accent: #e07a7a;
+  --base-error-surface: #1e1616;
+  --base-error-surface-dark: #151010;
+  --base-error-text-muted: #d0a6a6;
+  --base-error-border: #432a2a;
+
   --base-syntax-keyword: #b888d8;
-  --base-syntax-function: #cc9650;
+  --base-syntax-function: #d8b47e;
   --base-syntax-param: #80c8e8;
   --base-syntax-type: #68b580;
-  --base-syntax-punctuation: #b8b8b899;
-  --base-syntax-comment: #484848;
-  --base-switch-fg: #606060;
-  --base-switch-bg: #212121;
+  --base-syntax-punctuation: #c2c8c599;
+  --base-syntax-comment: #5e6763;
 }
 
+/* Obsidian Ember — brown-black glass with a lava signal. */
 [data-theme="obsidian-ember"] {
-  --base-white: #c8bcb8;
-  --base-grey: #756864;
-  --base-blue: #d4785a;
-  --base-gold: #d4785a;
-  --base-red: #cf6a4c;
-  --base-surface-base: #151211;
-  --base-surface-raised: #1d1817;
-  --base-surface-overlay: #261f1d;
-  --base-surface-panel: #110e0d;
-  --base-surface-input: #120f0e;
+  --base-foreground: #d3c8c3;
+  --base-text-muted: #a39590;
+  --base-text-muted-strong: #8a7d78;
+  --base-text-muted-faint: #6e625d;
+
+  --base-surface-chrome: #0e0b0a;
+  --base-surface-panel: #100d0c;
+  --base-surface-base: #151110;
+  --base-surface-raised: #1c1716;
+  --base-surface-overlay: #282120;
+  --base-surface-input: #0e0b0a;
+
   --base-border: #352b28;
-  --base-border-subtle: #2a211f;
-  --base-text-muted: #978782;
-  --base-text-muted-faint: #4a403d;
-  --base-text-muted-strong: #756864;
-  --base-accent: #d4785a;
-  --base-accent-hover: #de8c70;
-  --base-accent-muted: #d4785a25;
-  --base-accent-subtle: #d4785a12;
-  --base-accent-border: #d4785a50;
-  --base-danger: #cf6a4c;
-  --base-hover-overlay: rgba(255, 245, 240, 0.03);
-  --base-active-overlay: rgba(255, 245, 240, 0.06);
-  --base-error-accent: #df7a62;
-  --base-error-accent-soft: rgba(223, 122, 98, 0.2);
-  --base-error-glow: rgba(207, 106, 76, 0.12);
-  --base-error-surface: #241917;
-  --base-error-surface-dark: #1a1211;
-  --base-error-text-muted: #756864;
-  --base-error-border: #4c2f29;
+  --base-border-subtle: #2a2220;
+
+  --base-accent: #f07a4e;
+  --base-accent-hover: #f4936f;
+  --base-on-accent: #151110;
+  --base-selected: #33251f;
+  --base-selected-strong: #8a5640;
+  --base-secondary: #e0a98c;
+
+  --base-success: #9cc88e;
+  --base-warning: #e8bc5a;
+  --base-danger: #f0687a;
+  --base-info: #c0c8d0;
+
+  --base-hover-overlay: rgba(255, 240, 230, 0.035);
+  --base-active-overlay: rgba(255, 240, 230, 0.07);
+  --base-shadow: rgba(0, 0, 0, 0.65);
+
+  --base-error-accent: #f2808e;
+  --base-error-surface: #261a1b;
+  --base-error-surface-dark: #1b1213;
+  --base-error-text-muted: #ddb0b2;
+  --base-error-border: #4f2c30;
+
   --base-syntax-keyword: #c792ea;
-  --base-syntax-function: #d4785a;
+  --base-syntax-function: #f0a07e;
   --base-syntax-param: #f2c38f;
   --base-syntax-type: #78b0a0;
-  --base-syntax-punctuation: #c8bcb899;
-  --base-syntax-comment: #5d504c;
-  --base-switch-fg: #756864;
-  --base-switch-bg: #2a211f;
+  --base-syntax-punctuation: #d3c8c399;
+  --base-syntax-comment: #6e625d;
 }
 
+/* Obsidian Frost — blue-black glass with an ice signal. */
 [data-theme="obsidian-frost"] {
-  --base-white: #c4c8cc;
-  --base-grey: #687078;
-  --base-blue: #8aacc8;
-  --base-gold: #8aacc8;
-  --base-red: #c86868;
-  --base-surface-base: #141618;
-  --base-surface-raised: #1b1e22;
-  --base-surface-overlay: #24272c;
-  --base-surface-panel: #101214;
-  --base-surface-input: #111315;
-  --base-border: #2e3238;
-  --base-border-subtle: #252830;
-  --base-text-muted: #909498;
-  --base-text-muted-faint: #3e4248;
-  --base-text-muted-strong: #687078;
-  --base-accent: #8aacc8;
-  --base-accent-hover: #9ebcd4;
-  --base-accent-muted: #8aacc825;
-  --base-accent-subtle: #8aacc812;
-  --base-accent-border: #8aacc850;
-  --base-danger: #c86868;
-  --base-hover-overlay: rgba(240, 248, 255, 0.03);
-  --base-active-overlay: rgba(240, 248, 255, 0.06);
-  --base-error-accent: #d87070;
-  --base-error-accent-soft: rgba(216, 112, 112, 0.2);
-  --base-error-glow: rgba(200, 104, 104, 0.12);
-  --base-error-surface: #1e1c20;
-  --base-error-surface-dark: #161418;
-  --base-error-text-muted: #687078;
-  --base-error-border: #402e2e;
+  --base-foreground: #cbd3da;
+  --base-text-muted: #97a3ae;
+  --base-text-muted-strong: #7e8a95;
+  --base-text-muted-faint: #63707b;
+
+  --base-surface-chrome: #0b0e10;
+  --base-surface-panel: #0d1013;
+  --base-surface-base: #111518;
+  --base-surface-raised: #171c20;
+  --base-surface-overlay: #212930;
+  --base-surface-input: #0b0e10;
+
+  --base-border: #2a3239;
+  --base-border-subtle: #20272d;
+
+  --base-accent: #9ccbf0;
+  --base-accent-hover: #b6d9f4;
+  --base-on-accent: #111518;
+  --base-selected: #1f2d3a;
+  --base-selected-strong: #4a7598;
+  --base-secondary: #a8c4da;
+
+  --base-success: #80cdb0;
+  --base-warning: #e5c46b;
+  --base-danger: #e77d86;
+  --base-info: #a8c4da;
+
+  --base-hover-overlay: rgba(240, 248, 255, 0.035);
+  --base-active-overlay: rgba(240, 248, 255, 0.07);
+  --base-shadow: rgba(0, 0, 0, 0.65);
+
+  --base-error-accent: #ec8a92;
+  --base-error-surface: #221b20;
+  --base-error-surface-dark: #181317;
+  --base-error-text-muted: #d8b0b6;
+  --base-error-border: #482c34;
+
   --base-syntax-keyword: #b898d8;
-  --base-syntax-function: #8aacc8;
+  --base-syntax-function: #9ccbf0;
   --base-syntax-param: #a0d4e8;
   --base-syntax-type: #70b890;
-  --base-syntax-punctuation: #c4c8cc99;
-  --base-syntax-comment: #4a4e54;
-  --base-switch-fg: #687078;
-  --base-switch-bg: #252830;
+  --base-syntax-punctuation: #cbd3da99;
+  --base-syntax-comment: #63707b;
 }

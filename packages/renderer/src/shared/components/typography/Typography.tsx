@@ -6,15 +6,15 @@ const typographyVariants = cva("m-0", {
   variants: {
     variant: {
       title:
-        "font-heading text-base font-semibold text-foreground leading-[1.2]",
+        "font-heading text-[15px] font-semibold text-foreground leading-[1.25]",
       subtitle:
-        "font-heading text-xl font-medium text-text-muted leading-[1.3]",
+        "font-heading text-lg font-bold tracking-[-0.01em] text-foreground leading-[1.3]",
       "section-title":
-        "font-mono text-[10px] font-semibold text-text-muted uppercase tracking-[0.05em] leading-[1.4]",
-      body: "font-body text-sm font-normal text-text-muted leading-normal",
-      button: "font-mono text-sm font-medium text-foreground leading-normal",
+        "font-heading text-sm font-semibold text-foreground leading-[1.4]",
+      body: "font-body text-base font-normal text-text-muted leading-normal",
+      button: "font-body text-base font-medium text-foreground leading-normal",
       caption: "font-body text-xs font-normal text-text-muted leading-[1.4]",
-      code: "font-mono text-sm font-normal text-foreground leading-[1.6] tracking-[-0.01em]",
+      code: "font-mono text-[12.5px] font-normal text-foreground leading-[1.6]",
     },
   },
   defaultVariants: {

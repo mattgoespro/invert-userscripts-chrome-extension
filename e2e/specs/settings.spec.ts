@@ -74,10 +74,10 @@ test.describe("Settings", () => {
       width: getComputedStyle(element, "::-webkit-scrollbar").width,
       thumb: getComputedStyle(element, "::-webkit-scrollbar-thumb")
         .backgroundColor,
-      theme: getComputedStyle(element.previousElementSibling).borderBottomColor,
     }));
+    const scrollbarTheme = await content.evaluate(borderColor);
     expect(scrollbar.width).toBe("6px");
-    expect(scrollbar.thumb).toBe(scrollbar.theme);
+    expect(scrollbar.thumb).toBe(scrollbarTheme);
     await content.focus();
     await optionsPage.keyboard.press("Home");
     await expect
@@ -108,12 +108,7 @@ test.describe("Settings", () => {
         (element) =>
           getComputedStyle(element, "::-webkit-scrollbar-thumb").backgroundColor
       )
-    ).toBe(
-      await content.evaluate(
-        (element) =>
-          getComputedStyle(element.previousElementSibling).borderBottomColor
-      )
-    );
+    ).toBe(await content.evaluate(borderColor));
     await advanced.focus();
     await optionsPage.keyboard.press("Space");
     await expect(advanced).toHaveAttribute("aria-expanded", "false");
@@ -139,7 +134,7 @@ test.describe("Settings", () => {
     await expect.poll(() => settings.getDocumentTheme()).toBe("obsidian");
   });
 
-  test("app theme defaults to graphite (no data-theme attribute)", async ({
+  test("app theme defaults to cyanotype (no data-theme attribute)", async ({
     optionsPage,
     clearStorage,
   }) => {
@@ -153,10 +148,9 @@ test.describe("Settings", () => {
     const settings = new SettingsPage(optionsPage);
     await settings.waitForReady();
 
-    // Default is graphite, which removes data-theme
+    // Cyanotype is the default theme and lives on :root without data-theme.
     const theme = await settings.getDocumentTheme();
-    // Either null/absent or "graphite" depending on seeded settings
-    expect(theme === null || theme === "graphite").toBe(true);
+    expect(theme).toBeNull();
   });
 
   test("app theme persists after page reload", async ({
@@ -204,6 +198,16 @@ test.describe("Settings", () => {
     ).toBeVisible({ timeout: 20_000 });
   });
 });
+
+/** The computed color of the theme's --border token, resolved in the page. */
+function borderColor(element: Element): string {
+  const probe = element.ownerDocument.createElement("div");
+  probe.style.backgroundColor = "var(--border)";
+  element.ownerDocument.body.append(probe);
+  const color = getComputedStyle(probe).backgroundColor;
+  probe.remove();
+  return color;
+}
 
 /** Inline helper for the reload test above. */
 async function settings_getTheme(

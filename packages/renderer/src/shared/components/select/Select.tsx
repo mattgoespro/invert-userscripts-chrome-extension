@@ -3,13 +3,13 @@ import clsx from "clsx";
 import { useEffect, useRef, useState } from "react";
 
 const selectToggleVariants = cva(
-  "flex items-center gap-2 w-full py-2 px-3.5 h-(--input-height) rounded-default cursor-pointer font-mono text-base font-medium tracking-[0.02em] select-none transition-all duration-200 focus-visible:outline-none focus-visible:border-accent-border focus-visible:shadow-[0_0_0_2px_var(--accent-muted)]",
+  "flex items-center gap-2 w-full py-2 px-3.5 h-(--input-height) rounded-default cursor-pointer text-base font-medium select-none transition-colors duration-150 focus-visible:outline-none focus-visible:border-accent-border focus-visible:shadow-[0_0_0_3px_var(--accent-subtle)]",
   {
     variants: {
       expanded: {
-        true: "bg-surface-raised border border-accent-border text-foreground shadow-[0_0_0_2px_var(--accent-muted),0_4px_16px_rgba(0,0,0,0.25)]",
+        true: "bg-surface-raised border border-accent-border text-foreground shadow-[0_0_0_3px_var(--accent-subtle)]",
         false:
-          "bg-select-bg border border-select-border text-text-muted-strong hover:border-accent-border hover:bg-surface-raised hover:text-foreground",
+          "bg-select-bg border border-select-border text-foreground hover:border-text-muted-faint",
       },
     },
     defaultVariants: {
@@ -19,13 +19,13 @@ const selectToggleVariants = cva(
 );
 
 const selectOptionVariants = cva(
-  "flex items-center gap-2 w-full h-(--button-height) py-0 px-2.5 border-none rounded-[calc(var(--geometry-border-radius)-2px)] cursor-pointer font-mono text-base font-medium tracking-[0.02em] text-left whitespace-nowrap overflow-hidden text-ellipsis transition-colors duration-120 active:bg-active-overlay",
+  "flex items-center gap-2 w-full h-(--button-height) py-0 px-2.5 border-none rounded-[calc(var(--geometry-border-radius)-2px)] cursor-pointer text-base font-medium text-left whitespace-nowrap overflow-hidden text-ellipsis transition-colors duration-120 active:bg-active-overlay",
   {
     variants: {
       selected: {
-        true: "text-accent bg-accent-subtle hover:bg-accent-muted",
+        true: "text-foreground bg-selected",
         false:
-          "bg-transparent text-text-muted-strong hover:bg-hover-overlay hover:text-foreground",
+          "bg-transparent text-text-muted hover:bg-hover-overlay hover:text-foreground",
       },
     },
     defaultVariants: {
@@ -118,9 +118,9 @@ export function Select<T>({ label, options, value, onChange }: SelectProps<T>) {
   const stringValue = typeof value === "string" ? value : JSON.stringify(value);
 
   return (
-    <div className="relative flex flex-col gap-2 font-mono" ref={wrapperRef}>
+    <div className="relative flex flex-col gap-2" ref={wrapperRef}>
       {label && (
-        <label className="font-mono text-xs leading-none font-normal text-label-fg uppercase">
+        <label className="text-xs leading-none font-medium text-label-fg">
           {label}
         </label>
       )}
@@ -148,9 +148,9 @@ export function Select<T>({ label, options, value, onChange }: SelectProps<T>) {
         <div
           className={clsx(
             "absolute top-[calc(100%+6px)] left-0 max-h-70 w-full min-w-45",
-            "flex flex-col rounded-default border border-accent-border bg-surface-panel",
+            "flex flex-col gap-px rounded-default border border-border bg-surface-raised p-1",
             "z-100 scrollbar-thin scrollbar-thumb-transparent scrollbar-track-transparent overflow-scroll hover:scrollbar-thumb-hover-overlay",
-            "shadow-[0_8px_32px_rgba(0,0,0,0.4),0_0_0_1px_var(--border-subtle)]",
+            "shadow-(--popover-shadow)",
             "origin-top animate-select-reveal"
           )}
         >

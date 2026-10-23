@@ -3,7 +3,7 @@ import clsx from "clsx";
 import { buttonSizes } from "./presets";
 
 const buttonVariants = cva(
-  "inline-flex max-w-full shrink-0 items-center justify-center gap-2 overflow-hidden py-0 font-mono font-medium leading-none whitespace-nowrap rounded-default cursor-pointer transition-colors duration-150 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent",
+  "inline-flex max-w-full shrink-0 items-center justify-center gap-2 overflow-hidden py-0 font-body font-semibold leading-none whitespace-nowrap rounded-default cursor-pointer transition-colors duration-150 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent",
   {
     variants: {
       size: buttonSizes,
@@ -11,11 +11,11 @@ const buttonVariants = cva(
       variant: {
         link: "bg-transparent border-none text-secondary enabled:hover:underline focus-visible:outline-secondary",
         primary:
-          "bg-accent text-surface-base border-none hover:bg-accent-hover",
+          "bg-accent text-on-accent border-none enabled:hover:bg-accent-hover",
         secondary:
-          "bg-transparent text-secondary border border-secondary enabled:hover:bg-secondary-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-solid focus-visible:outline-secondary",
+          "bg-transparent text-foreground border border-border enabled:hover:bg-hover-overlay enabled:hover:border-text-muted-faint",
         danger:
-          "bg-error-surface text-error-accent border border-error-border hover:bg-danger hover:border-danger hover:text-foreground",
+          "bg-error-surface text-error-accent border border-error-border enabled:hover:bg-danger enabled:hover:border-danger enabled:hover:text-on-accent",
         ghost:
           "bg-transparent text-text-muted border border-transparent enabled:hover:bg-hover-overlay enabled:hover:text-foreground",
       },

@@ -15,10 +15,10 @@ const iconButtonVariants = cva(
     variants: {
       variant: {
         primary: "hover:bg-accent-subtle hover:text-accent",
-        secondary: "hover:bg-hover-overlay hover:text-text-muted-strong",
+        secondary: "hover:bg-hover-overlay hover:text-foreground",
         outlined:
-          "border-border text-text-muted-strong hover:border-accent-muted hover:text-accent",
-        ghost: "hover:bg-hover-overlay hover:text-text-muted-strong",
+          "border-border text-text-muted hover:border-text-muted-faint hover:text-foreground",
+        ghost: "hover:bg-hover-overlay hover:text-foreground",
         danger:
           "hover:bg-error-surface hover:border-danger hover:text-error-accent",
       },

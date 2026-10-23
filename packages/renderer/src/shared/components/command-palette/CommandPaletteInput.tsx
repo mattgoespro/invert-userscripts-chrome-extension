@@ -26,7 +26,7 @@ export function CommandPaletteInput({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         aria-label="Command palette search"
-        className="h-10 w-full bg-transparent font-mono text-[13px] text-foreground outline-none placeholder:text-text-muted-faint"
+        className="h-12 w-full bg-transparent text-[15px] text-foreground outline-none placeholder:text-text-muted-faint"
       />
     </div>
   );

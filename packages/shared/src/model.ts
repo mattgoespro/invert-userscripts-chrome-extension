@@ -2,6 +2,8 @@ import type { EditorThemeName } from "./editor-theme";
 import type { ModuleManifest } from "./modules/manifest";
 
 export type AppThemeName =
+  | "cyanotype"
+  | "print"
   | "graphite"
   | "graphite-warm"
   | "graphite-dusk"

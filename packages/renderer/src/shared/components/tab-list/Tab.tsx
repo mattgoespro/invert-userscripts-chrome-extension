@@ -4,13 +4,12 @@ import { cva } from "class-variance-authority";
 import clsx from "clsx";
 
 const tabVariants = cva(
-  "inline-flex h-(--button-height-sm) items-center gap-1.5 py-0 px-2.5 rounded-default cursor-pointer font-mono text-base font-medium tracking-[0.03em] transition-colors duration-150",
+  "relative inline-flex h-full items-center gap-1.5 py-0 px-1 cursor-pointer text-base font-medium transition-colors duration-150 border-y-2 border-transparent focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent",
   {
     variants: {
       active: {
-        true: "text-foreground bg-surface-overlay border border-border",
-        false:
-          "text-text-muted bg-transparent border border-transparent hover:text-foreground hover:bg-hover-overlay",
+        true: "text-foreground border-b-accent",
+        false: "text-text-muted hover:text-foreground",
       },
     },
     defaultVariants: {

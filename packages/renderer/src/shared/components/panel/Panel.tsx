@@ -21,9 +21,9 @@ export function Panel({
       className={clsx(
         "absolute top-[calc(100%+0.5rem)] right-0 z-100",
         "flex flex-col overflow-hidden",
-        "rounded-default border border-accent-border bg-surface-panel",
-        "shadow-[0_4px_24px_rgba(0,0,0,0.5),0_0_0_1px_rgba(0,0,0,0.2)]",
-        "font-mono text-xs leading-[1.4]",
+        "rounded-panel border border-border bg-surface-raised",
+        "shadow-(--popover-shadow)",
+        "text-xs leading-[1.4]",
         "animate-panel-enter",
         className
       )}
@@ -52,9 +52,7 @@ export function PanelHeader({ icon, className, children }: PanelHeaderProps) {
       {icon && (
         <span className="flex items-center text-text-muted-faint">{icon}</span>
       )}
-      <span className="font-mono text-[10px] font-semibold tracking-[0.06em] text-text-muted-strong uppercase">
-        {children}
-      </span>
+      <span className="text-xs font-semibold text-foreground">{children}</span>
     </div>
   );
 }

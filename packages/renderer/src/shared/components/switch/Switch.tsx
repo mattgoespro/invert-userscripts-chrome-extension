@@ -15,7 +15,7 @@ export function Switch({ checked, onChange, label }: SwitchProps) {
       />
       <span className="switch--slider"></span>
       {label && (
-        <span className="text-text-muted-strong flex cursor-pointer items-center gap-2.5 font-mono text-[13px]">
+        <span className="flex cursor-pointer items-center gap-2.5 text-base text-text-muted">
           {label}
         </span>
       )}

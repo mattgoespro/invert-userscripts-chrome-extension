@@ -105,7 +105,7 @@ export async function expandProblemsDrawer(page: Page) {
     timeout: 15_000,
   });
 
-  await page.getByRole("tab", { name: /^problems(?:\s+\d+)?$/ }).click();
+  await page.getByRole("tab", { name: /^Problems(?:\s+\d+)?$/ }).click();
 }
 
 /**
@@ -113,7 +113,7 @@ export async function expandProblemsDrawer(page: Page) {
  *
  * Monaco's TS worker can report a clean panel briefly before markers arrive,
  * so we require several consecutive clean polls after the panel has a settled
- * message ("No errors or warnings" or any non-module diagnostic).
+ * message ("No problems in this script" or any non-module diagnostic).
  */
 export async function expectNoModuleImportErrors(page: Page, timeout = 20_000) {
   await expandProblemsDrawer(page);
@@ -127,7 +127,8 @@ export async function expectNoModuleImportErrors(page: Page, timeout = 20_000) {
     const text = await problems.innerText();
     const hasImportError = /Cannot find module/i.test(text);
     const settled =
-      /No errors or warnings/i.test(text) || /Line\s+\d+:\d+/i.test(text);
+      /No problems in this script/i.test(text) ||
+      /(main\.ts|types\.d\.ts|styles\.scss) \d+:\d+/.test(text);
 
     if (hasImportError) {
       cleanStreak = 0;
@@ -171,7 +172,7 @@ export async function expectCannotFindName(
 /**
  * Assert the visible script has a fully clean problems panel.
  *
- * Monaco can flash "No errors or warnings" before markers arrive, so we
+ * Monaco can flash "No problems in this script" before markers arrive, so we
  * ignore the empty state until `minWaitMs` has elapsed, fail immediately on
  * any diagnostic, and then require several consecutive clean polls.
  */
@@ -192,7 +193,7 @@ export async function expectNoEditorProblems(
     const text = await problems.innerText();
     const hasDiagnostic = /Line\s+\d+:\d+/i.test(text);
     const cannotFindName = /Cannot find name/i.test(text);
-    const settledClean = /No errors or warnings/i.test(text);
+    const settledClean = /No problems in this script/i.test(text);
 
     if (hasDiagnostic || cannotFindName) {
       throw new Error(
