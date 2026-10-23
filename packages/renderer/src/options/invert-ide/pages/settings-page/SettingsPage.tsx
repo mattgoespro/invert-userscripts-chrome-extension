@@ -4,7 +4,10 @@ import { useToast } from "@/shared/components/toast/ToastProvider";
 import { Input } from "@/shared/components/input/Input";
 import { Select } from "@/shared/components/select/Select";
 import { Typography } from "@/shared/components/typography/Typography";
-import type { EditorThemeName } from "@shared/editor-theme";
+import {
+  MatchAppEditorTheme,
+  type EditorThemeSetting,
+} from "@shared/editor-theme";
 import { useAppDispatch, useAppSelector } from "@/shared/store/hooks";
 import { selectMonacoReady } from "@/shared/store/slices/code-editor";
 import {
@@ -52,7 +55,7 @@ export function Settings() {
   const [activeSection, setActiveSection] =
     useState<SettingsSectionId>("appearance");
 
-  const handleThemeChange = (theme: EditorThemeName) => {
+  const handleThemeChange = (theme: EditorThemeSetting) => {
     dispatch(updateSettings({ theme }));
   };
 
@@ -106,12 +109,21 @@ export function Settings() {
 
   function getEditorThemeOptions(): {
     label: string;
-    value: EditorThemeName;
+    value: EditorThemeSetting;
   }[] {
-    return getEditorThemes().map(([key, theme]) => ({
+    const themes = getEditorThemes().map(([key, theme]) => ({
       label: theme.displayName,
-      value: key as EditorThemeName,
+      value: key as EditorThemeSetting,
     }));
+    const isFamily = (value: string): boolean =>
+      value.startsWith("invert-") && value !== "invert-dark";
+    return [
+      { label: "Match app theme", value: MatchAppEditorTheme },
+      ...themes.filter((theme) => isFamily(theme.value)),
+      ...themes
+        .filter((theme) => !isFamily(theme.value))
+        .sort((a, b) => a.label.localeCompare(b.label)),
+    ];
   }
 
   const scrollToSection = (id: SettingsSectionId) => {
@@ -213,16 +225,18 @@ export function Settings() {
             </SettingsSection>
             <SettingsSection
               title="Editor theme"
-              description="Syntax colors inside the code editors."
+              description="Syntax colors inside the code editors. Match app theme keeps the editors in step with the theme above."
             >
               <Select
                 label="Editor theme"
-                value={settings.theme}
+                value={settings.theme ?? MatchAppEditorTheme}
                 onChange={handleThemeChange}
                 options={getEditorThemeOptions()}
               />
               <div className="pt-1">
-                {monacoReady && <ThemePreview theme={settings.theme} />}
+                {monacoReady && (
+                  <ThemePreview theme={settings.theme ?? MatchAppEditorTheme} />
+                )}
               </div>
               <Input
                 type="number"

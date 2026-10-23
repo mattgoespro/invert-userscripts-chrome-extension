@@ -2,7 +2,7 @@ import { ThemeRegistration } from "@shikijs/core";
 
 export const invertDark: ThemeRegistration = {
   name: "invert-dark",
-  displayName: "Invert Dark",
+  displayName: "Invert Dark (classic)",
   type: "dark",
   fg: "#f0f0f0",
   bg: "#0e0e0e",

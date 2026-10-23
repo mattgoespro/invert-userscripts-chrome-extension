@@ -8,6 +8,7 @@ import { saveEditorCode } from "@/shared/store/slices/code-editor/thunks.code-ed
 import { selectEditorSettings } from "@/shared/store/slices/settings";
 import { describeApplyResult } from "@/shared/store/slices/userscripts/messaging";
 import { EditorSettings } from "@shared/model";
+import { resolveEditorTheme } from "@shared/editor-theme";
 import {
   attachWorkspaceModel,
   buildModelUri,
@@ -63,6 +64,7 @@ export function CodeEditor(props: CodeEditorProps) {
   const settings = settingsOverride
     ? { ...appEditorSettings, ...settingsOverride }
     : appEditorSettings;
+  const editorTheme = resolveEditorTheme(settings.theme, settings.appTheme);
 
   const editorRootRef = useRef<HTMLDivElement>(null);
   const editorInstanceRef = useRef<monaco.editor.IStandaloneCodeEditor>(null);
@@ -106,7 +108,7 @@ export function CodeEditor(props: CodeEditorProps) {
       },
       scrollBeyondLastLine: editable,
       selectionHighlight: editable,
-      theme: settings.theme,
+      theme: editorTheme,
       wordWrap: "on",
     });
 
@@ -151,8 +153,8 @@ export function CodeEditor(props: CodeEditorProps) {
   }, [onEditorReady]);
 
   useEffect(() => {
-    monaco.editor.setTheme(settings.theme);
-  }, [settings.theme]);
+    monaco.editor.setTheme(editorTheme);
+  }, [editorTheme]);
 
   useEffect(() => {
     editorInstanceRef.current?.updateOptions({ fontSize: settings.fontSize });

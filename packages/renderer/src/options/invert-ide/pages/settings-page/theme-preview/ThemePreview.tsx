@@ -1,8 +1,8 @@
 import { CodeEditor } from "@/options/invert-ide/shared/CodeEditor";
-import type { EditorThemeName } from "@shared/editor-theme";
+import type { EditorThemeSetting } from "@shared/editor-theme";
 
 type ThemePreviewProps = {
-  theme: EditorThemeName;
+  theme: EditorThemeSetting;
 };
 
 export function ThemePreview({ theme }: ThemePreviewProps) {

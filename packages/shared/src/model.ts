@@ -1,4 +1,4 @@
-import type { EditorThemeName } from "./editor-theme";
+import type { EditorThemeSetting } from "./editor-theme";
 import type { ModuleManifest } from "./modules/manifest";
 
 export type AppThemeName =
@@ -60,7 +60,7 @@ export interface GlobalModule {
 }
 
 export interface EditorSettings {
-  theme?: EditorThemeName;
+  theme?: EditorThemeSetting;
   appTheme?: AppThemeName;
   fontSize?: number;
   tabSize?: number;

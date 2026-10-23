@@ -13,6 +13,16 @@ export const EditorThemes: Record<EditorThemeName, ThemeRegistration> = {
   "github-dark": themes.githubDark,
   "github-dark-default": themes.githubDarkDefault,
   "github-dark-dimmed": themes.githubDarkDimmed,
+  "invert-cyanotype": themes.invertCyanotype,
+  "invert-print": themes.invertPrint,
+  "invert-graphite": themes.invertGraphite,
+  "invert-graphite-warm": themes.invertGraphiteWarm,
+  "invert-graphite-dusk": themes.invertGraphiteDusk,
+  "invert-graphite-ember": themes.invertGraphiteEmber,
+  "invert-obsidian": themes.invertObsidian,
+  "invert-obsidian-deep": themes.invertObsidianDeep,
+  "invert-obsidian-ember": themes.invertObsidianEmber,
+  "invert-obsidian-frost": themes.invertObsidianFrost,
   "invert-dark": themes.invertDark,
   "min-dark": themes.minDark,
   "one-dark-pro": themes.oneDarkPro,
@@ -25,7 +35,7 @@ export const EditorThemes: Record<EditorThemeName, ThemeRegistration> = {
 /**
  * The default theme registered at initialization time.
  */
-export const EditorDefaultTheme: EditorThemeName = "invert-dark";
+export const EditorDefaultTheme: EditorThemeName = "invert-cyanotype";
 
 /**
  * Gets the editor theme names and their corresponding TextMate theme definitions.
