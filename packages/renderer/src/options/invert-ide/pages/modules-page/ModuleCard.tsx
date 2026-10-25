@@ -1,7 +1,7 @@
 import { Checkbox } from "@/shared/components/checkbox/Checkbox";
 import { IconButton } from "@/shared/components/icon-button/IconButton";
 import { GlobalModule } from "@shared/model";
-import { LoaderCircleIcon, Trash2Icon } from "lucide-react";
+import { LoaderCircleIcon, Trash2Icon, TriangleAlertIcon } from "lucide-react";
 import clsx from "clsx";
 
 export type TypesValidationStatus = {
@@ -30,38 +30,42 @@ function TypesCell({
 
   const label = `@types/${module.packageName}${module.typeVersion ? "@" + module.typeVersion : ""}`;
 
+  const failed = typesValidation?.status === "error";
+
+  // Loaded types are the expected state, so only a failure gets an indicator.
   return (
     <span className="flex min-w-0 flex-col">
-      <span
-        className="truncate font-mono text-xs text-text-muted"
-        title={label}
-      >
-        {label}
+      <span className="flex min-w-0 items-center gap-1.5">
+        {failed && (
+          <TriangleAlertIcon
+            size={12}
+            className="shrink-0 text-error-accent"
+            aria-hidden
+          />
+        )}
+        <span
+          className={clsx(
+            "truncate font-mono text-xs",
+            failed ? "text-error-accent" : "text-text-muted"
+          )}
+          title={label}
+        >
+          {label}
+        </span>
+        {typesValidation?.status === "checking" && (
+          <LoaderCircleIcon
+            size={11}
+            className="shrink-0 animate-spin text-text-muted-strong"
+            aria-label="Checking types"
+          />
+        )}
       </span>
-      {typesValidation?.status === "checking" && (
-        <span
-          className="flex items-center gap-1 text-xs text-text-muted-strong"
-          aria-label="Checking types"
-        >
-          <LoaderCircleIcon size={11} className="animate-spin" aria-hidden />
-          Checking…
-        </span>
-      )}
-      {typesValidation?.status === "ok" && (
-        <span
-          className="text-xs text-success"
-          title="Types OK"
-          aria-label="Types reachable"
-        >
-          Types found
-        </span>
-      )}
-      {typesValidation?.status === "error" && (
+      {failed && (
         <span
           className="truncate text-xs text-error-accent"
           title={typesValidation.error}
         >
-          {typesValidation.error ?? "Types unreachable"}
+          Types didn’t load: {typesValidation.error ?? "unreachable"}
         </span>
       )}
     </span>

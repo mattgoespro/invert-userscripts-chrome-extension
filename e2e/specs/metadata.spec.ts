@@ -24,8 +24,8 @@ test.describe("Scripts — metadata", () => {
     // Re-select the script after reload so the metadata panel is rendered
     await scripts.selectScript("PatternScript");
 
-    // The editor header chips show the saved pattern
-    await expect(scripts.urlPatternSummary).toContainText("example.com", {
+    // Script details lists the saved pattern
+    await expect(await scripts.urlPatternList()).toContainText("example.com", {
       timeout: 10_000,
     });
   });
@@ -49,13 +49,10 @@ test.describe("Scripts — metadata", () => {
     await options.waitForReady();
     await scripts.selectScript("PatternsPreseeded");
 
-    // The header shows a chip for each pattern
-    await expect(scripts.urlPatternSummary).toContainText(
-      "https://example.com/*"
-    );
-    await expect(scripts.urlPatternSummary).toContainText(
-      "https://github.com/*"
-    );
+    // Script details lists each pattern
+    const patterns = await scripts.urlPatternList();
+    await expect(patterns).toContainText("https://example.com/*");
+    await expect(patterns).toContainText("https://github.com/*");
   });
 
   test("script marked as shared shows module name field", async ({
@@ -141,6 +138,6 @@ test.describe("Scripts — metadata", () => {
     await options.waitForReady();
     await scripts.createScript();
     await expect(optionsPage.getByTestId("script-setup-banner")).toHaveCount(0);
-    await expect(scripts.urlPatternSummary).toContainText("*://*/*");
+    await expect(await scripts.urlPatternList()).toContainText("*://*/*");
   });
 });

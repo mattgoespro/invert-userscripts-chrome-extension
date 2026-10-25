@@ -33,10 +33,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { selectScriptErrors } from "@/shared/store/slices/workspace";
 import type { CompilationError } from "@shared/errors";
 import { EditorPaneHeader } from "./EditorPaneHeader";
-import {
-  ScriptDetailsPanel,
-  type ScriptDetailsFocus,
-} from "./script-details/ScriptDetailsPanel";
+import { ScriptDetailsPanel } from "./script-details/ScriptDetailsPanel";
 import { useScriptMetadataActions } from "./script-metadata/useScriptMetadataActions";
 import { Group, Panel, PanelImperativeHandle } from "react-resizable-panels";
 import { ScriptEditorDrawer } from "./script-editor-drawer/ScriptEditorDrawer";
@@ -75,10 +72,6 @@ export function ScriptEditor() {
 
   const [focusedBuffer, setFocusedBuffer] = useState<EditorBuffer | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
-  const [detailsFocus, setDetailsFocus] = useState<{
-    target: ScriptDetailsFocus;
-    nonce: number;
-  } | null>(null);
   const metadataActions = useScriptMetadataActions(script);
   const scriptErrors = useAppSelector((state) =>
     selectScriptErrors(state, scriptId)
@@ -118,11 +111,6 @@ export function ScriptEditor() {
     );
     return () => disposables.forEach((disposable) => disposable.dispose());
   }, [tsEditorInstance, typeDefinitionEditorInstance, scssEditorInstance]);
-
-  const openDetails = useCallback((target: ScriptDetailsFocus) => {
-    setDetailsOpen(true);
-    setDetailsFocus({ target, nonce: Date.now() });
-  }, []);
 
   const drawerPanelRef = useRef<PanelImperativeHandle>(null);
   const drawerCollapsedRef = useRef(outputDrawerCollapsed);
@@ -231,7 +219,6 @@ export function ScriptEditor() {
           script={script}
           actions={metadataActions}
           detailsOpen={detailsOpen}
-          onOpenDetails={openDetails}
           onToggleDetails={() => setDetailsOpen((open) => !open)}
         />
       </div>
@@ -439,7 +426,6 @@ export function ScriptEditor() {
             key={script.id}
             script={script}
             actions={metadataActions}
-            focus={detailsFocus}
             onClose={() => setDetailsOpen(false)}
           />
         )}

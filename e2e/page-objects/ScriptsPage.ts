@@ -135,24 +135,23 @@ export class ScriptsPage {
     await expect(this.scriptListPanel).toContainText(name, { timeout: 15_000 });
   }
 
-  /** The URL pattern chips in the editor header; opens Script details. */
-  get urlPatternSummary() {
-    return this.page.getByTestId("url-pattern-summary");
+  /** Open Script details and return its "Where it runs" pattern list. */
+  async urlPatternList() {
+    await this.openOptionsPanel();
+    return this.page.getByTestId("url-pattern-list");
   }
 
   /** Add a URL pattern from the Script details panel and wait for it to be saved. */
   async addUrlPattern(pattern: string) {
-    await this.urlPatternSummary.click();
+    const list = await this.urlPatternList();
 
     const input = this.page.getByRole("textbox", { name: "Add URL pattern" });
     await input.fill(pattern);
     await input.press("Enter");
 
-    // Wait for the updateUserscript thunk to complete: the header chips only
-    // show the pattern after Redux accepts durable publication.
-    await expect(this.urlPatternSummary).toContainText(pattern, {
-      timeout: 15_000,
-    });
+    // Wait for the updateUserscript thunk to complete: the list only shows
+    // the pattern after Redux accepts durable publication.
+    await expect(list).toContainText(pattern, { timeout: 15_000 });
   }
 
   // ─── Options Panel ────────────────────────────────────────────────────────
@@ -167,14 +166,11 @@ export class ScriptsPage {
 
   /** Open the Script details panel (no-op when it is already open). */
   async openOptionsPanel() {
-    if (
-      (await this.scriptDetailsToggle.getAttribute("aria-pressed")) !== "true"
-    ) {
+    const drawer = this.page.getByRole("dialog", { name: "Script details" });
+    if (!(await drawer.isVisible())) {
       await this.scriptDetailsToggle.click();
     }
-    await expect(
-      this.page.getByRole("complementary", { name: "Script details" })
-    ).toBeVisible();
+    await expect(drawer).toBeVisible();
   }
 
   /** Close the Script details panel. */

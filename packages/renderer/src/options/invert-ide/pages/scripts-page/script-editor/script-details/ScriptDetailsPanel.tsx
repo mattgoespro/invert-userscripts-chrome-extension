@@ -22,12 +22,9 @@ import {
   parseUrlPatternInput,
 } from "../script-metadata/url-patterns";
 
-export type ScriptDetailsFocus = "patterns" | "tester";
-
 type ScriptDetailsPanelProps = {
   script: Userscript;
   actions: ScriptMetadataActions;
-  focus: { target: ScriptDetailsFocus; nonce: number } | null;
   onClose: () => void;
 };
 
@@ -65,7 +62,6 @@ function DetailsSection({
 export function ScriptDetailsPanel({
   script,
   actions,
-  focus,
   onClose,
 }: ScriptDetailsPanelProps) {
   const patterns = useMemo(
@@ -82,20 +78,28 @@ export function ScriptDetailsPanel({
   const [testUrl, setTestUrl] = useState("");
   const [openTabMatches, setOpenTabMatches] = useState<string[] | null>(null);
   const [tabsError, setTabsError] = useState<string | null>(null);
-  const patternInputRef = useRef<HTMLInputElement>(null);
-  const testerInputRef = useRef<HTMLInputElement>(null);
+  const drawerRef = useRef<HTMLElement>(null);
+  const patternListRef = useRef<HTMLUListElement>(null);
   const moduleInputRef = useRef<HTMLInputElement>(null);
+  const previousPatternCount = useRef(patterns.length);
 
+  // Temporary drawer: take focus on open and hand it back on close.
   useEffect(() => {
-    if (!focus) {
-      return;
+    const opener = document.activeElement as HTMLElement | null;
+    drawerRef.current?.focus();
+    return () => opener?.focus();
+  }, []);
+
+  // Keep a newly added pattern in view inside the scrolling list.
+  useEffect(() => {
+    if (
+      patterns.length > previousPatternCount.current &&
+      patternListRef.current
+    ) {
+      patternListRef.current.scrollTop = patternListRef.current.scrollHeight;
     }
-    const target =
-      focus.target === "tester"
-        ? testerInputRef.current
-        : patternInputRef.current;
-    target?.focus();
-  }, [focus]);
+    previousPatternCount.current = patterns.length;
+  }, [patterns.length]);
 
   const invalidPatterns = useMemo(
     () => new Set(patterns.filter((pattern) => !isValidUrlPattern(pattern))),
@@ -182,280 +186,306 @@ export function ScriptDetailsPanel({
   const runAt = script.runAt ?? "beforePageLoad";
 
   return (
-    <aside
-      aria-label="Script details"
-      className="flex h-full w-80 shrink-0 flex-col border-l border-border bg-surface-raised"
-    >
-      <div className="flex h-10 shrink-0 items-center justify-between border-b border-border px-lg">
-        <h2 className="text-sm font-semibold text-foreground">
-          Script details
-        </h2>
-        <IconButton
-          icon={XIcon}
-          variant="ghost"
-          size="sm"
-          onClick={onClose}
-          title="Close details panel"
-        />
-      </div>
-      <div className="scrollbar-thin-6 min-h-0 flex-1 overflow-y-auto">
-        <DetailsSection
-          title="Where it runs"
-          description="The script runs on pages that match any of these patterns."
-        >
-          {patterns.length === 0 && (
-            <p className="text-xs text-warning">
-              No patterns yet, so this script won’t run anywhere.
-            </p>
-          )}
-          <ul className="flex flex-col gap-1" data-testid="url-pattern-list">
-            {patterns.map((pattern) => {
-              const invalid = invalidPatterns.has(pattern);
-              return (
-                <li
-                  key={pattern}
-                  className={clsx(
-                    "group flex items-center gap-2 rounded-default border px-2.5 py-1",
-                    invalid
-                      ? "border-error-border bg-error-surface"
-                      : "border-transparent bg-surface-input"
-                  )}
-                >
-                  <span
-                    className={clsx(
-                      "min-w-0 flex-1 truncate font-mono text-xs",
-                      invalid ? "text-error-accent" : "text-foreground"
-                    )}
-                    title={pattern}
-                  >
-                    {pattern}
-                  </span>
-                  {invalid && (
-                    <span className="shrink-0 text-[11px] text-error-accent">
-                      Invalid
-                    </span>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => removePattern(pattern)}
-                    className="shrink-0 cursor-pointer rounded-sm text-[11px] text-text-muted-strong hover:text-danger focus-visible:outline-2 focus-visible:outline-accent"
-                    aria-label={`Remove ${pattern}`}
-                  >
-                    Remove
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-          <input
-            ref={patternInputRef}
-            type="text"
-            value={patternInput}
-            onChange={(event) => {
-              setPatternInput(event.target.value);
-              setPatternError(null);
-            }}
-            onKeyDown={(event) => {
-              if (event.key === "Enter" || event.key === ",") {
-                event.preventDefault();
-                commitPatterns();
-              }
-            }}
-            onBlur={() => {
-              if (patternInput.trim()) {
-                commitPatterns();
-              }
-            }}
-            placeholder="Add a pattern, then press Enter"
-            aria-label="Add URL pattern"
-            aria-invalid={!!patternError}
-            className={clsx(
-              "h-8 w-full rounded-default border border-dashed bg-transparent px-2.5 font-mono text-xs text-foreground outline-none placeholder:font-body placeholder:text-text-muted-faint focus:border-solid focus:border-accent-border",
-              patternError ? "border-danger" : "border-border"
-            )}
-          />
-          {patternError && (
-            <p role="alert" className="text-xs text-error-accent">
-              {patternError}
-            </p>
-          )}
-        </DetailsSection>
-
-        <DetailsSection title="Try a URL">
-          <input
-            ref={testerInputRef}
-            type="url"
-            value={testUrl}
-            onChange={(event) => setTestUrl(event.target.value)}
-            placeholder="https://example.com/page"
-            aria-label="URL to test"
-            className="h-8 w-full rounded-default border border-border bg-surface-input px-2.5 font-mono text-xs text-foreground outline-none placeholder:text-text-muted-faint focus:border-accent-border"
-          />
-          <p
-            role="status"
-            className={clsx(
-              "text-xs leading-[1.45]",
-              !testResult && "text-text-muted-strong",
-              testResult?.matchedPattern && "text-success",
-              testResult && !testResult.matchedPattern && "text-text-muted"
-            )}
-          >
-            {!testResult
-              ? "Paste a page address to check whether this script runs there."
-              : testResult.matchedPattern
-                ? `Runs here. Matches ${testResult.matchedPattern}`
-                : "Doesn’t run here. No pattern matches this URL."}
-          </p>
-          <Button
-            variant="secondary"
+    <>
+      <div
+        aria-hidden
+        className="fixed inset-0 z-900 bg-scrim motion-safe:animate-backdrop-enter"
+        onClick={onClose}
+      />
+      <aside
+        ref={drawerRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Script details"
+        tabIndex={-1}
+        onKeyDown={(event) => {
+          if (event.key === "Escape") {
+            event.stopPropagation();
+            onClose();
+          }
+        }}
+        className="fixed top-0 right-0 bottom-0 z-901 flex w-[22rem] max-w-[90vw] flex-col border-l border-border bg-surface-raised shadow-(--dialog-shadow) outline-none motion-safe:animate-drawer-enter"
+      >
+        <div className="flex h-10 shrink-0 items-center justify-between border-b border-border px-lg">
+          <h2 className="text-sm font-semibold text-foreground">
+            Script details
+          </h2>
+          <IconButton
+            icon={XIcon}
+            variant="ghost"
             size="sm"
-            onClick={() => void checkOpenTabs()}
-          >
-            Check open tabs
-          </Button>
-          {tabsError && (
-            <p className="text-xs text-error-accent">{tabsError}</p>
-          )}
-          {openTabMatches && (
-            <div className="flex flex-col gap-1">
-              <p className="text-xs text-text-muted">
-                {openTabMatches.length === 0
-                  ? "None of your open tabs match."
-                  : `Runs in ${openTabMatches.length} open tab${openTabMatches.length === 1 ? "" : "s"}:`}
-              </p>
-              {openTabMatches.slice(0, 8).map((url, index) => (
-                <p
-                  key={`${url}-${index}`}
-                  className="truncate font-mono text-[11px] text-text-muted-strong"
-                  title={url}
-                >
-                  {url}
-                </p>
-              ))}
-            </div>
-          )}
-        </DetailsSection>
-
-        <DetailsSection title="When it runs">
-          <div
-            role="radiogroup"
-            aria-label="When it runs"
-            data-testid="run-at-select"
-            className="flex rounded-default bg-surface-input p-0.5"
-          >
-            {RUN_AT_OPTIONS.map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                role="radio"
-                aria-checked={runAt === option.value}
-                title={option.hint}
-                onClick={() =>
-                  void actions.updateScript({ runAt: option.value })
-                }
-                className={clsx(
-                  "h-7 flex-1 cursor-pointer rounded-[calc(var(--geometry-border-radius)-2px)] text-xs font-medium transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-accent",
-                  runAt === option.value
-                    ? "bg-selected text-foreground"
-                    : "text-text-muted hover:text-foreground"
-                )}
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
-          <p className="text-xs text-text-muted-strong">
-            {RUN_AT_OPTIONS.find((option) => option.value === runAt)?.hint}
-          </p>
-        </DetailsSection>
-
-        <DetailsSection
-          title="Modules"
-          description="CDN libraries loaded before this script runs."
-        >
-          {globalModules.length > 0 ? (
-            <div className="flex flex-col gap-sm">
-              {globalModules.map((module) => (
-                <Checkbox
-                  key={module.id}
-                  label={module.name}
-                  checked={(script.globalModules ?? []).includes(module.id)}
-                  onChange={(checked) =>
-                    actions.toggleModule(module.id, checked)
-                  }
-                />
-              ))}
-            </div>
-          ) : (
-            <p className="text-xs text-text-muted">
-              No modules yet. Add them on the Modules page.
-            </p>
-          )}
-        </DetailsSection>
-
-        <DetailsSection
-          title="Share as a module"
-          description="Give this script a module name so other scripts can import it."
-        >
-          <div className="relative w-full">
-            <input
-              ref={moduleInputRef}
-              defaultValue={script.moduleName ?? ""}
-              placeholder="module-name"
-              aria-label="Module name"
-              onChange={(event) => actions.updateModuleName(event.target.value)}
-              className="h-8 w-full rounded-default border border-border bg-surface-input pr-9 pl-2.5 font-mono text-xs text-foreground outline-none placeholder:text-text-muted-faint focus:border-accent-border"
-            />
-            <IconButton
-              icon={WandSparklesIcon}
-              variant="ghost"
-              size="sm"
-              className="absolute top-1/2 right-1 -translate-y-1/2"
-              onClick={autoFillModuleName}
-              title="Auto-fill from script name"
-            />
-          </div>
-          {script.moduleName && (
-            <p className="font-mono text-[11px] text-text-muted-strong">
-              import … from &quot;scripts/{script.moduleName}/main&quot;
-            </p>
-          )}
-        </DetailsSection>
-
-        <DetailsSection
-          title="Shared imports"
-          description="Other scripts this one imports, read from its import statements."
-        >
-          {currentSharedDependencies.length > 0 ? (
-            <div className="flex flex-col gap-1">
-              {currentSharedDependencies.map((shared) => (
-                <div
-                  key={shared.id}
-                  className="flex items-center justify-between gap-sm rounded-default bg-surface-input px-2.5 py-1 text-xs"
-                >
-                  <span className="truncate text-foreground">
-                    {shared.name}
-                  </span>
-                  <span className="shrink-0 font-mono text-[11px] text-text-muted-strong">
-                    scripts/{shared.moduleName}/main
-                  </span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-xs text-text-muted">
-              This script doesn’t import any shared scripts.
-            </p>
-          )}
-        </DetailsSection>
-
-        <div className="px-lg py-md">
-          <Button variant="danger" size="sm" onClick={actions.deleteScript}>
-            <Trash2Icon size={13} aria-hidden />
-            Delete script
-          </Button>
+            onClick={onClose}
+            title="Close details panel"
+          />
         </div>
-      </div>
-    </aside>
+        <div className="scrollbar-thin-6 min-h-0 flex-1 overflow-y-auto">
+          <DetailsSection
+            title="Where it runs"
+            description="The script runs on pages that match any of these patterns."
+          >
+            {patterns.length === 0 && (
+              <p className="text-xs text-warning">
+                No patterns yet, so this script won’t run anywhere.
+              </p>
+            )}
+            {patterns.length > 0 && (
+              <p className="text-xs text-text-muted-strong">
+                {patterns.length} pattern{patterns.length === 1 ? "" : "s"}
+              </p>
+            )}
+            <ul
+              ref={patternListRef}
+              className="-mr-1 flex scrollbar-thin-6 max-h-56 flex-col gap-1 overflow-y-auto pr-1"
+              data-testid="url-pattern-list"
+            >
+              {patterns.map((pattern) => {
+                const invalid = invalidPatterns.has(pattern);
+                return (
+                  <li
+                    key={pattern}
+                    className={clsx(
+                      "group flex items-center gap-2 rounded-default border px-2.5 py-1",
+                      invalid
+                        ? "border-error-border bg-error-surface"
+                        : "border-transparent bg-surface-input"
+                    )}
+                  >
+                    <span
+                      className={clsx(
+                        "min-w-0 flex-1 truncate font-mono text-xs",
+                        invalid ? "text-error-accent" : "text-foreground"
+                      )}
+                      title={pattern}
+                    >
+                      {pattern}
+                    </span>
+                    {invalid && (
+                      <span className="shrink-0 text-[11px] text-error-accent">
+                        Invalid
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => removePattern(pattern)}
+                      className="shrink-0 cursor-pointer rounded-sm text-[11px] text-text-muted-strong hover:text-danger focus-visible:outline-2 focus-visible:outline-accent"
+                      aria-label={`Remove ${pattern}`}
+                    >
+                      Remove
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+            <input
+              type="text"
+              value={patternInput}
+              onChange={(event) => {
+                setPatternInput(event.target.value);
+                setPatternError(null);
+              }}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === ",") {
+                  event.preventDefault();
+                  commitPatterns();
+                }
+              }}
+              onBlur={() => {
+                if (patternInput.trim()) {
+                  commitPatterns();
+                }
+              }}
+              placeholder="Add a pattern, then press Enter"
+              aria-label="Add URL pattern"
+              aria-invalid={!!patternError}
+              className={clsx(
+                "h-8 w-full rounded-default border border-dashed bg-transparent px-2.5 font-mono text-xs text-foreground outline-none placeholder:font-body placeholder:text-text-muted-faint focus:border-solid focus:border-accent-border",
+                patternError ? "border-danger" : "border-border"
+              )}
+            />
+            {patternError && (
+              <p role="alert" className="text-xs text-error-accent">
+                {patternError}
+              </p>
+            )}
+          </DetailsSection>
+
+          <DetailsSection title="Try a URL">
+            <input
+              type="url"
+              value={testUrl}
+              onChange={(event) => setTestUrl(event.target.value)}
+              placeholder="https://example.com/page"
+              aria-label="URL to test"
+              className="h-8 w-full rounded-default border border-border bg-surface-input px-2.5 font-mono text-xs text-foreground outline-none placeholder:text-text-muted-faint focus:border-accent-border"
+            />
+            <p
+              role="status"
+              className={clsx(
+                "text-xs leading-[1.45]",
+                !testResult && "text-text-muted-strong",
+                testResult?.matchedPattern && "text-success",
+                testResult && !testResult.matchedPattern && "text-text-muted"
+              )}
+            >
+              {!testResult
+                ? "Paste a page address to check whether this script runs there."
+                : testResult.matchedPattern
+                  ? `Runs here. Matches ${testResult.matchedPattern}`
+                  : "Doesn’t run here. No pattern matches this URL."}
+            </p>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => void checkOpenTabs()}
+            >
+              Check open tabs
+            </Button>
+            {tabsError && (
+              <p className="text-xs text-error-accent">{tabsError}</p>
+            )}
+            {openTabMatches && (
+              <div className="flex flex-col gap-1">
+                <p className="text-xs text-text-muted">
+                  {openTabMatches.length === 0
+                    ? "None of your open tabs match."
+                    : `Runs in ${openTabMatches.length} open tab${openTabMatches.length === 1 ? "" : "s"}:`}
+                </p>
+                {openTabMatches.slice(0, 8).map((url, index) => (
+                  <p
+                    key={`${url}-${index}`}
+                    className="truncate font-mono text-[11px] text-text-muted-strong"
+                    title={url}
+                  >
+                    {url}
+                  </p>
+                ))}
+              </div>
+            )}
+          </DetailsSection>
+
+          <DetailsSection title="When it runs">
+            <div
+              role="radiogroup"
+              aria-label="When it runs"
+              data-testid="run-at-select"
+              className="flex rounded-default bg-surface-input p-0.5"
+            >
+              {RUN_AT_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  role="radio"
+                  aria-checked={runAt === option.value}
+                  title={option.hint}
+                  onClick={() =>
+                    void actions.updateScript({ runAt: option.value })
+                  }
+                  className={clsx(
+                    "h-7 flex-1 cursor-pointer rounded-[calc(var(--geometry-border-radius)-2px)] text-xs font-medium transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-accent",
+                    runAt === option.value
+                      ? "bg-selected text-foreground"
+                      : "text-text-muted hover:text-foreground"
+                  )}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-text-muted-strong">
+              {RUN_AT_OPTIONS.find((option) => option.value === runAt)?.hint}
+            </p>
+          </DetailsSection>
+
+          <DetailsSection
+            title="Modules"
+            description="CDN libraries loaded before this script runs."
+          >
+            {globalModules.length > 0 ? (
+              <div className="flex flex-col gap-sm">
+                {globalModules.map((module) => (
+                  <Checkbox
+                    key={module.id}
+                    label={module.name}
+                    checked={(script.globalModules ?? []).includes(module.id)}
+                    onChange={(checked) =>
+                      actions.toggleModule(module.id, checked)
+                    }
+                  />
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-text-muted">
+                No modules yet. Add them on the Modules page.
+              </p>
+            )}
+          </DetailsSection>
+
+          <DetailsSection
+            title="Share as a module"
+            description="Give this script a module name so other scripts can import it."
+          >
+            <div className="relative w-full">
+              <input
+                ref={moduleInputRef}
+                defaultValue={script.moduleName ?? ""}
+                placeholder="module-name"
+                aria-label="Module name"
+                onChange={(event) =>
+                  actions.updateModuleName(event.target.value)
+                }
+                className="h-8 w-full rounded-default border border-border bg-surface-input pr-9 pl-2.5 font-mono text-xs text-foreground outline-none placeholder:text-text-muted-faint focus:border-accent-border"
+              />
+              <IconButton
+                icon={WandSparklesIcon}
+                variant="ghost"
+                size="sm"
+                className="absolute top-1/2 right-1 -translate-y-1/2"
+                onClick={autoFillModuleName}
+                title="Auto-fill from script name"
+              />
+            </div>
+            {script.moduleName && (
+              <p className="font-mono text-[11px] text-text-muted-strong">
+                import … from &quot;scripts/{script.moduleName}/main&quot;
+              </p>
+            )}
+          </DetailsSection>
+
+          <DetailsSection
+            title="Shared imports"
+            description="Other scripts this one imports, read from its import statements."
+          >
+            {currentSharedDependencies.length > 0 ? (
+              <div className="flex flex-col gap-1">
+                {currentSharedDependencies.map((shared) => (
+                  <div
+                    key={shared.id}
+                    className="flex items-center justify-between gap-sm rounded-default bg-surface-input px-2.5 py-1 text-xs"
+                  >
+                    <span className="truncate text-foreground">
+                      {shared.name}
+                    </span>
+                    <span className="shrink-0 font-mono text-[11px] text-text-muted-strong">
+                      scripts/{shared.moduleName}/main
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-text-muted">
+                This script doesn’t import any shared scripts.
+              </p>
+            )}
+          </DetailsSection>
+
+          <div className="px-lg py-md">
+            <Button variant="danger" size="sm" onClick={actions.deleteScript}>
+              <Trash2Icon size={13} aria-hidden />
+              Delete script
+            </Button>
+          </div>
+        </div>
+      </aside>
+    </>
   );
 }
