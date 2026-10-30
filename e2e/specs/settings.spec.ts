@@ -88,10 +88,9 @@ test.describe("Settings", () => {
       .poll(() => content.evaluate((element) => element.scrollTop))
       .toBeGreaterThan(0);
     const settings = new SettingsPage(optionsPage);
+    // Matte Grey is the default and leaves data-theme unset.
     const nextTheme =
-      (await settings.getDocumentTheme()) === "obsidian"
-        ? "Graphite"
-        : "Obsidian";
+      (await settings.getDocumentTheme()) === null ? "Graphite" : "Obsidian";
     await settings.setAppTheme(nextTheme);
     await header.hover();
     await expect
@@ -129,12 +128,12 @@ test.describe("Settings", () => {
     const settings = new SettingsPage(optionsPage);
     await settings.waitForReady();
 
-    await settings.setAppTheme("Obsidian");
+    await settings.setAppTheme("Graphite");
 
-    await expect.poll(() => settings.getDocumentTheme()).toBe("obsidian");
+    await expect.poll(() => settings.getDocumentTheme()).toBe("graphite");
   });
 
-  test("app theme defaults to cyanotype (no data-theme attribute)", async ({
+  test("app theme defaults to matte grey (no data-theme attribute)", async ({
     optionsPage,
     clearStorage,
   }) => {
@@ -148,7 +147,7 @@ test.describe("Settings", () => {
     const settings = new SettingsPage(optionsPage);
     await settings.waitForReady();
 
-    // Cyanotype is the default theme and lives on :root without data-theme.
+    // Matte Grey is the default theme and lives on :root without data-theme.
     const theme = await settings.getDocumentTheme();
     expect(theme).toBeNull();
   });

@@ -2,8 +2,7 @@ import type { EditorThemeSetting } from "./editor-theme";
 import type { ModuleManifest } from "./modules/manifest";
 
 export type AppThemeName =
-  | "cyanotype"
-  | "print"
+  | "matte-grey"
   | "graphite"
   | "graphite-warm"
   | "graphite-dusk"
@@ -11,7 +10,9 @@ export type AppThemeName =
   | "obsidian"
   | "obsidian-deep"
   | "obsidian-ember"
-  | "obsidian-frost";
+  | "obsidian-frost"
+  | "basalt"
+  | "carbon";
 
 export type UserscriptStatus = "modified" | "saved";
 

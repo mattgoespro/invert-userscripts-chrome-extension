@@ -1,3 +1,4 @@
+import { resolveAppTheme } from "./constants";
 import type { AppThemeName } from "./model";
 
 /** Editor themes in the Invert family, one per app theme. */
@@ -29,7 +30,7 @@ export function resolveEditorTheme(
   appTheme: AppThemeName | undefined
 ): EditorThemeName {
   if (!setting || setting === MatchAppEditorTheme) {
-    return `invert-${appTheme ?? "cyanotype"}`;
+    return `invert-${resolveAppTheme(appTheme)}`;
   }
 
   return setting;

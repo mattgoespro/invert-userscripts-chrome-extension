@@ -7,7 +7,13 @@ type AppThemePickerProps = {
   onChange: (theme: AppThemeName) => void;
 };
 
-const FAMILIES: AppThemeFamily[] = ["Cyanotype", "Graphite", "Obsidian"];
+const FAMILIES: AppThemeFamily[] = [
+  "Matte Grey",
+  "Obsidian",
+  "Graphite",
+  "Basalt",
+  "Carbon",
+];
 
 /** Theme cards grouped by family; each card previews the theme's surfaces and signal. */
 export function AppThemePicker({ value, onChange }: AppThemePickerProps) {

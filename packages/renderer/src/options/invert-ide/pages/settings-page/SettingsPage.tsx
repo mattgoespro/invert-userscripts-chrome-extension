@@ -17,7 +17,7 @@ import {
 import { updateSettings } from "@/shared/store/slices/settings/thunks.settings";
 import { rebuildCompiledUserscripts } from "@/shared/store/slices/userscripts/thunks.userscripts";
 import { getEditorThemes } from "@packages/monaco";
-import { DefaultAppTheme } from "@shared/constants";
+import { resolveAppTheme } from "@shared/constants";
 import clsx from "clsx";
 import { AppThemePicker } from "./theme-picker/AppThemePicker";
 import { AppThemeName } from "@shared/model";
@@ -219,7 +219,7 @@ export function Settings() {
               description="Colors for the IDE and popup. Each theme reserves its signal color for things that need your attention."
             >
               <AppThemePicker
-                value={settings.appTheme ?? DefaultAppTheme}
+                value={resolveAppTheme(settings.appTheme)}
                 onChange={handleAppThemeChange}
               />
             </SettingsSection>
