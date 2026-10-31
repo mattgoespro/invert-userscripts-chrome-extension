@@ -1,4 +1,4 @@
-import { updateBadgeForTab } from "../../ide/badge";
+import { isMissingTabError, updateBadgeForTab } from "../../ide/badge";
 import { isInjectablePage } from "@shared/injection-eligibility";
 import {
   injectMatchingScripts,
@@ -37,6 +37,9 @@ export const onTabActivated = async (
     const tab = await chrome.tabs.get(activeInfo.tabId);
     await updateBadgeForTab(activeInfo.tabId, tab.pendingUrl ?? tab.url ?? "");
   } catch (error) {
+    if (isMissingTabError(error)) {
+      return;
+    }
     console.error("Error updating badge on tab activation:", error);
   }
 };

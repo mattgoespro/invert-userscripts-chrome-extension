@@ -53,6 +53,18 @@ export async function updateBadgeForTab(
         : "Invert IDE — Scripts cannot run on this page",
     });
   } catch (error) {
+    // The tab can close (or a prerender tab can be swapped out) while the
+    // event handler awaits storage or injection; there is no badge to update.
+    if (isMissingTabError(error)) {
+      return;
+    }
     console.error("Error updating badge for tab:", error);
   }
+}
+
+export function isMissingTabError(error: unknown): boolean {
+  return (
+    error instanceof Error &&
+    /No tab with id|Invalid tab ID/i.test(error.message)
+  );
 }
