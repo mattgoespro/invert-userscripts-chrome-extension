@@ -179,7 +179,7 @@ export function ScriptsActionsMenu({
             }}
           >
             <Panel className="w-full" style={{ position: "static" }}>
-              <PanelHeader>script list</PanelHeader>
+              <PanelHeader>Options</PanelHeader>
               <PanelSection className="gap-sm">
                 <div className="flex flex-col gap-xs">
                   <label

@@ -55,6 +55,9 @@ export function Settings() {
   const [activeSection, setActiveSection] =
     useState<SettingsSectionId>("appearance");
   const contentRef = useRef<HTMLElement>(null);
+  // A section picked in the nav stays highlighted until the user scrolls the
+  // content themselves; short sections near the end can't reach the middle.
+  const pickedSectionRef = useRef<SettingsSectionId | null>(null);
 
   // Scroll spy: highlight the section that crosses the middle of the content.
   useEffect(() => {
@@ -63,6 +66,10 @@ export function Settings() {
       return;
     }
     const updateActiveSection = (): void => {
+      if (pickedSectionRef.current) {
+        setActiveSection(pickedSectionRef.current);
+        return;
+      }
       const bounds = content.getBoundingClientRect();
       // Sections near the end can't reach the middle, so the bottom of the
       // scroll range selects the last visible section.
@@ -83,8 +90,31 @@ export function Settings() {
       }
       setActiveSection(current);
     };
+    const releasePickedSection = (): void => {
+      pickedSectionRef.current = null;
+    };
+    const releaseOnScrollKey = (event: KeyboardEvent): void => {
+      if (
+        [
+          "ArrowUp",
+          "ArrowDown",
+          "PageUp",
+          "PageDown",
+          "Home",
+          "End",
+          " ",
+        ].includes(event.key)
+      ) {
+        releasePickedSection();
+      }
+    };
+    const userScrollEvents = ["wheel", "touchstart", "pointerdown"] as const;
     updateActiveSection();
     content.addEventListener("scroll", updateActiveSection, { passive: true });
+    for (const type of userScrollEvents) {
+      content.addEventListener(type, releasePickedSection, { passive: true });
+    }
+    content.addEventListener("keydown", releaseOnScrollKey);
     const observer = new ResizeObserver(updateActiveSection);
     observer.observe(content);
     for (const child of Array.from(content.children)) {
@@ -92,6 +122,10 @@ export function Settings() {
     }
     return () => {
       content.removeEventListener("scroll", updateActiveSection);
+      for (const type of userScrollEvents) {
+        content.removeEventListener(type, releasePickedSection);
+      }
+      content.removeEventListener("keydown", releaseOnScrollKey);
       observer.disconnect();
     };
   }, [isLoading, advanced]);
@@ -168,15 +202,23 @@ export function Settings() {
   }
 
   const scrollToSection = (id: SettingsSectionId) => {
+    pickedSectionRef.current = id;
     setActiveSection(id);
     if (id === "advanced" && !advanced) {
       setAdvanced(true);
     }
-    requestAnimationFrame(() =>
-      document
-        .getElementById(SECTION_ANCHORS[id])
-        ?.scrollIntoView({ behavior: "smooth", block: "start" })
-    );
+    // Scroll only the settings content, never the page around it.
+    requestAnimationFrame(() => {
+      const content = contentRef.current;
+      const target = document.getElementById(SECTION_ANCHORS[id]);
+      if (!content || !target) {
+        return;
+      }
+      const offset =
+        target.getBoundingClientRect().top -
+        content.getBoundingClientRect().top;
+      content.scrollTo({ top: content.scrollTop + offset, behavior: "smooth" });
+    });
   };
 
   const header = (
@@ -217,6 +259,7 @@ export function Settings() {
                 aria-controls="advanced-settings"
                 onClick={() => {
                   if (advanced) {
+                    pickedSectionRef.current = null;
                     setAdvanced(false);
                   } else {
                     scrollToSection("advanced");

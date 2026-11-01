@@ -258,6 +258,63 @@ test.describe("Settings", () => {
       nav.getByRole("button", { name: "Appearance" })
     ).toHaveAttribute("aria-current", "true");
   });
+
+  test("clicking a section in the nav scrolls to it and highlights that label", async ({
+    optionsPage,
+    clearStorage,
+  }) => {
+    await clearStorage(optionsPage);
+    await optionsPage.setViewportSize({ width: 1440, height: 860 });
+    await optionsPage.reload();
+
+    const options = new OptionsPage(optionsPage);
+    await options.waitForReady();
+    await options.clickTab("settings");
+    const settings = new SettingsPage(optionsPage);
+    await settings.waitForReady();
+
+    const content = optionsPage.getByRole("region", {
+      name: "Settings content",
+    });
+    const nav = optionsPage.getByRole("navigation", {
+      name: "Settings sections",
+    });
+    const sectionTop = (id: string) =>
+      content.evaluate(
+        (element, anchor) =>
+          Math.round(
+            document.getElementById(anchor)!.getBoundingClientRect().top -
+              element.getBoundingClientRect().top
+          ),
+        id
+      );
+
+    // Short sections near the end used to hand the highlight to a later one.
+    for (const [label, anchor] of [
+      ["Editing", "settings-editing"],
+      ["Build output", "settings-build"],
+      ["Advanced", "advanced-settings"],
+      ["Editing", "settings-editing"],
+      ["Appearance", "settings-appearance"],
+    ] as const) {
+      await nav.getByRole("button", { name: label, exact: true }).click();
+      await expect(
+        nav.getByRole("button", { name: label, exact: true })
+      ).toHaveAttribute("aria-current", "true");
+      await optionsPage.waitForTimeout(900);
+      await expect(
+        nav.getByRole("button", { name: label, exact: true })
+      ).toHaveAttribute("aria-current", "true");
+      const scrollable = await content.evaluate(
+        (element) => element.scrollHeight - element.clientHeight
+      );
+      const scrollTop = await content.evaluate((element) => element.scrollTop);
+      // The section reaches the top, unless the content has run out of room.
+      if (scrollTop < scrollable - 1) {
+        expect(Math.abs(await sectionTop(anchor))).toBeLessThanOrEqual(1);
+      }
+    }
+  });
 });
 
 /** The computed color of the theme's --border token, resolved in the page. */

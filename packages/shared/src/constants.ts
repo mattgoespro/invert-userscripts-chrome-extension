@@ -24,7 +24,7 @@ export const AppThemes: AppThemeDefinition[] = [
     displayName: "Matte Grey",
     description: "Neutral grey with an amber signal",
     family: "Matte Grey",
-    swatches: ["#1c1c1c", "#222222", "#4a74a3", "#e0a85a"],
+    swatches: ["#1c1c1c", "#222222", "#6e6e6e", "#e0a85a"],
   },
   {
     name: "obsidian",
@@ -59,7 +59,7 @@ export const AppThemes: AppThemeDefinition[] = [
     displayName: "Graphite",
     description: "Pencil lead with a highlighter signal",
     family: "Graphite",
-    swatches: ["#18191a", "#1e1f21", "#5c7fa3", "#e8d25a"],
+    swatches: ["#18191a", "#1e1f21", "#5b646d", "#e8d25a"],
   },
   {
     name: "graphite-warm",
@@ -85,9 +85,9 @@ export const AppThemes: AppThemeDefinition[] = [
   {
     name: "basalt",
     displayName: "Basalt",
-    description: "Cooled lava stone with a sulfur signal",
+    description: "Cooled lava stone with an ember signal",
     family: "Basalt",
-    swatches: ["#161718", "#1c1d1f", "#4a76a8", "#d9c84a"],
+    swatches: ["#161718", "#1c1d1f", "#8a5f48", "#d6764c"],
   },
   {
     name: "carbon",

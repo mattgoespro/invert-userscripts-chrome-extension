@@ -30,7 +30,7 @@
   --base-surface-panel: #181818;
   --base-surface-base: #1c1c1c;
   --base-surface-raised: #222222;
-  --base-surface-overlay: #2b2b2b;
+  --base-surface-overlay: #151519;
   --base-surface-input: #141414;
 
   --base-border: #333333;
@@ -39,14 +39,14 @@
   --base-accent: #e0a85a;
   --base-accent-hover: #e8ba78;
   --base-on-accent: #1c1c1c;
-  --base-selected: #1f2a38;
-  --base-selected-strong: #4a74a3;
-  --base-secondary: #a7c4dd;
+  --base-selected: #454545;
+  --base-selected-strong: #6e6e6e;
+  --base-secondary: #bf94ff;
 
   --base-success: #8fc9a0;
   --base-warning: #e6c65c;
   --base-danger: #e88078;
-  --base-info: #a7c4dd;
+  --base-info: #70b5ff;
 
   --base-hover-overlay: rgba(255, 255, 255, 0.04);
   --base-active-overlay: rgba(255, 255, 255, 0.08);
@@ -314,20 +314,20 @@ body {
 /* Obsidian Frost — cool text with an ice signal. */
 [data-theme="obsidian-frost"] {
   --base-foreground: #cbd3da;
-  --base-text-muted: #97a3ae;
+  --base-text-muted: #aaaeb1;
   --base-text-muted-strong: #7e8a95;
   --base-text-muted-faint: #63707b;
 
   --base-accent: #9ccbf0;
   --base-accent-hover: #b6d9f4;
-  --base-selected: #1f2d3a;
+  --base-selected: #212930;
   --base-selected-strong: #4a7598;
   --base-secondary: #a8c4da;
 
   --base-success: #80cdb0;
   --base-warning: #e5c46b;
   --base-danger: #e77d86;
-  --base-info: #a8c4da;
+  --base-info: #6cc4bd;
 
   --base-hover-overlay: rgba(240, 248, 255, 0.035);
   --base-active-overlay: rgba(240, 248, 255, 0.07);
@@ -373,14 +373,14 @@ body {
   --base-accent: #e8d25a;
   --base-accent-hover: #f0de7c;
   --base-on-accent: #1c1d20;
-  --base-selected: #2e3a48;
-  --base-selected-strong: #5c7fa3;
+  --base-selected: #2c3036;
+  --base-selected-strong: #5b646d;
   --base-secondary: #8fb4d9;
 
   --base-success: #8bcf9f;
   --base-warning: #e8b04a;
   --base-danger: #f07a6e;
-  --base-info: #8fb4d9;
+  --base-info: #4d9aff;
 
   --base-hover-overlay: rgba(255, 255, 255, 0.04);
   --base-active-overlay: rgba(255, 255, 255, 0.08);
@@ -512,7 +512,7 @@ body {
 }
 
 /* =========================================================================
-   Basalt — cooled lava stone with a sulfur signal. Surfaces step between
+   Basalt — cooled lava stone with an ember signal. Surfaces step between
    the stone (#161718) and its edge (#2e3032).
    ========================================================================= */
 [data-theme="basalt"] {
@@ -521,8 +521,8 @@ body {
   --base-text-muted-strong: #8a9199;
   --base-text-muted-faint: #6f767e;
 
-  --base-surface-chrome: #101112;
-  --base-surface-panel: #131415;
+  --base-surface-chrome: #100f0f;
+  --base-surface-panel: #171716;
   --base-surface-base: #161718;
   --base-surface-raised: #1c1d1f;
   --base-surface-overlay: #252628;
@@ -531,23 +531,23 @@ body {
   --base-border: #2e3032;
   --base-border-subtle: #222325;
 
-  --base-accent: #d9c84a;
-  --base-accent-hover: #e4d670;
+  --base-accent: #d6764c;
+  --base-accent-hover: #ffad8a;
   --base-on-accent: #161718;
-  --base-selected: #1e2b3c;
-  --base-selected-strong: #4a76a8;
+  --base-selected: #2f2622;
+  --base-selected-strong: #8a5f48;
   --base-secondary: #9cc0dc;
 
   --base-success: #8fcc9f;
   --base-warning: #e8b34a;
-  --base-danger: #ee7d72;
-  --base-info: #9cc0dc;
+  --base-danger: #f06a7a;
+  --base-info: #8ae2ff;
 
   --base-hover-overlay: rgba(235, 238, 242, 0.04);
   --base-active-overlay: rgba(235, 238, 242, 0.08);
   --base-shadow: rgba(0, 0, 0, 0.55);
 
-  --base-error-accent: #f28a7e;
+  --base-error-accent: #f27f8c;
   --base-error-surface: #2c2224;
   --base-error-surface-dark: #221a1c;
   --base-error-text-muted: #e0b6b0;
@@ -571,8 +571,8 @@ body {
   --base-text-muted-strong: #8b8f96;
   --base-text-muted-faint: #6e727a;
 
-  --base-surface-chrome: #0e0f10;
-  --base-surface-panel: #101113;
+  --base-surface-chrome: #070708;
+  --base-surface-panel: #111212;
   --base-surface-base: #131416;
   --base-surface-raised: #191a1d;
   --base-surface-overlay: #222428;
@@ -591,7 +591,7 @@ body {
   --base-success: #7ed9a6;
   --base-warning: #f0c04f;
   --base-danger: #ff7a85;
-  --base-info: #8fd8e3;
+  --base-info: #4382fe;
 
   --base-hover-overlay: rgba(230, 250, 255, 0.04);
   --base-active-overlay: rgba(230, 250, 255, 0.08);

@@ -111,7 +111,7 @@ export function ModuleCard({
         <TypesCell module={module} typesValidation={typesValidation} />
       </td>
       <td className="px-md py-2 text-text-muted">
-        {usedBy === 0 ? "Unused" : `${usedBy} script${usedBy === 1 ? "" : "s"}`}
+        {usedBy === 0 ? "None" : `${usedBy} script${usedBy === 1 ? "" : "s"}`}
       </td>
       <td className="px-sm py-2 text-right">
         <IconButton
