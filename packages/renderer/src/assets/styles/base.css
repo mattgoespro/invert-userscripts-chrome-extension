@@ -347,116 +347,168 @@ body {
 }
 
 /* =========================================================================
-   Graphite — pencil lead. The family's surfaces step between the lead
-   (#4f555b) and its shade (#383d42); text, status and error colors are
-   lifted so they keep their contrast on the lighter ground.
+   Graphite — pencil lead. Every Graphite theme shares these surfaces, dark
+   steps of the lead (#4f555b), greyed and darkened, between the ground (#18191a) and
+   its edge (#2f3133); the variants below change only their signal colors.
    ========================================================================= */
 [data-theme^="graphite"] {
-  --base-foreground: #f2f3f5;
-  --base-text-muted: #d0d3d7;
-  --base-text-muted-strong: #c2c6cb;
-  --base-text-muted-faint: #a6abb1;
+  --base-surface-chrome: #111213;
+  --base-surface-panel: #151617;
+  --base-surface-base: #18191a;
+  --base-surface-raised: #1e1f21;
+  --base-surface-overlay: #27292b;
+  --base-surface-input: #111213;
 
-  --base-surface-chrome: #3f4449;
-  --base-surface-panel: #43484e;
-  --base-surface-base: #4f555b;
-  --base-surface-raised: #575d64;
-  --base-surface-overlay: #626970;
-  --base-surface-input: #43484e;
-
-  --base-border: #383d42;
-  --base-border-subtle: #464b51;
-
-  --base-on-accent: #24282c;
-
-  --base-success: #a8e6b8;
-  --base-warning: #f5cf75;
-  --base-danger: #ff9e94;
-
-  --base-hover-overlay: rgba(255, 255, 255, 0.06);
-  --base-active-overlay: rgba(255, 255, 255, 0.1);
-  --base-shadow: rgba(0, 0, 0, 0.45);
-
-  --base-error-accent: #ffb0a3;
-  --base-error-surface: #5d4a4c;
-  --base-error-surface-dark: #544347;
-  --base-error-text-muted: #f3d2cc;
-  --base-error-border: #8a5a5a;
-
-  --base-syntax-punctuation: #f2f3f5a6;
+  --base-border: #2f3133;
+  --base-border-subtle: #232527;
 }
 
 /* Graphite — highlighter signal. */
 [data-theme="graphite"] {
+  --base-foreground: #d8dadf;
+  --base-text-muted: #a3a7ae;
+  --base-text-muted-strong: #8c9099;
+  --base-text-muted-faint: #70747c;
+
   --base-accent: #e8d25a;
   --base-accent-hover: #f0de7c;
-  --base-selected: #3d4e61;
-  --base-selected-strong: #6d93ba;
-  --base-secondary: #b5d2ee;
-  --base-info: #b5d2ee;
+  --base-on-accent: #1c1d20;
+  --base-selected: #2e3a48;
+  --base-selected-strong: #5c7fa3;
+  --base-secondary: #8fb4d9;
 
-  --base-syntax-keyword: #e2c0f0;
-  --base-syntax-function: #f0e8a8;
-  --base-syntax-param: #b8e6ff;
-  --base-syntax-type: #8ee6d0;
-  --base-syntax-comment: #b0c0a8;
+  --base-success: #8bcf9f;
+  --base-warning: #e8b04a;
+  --base-danger: #f07a6e;
+  --base-info: #8fb4d9;
+
+  --base-hover-overlay: rgba(255, 255, 255, 0.04);
+  --base-active-overlay: rgba(255, 255, 255, 0.08);
+  --base-shadow: rgba(0, 0, 0, 0.55);
+
+  --base-error-accent: #f48771;
+  --base-error-surface: #2d2222;
+  --base-error-surface-dark: #221a1a;
+  --base-error-text-muted: #e0b4ac;
+  --base-error-border: #5a3434;
+
+  --base-syntax-keyword: #c9a0dc;
+  --base-syntax-function: #dcdcaa;
+  --base-syntax-param: #9cdcfe;
+  --base-syntax-type: #4ec9b0;
+  --base-syntax-punctuation: #d8dadf99;
+  --base-syntax-comment: #7a8a74;
 }
 
-/* Graphite Warm — brass signal. */
+/* Graphite Warm — warm text, brass signal. */
 [data-theme="graphite-warm"] {
-  --base-accent: #e8b85a;
-  --base-accent-hover: #f0c97c;
-  --base-selected: #5c4f3f;
-  --base-selected-strong: #a88a60;
-  --base-secondary: #e3cfaa;
-  --base-info: #c4dcea;
+  --base-foreground: #ddd6ce;
+  --base-text-muted: #aba298;
+  --base-text-muted-strong: #948b81;
+  --base-text-muted-faint: #776f66;
 
-  --base-hover-overlay: rgba(255, 245, 230, 0.06);
-  --base-active-overlay: rgba(255, 245, 230, 0.1);
+  --base-accent: #d9a441;
+  --base-accent-hover: #e4b862;
+  --base-on-accent: #1f1d1b;
+  --base-selected: #3b342c;
+  --base-selected-strong: #8c7350;
+  --base-secondary: #c7b08a;
 
-  --base-syntax-keyword: #f0bcd4;
-  --base-syntax-function: #f2d394;
-  --base-syntax-param: #c4dcea;
-  --base-syntax-type: #a8dcc0;
-  --base-syntax-comment: #c0b6a8;
+  --base-success: #9cc58a;
+  --base-warning: #e3b754;
+  --base-danger: #e07862;
+  --base-info: #a9c7d8;
+
+  --base-hover-overlay: rgba(255, 245, 230, 0.04);
+  --base-active-overlay: rgba(255, 245, 230, 0.08);
+  --base-shadow: rgba(0, 0, 0, 0.55);
+
+  --base-error-accent: #e8866f;
+  --base-error-surface: #2e211d;
+  --base-error-surface-dark: #231915;
+  --base-error-text-muted: #dfb6a8;
+  --base-error-border: #5c3a30;
+
+  --base-syntax-keyword: #d49bb5;
+  --base-syntax-function: #e3c07a;
+  --base-syntax-param: #a9c7d8;
+  --base-syntax-type: #8fc4a8;
+  --base-syntax-punctuation: #ddd6ce99;
+  --base-syntax-comment: #7c7468;
 }
 
-/* Graphite Dusk — lilac signal. */
+/* Graphite Dusk — violet text, lilac signal. */
 [data-theme="graphite-dusk"] {
-  --base-accent: #c9b5f7;
-  --base-accent-hover: #d8c9fa;
-  --base-selected: #4e4870;
-  --base-selected-strong: #8c80c8;
-  --base-secondary: #c4cdf7;
-  --base-info: #c4cdf7;
+  --base-foreground: #dad8e3;
+  --base-text-muted: #a7a3b8;
+  --base-text-muted-strong: #8f8ba1;
+  --base-text-muted-faint: #736f86;
 
-  --base-hover-overlay: rgba(240, 236, 255, 0.06);
-  --base-active-overlay: rgba(240, 236, 255, 0.1);
+  --base-accent: #b69cf2;
+  --base-accent-hover: #c7b3f6;
+  --base-on-accent: #1d1c22;
+  --base-selected: #34304a;
+  --base-selected-strong: #7466b0;
+  --base-secondary: #a9b6f0;
 
-  --base-syntax-keyword: #f0bdeb;
-  --base-syntax-function: #f5d9a3;
-  --base-syntax-param: #d0cdf5;
-  --base-syntax-type: #9ee5d8;
-  --base-syntax-comment: #b9b5d0;
+  --base-success: #8fd0b0;
+  --base-warning: #e8c06a;
+  --base-danger: #ee7f91;
+  --base-info: #a9b6f0;
+
+  --base-hover-overlay: rgba(240, 236, 255, 0.04);
+  --base-active-overlay: rgba(240, 236, 255, 0.08);
+  --base-shadow: rgba(0, 0, 0, 0.55);
+
+  --base-error-accent: #f08a9a;
+  --base-error-surface: #2c2029;
+  --base-error-surface-dark: #21171e;
+  --base-error-text-muted: #e2b6c2;
+  --base-error-border: #57324a;
+
+  --base-syntax-keyword: #e09edb;
+  --base-syntax-function: #f0c987;
+  --base-syntax-param: #b8b4ea;
+  --base-syntax-type: #7fd1c2;
+  --base-syntax-punctuation: #dad8e399;
+  --base-syntax-comment: #757189;
 }
 
 /* Graphite Ember — glowing ember signal. */
 [data-theme="graphite-ember"] {
-  --base-accent: #f7ac7e;
-  --base-accent-hover: #f9bc95;
-  --base-selected: #5e4a40;
-  --base-selected-strong: #b07656;
-  --base-secondary: #eec6aa;
-  --base-info: #ccd8e4;
+  --base-foreground: #dcd7d4;
+  --base-text-muted: #a9a19d;
+  --base-text-muted-strong: #918985;
+  --base-text-muted-faint: #756d69;
 
-  --base-hover-overlay: rgba(255, 240, 230, 0.06);
-  --base-active-overlay: rgba(255, 240, 230, 0.1);
+  --base-accent: #f08a4b;
+  --base-accent-hover: #f4a06c;
+  --base-on-accent: #1d1c1c;
+  --base-selected: #3a302c;
+  --base-selected-strong: #8f5e44;
+  --base-secondary: #e0b08f;
 
-  --base-syntax-keyword: #ecbde6;
-  --base-syntax-function: #f7bd97;
-  --base-syntax-param: #cfe0ec;
-  --base-syntax-type: #a8dcc8;
-  --base-syntax-comment: #c0b4ae;
+  --base-success: #9ccb8f;
+  --base-warning: #e8be55;
+  --base-danger: #f06a7a;
+  --base-info: #b8c8d8;
+
+  --base-hover-overlay: rgba(255, 240, 230, 0.04);
+  --base-active-overlay: rgba(255, 240, 230, 0.08);
+  --base-shadow: rgba(0, 0, 0, 0.55);
+
+  --base-error-accent: #f2808e;
+  --base-error-surface: #2e1f22;
+  --base-error-surface-dark: #221719;
+  --base-error-text-muted: #e2b3b8;
+  --base-error-border: #5a3038;
+
+  --base-syntax-keyword: #d6a0d0;
+  --base-syntax-function: #f0a678;
+  --base-syntax-param: #b8d0e0;
+  --base-syntax-type: #8fc8b0;
+  --base-syntax-punctuation: #dcd7d499;
+  --base-syntax-comment: #7a706b;
 }
 
 /* =========================================================================
