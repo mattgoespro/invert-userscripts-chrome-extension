@@ -8,6 +8,7 @@ import {
 
 export type UiState = {
   scriptListSort: ScriptListSort;
+  scriptListCaptions: boolean;
   hydrated: boolean;
   activeSidebarTab: AppSidebarTab;
   selectedScriptId: string | null;
@@ -20,6 +21,7 @@ const defaults = GlobalStateManager.defaultState;
 
 export const initialUiState: UiState = {
   scriptListSort: defaults.scriptListSort ?? "name",
+  scriptListCaptions: defaults.scriptListCaptions ?? true,
   hydrated: false,
   activeSidebarTab: defaults.activeSidebarTab ?? "scripts",
   selectedScriptId: defaults.selectedScriptId ?? null,

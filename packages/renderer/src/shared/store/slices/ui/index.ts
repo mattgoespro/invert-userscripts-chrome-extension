@@ -18,6 +18,9 @@ const uiSlice = createSlice({
     setScriptListSort: (state, action: PayloadAction<ScriptListSort>) => {
       state.scriptListSort = action.payload;
     },
+    setScriptListCaptions: (state, action: PayloadAction<boolean>) => {
+      state.scriptListCaptions = action.payload;
+    },
     setActiveSidebarTab: (state, action: PayloadAction<AppSidebarTab>) => {
       state.activeSidebarTab = action.payload;
     },
@@ -51,6 +54,7 @@ const uiSlice = createSlice({
         state.hydrated = true;
         state.scriptListSort =
           stored.scriptListSort === "created" ? "created" : "name";
+        state.scriptListCaptions = stored.scriptListCaptions ?? true;
         state.activeSidebarTab =
           stored.activeSidebarTab ?? state.activeSidebarTab;
         state.selectedScriptId =
@@ -76,6 +80,7 @@ const uiSlice = createSlice({
 
 export const {
   setScriptListSort,
+  setScriptListCaptions,
   setActiveSidebarTab,
   setOutputDrawerCollapsed,
   setOutputDrawerActiveTab,
@@ -107,10 +112,13 @@ export const selectOutputDrawerActiveTab = (state: { ui: UiState }) =>
 export const selectPanelSizes = (state: { ui: UiState }) => state.ui.panelSizes;
 export const selectScriptListSort = (state: { ui: UiState }) =>
   state.ui.scriptListSort;
+export const selectScriptListCaptions = (state: { ui: UiState }) =>
+  state.ui.scriptListCaptions;
 
 export function toPersistedGlobalState(ui: UiState): GlobalState {
   return {
     scriptListSort: ui.scriptListSort,
+    scriptListCaptions: ui.scriptListCaptions,
     activeSidebarTab: ui.activeSidebarTab,
     selectedScriptId: ui.selectedScriptId,
     outputDrawerCollapsed: ui.outputDrawerCollapsed,

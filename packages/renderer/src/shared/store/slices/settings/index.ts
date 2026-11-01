@@ -17,9 +17,9 @@ const settingsSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
-      .addCase(loadSettings.pending, (state) => {
-        state.isLoading = true;
-      })
+      // isLoading covers only the first load (it starts true). Background
+      // reloads after storage changes keep the settings page mounted, so
+      // they must not flip it back on.
       .addCase(loadSettings.fulfilled, (state, action) => {
         state.editorSettings = {
           ...ChromeSyncStorage.defaultSettings,

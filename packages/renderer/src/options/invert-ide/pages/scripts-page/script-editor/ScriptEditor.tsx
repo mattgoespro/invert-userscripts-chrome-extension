@@ -213,7 +213,7 @@ export function ScriptEditor() {
 
   return (
     <div className="flex h-full min-w-0 flex-col overflow-hidden">
-      <div className="flex min-w-0 items-center border-b border-border bg-surface-raised px-md py-sm">
+      <div className="flex min-w-0 items-center border-b border-border bg-surface-raised px-md pt-(--page-padding) pb-sm">
         <ScriptMetadata
           key={script.id}
           script={script}

@@ -196,6 +196,68 @@ test.describe("Settings", () => {
       optionsPage.locator("[role='alert']:not([aria-atomic='true'])")
     ).toBeVisible({ timeout: 20_000 });
   });
+
+  test("changing the editor theme keeps the scroll position and the section nav follows scrolling", async ({
+    optionsPage,
+    clearStorage,
+  }) => {
+    await clearStorage(optionsPage);
+    await optionsPage.setViewportSize({ width: 1280, height: 700 });
+    await optionsPage.reload();
+
+    const options = new OptionsPage(optionsPage);
+    await options.waitForReady();
+    await options.clickTab("settings");
+    const settings = new SettingsPage(optionsPage);
+    await settings.waitForReady();
+
+    const content = optionsPage.getByRole("region", {
+      name: "Settings content",
+    });
+    const nav = optionsPage.getByRole("navigation", {
+      name: "Settings sections",
+    });
+    await expect(
+      nav.getByRole("button", { name: "Appearance" })
+    ).toHaveAttribute("aria-current", "true");
+
+    const themeSelect = optionsPage.getByRole("button", {
+      name: "Match app theme",
+    });
+    await themeSelect.scrollIntoViewIfNeeded();
+    await themeSelect.click();
+    await optionsPage
+      .getByRole("button", { name: "GitHub Dark", exact: true })
+      .click();
+    // Measure after the click: Playwright scrolls the option into view first.
+    const before = await content.evaluate((element) => element.scrollTop);
+    expect(before).toBeGreaterThan(0);
+    // A settings reload after the write used to remount the page at the top.
+    await expect
+      .poll(() =>
+        optionsPage.evaluate(
+          async () =>
+            (await chrome.storage.sync.get("editorSettings")).editorSettings
+              ?.theme
+        )
+      )
+      .toBe("github-dark");
+    await optionsPage.waitForTimeout(500);
+    expect(await content.evaluate((element) => element.scrollTop)).toBe(before);
+
+    await content.evaluate((element) => {
+      element.scrollTop = element.scrollHeight;
+    });
+    await expect(
+      nav.getByRole("button", { name: "Build output" })
+    ).toHaveAttribute("aria-current", "true");
+    await content.evaluate((element) => {
+      element.scrollTop = 0;
+    });
+    await expect(
+      nav.getByRole("button", { name: "Appearance" })
+    ).toHaveAttribute("aria-current", "true");
+  });
 });
 
 /** The computed color of the theme's --border token, resolved in the page. */

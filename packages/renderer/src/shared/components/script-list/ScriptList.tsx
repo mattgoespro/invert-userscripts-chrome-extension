@@ -3,31 +3,42 @@ import {
   selectCurrentUserscript,
 } from "@/shared/store/slices/userscripts/selectors";
 import { ScriptListItem } from "@/shared/components/script-list-item/ScriptListItem";
-import type { ScriptSiteGroup } from "@/shared/utils/script-site";
 import { Userscript } from "@shared/model";
 import { useSelector } from "react-redux";
 
+/** A titled run of scripts, for lists that group scripts by state. */
+export type ScriptListSection = {
+  title: string;
+  scripts: Userscript[];
+};
+
 type ScriptListProps = {
   scripts?: Userscript[];
-  groups?: ScriptSiteGroup[];
+  /** Render titled sections instead of a single list. */
+  sections?: ScriptListSection[];
   onScriptSelected?: (scriptId: string) => void;
   emptyMessage?: string;
+  /** Show the URL pattern caption under each script name. */
+  showCaptions?: boolean;
 };
 
 export function ScriptList({
   scripts,
-  groups,
+  sections,
   onScriptSelected,
   emptyMessage,
+  showCaptions = true,
 }: ScriptListProps) {
   // useSelector (untyped) so this list also works under the popup store.
   const currentScript = useSelector(selectCurrentUserscript);
   const reduxScripts = useSelector(selectAllUserscripts);
 
-  const displayGroups: ScriptSiteGroup[] = groups ?? [
-    { site: "", scripts: scripts ?? Object.values(reduxScripts ?? {}) },
+  const displaySections: ScriptListSection[] = sections ?? [
+    { title: "", scripts: scripts ?? Object.values(reduxScripts ?? {}) },
   ];
-  const isEmpty = displayGroups.every((group) => group.scripts.length === 0);
+  const isEmpty = displaySections.every(
+    (section) => section.scripts.length === 0
+  );
 
   const renderItem = (script: Userscript) => (
     <ScriptListItem
@@ -35,28 +46,27 @@ export function ScriptList({
       script={script}
       active={onScriptSelected ? currentScript?.id === script.id : false}
       onScriptSelected={onScriptSelected}
+      showCaption={showCaptions}
     />
   );
 
   return (
-    <div className="flex scrollbar-thin-6 flex-1 flex-col overflow-y-auto pb-sm">
+    <div className="flex scrollbar-thin-6 flex-1 flex-col overflow-y-auto pt-xs pb-sm">
       {isEmpty && emptyMessage && (
         <p className="px-md py-lg text-center text-base text-text-muted">
           {emptyMessage}
         </p>
       )}
-      {displayGroups.map((group) =>
-        group.site ? (
-          <section key={group.site} aria-label={group.site}>
-            <h3 className="truncate px-md pt-md pb-1 text-xs font-medium text-text-muted-strong">
-              {group.site}
+      {displaySections.map((section) =>
+        section.title ? (
+          <section key={section.title} aria-label={section.title}>
+            <h3 className="truncate px-md pt-sm pb-1 text-xs font-medium text-text-muted-strong">
+              {section.title}
             </h3>
-            {group.scripts.map(renderItem)}
+            {section.scripts.map(renderItem)}
           </section>
         ) : (
-          <div key="all" className="pt-xs">
-            {group.scripts.map(renderItem)}
-          </div>
+          <div key="all">{section.scripts.map(renderItem)}</div>
         )
       )}
     </div>

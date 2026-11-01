@@ -1,4 +1,5 @@
 import { Button } from "@/shared/components/button/Button";
+import { Checkbox } from "@/shared/components/checkbox/Checkbox";
 import { IconButton } from "@/shared/components/icon-button/IconButton";
 import {
   Panel,
@@ -21,6 +22,8 @@ import type { ScriptListSort } from "@shared/storage";
 type ScriptsActionsMenuProps = {
   sortBy: ScriptListSort;
   onSortChange: (value: ScriptListSort) => void;
+  showCaptions: boolean;
+  onShowCaptionsChange: (value: boolean) => void;
   onImportClick: () => void;
   onExportClick: () => void;
 };
@@ -28,6 +31,8 @@ type ScriptsActionsMenuProps = {
 export function ScriptsActionsMenu({
   sortBy,
   onSortChange,
+  showCaptions,
+  onShowCaptionsChange,
   onImportClick,
   onExportClick,
 }: ScriptsActionsMenuProps) {
@@ -198,6 +203,11 @@ export function ScriptsActionsMenu({
                     <option value="created">Created</option>
                   </select>
                 </div>
+                <Checkbox
+                  label="Show URL patterns"
+                  checked={showCaptions}
+                  onChange={onShowCaptionsChange}
+                />
                 <Button
                   size="sm"
                   variant="secondary"

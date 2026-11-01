@@ -21,7 +21,7 @@ export function Panel({
       className={clsx(
         "absolute top-[calc(100%+0.5rem)] right-0 z-100",
         "flex flex-col overflow-hidden",
-        "rounded-panel border border-border bg-surface-raised",
+        "rounded-panel border border-border bg-surface-overlay",
         "shadow-(--popover-shadow)",
         "text-xs leading-[1.4]",
         "animate-panel-enter",

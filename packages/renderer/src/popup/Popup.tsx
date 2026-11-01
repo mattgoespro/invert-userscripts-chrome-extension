@@ -140,12 +140,12 @@ export function Popup() {
       {matchingCount > 0 ? (
         <>
           <ScriptList
-            groups={[
+            sections={[
               ...(running.length > 0
-                ? [{ site: "Running on this page", scripts: running }]
+                ? [{ title: "Running on this page", scripts: running }]
                 : []),
               ...(turnedOff.length > 0
-                ? [{ site: "Matches, but turned off", scripts: turnedOff }]
+                ? [{ title: "Matches, but turned off", scripts: turnedOff }]
                 : []),
             ]}
           />

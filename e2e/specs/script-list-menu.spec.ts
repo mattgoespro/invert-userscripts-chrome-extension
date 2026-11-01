@@ -146,3 +146,58 @@ test("list menu stays unobscured at minimum width, repositions on resize, and su
   await optionsPage.getByTitle("Scripts", { exact: true }).click();
   await expect(menu).toBeHidden();
 });
+
+test("script list is one ungrouped list and the menu toggles URL pattern captions", async ({
+  optionsPage,
+  clearStorage,
+  seedStorage,
+}) => {
+  await clearStorage(optionsPage);
+  const scripts = [
+    buildUserscript({
+      id: "github",
+      name: "Alpha",
+      urlPatterns: ["https://github.com/*"],
+      enabled: false,
+    }),
+    buildUserscript({
+      id: "none",
+      name: "Beta",
+      urlPatterns: [],
+      enabled: false,
+    }),
+  ];
+  await seedStorage(
+    optionsPage,
+    Object.fromEntries(
+      scripts.map((script) => ["userscript:" + script.id, script])
+    )
+  );
+  await optionsPage.reload();
+  await new OptionsPage(optionsPage).waitForReady();
+  const sidebar = optionsPage.locator('[data-testid="scripts-sidebar"]');
+  await expect(sidebar.locator(".group > span")).toHaveText(["Alpha", "Beta"]);
+  await expect(sidebar.locator("h3")).toHaveCount(0);
+  await expect(sidebar.getByText("github.com/*")).toBeVisible();
+
+  await optionsPage.getByTitle("Script list options").click();
+  const captions = optionsPage.getByRole("checkbox", {
+    name: "Show URL patterns",
+  });
+  await expect(captions).toBeChecked();
+  await captions.uncheck();
+  await expect(sidebar.getByText("github.com/*")).toHaveCount(0);
+  await expect
+    .poll(() =>
+      optionsPage.evaluate(
+        async () =>
+          (await chrome.storage.sync.get("globalState")).globalState
+            ?.scriptListCaptions
+      )
+    )
+    .toBe(false);
+  await optionsPage.reload();
+  await new OptionsPage(optionsPage).waitForReady();
+  await expect(sidebar.locator(".group > span")).toHaveText(["Alpha", "Beta"]);
+  await expect(sidebar.getByText("github.com/*")).toHaveCount(0);
+});

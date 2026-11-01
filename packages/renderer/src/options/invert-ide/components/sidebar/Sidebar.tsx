@@ -1,3 +1,4 @@
+import { InvertLogo } from "@/shared/components/logo/InvertLogo";
 import { AppSidebarTab } from "@shared/storage";
 import {
   CommandIcon,
@@ -33,12 +34,9 @@ export function Sidebar({
       aria-label="Main"
       className="relative flex w-44 shrink-0 flex-col gap-0.5 border-r border-border bg-surface-chrome px-2 pt-md pb-sm max-[1360px]:w-14"
     >
-      <p className="px-2.5 pb-md font-heading text-[19px] leading-none font-extrabold tracking-[-0.04em] text-foreground select-none max-[1360px]:px-0 max-[1360px]:text-center">
-        <span className="max-[1360px]:hidden">Invert</span>
-        <span aria-hidden className="hidden max-[1360px]:inline">
-          I
-        </span>
-      </p>
+      <div className="flex px-2.5 pb-md select-none max-[1360px]:justify-center max-[1360px]:px-0">
+        <InvertLogo size={26} />
+      </div>
       <SidebarNavButton
         icon={FileCode2Icon}
         active={active === "scripts"}

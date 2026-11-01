@@ -33,6 +33,10 @@ export interface GlobalStateSizes {
 export interface GlobalState {
   scriptListSort?: ScriptListSort;
   /**
+   * Whether the script list shows the URL pattern caption under each script.
+   */
+  scriptListCaptions?: boolean;
+  /**
    * The currently active sidebar navigation tab.
    */
   activeSidebarTab?: AppSidebarTab;
@@ -56,6 +60,7 @@ export interface GlobalState {
 
 export const DEFAULT_GLOBAL_STATE: GlobalState = {
   scriptListSort: "name",
+  scriptListCaptions: true,
   activeSidebarTab: "scripts",
   selectedScriptId: null,
   outputDrawerCollapsed: false,

@@ -2,7 +2,7 @@ import { chromium, type Page } from "@playwright/test";
 import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { test, expect, buildUserscript } from "../fixtures";
+import { test, expect, buildUserscript, hideDriveClient } from "../fixtures";
 const request = (page: Page, message: unknown) =>
   page.evaluate((message) => chrome.runtime.sendMessage(message), message);
 const revisions = (page: Page) =>
@@ -36,11 +36,16 @@ test("two independent profiles retain concurrent edits and converge after explic
   try {
     const worker =
       peer.serviceWorkers()[0] ?? (await peer.waitForEvent("serviceworker"));
+    // Like the main profile, keep Drive out of this native-sync rehearsal.
+    await hideDriveClient(worker);
     const page = await peer.newPage();
     await page.goto(
       `chrome-extension://${new URL(worker.url()).host}/options.html`
     );
     await page.waitForSelector('[title="Scripts"]');
+    // The peer's first worker started Drive before its client was hidden;
+    // native sync stands down while Drive is on, so switch it back off.
+    await page.evaluate(() => chrome.storage.local.remove("driveSyncEnabled"));
     await request(page, { type: "publication.activate" });
     await request(page, { type: "publication.enableVerifiedSync" });
     const script = buildUserscript({

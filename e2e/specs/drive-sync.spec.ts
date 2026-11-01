@@ -44,7 +44,14 @@ async function driveGateway(worker: Worker): Promise<void> {
   await worker.evaluate(() => {
     const originalManifestGetter = chrome.runtime.getManifest;
     const originalAuth = chrome.identity.getAuthToken;
-    const originalManifest = chrome.runtime.getManifest();
+    // The fixture hides the build's Drive client from the worker; restore it.
+    const originalManifest =
+      (
+        globalThis as typeof globalThis & {
+          e2eBuildManifest?: chrome.runtime.Manifest;
+        }
+      ).e2eBuildManifest ?? chrome.runtime.getManifest();
+    chrome.runtime.getManifest = () => originalManifest;
     if (!originalManifest.oauth2?.client_id) {
       chrome.runtime.getManifest = () => ({
         ...originalManifest,

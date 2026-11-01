@@ -19,6 +19,8 @@ type ScriptListItemProps = {
   script: Userscript;
   active?: boolean;
   onScriptSelected?: (scriptId: string) => void;
+  /** Show the URL pattern caption under the script name. */
+  showCaption?: boolean;
 };
 
 type ToggleResult = {
@@ -39,6 +41,7 @@ export function ScriptListItem({
   script,
   active = false,
   onScriptSelected,
+  showCaption = true,
 }: ScriptListItemProps) {
   // Shared by IDE store and compile-free popup store (both have thunk middleware).
   const dispatch = useDispatch() as unknown as ThunkDispatch;
@@ -112,7 +115,9 @@ export function ScriptListItem({
       >
         {script.name}
       </span>
-      <div className="row-span-2 flex items-center gap-2">
+      <div
+        className={clsx("flex items-center gap-2", showCaption && "row-span-2")}
+      >
         {isModified && (
           <span
             className="h-2 w-2 shrink-0 animate-pulse-indicator rounded-full bg-accent"
@@ -131,18 +136,20 @@ export function ScriptListItem({
         )}
         <Switch checked={script.enabled} onChange={() => onToggleScript()} />
       </div>
-      <p className="flex min-w-0 items-center gap-1 font-mono text-[11px] leading-4 text-text-muted-strong">
-        {script.shared && (
-          <PackageIcon
-            size={11}
-            className="shrink-0 text-syntax-keyword"
-            aria-label="Shared module"
-          />
-        )}
-        <span className="truncate">
-          {summarizeUrlPatterns(script.urlPatterns)}
-        </span>
-      </p>
+      {showCaption && (
+        <p className="flex min-w-0 items-center gap-1 font-mono text-[11px] leading-4 text-text-muted-strong">
+          {script.shared && (
+            <PackageIcon
+              size={11}
+              className="shrink-0 text-syntax-keyword"
+              aria-label="Shared module"
+            />
+          )}
+          <span className="truncate">
+            {summarizeUrlPatterns(script.urlPatterns)}
+          </span>
+        </p>
+      )}
     </div>
   );
 }

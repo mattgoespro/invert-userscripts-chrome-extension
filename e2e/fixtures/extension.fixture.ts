@@ -3,12 +3,34 @@ import {
   test,
   type BrowserContext,
   type Page,
+  type Worker,
 } from "@playwright/test";
 import os from "os";
 import path from "path";
 
 const EXTENSION_DIST_PATH = path.resolve(import.meta.dirname, "../../dist");
 const extensionIds = new WeakMap<BrowserContext, string>();
+
+/**
+ * The production build carries a Drive OAuth client, so the background worker
+ * would run Drive preparation on its own schedule and switch storage to the
+ * transactional backend mid-test, racing each test's storage reset. Hide the
+ * client from the worker; Drive specs install their own controlled client.
+ */
+export async function hideDriveClient(worker: Worker): Promise<void> {
+  await worker
+    .evaluate(() => {
+      const manifest = chrome.runtime.getManifest();
+      if (!manifest.oauth2) {
+        return;
+      }
+      const { oauth2: _oauth2, ...withoutDrive } = manifest;
+      // Drive specs read the real manifest back from here.
+      Object.assign(globalThis, { e2eBuildManifest: manifest });
+      chrome.runtime.getManifest = () => withoutDrive;
+    })
+    .catch(() => {});
+}
 
 /**
  * Test-scoped fixtures (a new instance per test).
@@ -59,6 +81,10 @@ export const extensionTest = test.extend<
         (await context.waitForEvent("serviceworker"));
       const id = new URL(worker.url()).host;
       extensionIds.set(context, id);
+      await hideDriveClient(worker);
+      context.on("serviceworker", (restarted) => {
+        void hideDriveClient(restarted);
+      });
       const details = await context.newPage();
       await details.goto("chrome://extensions/?id=" + id);
       const allow = details.getByRole("button", {

@@ -1,5 +1,5 @@
 import { Checkbox } from "@/shared/components/checkbox/Checkbox";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useToast } from "@/shared/components/toast/ToastProvider";
 import { Input } from "@/shared/components/input/Input";
 import { Select } from "@/shared/components/select/Select";
@@ -54,6 +54,47 @@ export function Settings() {
   const [advanced, setAdvanced] = useState(false);
   const [activeSection, setActiveSection] =
     useState<SettingsSectionId>("appearance");
+  const contentRef = useRef<HTMLElement>(null);
+
+  // Scroll spy: highlight the section that crosses the middle of the content.
+  useEffect(() => {
+    const content = contentRef.current;
+    if (isLoading || !content) {
+      return;
+    }
+    const updateActiveSection = (): void => {
+      const bounds = content.getBoundingClientRect();
+      // Sections near the end can't reach the middle, so the bottom of the
+      // scroll range selects the last visible section.
+      const atBottom =
+        content.scrollHeight > content.clientHeight &&
+        content.scrollTop + content.clientHeight >= content.scrollHeight - 2;
+      const middle = bounds.top + bounds.height / 2;
+      let current: SettingsSectionId = SETTINGS_SECTIONS[0].id;
+      for (const section of SETTINGS_SECTIONS) {
+        const element = document.getElementById(SECTION_ANCHORS[section.id]);
+        if (!element || element.hidden) {
+          continue;
+        }
+        const top = element.getBoundingClientRect().top;
+        if (top <= middle || atBottom) {
+          current = section.id;
+        }
+      }
+      setActiveSection(current);
+    };
+    updateActiveSection();
+    content.addEventListener("scroll", updateActiveSection, { passive: true });
+    const observer = new ResizeObserver(updateActiveSection);
+    observer.observe(content);
+    for (const child of Array.from(content.children)) {
+      observer.observe(child);
+    }
+    return () => {
+      content.removeEventListener("scroll", updateActiveSection);
+      observer.disconnect();
+    };
+  }, [isLoading, advanced]);
 
   const handleThemeChange = (theme: EditorThemeSetting) => {
     dispatch(updateSettings({ theme }));
@@ -172,18 +213,18 @@ export function Settings() {
                 key={section.id}
                 type="button"
                 aria-expanded={advanced}
+                aria-current={activeSection === "advanced" ? "true" : undefined}
                 aria-controls="advanced-settings"
                 onClick={() => {
                   if (advanced) {
                     setAdvanced(false);
-                    setActiveSection("appearance");
                   } else {
                     scrollToSection("advanced");
                   }
                 }}
                 className={clsx(
                   navItemClass,
-                  advanced
+                  activeSection === "advanced"
                     ? "bg-selected font-semibold text-foreground"
                     : "text-text-muted hover:bg-hover-overlay hover:text-foreground"
                 )}
@@ -198,7 +239,7 @@ export function Settings() {
                 onClick={() => scrollToSection(section.id)}
                 className={clsx(
                   navItemClass,
-                  activeSection === section.id && !advanced
+                  activeSection === section.id
                     ? "bg-selected font-semibold text-foreground"
                     : "text-text-muted hover:bg-hover-overlay hover:text-foreground"
                 )}
@@ -209,6 +250,7 @@ export function Settings() {
           )}
         </nav>
         <section
+          ref={contentRef}
           aria-label="Settings content"
           tabIndex={0}
           className="max-w-3xl scrollbar-thin-6 min-h-0 min-w-0 flex-1 [scrollbar-gutter:stable] overflow-x-hidden overflow-y-auto overscroll-contain pr-sm focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent"

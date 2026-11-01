@@ -114,10 +114,13 @@ chrome.tabs.onRemoved.addListener(onTabRemoved);
 void chrome.storage.local
   .get(["publicationBackend", "verifiedSync", "driveSyncEnabled"])
   .then(async (flags) => {
-    if (flags.driveSyncEnabled || driveConfigured()) {
+    if (flags.publicationBackend !== "transactional") {
       return;
     }
-    if (flags.publicationBackend !== "transactional") {
+    // Drive owns replication when it is on, but pending CSS is local work a
+    // restarted worker must always finish.
+    if (flags.driveSyncEnabled || driveConfigured()) {
+      await reconcilePendingCss(documentRepository);
       return;
     }
     if (flags.verifiedSync) {

@@ -15,7 +15,6 @@ import {
 } from "@/shared/store/slices/userscripts/transfer.userscripts";
 import { LoaderCircleIcon, PlusIcon, SearchIcon } from "lucide-react";
 import clsx from "clsx";
-import { groupScriptsBySite } from "@/shared/utils/script-site";
 import { useCallback, useMemo, useState } from "react";
 import { Group, Panel } from "react-resizable-panels";
 import { ScriptEditor } from "./script-editor/ScriptEditor";
@@ -26,7 +25,9 @@ import {
 } from "@/shared/store/slices/userscripts/thunks.userscripts";
 import {
   selectPanelSizes,
+  selectScriptListCaptions,
   selectScriptListSort,
+  setScriptListCaptions,
   setScriptListSort,
   updatePanelSizesIfChanged,
 } from "@/shared/store/slices/ui";
@@ -52,6 +53,7 @@ export function ScriptsPage() {
   const selectedScript = useAppSelector(selectCurrentUserscript);
   const panelSizes = useAppSelector(selectPanelSizes);
   const sortBy = useAppSelector(selectScriptListSort);
+  const showCaptions = useAppSelector(selectScriptListCaptions);
   const sortedScripts = useMemo(
     () =>
       Object.values(scripts ?? {}).sort((a, b) =>
@@ -87,9 +89,9 @@ export function ScriptsPage() {
     ).length,
     off: sortedScripts.filter((script) => !script.enabled).length,
   };
-  const scriptGroups = useMemo(() => {
+  const visibleScripts = useMemo(() => {
     const needle = query.trim().toLowerCase();
-    const visible = sortedScripts.filter((script) => {
+    return sortedScripts.filter((script) => {
       if (filter === "problems" && !scriptsWithProblems.has(script.id)) {
         return false;
       }
@@ -106,7 +108,6 @@ export function ScriptsPage() {
         )
       );
     });
-    return groupScriptsBySite(visible);
   }, [sortedScripts, query, filter, scriptsWithProblems]);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
@@ -213,7 +214,7 @@ export function ScriptsPage() {
           className="min-h-0"
         >
           <div className="flex h-full min-h-0 flex-col bg-surface-raised">
-            <div className="flex flex-col gap-sm border-b border-border p-md">
+            <div className="flex flex-col gap-sm border-b border-border px-md pt-(--page-padding) pb-md">
               <div className="flex items-center justify-between gap-2xs">
                 <Typography variant="subtitle" className="min-w-0 truncate">
                   Scripts
@@ -222,6 +223,10 @@ export function ScriptsPage() {
                   <ScriptsActionsMenu
                     sortBy={sortBy}
                     onSortChange={(value) => dispatch(setScriptListSort(value))}
+                    showCaptions={showCaptions}
+                    onShowCaptionsChange={(value) =>
+                      dispatch(setScriptListCaptions(value))
+                    }
                     onImportClick={() => setImportDialogOpen(true)}
                     onExportClick={onExportScripts}
                   />
@@ -271,7 +276,8 @@ export function ScriptsPage() {
             <div className="relative min-h-0 flex-1">
               <div className="flex h-full flex-col">
                 <ScriptList
-                  groups={scriptGroups}
+                  scripts={visibleScripts}
+                  showCaptions={showCaptions}
                   onScriptSelected={onScriptSelected}
                   emptyMessage={
                     sortedScripts.length === 0

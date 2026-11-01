@@ -1,6 +1,6 @@
 import { expect } from "@playwright/test";
 import type { Page } from "@playwright/test";
-import { extensionTest } from "./extension.fixture";
+import { extensionTest, hideDriveClient } from "./extension.fixture";
 import { buildUserscriptSyncEntries } from "./userscript-storage";
 
 interface StorageFixtures {
@@ -27,14 +27,22 @@ interface StorageFixtures {
  * Import `test` and `expect` from `e2e/fixtures/index.ts` in all test files.
  */
 export const test = extensionTest.extend<StorageFixtures>({
-  clearStorage: async ({}, use) => {
+  clearStorage: async ({ extensionContext }, use) => {
     const clear = async (page: Page) => {
+      // A restarted worker (some specs close it on purpose) sees the build's
+      // Drive client again; hide it before the reset below.
+      await Promise.all(extensionContext.serviceWorkers().map(hideDriveClient));
+
       // The already-open options page may still have a debounced UI-state save
       // pending from its initial hydration. Let that settle before test setup
       // clears storage, otherwise a reload can rewrite stale globalState.
       await page.waitForTimeout(600);
 
       await page.evaluate(async () => {
+        // The profile outlives each test. A Drive retry alarm left by an
+        // earlier test would re-run Drive preparation mid-test and switch the
+        // freshly cleared profile back to transactional storage.
+        await chrome.alarms.clearAll();
         await chrome.storage.local.set({ publicationBackend: "legacy" });
         await Promise.all([
           chrome.storage.sync.clear(),

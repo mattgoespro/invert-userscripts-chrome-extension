@@ -73,6 +73,8 @@ export function isDriveLayout(value: unknown): value is GlobalState {
     switch (key) {
       case "scriptListSort":
         return ["name", "created"].includes(item);
+      case "scriptListCaptions":
+        return typeof item === "boolean";
       case "activeSidebarTab":
         return ["scripts", "modules", "settings"].includes(item);
       case "selectedScriptId":
