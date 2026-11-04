@@ -92,11 +92,7 @@ function stringifyPrefixWithLevel(
  * @returns {boolean} true if the message contains ANSI color codes, else false.
  */
 function isAnsiColoredMessage(message: string): boolean {
-  const ansiiRegex = /\\u001b\[\d+m/;
-
-  if (ansiiRegex.test(message)) {
-    console.log("Message is colored: ", message);
-  }
+  const ansiiRegex = /\u001b\[\d+m/;
 
   return ansiiRegex.test(message);
 }
@@ -125,7 +121,7 @@ function coalesceLoggerOptions(options: LoggerOptions): LoggerOptions {
  *
  * @param name the log message prefix
  */
-function createLogger(name: string, options: LoggerOptions={}): Logger {
+function createLogger(name: string, options?: LoggerOptions): Logger {
   const coercedOptions = coalesceLoggerOptions(options);
 
   const createLogMessage: CreateLogMessageFn = (
@@ -151,7 +147,7 @@ function createLogger(name: string, options: LoggerOptions={}): Logger {
      * In this case, we split the message into lines and log each line separately.
      */
     const messageLines = messageArgs.flatMap((message) =>
-      typeof message === "string" ? message.split("\n") : message
+      typeof message === "string" ? message.split("\n") : [message]
     );
 
     if (isMessageNewlineEscaped(messageArgs)) {
@@ -182,6 +178,10 @@ function createLogger(name: string, options: LoggerOptions={}): Logger {
     name,
     options: coercedOptions,
     debug: (...messageArgs: LogMessage[]) => {
+      if (!shouldLogLevel(coercedOptions.level, "debug")) {
+        return;
+      }
+
       console.debug(
         `${messageArgs.map((arg) => createLogMessage(arg, { level: "debug", addPrefix: coercedOptions.prefix })).join(" ")}`
       );
@@ -217,7 +217,7 @@ function createLogger(name: string, options: LoggerOptions={}): Logger {
     },
     errorStack: (error: Error) => {
       console.error(
-        `${stringifyPrefixWithLevel(name, "error", options.prefix)}${error.message}`
+        `${stringifyPrefixWithLevel(name, "error", coercedOptions.prefix)}${error.message}`
       );
 
       if (error.stack != null) {
@@ -226,7 +226,7 @@ function createLogger(name: string, options: LoggerOptions={}): Logger {
             .split("\n")
             .map(
               (line) =>
-                `${stringifyPrefixWithLevel(name, "error", options.prefix)}${line}`
+                `${stringifyPrefixWithLevel(name, "error", coercedOptions.prefix)}${line}`
             )
             .join("\n")
         );

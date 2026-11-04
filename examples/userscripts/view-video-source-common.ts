@@ -3,6 +3,7 @@ const VIDEO_SELECTOR_RETRY_LIMIT = 500;
 const VIDEO_SELECTOR_RETRY_INTERVAL = 2e3;
 const VIDEO_QUALITY_CHECK_INTERVAL = 1e3;
 const VIDEO_QUALITY_FULL_HD_CHECKS_LIMIT = 10;
+const VIDEO_QUALITY_RESOLUTION_THRESHOLD = 360;
 const EMBEDDED_FRAME_MESSAGE_SOURCE = "embeddedFrame";
 
 function isTopLevelFrame() {
@@ -18,7 +19,10 @@ function hasVideoLoadFailed(videoElement: HTMLVideoElement): boolean {
 }
 
 function videoDetailsFromElement(videoElement: HTMLVideoElement): VideoDetails {
-  return { src: getVideoSourceUrl(videoElement), dpi: videoElement.videoHeight };
+  return {
+    src: getVideoSourceUrl(videoElement),
+    dpi: videoElement.videoHeight,
+  };
 }
 
 function getQuality(dpi: number): VideoQuality {
@@ -38,7 +42,9 @@ function findVideoElementInDocument() {
         return null;
       }
 
-      const readyVideos = videos.filter((el) => el.videoWidth >= 360);
+      const readyVideos = videos.filter(
+        (el) => el.videoWidth >= VIDEO_QUALITY_RESOLUTION_THRESHOLD
+      );
 
       if (readyVideos.length >= 1) {
         if (readyVideos.length > 1) {

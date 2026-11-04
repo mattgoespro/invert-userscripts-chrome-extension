@@ -5,30 +5,16 @@ const log = createLogger("DOM Utils | Utility");
  * On some pages, `window.open` could get modified during page loads, so cache its implementation
  * locally to use when the original implementation is needed.
  */
-const openTabFn = JSON.stringify(window.open);
+const openTabFn = window.open;
 
-/**
- * Check if the current window is the parent frame.
- * @param window the window object
- */
-function isParentFrame(window: Window) {
-  return !isEmbeddedFrame(window);
-}
-
-/**
- * Check if the current window is embedded within another frame.
- * @param window the window object
- */
-function isEmbeddedFrame(window: Window) {
-  return window !== window.parent;
-}
-
-/**
- * Check if the current window contains an embedded frame.
- */
-function containsEmbeddedFrame() {
-  return document.querySelector("iframe[allowfullscreen]") != null;
-}
+const DEFAULT_RETRY_OPTIONS: Required<RetryOptions> = {
+  waitTime: 3e3,
+  retryLimit: 10,
+  retryMessage: "Retrying function...",
+  timeoutMessage: "Retry limit reached.",
+  log: true,
+  throwError: true,
+};
 
 /**
  * Copy text to the clipboard.
@@ -47,13 +33,13 @@ function copyToClipboard(text: string) {
  *       Default: 3s
  *   - retryLimit: (optional) the limit of the calls to the retry function
  *       Default: 10
- *	 - retryMessage: (optional) the message to log on a retry
+ *   - retryMessage: (optional) the message to log on a retry
  *       Default: 'Retrying function...'
  *   - timeoutMessage: (optional) a message string to log if the execution
- *	       limit is reached, or `false` to suppress log messages
+ *         limit is reached, or `false` to suppress log messages
  *       Default: 'Retry timed out.'
  *   - log: (optional) whether to suppress log messages
- *	 - throwError: (optional) whether to throw an error when the retry limit is reached
+ *   - throwError: (optional) whether to throw an error when the retry limit is reached
  *       Default: true
  *
  * @returns the result of the function callback if resolved to
@@ -61,38 +47,34 @@ function copyToClipboard(text: string) {
  */
 async function retry<T>(
   retryFn: () => T | Promise<T>,
-  options = {
-    waitTime: 3e3,
-    retryLimit: 10,
-    retryMessage: "Retrying function...",
-    timeoutMessage: "Retry limit reached.",
-    log: true,
-    throwError: true,
-  }
+  options: RetryOptions = {}
 ) {
-  const { waitTime, retryLimit, retryMessage, timeoutMessage, throwError } =
-    options;
+  const {
+    waitTime,
+    retryLimit,
+    retryMessage,
+    timeoutMessage,
+    log: logMessages,
+    throwError,
+  } = { ...DEFAULT_RETRY_OPTIONS, ...options };
 
-  const logMessages = options.log == null ? true : options.log;
+  const isUnresolved = (result: T) => result == null || result === false;
 
   let retryFnResult = await retryFn();
   let retries = 1;
 
-  while (
-    (retryFnResult == null || retryFnResult === false) &&
-    retries < retryLimit
-  ) {
+  while (isUnresolved(retryFnResult) && retries < retryLimit) {
     await wait(waitTime);
 
     if (logMessages) {
-      log.info(`${retryMessage}		[${retries}/${retryLimit}]`);
+      log.info(`${retryMessage}     [${retries}/${retryLimit}]`);
     }
 
     retryFnResult = await retryFn();
     retries++;
   }
 
-  if (retries === retryLimit) {
+  if (isUnresolved(retryFnResult)) {
     if (throwError) {
       throw new Error(log.createLogMessage(timeoutMessage));
     }
@@ -101,7 +83,7 @@ async function retry<T>(
       log.warn(timeoutMessage);
     }
 
-    return void 0;
+    return null;
   }
 
   return retryFnResult;
@@ -139,30 +121,6 @@ async function wait(time: number) {
 }
 
 /**
- * Checks if a function may return another function.
- * This is purely static text inspection (no execution).
- */
-function couldReturnFunction(fn: (...args: unknown[]) => unknown): boolean {
-  const src = fn.toString();
-
-  // Normalize whitespace
-  const clean = src.replace(/\s+/g, " ");
-
-  // Case 1: explicit return of an arrow function
-  if (/return\s*\([^)]*\)\s*=>/.test(clean)) return true;
-  if (/return\s*[^=]*=>/.test(clean)) return true;
-
-  // Case 2: explicit return of a function expression
-  if (/return\s*function\s*\(/.test(clean)) return true;
-
-  // Case 3: function body *is* an arrow returning an arrow
-  // e.g. (x) => (y) => y + x
-  if (/^\s*\([^)]*\)\s*=>\s*\([^)]*\)\s*=>/.test(clean)) return true;
-
-  return false;
-}
-
-/**
  * Converts a space-separated string to a camel-case string.
  *
  * @returns the string as a camel-case.
@@ -195,13 +153,12 @@ function addStyles(
   element: HTMLElement,
   styles: CSSStylesObject
 ): CSSStyleDeclaration {
-  const existingStyles = element.style ?? {};
-  return Object.assign(element.style, { ...styles, ...existingStyles });
+  return Object.assign(element.style, styles);
 }
 
 /**
  * Create a banner at the bottom of the page containing the
- *  list of	provided elements.
+ *  list of provided elements.
  *
  * @param elements the elements to add to the banner
  */
@@ -216,7 +173,7 @@ function createPageBanner(...elements: HTMLElement[]) {
 
 /**
  * Create a banner at the bottom of the page containing the
- *  list of	provided elements.
+ *  list of provided elements.
  *
  * @param elements the elements to add to the banner
  */
@@ -229,35 +186,13 @@ function createPageSidebar(...elements: HTMLElement[]) {
   return banner;
 }
 
-function linkMaterialFonts() {
-  const link = document.createElement("link");
-  link.href = "https://fonts.googleapis.com/icon?family=Material+Icons";
-  link.rel = "stylesheet";
-  document.head.appendChild(link);
-}
-
-function createIcon(
-  icon: string,
-  size: number = 48,
-  color: string = "white"
-): HTMLSpanElement {
-  const span = document.createElement("span");
-  span.classList.add("material-icons", `md-${size}`);
-  span.style.color = color;
-  span.innerText = icon;
-  return span;
-}
-
 /**
  * Enables resizing from the bottom-right corner.
  * @param {HTMLDivElement} el
  */
 function makeResizable(el: HTMLDivElement, parent: HTMLDivElement = el) {
   const resizer = document.createElement("div");
-
-  resizer.classList.add("ujs-element-resizer", "fa-solid", "fa-house");
-
-  resizer.appendChild(createIcon("face"));
+  resizer.classList.add("ujs-element-resizer");
   parent.appendChild(resizer);
 
   let startX: number, startY: number, startWidth: number, startHeight: number;
@@ -331,22 +266,19 @@ function makeDraggable(el: HTMLDivElement, handle: HTMLDivElement) {
  */
 function openUrl(url: string) {
   if (openTabFn != null) {
-    const open = JSON.parse(openTabFn);
-    open(url, "_blank");
+    openTabFn.call(window, url, "_blank");
     log.info("Opened new tab with URL: ", url);
     return;
   }
 
-  const openUrlForm = document.createElement("form");
-
   const { origin, pathname, searchParams } = new URL(url);
-  const actionUrl = `${origin}${pathname}`;
 
+  const actionUrl = `${origin}${pathname}`;
   log.info(`Setting form action URL -> '${actionUrl}'`);
 
+  const openUrlForm = document.createElement("form");
   openUrlForm.id = "open-url-form";
   openUrlForm.action = actionUrl;
-  openUrlForm.rel = "preconnect";
   openUrlForm.rel = "prefetch";
   openUrlForm.method = "get";
   openUrlForm.target = "_blank";
@@ -360,7 +292,6 @@ function openUrl(url: string) {
      * TODO: May need to check if the value *needs* encoding, otherwise
      * don't encode.
      */
-    // const value = encodeURIComponent(paramValue);
     const value = paramValue;
 
     log.info(
@@ -374,7 +305,6 @@ function openUrl(url: string) {
     paramInput.value = value;
 
     openUrlForm.appendChild(paramInput);
-    openUrlForm.submit();
   }
 
   document.body.appendChild(openUrlForm);
@@ -384,8 +314,14 @@ function openUrl(url: string) {
   document.body.removeChild(openUrlForm);
 }
 
-async function waitForModule(module: unknown) {
-  await retry(() => module != null);
+/**
+ * Wait until a global module has loaded.
+ *
+ * @param getModule reads the module on every check, so a module that loads
+ *   after the call is still picked up
+ */
+async function waitForModule(getModule: () => unknown) {
+  await retry(() => getModule() != null);
 }
 
 /**
@@ -395,8 +331,7 @@ async function waitForModule(module: unknown) {
  * to inject into the page.
  */
 async function injectFonts(...fontFamilies: string[]) {
-  // @ts-expect-error - WebFont is loaded globally from CDN and does not have types
-  await waitForModule(WebFont);
+  await waitForModule(() => (window as Window & { WebFont?: unknown }).WebFont);
 
   // @ts-expect-error - WebFont is loaded globally from CDN and does not have types
   WebFont.load({

@@ -1,18 +1,23 @@
 # Example userscript export
 
 Run `pnpm export:examples` to generate `temp/example-userscripts.json`, then
-select that file in the options page's **Import Userscripts** dialog.
+import that file with the Import button in the User JavaScript and CSS extension,
+choosing to merge it with your existing rules. Replacing instead deletes every
+rule that isn't in the file.
 To choose a different destination, run `pnpm export:examples <output.json>`.
 
-The exporter reads `examples/userscripts/` and uses the options page's transfer
-format and validator. Plain `.ts` files become TypeScript sources. Matching
-`.d.ts` and `.global.d.ts` files populate the type declarations pane. Declaration
-files without a matching source (such as `modules.d.ts`) become entries with
-an empty source, so every declaration file is preserved.
+The exporter reads `examples/userscripts/` and writes the extension's backup
+format (version 11). Plain `.ts` files are compiled to JavaScript, and a `.scss`
+file with the same name supplies the rule's SCSS and compiled CSS. Declaration
+files are not exported because the extension has no types.
 
-Entries use their filename stem as the name and shared module name. They start
-disabled with no URL patterns; configure their dependencies and target pages
-before enabling injection. SCSS and global module imports start empty.
+Rules use their filename stem as the name and a stable `r:example-<stem>` ID, so
+importing again updates them without touching your other rules. They start
+disabled with no URL patterns, so set the target pages before enabling injection.
+Flags and dependencies come from `RULE_SETTINGS` in the exporter; add an entry
+there when a new example needs more than the `shared` flag. The file has no
+library content or settings, so a library missing from your install has to be
+downloaded by the extension.
 
 ## Refactor validation and recovery
 

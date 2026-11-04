@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars -- global API */
 const commonHeaders = {
-  "Content-Type": "application/json",
   Accept: "application/json",
   "User-Agent":
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
@@ -14,21 +13,22 @@ class HttpClient {
       headers: commonHeaders,
     });
 
-    return this._getResponseBody(rsp);
+    return this._getJsonResponseBody(rsp);
   }
 
   async _request(method, url, headers = {}) {
     return fetch(url, { method, headers: { ...commonHeaders, ...headers } });
   }
 
-  async get(url, headers = {}) {
-    return this._request(url, { method: "GET", headers });
+  async request(url, headers = {}) {
+    return this._request("GET", url, headers);
   }
 
   async head(url) {
+    const { Accept: _accept, ...headHeaders } = commonHeaders;
     const rsp = await fetch(url, {
       method: "HEAD",
-      headers: { ...commonHeaders, Accept: undefined },
+      headers: headHeaders,
     });
 
     if (!rsp.ok) {
@@ -46,7 +46,7 @@ class HttpClient {
     return headers;
   }
 
-  async _getResponseBody(rsp) {
+  async _getJsonResponseBody(rsp) {
     if (!rsp.ok) {
       throw new Error(
         `HttpClient: request failed with HTTP response code: ${rsp.status}`

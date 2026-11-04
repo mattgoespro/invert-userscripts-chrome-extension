@@ -14,6 +14,43 @@ window.log = createLogger("Button | DOM Components");
  *		- `href`: (optional) the target url of a link button
  *    - `classes`: (optional) list of additional css classes to apply
  */
+function useButton(
+  text: string,
+  { onClickFn, classes, disabled, data }: UseButtonOptions
+): [HTMLButtonElement, UseButtonUpdateFn] {
+  const button = document.createElement("button");
+  button.id = convertToCamelCase(text);
+  button.classList.add(...(classes ?? []), "ujs-button");
+  button.innerText = text;
+  button.disabled = disabled ?? false;
+
+  const buttonCustomDataAttr = document.createAttribute("data");
+  button.setAttributeNode(buttonCustomDataAttr);
+  button.setAttribute("data", JSON.stringify({ text, ...data }));
+
+  button.onclick = (event) => {
+    // When the consumer requires an instance of the button before it has been
+    // initialized, a new callback function without parameters must be returned,
+    // so we add the return value of the provided callback function as the click listener.
+    if (onClickFn == null) {
+      window.log.warn("No click listener provided.");
+      return;
+    }
+
+    const result = (onClickFn as UseButtonOnClickCallback)(button);
+
+    if (typeof result === "function") {
+      result.call(button, event);
+    }
+  };
+
+  const updateButton = (updateData: UseButtonUpdateData) => {
+    applyButtonUpdate(button, updateData);
+  };
+
+  return [button, updateButton];
+}
+
 function applyButtonUpdate(
   button: HTMLButtonElement,
   updateData: UseButtonUpdateData
@@ -24,7 +61,10 @@ function applyButtonUpdate(
     onClickFn: updateEventOnClickFn,
     disabled: updateEventDisabled,
   } = updateData;
-  button.disabled = updateEventDisabled ?? false;
+
+  if (updateEventDisabled != null) {
+    button.disabled = updateEventDisabled;
+  }
 
   if (updateText != null) {
     button.innerText = updateText(button);
@@ -38,49 +78,6 @@ function applyButtonUpdate(
   const currentData = getDataAttributeObject(button);
   const updatedData = { ...currentData, ...updateEventData };
   setDataAttributeObject(button, updatedData);
-}
-
-function useButton(
-  text: string,
-  { onClickFn, classes, disabled, data }: UseButtonOptions
-): [HTMLButtonElement, UseButtonUpdateFn] {
-  const button = document.createElement("button");
-  const buttonCustomDataAttr = document.createAttribute("data");
-  button.setAttributeNode(buttonCustomDataAttr);
-  button.setAttribute("data", JSON.stringify({ text, ...data }));
-  button.id = convertToCamelCase(text);
-  button.classList.add(...(classes ?? []), "ujs-button");
-  button.innerText = text;
-  button.disabled = disabled ?? false;
-
-  /**
-   * When the consumer requires an instance of the button before it has been
-   * initialized, a new callback function without parameters must be returned,
-   * so we add the return value of the provided callback function as the click listener.
-   */
-  const onClick =
-    onClickFn ?? (() => window.log.warn("No click listener provided."));
-  const clickHandler = onClick.call(button);
-
-  if (typeof clickHandler === "function") {
-    button.addEventListener("click", clickHandler);
-  }
-
-  // if (couldReturnFunction(onClick)) {
-  // 	window.log.info('Attaching delegated click function.');
-  // } else {
-  // 	/**
-  // 	 *  The click listener can be directly attached..
-  // 	 */
-  // 	window.log.info('Attaching click function directly.');
-  // 	button.addEventListener('click', onClick.bind(button));
-  // }
-
-  const updateButton = (updateData: UseButtonUpdateData) => {
-    applyButtonUpdate(button, updateData);
-  };
-
-  return [button, updateButton];
 }
 
 /**
@@ -119,7 +116,7 @@ function createIconButton(
 ) {
   // Create an icon button with the specified Material Icon
   const iconBtn = document.createElement("button");
-  iconBtn.classList.add("material-icons", "ujs-close-btn");
+  iconBtn.classList.add("material-symbols-outlined", "ujs-close-btn");
   iconBtn.innerText = icon;
   iconBtn.addEventListener("click", onClickFn);
   return iconBtn;

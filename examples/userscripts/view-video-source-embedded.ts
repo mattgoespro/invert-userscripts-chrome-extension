@@ -1,5 +1,3 @@
-console.log.bind(window);
-
 window.log = createLogger("Embedded | View Video Source");
 
 /**

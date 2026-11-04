@@ -10,10 +10,12 @@ function _getToastContainer() {
   return container;
 }
 
-function _createToastElement(level, message, { duration = 500 }) {
+const TOAST_DISMISS_ANIMATION_DURATION = 500;
+
+function _createToastElement(level, message, { duration = 3000 }) {
   const toast = document.createElement("div");
   toast.setAttribute("duration", duration.toString());
-  toast.classList.add("ujs-toast", `ujs-toast-${level}`);
+  toast.classList.add("ujs-toast", `ujs-toast-${level ?? "info"}`);
 
   const msgSpan = document.createElement("span");
   msgSpan.classList.add("ujs-toast-message");
@@ -21,19 +23,27 @@ function _createToastElement(level, message, { duration = 500 }) {
 
   // Create a close button with the `close` Material Icon
   const dismissBtn = document.createElement("button");
-  dismissBtn.classList.add("material-icons", "ujs-close-btn");
+  dismissBtn.classList.add("material-symbols-outlined", "ujs-close-btn");
   dismissBtn.innerText = "close";
 
-  const dismiss = () => toast.remove();
+  let isDismissing = false;
 
-  dismissBtn.addEventListener("click", () => {
+  const dismiss = () => {
+    if (isDismissing) {
+      return;
+    }
+
+    isDismissing = true;
     toast.classList.add("ujs-toast-dismissing");
 
     setTimeout(() => {
-      dismiss();
+      toast.remove();
       console.log("Toast removed from page.");
-    }, duration);
-  });
+    }, TOAST_DISMISS_ANIMATION_DURATION);
+  };
+
+  dismissBtn.addEventListener("click", dismiss);
+  setTimeout(dismiss, duration);
 
   toast.appendChild(msgSpan);
   toast.appendChild(dismissBtn);
@@ -44,7 +54,7 @@ function _createToastElement(level, message, { duration = 500 }) {
 /* eslint-disable @typescript-eslint/no-unused-vars -- global API */
 function createToaster(toastContainer = _getToastContainer()) {
   return {
-    showToast: (level, message, options = { duration: 3000 }) => {
+    showToast: (level, message, options: { duration?: number } = {}) => {
       const toastElement = _createToastElement(level, message, {
         duration: options.duration,
       });

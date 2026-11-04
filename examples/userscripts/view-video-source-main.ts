@@ -1,5 +1,3 @@
-console.log.bind(window);
-
 window.log = createLogger("Main | View Video Source");
 window.toaster = null;
 
@@ -19,18 +17,18 @@ const [copySourceButton, updateCopySourceButton] = useButton("Copy URL", {
   },
 });
 
-const [openPreviewBoxButton, updateOpenPreviewBoxButton] = useButton(
-  "Open Preview",
+const [logVideoElementButton, updateLogVideoElementButton] = useButton(
+  "Log Video Element",
   {
-    classes: ["ujs-open-preview-box-btn"],
+    classes: ["ujs-log-src-btn"],
     disabled: true,
   }
 );
 
-const [logVideoElementButton, updateLogVideoElementButton] = useButton(
-  "Log Video Element",
+const [openPreviewBoxButton, updateOpenPreviewBoxButton] = useButton(
+  "Open Preview",
   {
-    classes: ["ujs-log-video-element-btn"],
+    classes: ["ujs-open-preview-box-btn"],
     disabled: true,
   }
 );
@@ -121,10 +119,11 @@ function createVideoPreview(srcUrl: string) {
 
   const header = document.createElement("div");
   header.classList.add("ujs-video-preview-box-header");
+  header.appendChild(createIcon("open_with")); // 'move' icon
   box.appendChild(header);
 
   const previewVideoElement = document.createElement("video");
-  previewVideoElement.classList.add("ujs-video-preview-element");
+  previewVideoElement.classList.add("ujs-video-preview-player");
   previewVideoElement.src = srcUrl;
   previewVideoElement.muted = true;
   previewVideoElement.autoplay = true;
@@ -153,7 +152,7 @@ function onOpenVideoSourceClick(srcUrl: string) {
           `
 					The resolved video has a blob file source URL.
 					Search for the m3u8 stream file in the DevTools Network tab and download the video using the \`lux\` video downloader CLI.
-					Example: \`lux -m -O '<downloaded_file_name> '<m3u8_url>'\`
+					Example: \`lux -m -O '<downloaded_file_name>' '<m3u8_url>'\`
 				`
         )
       );
@@ -176,9 +175,22 @@ function createBanner() {
   window.toaster = createToaster(banner);
 }
 
+/**
+ * Only frames embedded in this page may update the banner, so other windows
+ * can't swap in a URL that the "Open URL" button would then open.
+ */
+function isFromEmbeddedFrame(msgEvent: MessageEvent): boolean {
+  return Array.from(document.querySelectorAll("iframe")).some(
+    (iframe) => iframe.contentWindow === msgEvent.source
+  );
+}
+
 function listenForEmbeddedVideoDetails() {
   window.addEventListener("message", (msgEvent) => {
-    if (!isEmbeddedVideoDetailsMessage(msgEvent.data)) {
+    if (
+      !isEmbeddedVideoDetailsMessage(msgEvent.data) ||
+      !isFromEmbeddedFrame(msgEvent)
+    ) {
       return;
     }
 
@@ -219,7 +231,7 @@ async function initViewVideoSourceMain() {
 
 async function loadViewVideoSourceMain() {
   try {
-    linkMaterialFonts();
+    linkMaterialIcons();
     injectFonts("Open Sans");
 
     window.log.info(
@@ -230,9 +242,10 @@ async function loadViewVideoSourceMain() {
     await initViewVideoSourceMain();
   } catch (error) {
     alert(
-      ["Script `Main | Open Video Source` threw an error.", error.stack].join(
-        "\n\n"
-      )
+      [
+        "Script `Main | Open Video Source` threw an error.",
+        error instanceof Error ? error.stack : String(error),
+      ].join("\n\n")
     );
     console.error(error);
   }

@@ -12,10 +12,6 @@ function prettyStringify(
   options: PrettyStringifyOptions,
   indent = 0
 ): string {
-  if (value == null) {
-    return "null";
-  }
-
   switch (typeof value) {
     case "undefined":
       return "undefined";
@@ -82,7 +78,9 @@ function formatObject(
   indent = 0
 ): string {
   const keyModifier = options?.objectKeyModifier ?? ((key) => key);
-  const valueModifier = options?.objectValueModifier ?? ((value) => `${value}`);
+  const valueModifier =
+    options?.objectValueModifier ??
+    ((value: unknown) => prettyStringify(value, options));
 
   const formattedObject = (
     options?.sortObjectKeys

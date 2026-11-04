@@ -1,0 +1,24 @@
+.ujs-toast {
+  .ujs-toast-info {
+    background-color: blue;
+  }
+
+  .ujs-toast-warn {
+    background-color: yellow;
+  }
+
+  .ujs-toast-error {
+    background-color: red;
+  }
+}
+
+.ujs-toast-message {
+  color: white;
+  text-transform: uppercase;
+}
+
+.ujs-close-btn {
+  background-color: transparent;
+  border: none;
+  outline: none;
+}

@@ -15,12 +15,6 @@ declare global {
 
   function convertToCamelCase(str: string): string;
 
-  function isParentFrame(window: Window): boolean;
-
-  function isEmbeddedFrame(window: Window): boolean;
-
-  function containsEmbeddedFrame(): boolean;
-
   function createPageBanner(...elements: HTMLElement[]): HTMLElement;
 
   function makeResizable(element: HTMLElement, handle: HTMLElement): void;
@@ -28,8 +22,6 @@ declare global {
   function makeDraggable(element: HTMLElement, handle: HTMLElement): void;
 
   function openUrl(url: string): void;
-
-  function linkMaterialFonts(): void;
 
   function injectFonts(...families: string[]): void;
 }
