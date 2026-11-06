@@ -102,9 +102,10 @@ export function InvertIde() {
 
     return startIdeWorkspace({
       initialize: async () => {
-        // Monaco/Shiki must finish before readiness mounts the editors.
+        // Monaco/Shiki must finish before readiness mounts the editors. A Shiki
+        // failure is tolerated (Monarch remains), so it must not fail startup.
         await Promise.all([
-          dispatch(initializeMonaco()).unwrap(),
+          dispatch(initializeMonaco()),
           dispatch(loadUserscripts()).unwrap(),
           dispatch(loadSettings()).unwrap(),
           dispatch(loadModules()).unwrap(),

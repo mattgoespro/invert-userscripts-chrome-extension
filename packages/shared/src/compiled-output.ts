@@ -77,6 +77,21 @@ function hasRuntimeBindings(importClause?: ts.ImportClause): boolean {
   );
 }
 
+function collectBindingNames(
+  name: ts.BindingName,
+  sourceFile: ts.SourceFile
+): string[] {
+  if (ts.isIdentifier(name)) {
+    return [name.getText(sourceFile)];
+  }
+
+  return name.elements.flatMap((element) =>
+    ts.isOmittedExpression(element)
+      ? []
+      : collectBindingNames(element.name, sourceFile)
+  );
+}
+
 function getSharedNamespaceAccessor(moduleName: string): string {
   return `window.__INVERT_SHARED__[${JSON.stringify(moduleName)}]`;
 }
@@ -233,8 +248,7 @@ export function wrapSharedScriptForInjection(
 
     if (ts.isVariableStatement(statement)) {
       for (const decl of statement.declarationList.declarations) {
-        if (ts.isIdentifier(decl.name)) {
-          const name = decl.name.getText(sourceFile);
+        for (const name of collectBindingNames(decl.name, sourceFile)) {
           assignments.push(`__ns__[${JSON.stringify(name)}]=${name}`);
         }
       }
@@ -270,6 +284,12 @@ export function wrapSharedScriptForInjection(
             start,
             end,
             text: `const ${defName} = `,
+          });
+          // The declaration is now an expression, so a following `(` would call it.
+          replacements.push({
+            start: statement.getEnd(),
+            end: statement.getEnd(),
+            text: ";",
           });
         }
         continue;
@@ -510,10 +530,11 @@ export function stripModuleSyntaxForClassicScript(compiledJs: string): string {
 
     if (ts.isExportAssignment(statement)) {
       const expr = statement.expression.getText(sourceFile);
+      // Keep it an expression: a leading `{` would otherwise parse as a block.
       replacements.push({
         start: statement.getStart(sourceFile),
         end: statement.getEnd(),
-        text: `${expr};`,
+        text: `void (${expr});`,
       });
       continue;
     }
@@ -547,6 +568,15 @@ export function stripModuleSyntaxForClassicScript(compiledJs: string): string {
         end,
         text: anonymousDefault ? "void " : "",
       });
+
+      // The declaration is now an expression, so a following `(` would call it.
+      if (anonymousDefault) {
+        replacements.push({
+          start: statement.getEnd(),
+          end: statement.getEnd(),
+          text: ";",
+        });
+      }
       continue;
     }
 

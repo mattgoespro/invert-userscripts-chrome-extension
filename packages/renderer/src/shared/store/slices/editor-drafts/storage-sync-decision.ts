@@ -1,6 +1,7 @@
 import { Userscript } from "@shared/model";
 import { detectDraftConflict } from "./helpers";
 import {
+  DraftBuffer,
   EditorDraft,
   RemoteDraftConflict,
   isDraftDirty,
@@ -12,6 +13,8 @@ export type StorageSyncDecision =
   | { action: "sync"; script: Userscript }
   /** Update the entity only; leave an absent or dirty draft untouched. */
   | { action: "sync-entity"; script: Userscript }
+  /** Update the entity and merge remote into a dirty draft's clean buffers. */
+  | { action: "merge-clean"; script: Userscript }
   | { action: "conflict"; conflict: RemoteDraftConflict };
 
 /**
@@ -22,8 +25,10 @@ export type StorageSyncDecision =
  * - Missing remote + clean/absent local → remove the draft
  * - Present remote + no local → sync entity only (drafts are created on open)
  * - Present remote + dirty conflict → enqueue conflict
- * - Present remote + dirty, no conflict → sync entity only (remote snapshot);
- *   draft buffers stay as the open overlay (never merged onto the entity)
+ * - Present remote + dirty, no conflict, same sources → sync entity only (remote
+ *   snapshot); draft buffers stay as the open overlay (never merged onto the entity)
+ * - Present remote + dirty, no conflict, new sources → merge into clean buffers,
+ *   so a later save cannot write their old values back
  * - Present remote + no conflict → sync from remote (may overwrite clean draft)
  */
 export function decideStorageSyncAction(
@@ -51,8 +56,27 @@ export function decideStorageSyncAction(
 
   if (isDraftDirty(localDraft)) {
     // Entity stays the remote/persisted snapshot; UI reads buffers via drafts.
-    return { action: "sync-entity", script: remoteScript };
+    return hasNewRemoteSource(localDraft, remoteScript)
+      ? { action: "merge-clean", script: remoteScript }
+      : { action: "sync-entity", script: remoteScript };
   }
 
   return { action: "sync", script: remoteScript };
+}
+
+function hasNewRemoteSource(
+  draft: EditorDraft,
+  remoteScript: Userscript
+): boolean {
+  const remote: Record<DraftBuffer, string> = {
+    typescript: remoteScript.code.source.typescript,
+    scss: remoteScript.code.source.scss,
+    typeDefinitions: remoteScript.typeDefinitions ?? "",
+  };
+
+  return (Object.keys(remote) as DraftBuffer[]).some(
+    (buffer) =>
+      draft.lastSynced[buffer] !== remote[buffer] ||
+      (!draft.dirty[buffer] && draft[buffer] !== remote[buffer])
+  );
 }

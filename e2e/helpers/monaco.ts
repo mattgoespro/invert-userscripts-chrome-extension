@@ -1,5 +1,8 @@
 import { expect, type Locator, type Page } from "@playwright/test";
 
+/** Matches the file and position that ErrorPanel renders for each problem. */
+const PROBLEM_LOCATION_PATTERN = /(main\.ts|types\.d\.ts|styles\.scss) \d+:\d+/;
+
 export function editorNeedle(code: string): string {
   const match = code.match(/export\s+const\s+(\w+)\s*=\s*([^;]+)/);
   if (match) {
@@ -128,7 +131,7 @@ export async function expectNoModuleImportErrors(page: Page, timeout = 20_000) {
     const hasImportError = /Cannot find module/i.test(text);
     const settled =
       /No problems in this script/i.test(text) ||
-      /(main\.ts|types\.d\.ts|styles\.scss) \d+:\d+/.test(text);
+      PROBLEM_LOCATION_PATTERN.test(text);
 
     if (hasImportError) {
       cleanStreak = 0;
@@ -191,7 +194,7 @@ export async function expectNoEditorProblems(
 
   while (Date.now() < deadline) {
     const text = await problems.innerText();
-    const hasDiagnostic = /Line\s+\d+:\d+/i.test(text);
+    const hasDiagnostic = PROBLEM_LOCATION_PATTERN.test(text);
     const cannotFindName = /Cannot find name/i.test(text);
     const settledClean = /No problems in this script/i.test(text);
 

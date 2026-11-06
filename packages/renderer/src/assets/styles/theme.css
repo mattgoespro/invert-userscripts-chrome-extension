@@ -20,6 +20,11 @@
   --color-white: #fff;
   --color-black: #000;
 
+  /* Layout sizes in use (re-added after reset) */
+  --container-3xl: 48rem;
+  --container-6xl: 72rem;
+  --breakpoint-xl: 80rem;
+
   /* Colors */
   --color-accent: var(--accent);
   --color-accent-hover: var(--accent-hover);

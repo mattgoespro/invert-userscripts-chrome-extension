@@ -39,7 +39,6 @@ export async function restoreDraftRecovery(store: AppStore): Promise<void> {
     const script = store.getState().userscripts.scripts[checkpoint.scriptId];
     if (
       !script ||
-      restored.has(script.id) ||
       !checkpoint.buffers ||
       !Object.values(checkpoint.buffers).every(
         (value) => typeof value === "string"
@@ -47,8 +46,13 @@ export async function restoreDraftRecovery(store: AppStore): Promise<void> {
     ) {
       continue;
     }
-    restored.add(script.id);
+    // Older checkpoints are superseded by the newest one; retire them with it
+    // so a later session cannot restore them as stale drafts.
     consumed.set(script.id, [...(consumed.get(script.id) ?? []), key]);
+    if (restored.has(script.id)) {
+      continue;
+    }
+    restored.add(script.id);
     const saved = {
       ...script.code.source,
       typeDefinitions: script.typeDefinitions ?? "",

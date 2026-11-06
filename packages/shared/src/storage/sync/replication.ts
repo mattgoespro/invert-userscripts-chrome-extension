@@ -8,21 +8,22 @@ export function mergeSyncRevision(
   revisions: Record<string, CausalRevision>
 ): { status: "advance" | "duplicate" | "conflict"; heads: string[] } {
   const records = { ...revisions, [incoming.revision]: incoming };
-  const descends = (
-    child: string,
-    ancestor: string,
-    seen = new Set<string>()
-  ): boolean => {
-    if (child === ancestor) {
-      return true;
+  // Iterative: revision histories can outgrow the call stack.
+  const descends = (child: string, ancestor: string): boolean => {
+    const seen = new Set<string>();
+    const stack = [child];
+    while (stack.length) {
+      const current = stack.pop()!;
+      if (current === ancestor) {
+        return true;
+      }
+      if (seen.has(current)) {
+        continue;
+      }
+      seen.add(current);
+      stack.push(...(records[current]?.parents ?? []));
     }
-    if (seen.has(child)) {
-      return false;
-    }
-    seen.add(child);
-    return (records[child]?.parents ?? []).some((parent) =>
-      descends(parent, ancestor, seen)
-    );
+    return false;
   };
   const candidates = [...new Set([...heads, incoming.revision])];
   const normalized = candidates.filter(

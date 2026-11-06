@@ -13,6 +13,7 @@ export default class ExtensionReloaderPlugin
   private readonly name = "ChromeExtensionReloaderWebpackPlugin";
   private readonly ChromeExtensionReloaderClientScriptName =
     "chrome-extension-reloader-client.js";
+  private readonly BackgroundAssetName = "background.js";
 
   private _options: ChromeExtensionReloaderPluginOptions;
 
@@ -63,7 +64,14 @@ export default class ExtensionReloaderPlugin
       this._log.verbose(
         "Build done. Broadcasting reload message to clients..."
       );
-      this.broadcastActionToClients({ type: "reload" });
+      this.broadcastActionToClients({
+        type: "reload",
+        data: {
+          backgroundChanged: stats.compilation.emittedAssets.has(
+            this.BackgroundAssetName
+          ),
+        },
+      });
     });
 
     compiler.hooks.shutdown.tap(this.name, () => {
@@ -116,9 +124,10 @@ export default class ExtensionReloaderPlugin
     const broadcastMessage = (message: BroadcastMessage) => {
       for (const client of this._wss.clients) {
         if (client.readyState !== WebSocket.OPEN) {
-          throw new Error(
+          this._log.verbose(
             "An existing client is not ready to receive messages. Skipping..."
           );
+          continue;
         }
 
         this.sendBrowserClientMessage(client, message);
@@ -175,7 +184,7 @@ export default class ExtensionReloaderPlugin
       }
     } catch (error) {
       this._log.error("Failed to parse message from client:");
-      this._log.error(error);
+      this._log.error(String(error));
     }
   }
 

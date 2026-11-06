@@ -22,10 +22,34 @@ function formatBytes(contents: string): string {
   return bytes < 1024 ? `${bytes} B` : `${(bytes / 1024).toFixed(1)} KB`;
 }
 
+type BuildFailureProps = {
+  language: string;
+  message: string;
+};
+
+function BuildFailure({ language, message }: BuildFailureProps) {
+  return (
+    <div
+      role="alert"
+      className="flex scrollbar-thin-6 h-full flex-col gap-xs overflow-y-auto bg-surface-base p-md"
+    >
+      <p className="text-xs font-semibold text-error-accent">
+        This {language} couldn’t be built.
+      </p>
+      <pre className="font-mono text-xs break-words whitespace-pre-wrap text-foreground">
+        {message}
+      </pre>
+    </div>
+  );
+}
+
 type ScriptEditorDrawerProps = {
   script: Userscript;
   javascript: string;
   css: string;
+  /** Why the latest live build of each output failed, if it did. */
+  javascriptError?: string | null;
+  cssError?: string | null;
   isCollapsed: boolean;
   onToggleCollapse: () => void;
   editorInstances?: Partial<
@@ -37,6 +61,8 @@ export function ScriptEditorDrawer({
   script,
   javascript,
   css,
+  javascriptError,
+  cssError,
   isCollapsed,
   onToggleCollapse,
   editorInstances,
@@ -70,7 +96,7 @@ export function ScriptEditorDrawer({
           {errorCount}
         </span>
         {!isCollapsed && (
-          <TabContent>
+          <TabContent key="errors">
             <ErrorPanel
               scriptId={script.id}
               onErrorClick={(error) => {
@@ -94,35 +120,51 @@ export function ScriptEditorDrawer({
         onClick={() => onTabChange("javascript")}
       >
         JavaScript{" "}
-        <span className="text-text-muted-strong tabular-nums">
-          {formatBytes(javascript)}
-        </span>
+        {javascriptError ? (
+          <span className="text-error-accent">Failed</span>
+        ) : (
+          <span className="text-text-muted-strong tabular-nums">
+            {formatBytes(javascript)}
+          </span>
+        )}
         {!isCollapsed && (
-          <TabContent>
-            <CodeEditor
-              modelId={`javascript-compiled-${script}`}
-              language="typescript"
-              contents={javascript}
-              editable={false}
-              settingsOverride={{ fontSize: 12 }}
-            />
+          <TabContent key={`javascript-${script.id}`}>
+            {javascriptError ? (
+              <BuildFailure language="JavaScript" message={javascriptError} />
+            ) : (
+              <CodeEditor
+                modelId={`javascript-compiled-${script.id}`}
+                language="javascript"
+                contents={javascript}
+                editable={false}
+                settingsOverride={{ fontSize: 12 }}
+              />
+            )}
           </TabContent>
         )}
       </Tab>
       <Tab active={activeTab === "css"} onClick={() => onTabChange("css")}>
         CSS{" "}
-        <span className="text-text-muted-strong tabular-nums">
-          {formatBytes(css)}
-        </span>
+        {cssError ? (
+          <span className="text-error-accent">Failed</span>
+        ) : (
+          <span className="text-text-muted-strong tabular-nums">
+            {formatBytes(css)}
+          </span>
+        )}
         {!isCollapsed && (
-          <TabContent>
-            <CodeEditor
-              modelId={`css-compiled-${script}`}
-              language="scss"
-              contents={css}
-              editable={false}
-              settingsOverride={{ fontSize: 12 }}
-            />
+          <TabContent key={`css-${script.id}`}>
+            {cssError ? (
+              <BuildFailure language="CSS" message={cssError} />
+            ) : (
+              <CodeEditor
+                modelId={`css-compiled-${script.id}`}
+                language="scss"
+                contents={css}
+                editable={false}
+                settingsOverride={{ fontSize: 12 }}
+              />
+            )}
           </TabContent>
         )}
       </Tab>

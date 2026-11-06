@@ -1,4 +1,9 @@
-import { transpileModule } from "typescript";
+import {
+  DiagnosticCategory,
+  flattenDiagnosticMessageText,
+  transpileModule,
+  type Diagnostic,
+} from "typescript";
 import { TypeScriptCompilerOptions } from "@shared/typescript";
 import { prepareCompiledJavascript } from "@shared/compiled-output";
 import { minifyUserscript } from "./minifier";
@@ -24,6 +29,17 @@ interface BuildWorkerResponse {
   success?: boolean;
   code?: string;
   error?: string;
+}
+
+function formatDiagnostic(diagnostic: Diagnostic): string {
+  const message = flattenDiagnosticMessageText(diagnostic.messageText, "\n");
+  if (!diagnostic.file || diagnostic.start === undefined) {
+    return message;
+  }
+  const { line, character } = diagnostic.file.getLineAndCharacterOfPosition(
+    diagnostic.start
+  );
+  return `Line ${line + 1}, column ${character + 1}: ${message}`;
 }
 
 /**
@@ -62,7 +78,16 @@ self.addEventListener("message", (event: MessageEvent<BuildWorkerRequest>) => {
       }
       const transpiled = transpileModule(sourceCode, {
         compilerOptions: TypeScriptCompilerOptions,
+        reportDiagnostics: true,
       });
+      // transpileModule still emits for unparsable source, so its output cannot
+      // be published as a successful build.
+      const errors = (transpiled.diagnostics ?? []).filter(
+        (diagnostic) => diagnostic.category === DiagnosticCategory.Error
+      );
+      if (errors.length > 0) {
+        throw new Error(errors.map(formatDiagnostic).join("\n"));
+      }
 
       let code = prepareCompiledJavascript(transpiled.outputText, {
         shared,

@@ -79,7 +79,10 @@ export async function migrateLegacyDocuments(
       });
       if (result.outcome.status !== "committed") {
         throw new Error(
-          "Legacy data cannot be migrated: " + result.outcome.status
+          "Legacy data cannot be migrated: " +
+            (result.outcome.status === "rejected"
+              ? result.outcome.reason
+              : result.outcome.status)
         );
       }
       // The shadow already exists in legacy sync. Republishing it could overwrite a

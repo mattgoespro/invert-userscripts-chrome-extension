@@ -89,10 +89,10 @@ const RULE_SETTINGS: Record<string, ExampleRuleSettings> = {
   },
   "view-video-source-common": {
     flags: ["shared", "deepJS", "atStartJS", "isoJS"],
-    libs: ["logger"],
+    libs: ["logger", "dom-utils"],
   },
   "view-video-source-embedded": {
-    flags: ["shared", "isoJS"],
+    flags: ["deepJS", "isoJS"],
     libs: ["view-video-source-common"],
   },
   "view-video-source-main": {

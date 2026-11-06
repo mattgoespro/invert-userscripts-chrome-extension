@@ -1,4 +1,5 @@
-import { runPublicationEffect } from "../publication/effects";
+import { transactionalEnabled } from "@shared/publication/client";
+import { isMissingTabError } from "./badge";
 import { executeUserScript } from "./user-scripts-executor";
 import { resolveModuleGraph, affectedConsumers } from "@shared/modules/graph";
 import type { ModuleManifest } from "@shared/modules/manifest";
@@ -26,9 +27,15 @@ import {
   getCssBookmark,
   setCssBookmark,
 } from "./css-bookmarks";
+import {
+  forgetTabDocuments,
+  hasDocumentStep,
+  recordDocumentStep,
+} from "./document-ledger";
 
 const tabQueues = new Map<number, Promise<unknown>>();
 const tabEpochs = new Map<number, number>();
+const tabDocuments = new Map<number, string>();
 interface PinnedDocument {
   documentId: string;
   url: string;
@@ -47,6 +54,43 @@ async function pinDocument(
     url: frame.url,
     epoch: tabEpochs.get(tabId) ?? 0,
   };
+}
+/** Libraries and shared modules are singletons within one document. */
+async function oncePerDocument(
+  tabId: number,
+  documentId: string,
+  step: string,
+  operation: () => Promise<void>
+): Promise<void> {
+  const executed = await hasDocumentStep(documentId, step).catch((error) => {
+    console.warn("Failed to read executed document steps:", error);
+    return false;
+  });
+  if (executed) {
+    return;
+  }
+  await operation();
+  await recordDocumentStep(tabId, documentId, step).catch((error) => {
+    console.warn("Failed to record executed document step:", error);
+  });
+}
+async function digestCode(code: string): Promise<string> {
+  const digest = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(code)
+  );
+  return Array.from(new Uint8Array(digest), (byte) =>
+    byte.toString(16).padStart(2, "0")
+  ).join("");
+}
+function isUnreachableTabError(error: unknown): boolean {
+  return (
+    isMissingTabError(error) ||
+    (error instanceof Error &&
+      /Cannot access|cannot be scripted|Missing host permission|showing error page/i.test(
+        error.message
+      ))
+  );
 }
 function inTab<T>(tabId: number, operation: () => Promise<T>): Promise<T> {
   const task = (tabQueues.get(tabId) ?? Promise.resolve())
@@ -225,12 +269,18 @@ async function injectResolvedScripts(
       if (
         !(await run("cdn:" + moduleId, async () => {
           await assertCurrent();
-          await injectCdnModule(
+          await oncePerDocument(
             tabId,
-            modules![moduleId],
-            injectImmediately,
             document.documentId,
-            assertCurrent
+            "cdn:" + moduleId + ":" + modules![moduleId].url,
+            () =>
+              injectCdnModule(
+                tabId,
+                modules![moduleId],
+                injectImmediately,
+                document.documentId,
+                assertCurrent
+              )
           );
         }))
       ) {
@@ -243,12 +293,26 @@ async function injectResolvedScripts(
       }
       ready = await run("shared:" + id, async () => {
         await assertCurrent();
-        await injectSharedScript(
+        const shared = hydrateUserscriptWithCompiled(
+          scriptsMap[id],
+          compiled[id]
+        );
+        // Keyed by code so an explicit apply of an edited module still runs it.
+        await oncePerDocument(
           tabId,
-          hydrateUserscriptWithCompiled(scriptsMap[id], compiled[id]),
-          injectImmediately,
           document.documentId,
-          compiled[id]?.manifest?.awaitCompletion
+          "shared:" +
+            id +
+            ":" +
+            (await digestCode(shared.code.compiled.javascript)),
+          () =>
+            injectSharedScript(
+              tabId,
+              shared,
+              injectImmediately,
+              document.documentId,
+              compiled[id]?.manifest?.awaitCompletion
+            )
         );
       });
     }
@@ -311,27 +375,30 @@ export async function injectMatchingScripts(
     }
     const pinned = await pinDocument(tabId, url);
 
-    const result = await runPublicationEffect(
-      "navigation:" + pinned.documentId + ":" + timing,
-      async () => {
-        const injected = await inTab(tabId, () =>
-          injectResolvedScripts(
-            tabId,
-            matchingScripts,
-            state,
-            timing === "beforePageLoad",
-            pinned
-          )
-        );
-        return {
-          success: injected.failedCount === 0,
-          appliedTabCount: injected.injectedCount > 0 ? 1 : 0,
-          failedCount: injected.failedCount,
-        };
-      }
+    // This record lives as long as the document, so it stays out of the
+    // aggregate. Same-document events (SPA routes, bfcache) must not rerun.
+    if (
+      (await transactionalEnabled()) &&
+      !(await recordDocumentStep(
+        tabId,
+        pinned.documentId,
+        "navigation:" + timing
+      ))
+    ) {
+      return;
+    }
+
+    const injected = await inTab(tabId, () =>
+      injectResolvedScripts(
+        tabId,
+        matchingScripts,
+        state,
+        timing === "beforePageLoad",
+        pinned
+      )
     );
 
-    if (!result.success) {
+    if (injected.failedCount > 0) {
       console.error(
         `Finished injecting into tab ${tabId} with failed step(s).`
       );
@@ -452,7 +519,7 @@ export async function applyScriptsToMatchingTabs(scriptIds: string[]): Promise<{
  */
 export async function removeScriptFromMatchingTabs(
   scriptId: string
-): Promise<{ removedTabCount: number }> {
+): Promise<{ removedTabCount: number; failedTabCount?: number }> {
   const scriptsMap = await ChromeSyncStorage.getAllScripts();
   const script = scriptsMap[scriptId];
 
@@ -462,9 +529,10 @@ export async function removeScriptFromMatchingTabs(
 
   const tabs = await chrome.tabs.query({});
   let removedTabCount = 0;
+  let failedTabCount = 0;
 
   for (const tab of tabs) {
-    if (!tab.id || !tab.url || !isInjectablePage(tab.url)) {
+    if (!tab.id || !tab.url || !isInjectablePage(tab.url) || tab.discarded) {
       continue;
     }
 
@@ -472,23 +540,57 @@ export async function removeScriptFromMatchingTabs(
       continue;
     }
 
-    await inTab(tab.id, async () => {
-      const current = (await ChromeSyncStorage.getAllScripts())[scriptId];
-      if (!current || current.enabled) {
-        return;
-      }
-      const pinned = await pinDocument(tab.id!, tab.url);
-      await removeInjectedStylesheet(tab.id!, scriptId, pinned.documentId);
-      removedTabCount++;
-    });
+    try {
+      await inTab(tab.id, async () => {
+        const current = (await ChromeSyncStorage.getAllScripts())[scriptId];
+        if (!current || current.enabled) {
+          return;
+        }
+        if (!(await getCssBookmark(tab.id!, scriptId))) {
+          return;
+        }
+        const pinned = await pinDocument(tab.id!, tab.url);
+        if (
+          await removeInjectedStylesheet(tab.id!, scriptId, pinned.documentId)
+        ) {
+          removedTabCount++;
+        }
+      });
+    } catch (error) {
+      failedTabCount++;
+      console.error(`Error removing styles from tab ${tab.id}:`, error);
+    }
   }
 
-  return { removedTabCount };
+  return failedTabCount
+    ? { removedTabCount, failedTabCount }
+    : { removedTabCount };
 }
 
+/**
+ * Chrome also reports status "loading" for pushState, replaceState and hash
+ * changes. Those keep the document, its styles and any in-flight injection.
+ */
 export async function prepareTabForInjection(tabId: number): Promise<void> {
-  tabEpochs.set(tabId, (tabEpochs.get(tabId) ?? 0) + 1);
-  await clearCssBookmarksForTab(tabId);
+  const frame = await chrome.webNavigation
+    .getFrame({ tabId, frameId: 0 })
+    .catch((): null => null);
+  const documentId = frame?.documentId;
+  const previous = tabDocuments.get(tabId);
+  if (documentId && documentId === previous) {
+    return;
+  }
+  if (!documentId || previous) {
+    tabEpochs.set(tabId, (tabEpochs.get(tabId) ?? 0) + 1);
+  }
+  if (!documentId) {
+    tabDocuments.delete(tabId);
+    await clearCssBookmarksForTab(tabId);
+    await forgetTabDocuments(tabId);
+    return;
+  }
+  tabDocuments.set(tabId, documentId);
+  await clearCssBookmarksForTab(tabId, documentId);
 }
 
 export async function injectScript(
@@ -567,11 +669,11 @@ async function removeInjectedStylesheet(
   tabId: number,
   scriptId: string,
   documentId?: string
-): Promise<void> {
-  const previousCss = await getCssBookmark(tabId, scriptId);
+): Promise<boolean> {
+  const previousCss = await getCssBookmark(tabId, scriptId, documentId);
 
   if (!previousCss) {
-    return;
+    return false;
   }
 
   try {
@@ -597,6 +699,7 @@ async function removeInjectedStylesheet(
   }
 
   await clearCssBookmark(tabId, scriptId);
+  return true;
 }
 
 /**
@@ -610,7 +713,7 @@ async function injectStylesheet(
   assertCurrent?: () => Promise<void>
 ): Promise<void> {
   const cssCode = script.code?.compiled?.css ?? "";
-  const previousCss = await getCssBookmark(tabId, script.id);
+  const previousCss = await getCssBookmark(tabId, script.id, documentId);
 
   if (previousCss && previousCss === cssCode) {
     return;
@@ -629,7 +732,7 @@ async function injectStylesheet(
     target: { tabId, ...(documentId ? { documentIds: [documentId] } : {}) },
     css: cssCode,
   });
-  await setCssBookmark(tabId, script.id, cssCode);
+  await setCssBookmark(tabId, script.id, cssCode, documentId);
   console.log(`Injected stylesheet: ${script.name} into tab ${tabId}`);
 }
 
@@ -638,7 +741,8 @@ export async function reconcileStylesForScripts(ids: string[]): Promise<void> {
   const tabs = await chrome.tabs.query({});
   const failures: unknown[] = [];
   for (const tab of tabs) {
-    if (!tab.id || !tab.url || !/^(?:https?|file):/.test(tab.url)) {
+    // A discarded tab has no document; its next load starts from saved state.
+    if (!tab.id || !tab.url || !isInjectablePage(tab.url) || tab.discarded) {
       continue;
     }
     try {
@@ -684,7 +788,9 @@ export async function reconcileStylesForScripts(ids: string[]): Promise<void> {
         }
       });
     } catch (error) {
-      failures.push(error);
+      if (!isUnreachableTabError(error)) {
+        failures.push(error);
+      }
     }
   }
   if (failures.length) {

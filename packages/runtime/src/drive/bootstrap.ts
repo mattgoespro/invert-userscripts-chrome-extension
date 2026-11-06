@@ -71,27 +71,38 @@ export function initializeDriveSync(
       }
       // Switch native transport off before activation can start a legacy drain.
       await chrome.storage.local.set({ driveSyncEnabled: true });
-      await activate();
-      const [legacy, local] = await Promise.all([
-        chrome.storage.sync.get(["globalState"]),
-        chrome.storage.local.get(null),
-      ]);
-      await repository.update((state) => {
-        enableDriveState(state, {
-          settings: Object.entries(state.settings).some(
-            ([key, value]) =>
-              JSON.stringify(value) !==
-              JSON.stringify(
-                LegacyChromeSyncStorage.defaultSettings[
-                  key as keyof typeof LegacyChromeSyncStorage.defaultSettings
-                ]
-              )
-          ),
-          modules: Object.keys(state.modules).length > 0,
-          layout: chooseDriveLayout(local, legacy.globalState),
+      try {
+        await activate();
+        const [legacy, local] = await Promise.all([
+          chrome.storage.sync.get(["globalState"]),
+          chrome.storage.local.get(null),
+        ]);
+        await repository.update((state) => {
+          enableDriveState(state, {
+            settings: Object.entries(state.settings).some(
+              ([key, value]) =>
+                JSON.stringify(value) !==
+                JSON.stringify(
+                  LegacyChromeSyncStorage.defaultSettings[
+                    key as keyof typeof LegacyChromeSyncStorage.defaultSettings
+                  ]
+                )
+            ),
+            modules: Object.keys(state.modules).length > 0,
+            layout: chooseDriveLayout(local, legacy.globalState),
+          });
+          return { state, value: undefined };
         });
-        return { state, value: undefined };
-      });
+      } catch (error) {
+        // Only an established Drive account keeps native transport off; a flag
+        // left by an earlier failed attempt must not outlive this one either.
+        if (!(state.drive && flags.driveSyncEnabled)) {
+          await chrome.storage.local
+            .remove("driveSyncEnabled")
+            .catch(console.error);
+        }
+        throw error;
+      }
     })().finally(() => {
       // Coalesce only in-flight work. Durable storage/flags may be cleared while
       // this worker stays alive, so a fulfilled promise cannot prove readiness.

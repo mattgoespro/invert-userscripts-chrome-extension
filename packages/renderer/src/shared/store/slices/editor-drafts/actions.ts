@@ -16,6 +16,17 @@ export const commitDraftForSave = createAction<{
   snapshotCode?: string;
 }>("editorDrafts/commitDraftForSave");
 
+/** The source write landed, so a later failure must keep the new baseline. */
+export const confirmDraftSaveWrite = createAction<{
+  scriptId: string;
+  saveRequestId: string;
+}>("editorDrafts/confirmDraftSaveWrite");
+
+/** Remote state observed without a conflict, for a draft with unsaved edits. */
+export const mergeRemoteIntoDraft = createAction<Userscript>(
+  "editorDrafts/mergeRemoteIntoDraft"
+);
+
 export const removeDraft = createAction<string>("editorDrafts/removeDraft");
 export const syncDraftFromRemoteScript = createAction<Userscript>(
   "editorDrafts/syncDraftFromRemoteScript"

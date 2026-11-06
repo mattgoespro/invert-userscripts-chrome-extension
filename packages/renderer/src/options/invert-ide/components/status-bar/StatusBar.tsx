@@ -9,6 +9,7 @@ import {
 import { selectCurrentUserscript } from "@/shared/store/slices/userscripts";
 import { selectErrorCount } from "@/shared/store/slices/workspace";
 import { useDriveSyncStatus } from "../../hooks/useDriveSyncStatus";
+import { requestSettingsSection } from "../../pages/settings-page/settings-navigation";
 import { describeRunAt } from "../../shared/run-at";
 
 const DRIVE_TONE: Record<DrivePhase, string> = {
@@ -77,7 +78,10 @@ export function StatusBar() {
       {drive && (
         <button
           type="button"
-          onClick={() => dispatch(setActiveSidebarTab("settings"))}
+          onClick={() => {
+            requestSettingsSection("advanced");
+            dispatch(setActiveSidebarTab("settings"));
+          }}
           className={clsx(
             itemClass,
             "min-w-0 cursor-pointer truncate hover:underline focus-visible:outline-2 focus-visible:outline-accent",

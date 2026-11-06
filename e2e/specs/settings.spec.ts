@@ -335,3 +335,43 @@ async function settings_getTheme(
     document.documentElement.getAttribute("data-theme")
   );
 }
+
+test("number settings accept values typed through out-of-range text", async ({
+  optionsPage,
+}) => {
+  const options = new OptionsPage(optionsPage);
+  await options.clickTab("settings");
+  await new SettingsPage(optionsPage).waitForReady();
+  const input = optionsPage
+    .locator("label")
+    .filter({ hasText: /^Font size$/ })
+    .locator("..")
+    .getByRole("spinbutton");
+
+  await input.fill("");
+  await expect(input).toHaveValue("");
+  await input.pressSequentially("2");
+  await expect(input).toHaveValue("2");
+  await input.pressSequentially("0");
+  await expect(input).toHaveValue("20");
+
+  await input.fill("99");
+  await expect(input).toHaveValue("99");
+  await input.press("Tab");
+  await expect(input).toHaveValue("20");
+});
+
+test("the status bar's Drive item opens the Advanced settings", async ({
+  optionsPage,
+}) => {
+  await optionsPage.setViewportSize({ width: 1100, height: 600 });
+  const options = new OptionsPage(optionsPage);
+  await options.clickTab("scripts");
+  await optionsPage.getByTitle("Show Drive sync details").click();
+  await new SettingsPage(optionsPage).waitForReady();
+
+  await expect(
+    optionsPage.getByRole("button", { name: "Advanced", exact: true })
+  ).toHaveAttribute("aria-expanded", "true");
+  await expect(optionsPage.getByTestId("drive-sync-panel")).toBeInViewport();
+});

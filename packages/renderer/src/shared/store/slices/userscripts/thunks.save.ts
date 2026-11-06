@@ -5,8 +5,12 @@ import {
   type PersistScriptBuffersArgs,
 } from "../../../services/draft-save-lifecycle";
 import { publishMetadata } from "../../../services/userscript-publication";
+import type { MetadataUpdates } from "../../../services/metadata-edits";
 import { publicationContext } from "./publication-context";
-import { commitDraftForSave } from "../editor-drafts/actions";
+import {
+  commitDraftForSave,
+  confirmDraftSaveWrite,
+} from "../editor-drafts/actions";
 import { createAsyncThunk } from "@reduxjs/toolkit/react";
 import type { Userscript } from "@shared/model";
 import { ChromeSyncStorage, CompiledCodeStorage } from "@shared/storage";
@@ -17,7 +21,7 @@ import { PrettierFormatter } from "@/sandbox/formatter";
 
 export const updateUserscript = createAsyncThunk<
   Userscript,
-  { id: string; updates: Partial<Userscript> },
+  { id: string; updates: MetadataUpdates },
   { state: RootState }
 >("userscripts/updateUserscript", ({ id, updates }, { getState, dispatch }) =>
   publishMetadata(id, updates, publicationContext(getState), (script) => {
@@ -44,6 +48,14 @@ export const persistScriptBuffers = createAsyncThunk<
       format: (code, language) => PrettierFormatter.format(code, language),
       acceptPublished: (script) => {
         dispatch(acceptPublishedScript({ script, kind: "updated" }));
+      },
+      confirmSourceWrite: () => {
+        dispatch(
+          confirmDraftSaveWrite({
+            scriptId: args.scriptId,
+            saveRequestId: requestId,
+          })
+        );
       },
       apply: sendApplyScriptsMessage,
       commit: (payload) => {

@@ -28,11 +28,22 @@ import {
   setOutputDrawerCollapsed,
   updatePanelSizesIfChanged,
 } from "@/shared/store/slices/ui";
-import { UserscriptSourceLanguage } from "@shared/model";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  UserscriptSourceLanguage,
+  type UserscriptCompileResult,
+} from "@shared/model";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { selectScriptErrors } from "@/shared/store/slices/workspace";
 import type { CompilationError } from "@shared/errors";
 import { EditorPaneHeader } from "./EditorPaneHeader";
+import { readBuildOutput, readBuildRejection } from "./live-output-result";
 import { ScriptDetailsPanel } from "./script-details/ScriptDetailsPanel";
 import { useScriptMetadataActions } from "./script-metadata/useScriptMetadataActions";
 import { Group, Panel, PanelImperativeHandle } from "react-resizable-panels";
@@ -42,6 +53,8 @@ import type * as monaco from "monaco-editor";
 import { useEditorErrorTracking } from "@/shared/hooks/useEditorErrorTracking";
 
 type EditorBuffer = UserscriptSourceLanguage | "typeDefinitions";
+type OutputLane = "javascript" | "css";
+type OutputFailure = { scriptId: string; message: string };
 
 export function ScriptEditor() {
   const dispatch = useAppDispatch();
@@ -114,6 +127,49 @@ export function ScriptEditor() {
 
   const drawerPanelRef = useRef<PanelImperativeHandle>(null);
   const drawerCollapsedRef = useRef(outputDrawerCollapsed);
+  const drawerPanelMounted = !!script && ideReady && monacoReady;
+
+  // Panels always mount expanded, and their first resize report would overwrite
+  // the saved preference. Collapse before that report and before the first paint.
+  useLayoutEffect(() => {
+    if (drawerPanelMounted && drawerCollapsedRef.current) {
+      drawerPanelRef.current?.collapse();
+    }
+  }, [drawerPanelMounted]);
+
+  const [outputFailures, setOutputFailures] = useState<
+    Partial<Record<OutputLane, OutputFailure>>
+  >({});
+  const latestBuildRef = useRef<Record<OutputLane, number>>({
+    javascript: 0,
+    css: 0,
+  });
+
+  /** Runs one live build and records its failure unless a newer build started. */
+  const runLiveBuild = useCallback(
+    async (
+      lane: OutputLane,
+      buildScriptId: string,
+      build: () => Promise<UserscriptCompileResult>
+    ): Promise<string> => {
+      latestBuildRef.current[lane] += 1;
+      const buildNumber = latestBuildRef.current[lane];
+      let output;
+      try {
+        output = readBuildOutput(await build());
+      } catch (error) {
+        output = readBuildRejection(error);
+      }
+      if (buildNumber === latestBuildRef.current[lane]) {
+        const failure = output.error
+          ? { scriptId: buildScriptId, message: output.error }
+          : undefined;
+        setOutputFailures((current) => ({ ...current, [lane]: failure }));
+      }
+      return output.code;
+    },
+    []
+  );
 
   const typescriptSource =
     draft?.typescript ?? script?.code.source.typescript ?? "";
@@ -137,20 +193,22 @@ export function ScriptEditor() {
     if (!script) {
       return "";
     }
-    const result = await buildUserscriptJavascript(
-      script,
-      typescriptSource,
-      getCompiledOutputBuildOptions(settings)
+    return runLiveBuild("javascript", script.id, () =>
+      buildUserscriptJavascript(
+        script,
+        typescriptSource,
+        getCompiledOutputBuildOptions(settings)
+      )
     );
-    return result.success && result.code ? result.code : "";
-  }, [script, typescriptSource, settings.minifyCompiledOutput]);
+  }, [script, typescriptSource, settings.minifyCompiledOutput, runLiveBuild]);
   const buildCss = useCallback(async (): Promise<string> => {
-    const result = await buildUserscriptStylesheet(
-      scssSource,
-      getCompiledOutputBuildOptions(settings)
+    return runLiveBuild("css", scriptId, () =>
+      buildUserscriptStylesheet(
+        scssSource,
+        getCompiledOutputBuildOptions(settings)
+      )
     );
-    return result.success && result.code ? result.code : "";
-  }, [scssSource, settings.minifyCompiledOutput]);
+  }, [scriptId, scssSource, settings.minifyCompiledOutput, runLiveBuild]);
   const liveJs = useLiveCompiledOutput(
     scriptId,
     script?.code.compiled.javascript ?? "",
@@ -403,6 +461,16 @@ export function ScriptEditor() {
                     script={script}
                     javascript={liveJs}
                     css={liveCss}
+                    javascriptError={
+                      outputFailures.javascript?.scriptId === scriptId
+                        ? outputFailures.javascript.message
+                        : null
+                    }
+                    cssError={
+                      outputFailures.css?.scriptId === scriptId
+                        ? outputFailures.css.message
+                        : null
+                    }
                     isCollapsed={isDrawerCollapsed}
                     onToggleCollapse={onToggleDrawer}
                     editorInstances={{

@@ -59,7 +59,9 @@ function replaceModelContents(
   model: monaco.editor.ITextModel,
   contents: string
 ): void {
-  if (model.getValue() === contents) {
+  // getValue() uses the model's line endings, and edits are normalized to them,
+  // so text differing only by EOL is already applied.
+  if (model.getValue() === contents.replace(/\r\n|\r|\n/g, model.getEOL())) {
     return;
   }
 

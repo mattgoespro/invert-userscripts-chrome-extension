@@ -16,11 +16,15 @@ import { Trash2Icon, WandSparklesIcon, XIcon } from "lucide-react";
 import clsx from "clsx";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { RUN_AT_OPTIONS } from "../../../../shared/run-at";
+import { getFocusWrapTarget } from "./focus-trap";
 import type { ScriptMetadataActions } from "../script-metadata/useScriptMetadataActions";
 import {
   isValidUrlPattern,
   parseUrlPatternInput,
 } from "../script-metadata/url-patterns";
+
+const TABBABLE_SELECTOR =
+  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 type ScriptDetailsPanelProps = {
   script: Userscript;
@@ -88,6 +92,26 @@ export function ScriptDetailsPanel({
     const opener = document.activeElement as HTMLElement | null;
     drawerRef.current?.focus();
     return () => opener?.focus();
+  }, []);
+
+  // The scrim blocks the mouse, but focus could still reach the editors behind
+  // it, where typing would edit a hidden buffer. Native dialogs and the command
+  // palette are layered above the drawer and keep their own focus.
+  useEffect(() => {
+    const keepFocusInDrawer = (event: FocusEvent): void => {
+      const drawer = drawerRef.current;
+      const target = event.target;
+      if (
+        drawer &&
+        target instanceof Element &&
+        !drawer.contains(target) &&
+        !target.closest("dialog, [data-command-palette]")
+      ) {
+        drawer.focus();
+      }
+    };
+    document.addEventListener("focusin", keepFocusInDrawer);
+    return () => document.removeEventListener("focusin", keepFocusInDrawer);
   }, []);
 
   // Keep a newly added pattern in view inside the scrolling list.
@@ -202,6 +226,22 @@ export function ScriptDetailsPanel({
           if (event.key === "Escape") {
             event.stopPropagation();
             onClose();
+            return;
+          }
+          if (event.key === "Tab") {
+            const target = getFocusWrapTarget(
+              Array.from(
+                event.currentTarget.querySelectorAll<HTMLElement>(
+                  TABBABLE_SELECTOR
+                )
+              ),
+              document.activeElement,
+              event.shiftKey
+            );
+            if (target) {
+              event.preventDefault();
+              target.focus();
+            }
           }
         }}
         className="fixed top-0 right-0 bottom-0 z-901 flex w-[22rem] max-w-[90vw] flex-col border-l border-border bg-surface-raised shadow-(--dialog-shadow) outline-none motion-safe:animate-drawer-enter"

@@ -55,3 +55,42 @@ test("live CSS retains unsaved source across metadata updates and script selecti
     "red"
   );
 });
+
+test("live output shows a build failure instead of a blank tab", async ({
+  optionsPage,
+  clearStorage,
+  seedStorage,
+}) => {
+  const script = buildUserscript({
+    name: "BrokenCss",
+    code: {
+      source: { typescript: "export {};", scss: ".probe { color: green; }" },
+      compiled: { javascript: "", css: "" },
+    },
+  });
+  await clearStorage(optionsPage);
+  await seedStorage(optionsPage, { [`userscript:${script.id}`]: script });
+  await optionsPage.reload();
+  const options = new OptionsPage(optionsPage),
+    scripts = new ScriptsPage(optionsPage);
+  await options.waitForReady();
+  await scripts.selectScript("BrokenCss");
+  const expand = optionsPage.getByTitle("Expand drawer");
+  if (await expand.isVisible()) {
+    await expand.click();
+  }
+  await scripts.clickDrawerTab("css");
+  await expect.poll(() => scripts.getCompiledOutput()).toContain("green");
+
+  const source = optionsPage.locator("#scss-editor .monaco-editor");
+  await replaceMonacoEditorContent(source, ".probe { color: ");
+  const failure = optionsPage.getByText("This CSS couldn’t be built.");
+  await expect(failure).toBeVisible({ timeout: 15_000 });
+  await expect(
+    optionsPage.getByRole("tab", { name: /^CSS\s+Failed$/ })
+  ).toBeVisible();
+
+  await replaceMonacoEditorContent(source, ".probe { color: red; }");
+  await expect(failure).toHaveCount(0, { timeout: 15_000 });
+  await expect.poll(() => scripts.getCompiledOutput()).toContain("red");
+});

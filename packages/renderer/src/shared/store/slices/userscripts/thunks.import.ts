@@ -2,7 +2,11 @@ import { acceptPublishedScript } from "./actions.publication";
 import { publishImportedScript } from "../../../services/userscript-publication";
 import { createAsyncThunk } from "@reduxjs/toolkit/react";
 import type { Userscript } from "@shared/model";
-import { getScriptModulePath } from "@shared/model";
+import {
+  findDuplicateModulePathScript,
+  getScriptModulePath,
+  sanitizeModuleName,
+} from "@shared/model";
 import { getSharedImportModuleNames } from "@shared/shared-module-imports";
 import { ChromeSyncStorage, CompiledCodeStorage } from "@shared/storage";
 import { normalizeUserscript } from "@shared/userscript-hydrate";
@@ -65,6 +69,21 @@ export const importUserscripts = createAsyncThunk<
     } satisfies Userscript;
   });
 
+  // Workspace state can change after the dialog validated the file.
+  const existingScripts =
+    Object.values(existingScriptsMap).map(normalizeUserscript);
+  for (const [index, script] of importedScripts.entries()) {
+    const duplicate = findDuplicateModulePathScript(
+      [...existingScripts, ...importedScripts.slice(0, index)],
+      script
+    );
+    if (duplicate) {
+      throw new Error(
+        `Module path "${getScriptModulePath(script)}" is already used by "${duplicate.name}". Rename it before importing.`
+      );
+    }
+  }
+
   const importedSharedByModuleName = new Map(
     importedScripts
       .filter((script) => script.shared)
@@ -74,17 +93,20 @@ export const importUserscripts = createAsyncThunk<
   for (const [index, entry] of file.userscripts.entries()) {
     const sharedImports = getSharedImportModuleNames(entry.sources.typescript);
     const resolvedImports =
-      sharedImports.length > 0 ? sharedImports : entry.sharedImports;
+      sharedImports.length > 0
+        ? sharedImports
+        : entry.sharedImports.map((moduleName) =>
+            sanitizeModuleName(moduleName.trim())
+          );
 
-    importedScripts[index].sharedScripts = resolvedImports.map((moduleName) => {
-      const trimmedModuleName = moduleName.trim();
+    importedScripts[index].sharedScripts = resolvedImports.map((modulePath) => {
       const sharedScriptId =
-        importedSharedByModuleName.get(trimmedModuleName) ??
-        existingSharedByModuleName.get(trimmedModuleName);
+        importedSharedByModuleName.get(modulePath) ??
+        existingSharedByModuleName.get(modulePath);
 
       if (!sharedScriptId) {
         throw new Error(
-          `Script \"${entry.name}\" references unknown shared module \"${trimmedModuleName}\".`
+          `Script \"${entry.name}\" references unknown shared module \"${modulePath}\".`
         );
       }
 

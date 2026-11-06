@@ -156,7 +156,10 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
   }
 
   return (
-    <div className="fixed inset-0 z-1000 flex animate-fade-in items-start justify-center bg-scrim pt-[12vh]">
+    <div
+      data-command-palette
+      className="fixed inset-0 z-1000 flex animate-fade-in items-start justify-center bg-scrim pt-[12vh]"
+    >
       <div
         ref={paletteRef}
         role="dialog"

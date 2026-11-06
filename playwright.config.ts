@@ -10,7 +10,7 @@ export default defineConfig({
   },
   reporter: [["html", { outputFolder: "e2e/report", open: "never" }], ["list"]],
   globalSetup: "./e2e/global-setup.ts",
-  outputDir: "./e2e/report",
+  outputDir: "./e2e/test-results",
   projects: [
     {
       name: "chromium",

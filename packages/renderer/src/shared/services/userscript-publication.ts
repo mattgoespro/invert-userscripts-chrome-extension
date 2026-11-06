@@ -26,12 +26,14 @@ import {
   toStorageSafeUserscript,
 } from "@shared/userscript-hydrate";
 import type {
+  DraftSaveBaseline,
   DraftSaveContext,
   DraftSaveResult,
   PersistScriptBuffersArgs,
 } from "./draft-save-lifecycle";
 import type { DraftBuffer } from "../store/slices/editor-drafts/state.editor-drafts";
 import { extractUserscriptMetadataUpdates } from "../store/slices/editor-drafts/helpers";
+import { resolveMetadataUpdates, type MetadataUpdates } from "./metadata-edits";
 
 interface PublicationStorage {
   sourceStorage: Pick<
@@ -147,7 +149,8 @@ export function publishDraft(
   context: DraftSaveContext,
   snapshot: Record<DraftBuffer, string>,
   buffers: Record<DraftBuffer, string>,
-  localScripts: Userscripts
+  localScripts: Userscripts,
+  observeBaseline: () => DraftSaveBaseline
 ): Promise<DraftSaveResult> {
   return publishInOrder(args.scriptId, async () => {
     const focused = args.focusedBuffer;
@@ -157,7 +160,14 @@ export function publishDraft(
         focused.buffer === "scss" ? "scss" : "typescript"
       );
     }
-    return saveDraftSnapshot(args, context, snapshot, buffers, localScripts);
+    return saveDraftSnapshot(
+      args,
+      context,
+      snapshot,
+      buffers,
+      localScripts,
+      observeBaseline
+    );
   });
 }
 
@@ -167,15 +177,16 @@ async function saveDraftSnapshot(
     applyTabs = true,
     compile = true,
     conflictId = null,
-    expectedRevision,
-    expectedSource,
   }: PersistScriptBuffersArgs,
   context: DraftSaveContext,
   snapshot: Record<DraftBuffer, string>,
   buffers: Record<DraftBuffer, string>,
-  localScripts: Userscripts
+  localScripts: Userscripts,
+  observeBaseline: () => DraftSaveBaseline
 ): Promise<DraftSaveResult> {
   const scriptsMap = await context.sourceStorage.getAllScripts();
+  // Read after this storage await, once the previous save's outcome is in state.
+  const { expectedRevision, expectedSource } = observeBaseline();
   const storedEntry = scriptsMap[scriptId];
   const entity = editableEntry(scriptId, storedEntry, localScripts[scriptId]);
   const script: Userscript = {
@@ -259,6 +270,7 @@ async function saveDraftSnapshot(
   } else if (!atomic) {
     await context.sourceStorage.saveScript(storageSafe);
   }
+  context.confirmSourceWrite?.();
   if (!atomic && compile && compiledEntry) {
     await context.compiledStorage.saveCompiledCode(scriptId, compiledEntry);
   }
@@ -285,7 +297,7 @@ async function saveDraftSnapshot(
 
 export function publishMetadata(
   id: string,
-  updates: Partial<Userscript>,
+  updates: MetadataUpdates,
   context: PublicationContext,
   acceptPublished: (script: Userscript) => void = () => {}
 ): Promise<Userscript> {
@@ -307,10 +319,11 @@ export function publishMetadata(
       },
     };
 
-    const metadataUpdates = extractUserscriptMetadataUpdates(updates);
     const normalizedScript = {
       ...storedScript,
-      ...metadataUpdates,
+      ...extractUserscriptMetadataUpdates(
+        resolveMetadataUpdates(updates, storedScript)
+      ),
       updatedAt: Date.now(),
     };
 
@@ -380,7 +393,9 @@ export function publishMetadata(
 
     const persistCandidate = {
       ...latestStored,
-      ...metadataUpdates,
+      ...extractUserscriptMetadataUpdates(
+        resolveMetadataUpdates(updates, latestStored)
+      ),
       updatedAt: Date.now(),
     };
     const lateDuplicate = findDuplicateModulePathScript(

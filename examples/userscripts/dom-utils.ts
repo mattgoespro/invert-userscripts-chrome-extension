@@ -211,6 +211,9 @@ function makeResizable(el: HTMLDivElement, parent: HTMLDivElement = el) {
 
   resizer.addEventListener("mousedown", (e) => {
     e.preventDefault();
+    // Pin the left edge so that a right-anchored element grows towards the cursor.
+    el.style.left = `${el.getBoundingClientRect().left}px`;
+    el.style.right = "auto";
     startX = e.clientX;
     startY = e.clientY;
     startWidth = parseInt(getComputedStyle(el).width, 10);

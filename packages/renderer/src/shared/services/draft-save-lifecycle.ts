@@ -3,7 +3,10 @@ import type { ApplyScriptsResponse } from "@shared/messages";
 import type { CompiledCodeEntry, Userscript, Userscripts } from "@shared/model";
 import type { ChromeSyncStorage, CompiledCodeStorage } from "@shared/storage";
 import { publishDraft } from "./userscript-publication";
-import { applySaveRejectionDirtyRestore } from "../store/slices/editor-drafts/editor-drafts-transitions";
+import {
+  applySaveRejectionDirtyRestore,
+  clearSaveBaseline,
+} from "../store/slices/editor-drafts/editor-drafts-transitions";
 import {
   isDraftDirty,
   type DraftBuffer,
@@ -26,6 +29,12 @@ export interface PersistScriptBuffersArgs {
   /** Types-pane saves bypass compilation and shared-import errors. */
   compile?: boolean;
 }
+
+/** What a queued save expects storage to hold once its turn comes. */
+export type DraftSaveBaseline = Pick<
+  PersistScriptBuffersArgs,
+  "expectedRevision" | "expectedSource"
+>;
 
 export interface DraftSaveResult {
   script: Userscript;
@@ -57,6 +66,8 @@ export interface DraftSaveContext {
   format: (code: string, language: "typescript" | "scss") => Promise<string>;
   /** Accept durable source/artifact state before tab-application feedback. */
   acceptPublished?: (script: Userscript) => void;
+  /** The source write landed; a later artifact failure must keep its baseline. */
+  confirmSourceWrite?: () => void;
   apply: (scriptIds: string[]) => Promise<ApplyScriptsResponse>;
   commit: (payload: {
     scriptId: string;
@@ -87,16 +98,32 @@ export async function persistDraftSave(
     snapshot[args.focusedBuffer.buffer] = args.focusedBuffer.code;
   }
   const buffers = { ...snapshot };
+  // Resolving a conflict is pinned to the version the user chose to overwrite.
+  const pinned: DraftSaveBaseline | undefined =
+    args.expectedRevision !== undefined || args.conflictId
+      ? {
+          expectedRevision:
+            args.expectedRevision ??
+            state.editorDrafts.pendingConflicts?.[args.scriptId]?.remoteScript
+              .storageRevision,
+          expectedSource: { ...draft.lastSynced },
+        }
+      : undefined;
+  // An ordinary save expects whatever the saves queued ahead of it published.
+  const observeBaseline = (): DraftSaveBaseline => {
+    if (pinned) {
+      return pinned;
+    }
+    const current =
+      context.getState().editorDrafts.drafts[args.scriptId] ?? draft;
+    return {
+      expectedRevision: current.baseSavedRevision,
+      expectedSource: { ...current.lastSynced },
+    };
+  };
   return publishDraft(
     {
       ...args,
-      expectedRevision:
-        args.expectedRevision ??
-        (args.conflictId
-          ? state.editorDrafts.pendingConflicts?.[args.scriptId]?.remoteScript
-              .storageRevision
-          : draft.baseSavedRevision),
-      expectedSource: { ...draft.lastSynced },
       conflictId:
         args.conflictId === undefined
           ? (state.editorDrafts.pendingConflicts?.[args.scriptId]?.conflictId ??
@@ -106,7 +133,8 @@ export async function persistDraftSave(
     context,
     snapshot,
     buffers,
-    state.userscripts.scripts ?? {}
+    state.userscripts.scripts ?? {},
+    observeBaseline
   );
 }
 
@@ -121,6 +149,7 @@ export function completeDraftSave(
   if (!draft) {
     return;
   }
+  clearSaveBaseline(draft, requestId);
   if (
     script.storageRevision &&
     BUFFERS.some((buffer) => draft.lastSaveRequestId[buffer] === requestId)
@@ -162,6 +191,7 @@ export function rejectDraftSave(
     for (const buffer of BUFFERS) {
       applySaveRejectionDirtyRestore(draft, buffer, requestId);
     }
+    clearSaveBaseline(draft, requestId);
   }
 }
 

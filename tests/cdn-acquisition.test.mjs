@@ -152,3 +152,89 @@ test("a stale acquisition finishing after a newer version cannot replace its dec
   assert.ok([...h.libs.values()].some((contents) => contents.includes("'2'")));
   assert.ok(![...h.libs.values()].some((contents) => contents.includes("'1'")));
 });
+test("one failing module registers the others and still reports the failure", async () => {
+  const h = harness(async (input) => {
+    if (input.packageName === "bad") {
+      throw new Error("bad package");
+    }
+    return result(input);
+  });
+  await assert.rejects(
+    () =>
+      h.syncCdnModuleLibs([
+        { id: "bad", packageName: "bad", typeVersion: "1" },
+        { id: "good", packageName: "good", typeVersion: "1" },
+      ]),
+    /bad package/
+  );
+  assert.ok(
+    h.libs.has("file:///node_modules/@types/good/index.d.ts"),
+    "the healthy module is registered"
+  );
+  assert.ok(!h.libs.has("file:///node_modules/@types/bad/index.d.ts"));
+});
+test("every distinct failure is reported", async () => {
+  const h = harness(async (input) => {
+    throw new Error(input.packageName + " failed");
+  });
+  await assert.rejects(
+    () =>
+      h.syncCdnModuleLibs([
+        { id: "a", packageName: "a", typeVersion: "1" },
+        { id: "b", packageName: "b", typeVersion: "1" },
+      ]),
+    (error) =>
+      error.message.includes("a failed") && error.message.includes("b failed")
+  );
+});
+test("a failed refresh keeps existing declarations until acquisition completes", async () => {
+  let offline = false;
+  const h = harness(async (input) => {
+    if (offline && input.version === "2") {
+      throw new Error("offline");
+    }
+    return result(input);
+  });
+  await h.syncCdnModuleLibs([
+    { id: "m", packageName: "sample", typeVersion: "1" },
+  ]);
+  offline = true;
+  await assert.rejects(
+    () =>
+      h.syncCdnModuleLibs([
+        { id: "m", packageName: "sample", typeVersion: "2" },
+      ]),
+    /offline/
+  );
+  assert.equal(h.libs.size, 2);
+  assert.equal(h.disposed.length, 0);
+  offline = false;
+  await h.syncCdnModuleLibs([
+    { id: "m", packageName: "sample", typeVersion: "2" },
+  ]);
+  assert.ok([...h.libs.values()].some((contents) => contents.includes("'2'")));
+  await h.syncCdnModuleLibs([]);
+  assert.equal(h.libs.size, 0);
+});
+test("a stale failure does not surface after a newer sync", async () => {
+  let fail;
+  const h = harness((input) =>
+    input.version === "1"
+      ? new Promise((_resolve, reject) => {
+          fail = () => reject(new Error("stale"));
+        })
+      : Promise.resolve(result(input))
+  );
+  const old = h.syncCdnModuleLibs([
+    { id: "m", packageName: "sample", typeVersion: "1" },
+  ]);
+  while (!fail) {
+    await new Promise((resolve) => setImmediate(resolve));
+  }
+  await h.syncCdnModuleLibs([
+    { id: "m", packageName: "sample", typeVersion: "2" },
+  ]);
+  fail();
+  await old;
+  assert.ok([...h.libs.values()].some((contents) => contents.includes("'2'")));
+});

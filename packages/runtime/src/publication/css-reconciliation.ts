@@ -4,10 +4,7 @@ let drain: Promise<void> | undefined;
 export async function reconcilePendingCss(
   repository: IndexedDocumentRepository
 ): Promise<void> {
-  if (drain) {
-    return drain;
-  }
-  drain = (async () => {
+  drain ??= (async () => {
     for (;;) {
       const pending = (await repository.state()).cssOutbox ?? {};
       if (!Object.keys(pending).length) {
@@ -44,5 +41,9 @@ export async function reconcilePendingCss(
     .finally(() => {
       drain = undefined;
     });
-  return drain;
+  await drain;
+  // A commit during the drain's tail joined a pass that had already finished.
+  if (Object.keys((await repository.state()).cssOutbox ?? {}).length) {
+    await reconcilePendingCss(repository);
+  }
 }

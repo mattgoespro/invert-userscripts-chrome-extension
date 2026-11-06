@@ -1,7 +1,6 @@
 import { Checkbox } from "@/shared/components/checkbox/Checkbox";
 import { useEffect, useRef, useState } from "react";
 import { useToast } from "@/shared/components/toast/ToastProvider";
-import { Input } from "@/shared/components/input/Input";
 import { Select } from "@/shared/components/select/Select";
 import { Typography } from "@/shared/components/typography/Typography";
 import {
@@ -25,8 +24,12 @@ import { SettingsSection } from "./SettingsSection";
 import { StorageUsagePanel } from "./StorageUsagePanel";
 import { ThemePreview } from "./theme-preview/ThemePreview";
 import { DocumentStoragePanel } from "./DocumentStoragePanel";
-
-type SettingsSectionId = "appearance" | "editor" | "build" | "advanced";
+import { NumberSettingInput } from "./NumberSettingInput";
+import {
+  consumeSettingsSectionRequest,
+  subscribeToSettingsSectionRequests,
+  type SettingsSectionId,
+} from "./settings-navigation";
 
 const SETTINGS_SECTIONS: { id: SettingsSectionId; label: string }[] = [
   { id: "appearance", label: "Appearance" },
@@ -54,6 +57,8 @@ export function Settings() {
   const [advanced, setAdvanced] = useState(false);
   const [activeSection, setActiveSection] =
     useState<SettingsSectionId>("appearance");
+  const [requestedSection, setRequestedSection] =
+    useState<SettingsSectionId | null>(null);
   const contentRef = useRef<HTMLElement>(null);
   // A section picked in the nav stays highlighted until the user scrolls the
   // content themselves; short sections near the end can't reach the middle.
@@ -139,15 +144,11 @@ export function Settings() {
   };
 
   const handleFontSizeChange = (fontSize: number) => {
-    if (!isNaN(fontSize) && fontSize >= 8 && fontSize <= 32) {
-      dispatch(updateSettings({ fontSize }));
-    }
+    dispatch(updateSettings({ fontSize }));
   };
 
   const handleTabSizeChange = (tabSize: number) => {
-    if (!isNaN(tabSize) && tabSize >= 2 && tabSize <= 8) {
-      dispatch(updateSettings({ tabSize }));
-    }
+    dispatch(updateSettings({ tabSize }));
   };
 
   const handleAutoFormatChange = (autoFormat: boolean) => {
@@ -220,6 +221,32 @@ export function Settings() {
       content.scrollTo({ top: content.scrollTop + offset, behavior: "smooth" });
     });
   };
+
+  // Other surfaces can ask for a section, whether or not this page is open yet.
+  useEffect(() => {
+    if (isLoading) {
+      return;
+    }
+    const takeRequest = (): void => {
+      const section = consumeSettingsSectionRequest();
+      if (section) {
+        if (section === "advanced") {
+          setAdvanced(true);
+        }
+        setRequestedSection(section);
+      }
+    };
+    takeRequest();
+    return subscribeToSettingsSectionRequests(takeRequest);
+  }, [isLoading]);
+
+  // Scroll after the commit, once a requested Advanced section is laid out.
+  useEffect(() => {
+    if (requestedSection) {
+      scrollToSection(requestedSection);
+      setRequestedSection(null);
+    }
+  }, [requestedSection]);
 
   const header = (
     <div className="mb-lg flex shrink-0 flex-col gap-1">
@@ -296,7 +323,7 @@ export function Settings() {
           ref={contentRef}
           aria-label="Settings content"
           tabIndex={0}
-          className="max-w-3xl scrollbar-thin-6 min-h-0 min-w-0 flex-1 [scrollbar-gutter:stable] overflow-x-hidden overflow-y-auto overscroll-contain pr-sm focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent"
+          className="scrollbar-thin-6 min-h-0 max-w-3xl min-w-0 flex-1 [scrollbar-gutter:stable] overflow-x-hidden overflow-y-auto overscroll-contain pr-sm focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent"
         >
           <div id={SECTION_ANCHORS.appearance}>
             <SettingsSection
@@ -323,15 +350,12 @@ export function Settings() {
                   <ThemePreview theme={settings.theme ?? MatchAppEditorTheme} />
                 )}
               </div>
-              <Input
-                type="number"
+              <NumberSettingInput
                 label="Font size"
                 value={settings.fontSize}
-                onChange={(event) =>
-                  handleFontSizeChange(parseInt(event.target.value))
-                }
-                min="8"
-                max="32"
+                min={8}
+                max={32}
+                onCommit={handleFontSizeChange}
                 className="max-w-40"
               />
             </SettingsSection>
@@ -373,15 +397,12 @@ export function Settings() {
                   </label>
                 </div>
               </fieldset>
-              <Input
-                type="number"
+              <NumberSettingInput
                 label="Tab size"
                 value={settings.tabSize}
-                onChange={(event) =>
-                  handleTabSizeChange(parseInt(event.target.value))
-                }
-                min="2"
-                max="8"
+                min={2}
+                max={8}
+                onCommit={handleTabSizeChange}
                 className="max-w-40"
               />
               <Checkbox

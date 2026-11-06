@@ -4,10 +4,97 @@ const TRIPLE_SLASH_TYPES_PATTERN =
   /^\s*\/\/\/\s*<reference\s+types\s*=\s*["']([^"']+)["']/gm;
 const RELATIVE_SPECIFIER_PATTERN =
   /(?:^|\n)\s*(?:import|export)\b[^;]*?from\s*["']([^"']+)["']|\bimport\s*\(\s*["']([^"']+)["']\s*\)/g;
+const REFERENCE_DIRECTIVE_PATTERN = /^\/\/\/\s*<reference\b/;
+
+/** Index just past the string or template literal opening at `start`. */
+function findLiteralEnd(contents: string, start: number): number {
+  const quote = contents[start];
+  let index = start + 1;
+
+  while (index < contents.length) {
+    const char = contents[index];
+
+    if (char === "\\") {
+      index += 2;
+      continue;
+    }
+
+    if (char === quote) {
+      return index + 1;
+    }
+
+    if (char === "\n" && quote !== "`") {
+      return index;
+    }
+
+    index++;
+  }
+
+  return contents.length;
+}
+
+/**
+ * Removes comments so prose in JSDoc cannot read as a dependency, keeping
+ * literals, line structure and line-leading `/// <reference>` directives.
+ * Hand-written because this module ships in the options bundle, which must not
+ * load the TypeScript compiler for `ts.preProcessFile`.
+ */
+function stripComments(contents: string): string {
+  let output = "";
+  let index = 0;
+  let atLineStart = true;
+
+  while (index < contents.length) {
+    const char = contents[index];
+    const next = contents[index + 1];
+
+    if (char === '"' || char === "'" || char === "`") {
+      const end = findLiteralEnd(contents, index);
+      output += contents.slice(index, end);
+      index = end;
+      atLineStart = false;
+      continue;
+    }
+
+    if (char === "/" && next === "*") {
+      const close = contents.indexOf("*/", index + 2);
+      const end = close === -1 ? contents.length : close + 2;
+      output += contents.slice(index, end).replace(/[^\r\n]/g, " ");
+      index = end;
+      continue;
+    }
+
+    if (char === "/" && next === "/") {
+      const newline = contents.indexOf("\n", index);
+      const end = newline === -1 ? contents.length : newline;
+      const line = contents.slice(index, end);
+
+      if (atLineStart && REFERENCE_DIRECTIVE_PATTERN.test(line)) {
+        output += line;
+      }
+
+      index = end;
+      continue;
+    }
+
+    if (char === "\n") {
+      atLineStart = true;
+    } else if (char.trim()) {
+      atLineStart = false;
+    }
+
+    output += char;
+    index++;
+  }
+
+  return output;
+}
 
 /**
  * Resolves a relative path against a `.d.ts` file path inside an `@types`
- * package, appending `.d.ts` when the specifier omits an extension.
+ * package. Runtime extensions map to their declaration counterparts
+ * (`.js` to `.d.ts`, `.mjs` to `.d.mts`, `.cjs` to `.d.cts`), and `.d.ts` is
+ * appended when the specifier omits an extension.
  */
 export function normalizeRelativePath(
   fromFile: string,
@@ -29,13 +116,17 @@ export function normalizeRelativePath(
     baseSegments.push(segment);
   }
 
-  let path = baseSegments.join("/");
+  const path = baseSegments.join("/");
 
-  if (!path.endsWith(".d.ts")) {
-    path = path.endsWith(".ts") ? path : `${path}.d.ts`;
+  if (/\.[cm]?ts$/.test(path)) {
+    return path;
   }
 
-  return path;
+  const runtimeExtension = /\.([cm]?)js$/.exec(path);
+
+  return runtimeExtension
+    ? `${path.slice(0, runtimeExtension.index)}.d.${runtimeExtension[1]}ts`
+    : `${path}.d.ts`;
 }
 
 /**
@@ -48,16 +139,17 @@ export function extractFileDependencies(
 ): { files: string[]; packages: string[] } {
   const files = new Set<string>();
   const packages = new Set<string>();
+  const code = stripComments(contents);
 
-  for (const match of contents.matchAll(TRIPLE_SLASH_PATH_PATTERN)) {
+  for (const match of code.matchAll(TRIPLE_SLASH_PATH_PATTERN)) {
     files.add(normalizeRelativePath(filePath, match[1]));
   }
 
-  for (const match of contents.matchAll(TRIPLE_SLASH_TYPES_PATTERN)) {
+  for (const match of code.matchAll(TRIPLE_SLASH_TYPES_PATTERN)) {
     packages.add(match[1]);
   }
 
-  for (const match of contents.matchAll(RELATIVE_SPECIFIER_PATTERN)) {
+  for (const match of code.matchAll(RELATIVE_SPECIFIER_PATTERN)) {
     const specifier = match[1] ?? match[2];
 
     if (specifier) {

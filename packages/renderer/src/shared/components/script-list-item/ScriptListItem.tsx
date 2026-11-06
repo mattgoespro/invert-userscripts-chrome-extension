@@ -113,7 +113,19 @@ export function ScriptListItem({
           script.enabled ? "text-foreground" : "text-text-muted-strong"
         )}
       >
-        {script.name}
+        {onScriptSelected ? (
+          // The row handles the click, so mouse users keep the whole row as a
+          // target; this button gives keyboards and screen readers the action.
+          <button
+            type="button"
+            aria-current={active ? "true" : undefined}
+            className="block w-full cursor-pointer truncate text-left focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent"
+          >
+            {script.name}
+          </button>
+        ) : (
+          script.name
+        )}
       </span>
       <div
         className={clsx("flex items-center gap-2", showCaption && "row-span-2")}
@@ -134,7 +146,13 @@ export function ScriptListItem({
             {problemCount}
           </span>
         )}
-        <Switch checked={script.enabled} onChange={() => onToggleScript()} />
+        <span className="contents" onClick={(event) => event.stopPropagation()}>
+          <Switch
+            checked={script.enabled}
+            onChange={() => onToggleScript()}
+            aria-label={`Enable ${script.name}`}
+          />
+        </span>
       </div>
       {showCaption && (
         <p className="flex min-w-0 items-center gap-1 font-mono text-[11px] leading-4 text-text-muted-strong">

@@ -13,17 +13,35 @@ export interface ResolvedTypePackage {
 }
 const bases = ["https://unpkg.com/", "https://cdn.jsdelivr.net/npm/"];
 type Fetcher = (url: string, options?: RequestInit) => Promise<Response>;
+/** First declaration path in a condition tree, in the package's own order. */
+function conditionTypes(rule: unknown, underTypes = false): string | undefined {
+  if (typeof rule === "string") {
+    return underTypes ? rule : undefined;
+  }
+  if (!rule || typeof rule !== "object") {
+    return undefined;
+  }
+  for (const [condition, value] of Object.entries(rule)) {
+    const found = conditionTypes(value, underTypes || condition === "types");
+    if (found !== undefined) {
+      return found;
+    }
+  }
+  return undefined;
+}
 function entryPath(metadata: Record<string, unknown>): string {
   if (metadata.typesVersions) {
     throw new Error("Unsupported typesVersions declaration rule.");
   }
   const exports = metadata.exports as Record<string, unknown> | undefined;
-  const root = (exports?.["."] ?? exports) as
-    | Record<string, unknown>
-    | string
-    | undefined;
-  const explicit = typeof root === "object" ? root?.types : undefined;
-  const path = explicit ?? metadata.types ?? metadata.typings ?? "index.d.ts";
+  // A subpath-only map has no root rule; its keys are not conditions.
+  const root =
+    exports?.["."] ??
+    (Object.keys(exports ?? {}).some((key) => key.startsWith("."))
+      ? undefined
+      : exports);
+  const path =
+    conditionTypes(root) ?? metadata.types ?? metadata.typings ?? "index.d.ts";
   if (typeof path !== "string" || path.includes("..") || path.includes("*")) {
     throw new Error("Unsupported declaration entry rule.");
   }
@@ -116,13 +134,11 @@ export async function resolveTypePackage(
             "Unsupported wildcard declaration export: " + subpath
           );
         }
-        if (
-          subpath.startsWith("./") &&
-          rule &&
-          typeof rule === "object" &&
-          "types" in rule
-        ) {
-          queue.push(entryPath({ types: rule.types }));
+        const types = subpath.startsWith("./")
+          ? conditionTypes(rule)
+          : undefined;
+        if (types !== undefined) {
+          queue.push(entryPath({ types }));
         }
       }
     }

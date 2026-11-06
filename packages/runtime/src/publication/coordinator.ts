@@ -151,7 +151,8 @@ export async function handleRepositoryRequest(
         );
       }
       if (request.discard === true) {
-        selected = { ...selected, script: undefined };
+        const { script: _discarded, ...tombstone } = selected;
+        selected = tombstone;
       }
       if (
         selected.script &&

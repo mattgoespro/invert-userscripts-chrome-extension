@@ -30,6 +30,10 @@ import * as draftHelpers from "../packages/renderer/src/shared/store/slices/edit
 import * as draftActions from "../packages/renderer/src/shared/store/slices/editor-drafts/actions.ts";
 import * as compileMetadata from "../packages/shared/src/compile-metadata.ts";
 import { PrettierFormatter } from "../packages/renderer/src/sandbox/formatter.ts";
+import {
+  rebaseListUpdates,
+  toggleListItem,
+} from "../packages/renderer/src/shared/services/metadata-edits.ts";
 import { buildUserscriptFixture } from "./helpers/fixtures.mjs";
 
 // Load unmodified thunk/reducer bodies with explicit production dependency
@@ -1136,4 +1140,261 @@ it("ordered toggles leave CSS installed after an older disable is delayed", asyn
     ChromeSyncStorage.getEditorSettings = settingsReads;
     CompiledCodeStorage.getAllCompiledCode = artifactReads;
   }
+});
+
+describe("draft save baselines and ownership", () => {
+  const macrotask = () => new Promise((resolve) => setImmediate(resolve));
+  const refresh = (h) =>
+    h.store.dispatch(h.thunks.refreshScriptsFromStorage()).unwrap();
+  const draftOf = (h, id = h.id) => h.store.getState().editorDrafts.drafts[id];
+
+  /** Revision-checked storage. Reads yield like real storage does. */
+  function withRevisions(h) {
+    let revision = 0;
+    h.sources[h.id].storageRevision = "r0";
+    const read = h.sourceStorage.getAllScripts;
+    h.sourceStorage.getAllScripts = async () => {
+      await macrotask();
+      return read();
+    };
+    h.sourceStorage.tryPublishScript = async (script) => {
+      if (script.storageRevision !== h.sources[script.id].storageRevision) {
+        throw Error("Another window saved first.");
+      }
+      const published = {
+        ...structuredClone(script),
+        storageRevision: `r${++revision}`,
+      };
+      h.sources[script.id] = published;
+      return structuredClone(published);
+    };
+  }
+
+  it("merges remote changes into clean buffers so a save cannot revert them", async () => {
+    const h = harness();
+    const originalTypescript = h.sources[h.id].code.source.typescript;
+    h.edit("typescript", "local edit");
+    h.sources[h.id].code.source.scss = ".remote {}";
+    h.sources[h.id].typeDefinitions = "type Remote = 1;";
+    await refresh(h);
+    const draft = draftOf(h);
+    assert.equal(draft.scss, ".remote {}");
+    assert.equal(draft.lastSynced.scss, ".remote {}");
+    assert.equal(draft.typeDefinitions, "type Remote = 1;");
+    assert.equal(draft.dirty.scss, false);
+    assert.equal(draft.typescript, "local edit");
+    assert.equal(draft.dirty.typescript, true);
+    assert.equal(draft.lastSynced.typescript, originalTypescript);
+    assert.deepEqual(h.store.getState().editorDrafts.pendingConflicts, {});
+    await h.save();
+    assert.equal(h.sources[h.id].code.source.scss, ".remote {}");
+    assert.equal(h.sources[h.id].typeDefinitions, "type Remote = 1;");
+    assert.equal(h.sources[h.id].code.source.typescript, "local edit");
+  });
+
+  it("restores the baseline after a failed write, avoiding a false conflict", async () => {
+    const h = harness();
+    const original = h.sources[h.id].code.source.typescript;
+    h.edit("typescript", "unsaved");
+    const write = h.sourceStorage.updateScript;
+    h.sourceStorage.updateScript = async () => {
+      throw Error("quota");
+    };
+    await assert.rejects(h.save(), { message: /quota/ });
+    const draft = draftOf(h);
+    assert.equal(draft.typescript, "unsaved");
+    assert.equal(draft.dirty.typescript, true);
+    assert.equal(draft.lastSynced.typescript, original);
+    assert.equal(draft.saveBaseline, undefined);
+    await refresh(h);
+    assert.deepEqual(h.store.getState().editorDrafts.pendingConflicts, {});
+    h.sourceStorage.updateScript = write;
+    await h.save();
+    assert.equal(h.sources[h.id].code.source.typescript, "unsaved");
+  });
+
+  it("keeps the new baseline when the source landed and only the artifact failed", async () => {
+    const h = harness();
+    h.edit("typescript", "written");
+    h.compiledStorage.saveCompiledCode = async () => {
+      throw Error("local failed");
+    };
+    await assert.rejects(h.save(), { message: /local failed/ });
+    assert.equal(h.sources[h.id].code.source.typescript, "written");
+    assert.equal(draftOf(h).lastSynced.typescript, "written");
+    assert.equal(draftOf(h).dirty.typescript, true);
+    h.edit("typescript", "written, then edited");
+    await refresh(h);
+    assert.deepEqual(h.store.getState().editorDrafts.pendingConflicts, {});
+  });
+
+  it("lets a second save follow the first without a false conflict", async () => {
+    const h = harness();
+    withRevisions(h);
+    await refresh(h);
+    assert.equal(draftOf(h).baseSavedRevision, "r0");
+    const entered = deferred(),
+      release = deferred();
+    h.effects.format = async (code) => {
+      entered.resolve();
+      await release.promise;
+      return code;
+    };
+    h.edit("typescript", "first");
+    const first = h.save({
+      focusedBuffer: {
+        buffer: "typescript",
+        code: "first",
+        autoFormat: true,
+      },
+    });
+    await entered.promise;
+    h.edit("typescript", "second");
+    const second = h.save();
+    release.resolve();
+    await Promise.all([first, second]);
+    assert.equal(h.sources[h.id].code.source.typescript, "second");
+    assert.equal(h.sources[h.id].storageRevision, "r2");
+    assert.equal(draftOf(h).baseSavedRevision, "r2");
+    assert.equal(draftOf(h).dirty.typescript, false);
+  });
+
+  it("still rejects a queued save when another window changed the source", async () => {
+    const h = harness();
+    withRevisions(h);
+    await refresh(h);
+    h.edit("typescript", "local");
+    h.sources[h.id].code.source.typescript = "other window";
+    h.sources[h.id].storageRevision = "external";
+    await assert.rejects(h.save(), { message: /Another window/ });
+    assert.equal(h.sources[h.id].code.source.typescript, "other window");
+    assert.equal(draftOf(h).dirty.typescript, true);
+  });
+
+  it("keeps a clean draft across a switch while its write is in flight", async () => {
+    const h = harness(2);
+    const [first, second] = h.scripts.map((script) => script.id);
+    const entered = deferred(),
+      release = deferred();
+    const write = h.sourceStorage.updateScript;
+    h.sourceStorage.updateScript = async () => {
+      entered.resolve();
+      await release.promise;
+      throw Error("quota");
+    };
+    h.edit("typescript", "unsaved");
+    const saving = h.save();
+    await entered.promise;
+    assert.equal(draftOf(h, first).dirty.typescript, false);
+    h.store.dispatch(h.userscripts.setCurrentUserscript(second));
+    assert.ok(draftOf(h, first), "in-flight draft was pruned");
+    release.resolve();
+    await assert.rejects(saving, { message: /quota/ });
+    assert.equal(draftOf(h, first).typescript, "unsaved");
+    assert.equal(draftOf(h, first).dirty.typescript, true);
+
+    // Once settled and clean, the draft is ordinary offscreen state again.
+    h.sourceStorage.updateScript = write;
+    await h.save();
+    assert.equal(draftOf(h, first).dirty.typescript, false);
+    h.store.dispatch(h.userscripts.setCurrentUserscript(second));
+    assert.equal(draftOf(h, first), undefined);
+  });
+
+  it("applies rapid list edits from one render against the latest stored list", async () => {
+    const h = harness();
+    h.sources[h.id].urlPatterns = ["a", "b", "c"];
+    const rendered = { urlPatterns: ["a", "b", "c"] };
+    const publish = (urlPatterns) =>
+      h.store
+        .dispatch(
+          h.thunks.updateUserscript({
+            id: h.id,
+            updates: rebaseListUpdates(rendered, { urlPatterns }),
+          })
+        )
+        .unwrap();
+    await Promise.all([
+      publish(["b", "c"]),
+      publish(["a", "c"]),
+      publish(["a", "b", "c", "d"]),
+    ]);
+    assert.deepEqual([...h.sources[h.id].urlPatterns], ["c", "d"]);
+    assert.deepEqual(
+      [...h.store.getState().userscripts.scripts[h.id].urlPatterns],
+      ["c", "d"]
+    );
+  });
+
+  it("toggles modules quickly without losing either selection", async () => {
+    const h = harness();
+    h.sources[h.id].globalModules = [];
+    const toggle = (moduleId) =>
+      h.store
+        .dispatch(
+          h.thunks.updateUserscript({
+            id: h.id,
+            updates: (latest) => ({
+              globalModules: toggleListItem(
+                latest.globalModules ?? [],
+                moduleId,
+                true
+              ),
+            }),
+          })
+        )
+        .unwrap();
+    await Promise.all([toggle("one"), toggle("two")]);
+    assert.deepEqual([...h.sources[h.id].globalModules], ["one", "two"]);
+  });
+});
+
+describe("import module path collisions", () => {
+  const entry = (name, moduleName, extra = {}) => ({
+    name,
+    enabled: false,
+    urlPatterns: [],
+    runAt: "afterPageLoad",
+    moduleName,
+    sources: {
+      typescript: "export const value = 1;",
+      "typescript-declarations": "",
+      scss: "",
+    },
+    sharedImports: [],
+    globalModuleImports: [],
+    ...extra,
+  });
+  const importFile = (h, userscripts) =>
+    h.store.dispatch(h.thunks.importUserscripts({ userscripts })).unwrap();
+
+  it("rejects a path taken since validation, without writing anything", async () => {
+    const h = harness();
+    const before = Object.keys(h.sources).length;
+    await assert.rejects(
+      importFile(h, [
+        entry("Fresh", "fresh"),
+        entry("Again", h.id.toUpperCase()),
+      ]),
+      { message: /already used/ }
+    );
+    assert.equal(Object.keys(h.sources).length, before);
+  });
+
+  it("rejects names in one file that sanitize to the same path", async () => {
+    const h = harness();
+    await assert.rejects(
+      importFile(h, [entry("A", "My Lib"), entry("B", "my-lib")]),
+      { message: /Module path "my-lib" is already used by "A"/ }
+    );
+  });
+
+  it("links explicit shared imports through their sanitized paths", async () => {
+    const h = harness();
+    const [library, consumer] = await importFile(h, [
+      entry("Library", "My Lib"),
+      entry("Consumer", "consumer", { sharedImports: ["My Lib"] }),
+    ]);
+    assert.deepEqual([...consumer.sharedScripts], [library.id]);
+  });
 });

@@ -139,19 +139,41 @@ export function isDriveRecord(value: unknown): value is DriveRecord {
       return false;
   }
 }
+/**
+ * Combines a record with what is already known for its revision. `legacy-*` script
+ * revisions are derived from content alone, so devices that observed the same content
+ * from different histories legitimately disagree on parents; their ancestry is the union.
+ */
+function reconcileRevision(
+  existing: DriveRecord | undefined,
+  record: DriveRecord
+): DriveRecord {
+  if (!existing) {
+    return record;
+  }
+  if (record.kind === "script" && record.revision.startsWith("legacy-")) {
+    const { parents: existingParents, ...existingIdentity } = existing;
+    const { parents, ...identity } = record;
+    if (JSON.stringify(existingIdentity) === JSON.stringify(identity)) {
+      return {
+        ...record,
+        parents: [...new Set([...existingParents, ...parents])],
+      };
+    }
+  } else if (JSON.stringify(existing) === JSON.stringify(record)) {
+    return record;
+  }
+  throw new Error("Drive revision identity does not match its stored content.");
+}
 function remember(
   state: StoredRepositoryState,
   record: DriveRecord,
   pending: boolean
 ): void {
   const drive = state.drive!;
-  const existing = drive.records[record.revision];
-  if (existing && JSON.stringify(existing) !== JSON.stringify(record)) {
-    throw new Error(
-      "Drive revision identity does not match its stored content."
-    );
-  }
-  drive.records[record.revision] = structuredClone(record);
+  drive.records[record.revision] = structuredClone(
+    reconcileRevision(drive.records[record.revision], record)
+  );
   if (pending && !drive.pending.includes(record.revision)) {
     drive.pending.push(record.revision);
   }
@@ -331,12 +353,7 @@ export function mergeDriveRecords(
     }
     const previous =
       seen.get(record.revision) ?? state.drive.records[record.revision];
-    if (previous && JSON.stringify(previous) !== JSON.stringify(record)) {
-      throw new Error(
-        "Drive revision identity does not match its stored content."
-      );
-    }
-    seen.set(record.revision, record);
+    seen.set(record.revision, reconcileRevision(previous, record));
   }
   const graph = { ...state.drive.records, ...Object.fromEntries(seen) };
   const entity = (record: DriveRecord): string =>

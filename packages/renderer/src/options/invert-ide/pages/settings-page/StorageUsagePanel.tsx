@@ -294,7 +294,7 @@ export function StorageUsagePanel() {
         scripts, settings, layout, compiled output and the upload queue live in
         IndexedDB. IndexedDB and Google Drive usage are not included here.
       </p>
-      <div className="xl:grid-cols-2 grid gap-sm">
+      <div className="grid gap-sm xl:grid-cols-2">
         <StorageMeter
           label="chrome.storage.sync"
           bytes={snapshot.syncTotalBytes}
@@ -311,7 +311,7 @@ export function StorageUsagePanel() {
         />
       </div>
 
-      <div className="xl:grid-cols-2 grid gap-sm">
+      <div className="grid gap-sm xl:grid-cols-2">
         <div className="rounded-default border border-border-subtle bg-surface-base p-md">
           <Typography
             variant="section-title"

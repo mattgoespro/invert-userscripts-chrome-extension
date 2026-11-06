@@ -25,6 +25,7 @@ export interface StorageReconciliationContext {
   removeDraft: (scriptId: string) => void;
   enqueueConflict: (conflict: RemoteDraftConflict) => void;
   syncDraft: (script: Userscript) => void;
+  mergeDraft: (script: Userscript) => void;
   removeScripts: (scriptIds: string[]) => void;
 }
 
@@ -89,6 +90,10 @@ export async function reconcileStoredScripts(
             conflictIds.push(scriptId);
             break;
           case "sync-entity":
+            syncedScripts.push(decision.script);
+            break;
+          case "merge-clean":
+            context.mergeDraft(decision.script);
             syncedScripts.push(decision.script);
             break;
           case "sync":

@@ -56,9 +56,11 @@ export async function encodeSyncRevision(
   document: SavedDocument | { revision: string; id: string },
   parents: string[]
 ): Promise<EncodedSyncRevision> {
-  const deleted = !("script" in document);
-  const id = deleted ? document.id : document.script.id;
-  const payload = JSON.stringify(deleted ? null : document.script);
+  // Tombstone outbox entries may carry an explicit `script: undefined`.
+  const script = "script" in document ? document.script : undefined;
+  const deleted = !script;
+  const id = script ? script.id : (document as { id: string }).id;
+  const payload = JSON.stringify(script ?? null);
   const bytes = new TextEncoder().encode(payload);
   let binary = "";
   for (const byte of bytes) {

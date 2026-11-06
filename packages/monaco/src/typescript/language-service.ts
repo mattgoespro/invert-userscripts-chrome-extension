@@ -68,7 +68,8 @@ export function reconcileLanguageWorkspace(
       if (lastCdnSignature !== signature) {
         return;
       }
-      lastCdnSignature = "";
+      // Keep the signature: every keystroke reconciles, so only an explicit
+      // retry or a changed module list may reach the network again.
       setAcquisitionError(
         error instanceof Error ? error.message : String(error)
       );

@@ -61,10 +61,7 @@ export async function flushSync(
     await schemaTransition;
     return flushSync(repository);
   }
-  if (drain) {
-    return drain;
-  }
-  drain = (async () => {
+  drain ??= (async () => {
     const verified =
       (await chrome.storage.local.get("verifiedSync")).verifiedSync === true;
     for (;;) {
@@ -179,7 +176,15 @@ export async function flushSync(
     .finally(() => {
       drain = undefined;
     });
-  return drain;
+  await drain;
+  // A commit during the drain's tail joined a pass that had already finished.
+  const pending = await repository.state();
+  if (
+    Object.keys(pending.outbox ?? {}).length ||
+    Object.keys(pending.preferenceOutbox ?? {}).length
+  ) {
+    await flushSync(repository);
+  }
 }
 export async function ingestPortablePreferences(
   repository: IndexedDocumentRepository

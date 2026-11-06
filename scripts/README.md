@@ -16,8 +16,10 @@ importing again updates them without touching your other rules. They start
 disabled with no URL patterns, so set the target pages before enabling injection.
 Flags and dependencies come from `RULE_SETTINGS` in the exporter; add an entry
 there when a new example needs more than the `shared` flag. The file has no
-library content or settings, so a library missing from your install has to be
-downloaded by the extension.
+library content or settings. As of version 4.3.0, the extension downloads a
+library with no stored content when its service worker starts, and a rule that
+needs the library runs without it until then. If a library is new to your
+install, check that it has downloaded before relying on the rule.
 
 ## Refactor validation and recovery
 

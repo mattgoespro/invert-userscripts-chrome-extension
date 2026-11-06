@@ -20,14 +20,15 @@ export class PrettierFormatter {
 
   static async format(
     code: string,
-    language: FormatterLanguage
+    language: FormatterLanguage,
+    tabWidth: number = 2
   ): Promise<string> {
     try {
       const parser = this.languageToParser[language];
       return await prettier.format(code, {
         parser,
         plugins: this.plugins,
-        tabWidth: 2,
+        tabWidth,
         useTabs: false,
         semi: true,
         singleQuote: false,

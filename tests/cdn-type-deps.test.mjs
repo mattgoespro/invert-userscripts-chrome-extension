@@ -20,6 +20,30 @@ describe("normalizeRelativePath", () => {
     assert.equal(normalizeRelativePath("index.d.ts", "./foo.ts"), "foo.ts");
   });
 
+  it("maps runtime extensions to their declaration files", () => {
+    assert.equal(
+      normalizeRelativePath("a/index.d.ts", "./foo.js"),
+      "a/foo.d.ts"
+    );
+    assert.equal(
+      normalizeRelativePath("a/index.d.ts", "./foo.mjs"),
+      "a/foo.d.mts"
+    );
+    assert.equal(
+      normalizeRelativePath("a/index.d.ts", "./foo.cjs"),
+      "a/foo.d.cts"
+    );
+    assert.equal(
+      normalizeRelativePath("index.d.ts", "./foo.js.map"),
+      "foo.js.map.d.ts"
+    );
+  });
+
+  it("preserves module declaration extensions", () => {
+    assert.equal(normalizeRelativePath("i.d.ts", "./a.d.mts"), "a.d.mts");
+    assert.equal(normalizeRelativePath("i.d.ts", "./a.d.cts"), "a.d.cts");
+  });
+
   it("ignores '.' and empty segments", () => {
     assert.equal(
       normalizeRelativePath("pkg/index.d.ts", "././types"),
@@ -29,6 +53,41 @@ describe("normalizeRelativePath", () => {
 });
 
 describe("extractFileDependencies", () => {
+  it("ignores dependencies written in comments", () => {
+    const contents = [
+      '/** await import("./chunk") */',
+      'export interface A { /* value from "./inline" */ value: string }',
+      '// import x from "./line";',
+      "/*",
+      '/// <reference path="./block.d.ts" />',
+      'import y from "other";',
+      "*/",
+      '/* lead */ import { B } from "./real";',
+      'const url: "http://example.com/*"; // it\'s',
+      'export { C } from "./after-string";',
+      '// /// <reference types="commented" />',
+      'declare const z: 1; /// <reference path="./trailing.d.ts" />',
+    ].join("\r\n");
+
+    const deps = extractFileDependencies("index.d.ts", contents);
+    assert.deepEqual(deps.files.sort(), ["after-string.d.ts", "real.d.ts"]);
+    assert.deepEqual(deps.packages, []);
+  });
+
+  it("keeps reference directives surrounded by comments", () => {
+    const contents = [
+      "// Type definitions for sample",
+      "/* header */",
+      '  /// <reference path="./a.d.ts" />',
+      '/// <reference types="node" />',
+      "export {};",
+    ].join("\n");
+
+    const deps = extractFileDependencies("index.d.ts", contents);
+    assert.deepEqual(deps.files, ["a.d.ts"]);
+    assert.deepEqual(deps.packages, ["node"]);
+  });
+
   it("collects triple-slash path references", () => {
     const contents = [
       '/// <reference path="./helpers.d.ts" />',

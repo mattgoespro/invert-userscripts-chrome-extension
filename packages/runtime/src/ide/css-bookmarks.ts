@@ -1,6 +1,10 @@
 const SESSION_KEY = "injectCssBookmarks";
 
-type CssBookmarks = Record<string, string>;
+interface CssBookmark {
+  css: string;
+  documentId?: string;
+}
+type CssBookmarks = Record<string, CssBookmark>;
 
 let memoryBookmarks: CssBookmarks | null = null;
 let loadPromise: Promise<CssBookmarks> | null = null;
@@ -45,13 +49,26 @@ async function writeBookmarks(bookmarks: CssBookmarks): Promise<void> {
   }
 }
 
+/**
+ * With `documentId`, only a bookmark for that document counts: a write landing
+ * after navigation describes the previous document's styles, not the new one's.
+ */
 export async function getCssBookmark(
   tabId: number,
-  scriptId: string
+  scriptId: string,
+  documentId?: string
 ): Promise<string | undefined> {
   await mutations;
   const bookmarks = await readBookmarks();
-  return bookmarks[bookmarkKey(tabId, scriptId)];
+  const bookmark = bookmarks[bookmarkKey(tabId, scriptId)];
+  if (
+    documentId &&
+    bookmark?.documentId &&
+    bookmark.documentId !== documentId
+  ) {
+    return undefined;
+  }
+  return bookmark?.css;
 }
 
 function mutateBookmarks(
@@ -68,10 +85,14 @@ function mutateBookmarks(
 export function setCssBookmark(
   tabId: number,
   scriptId: string,
-  css: string
+  css: string,
+  documentId?: string
 ): Promise<void> {
   return mutateBookmarks((bookmarks) => {
-    bookmarks[bookmarkKey(tabId, scriptId)] = css;
+    bookmarks[bookmarkKey(tabId, scriptId)] = {
+      css,
+      ...(documentId ? { documentId } : {}),
+    };
   });
 }
 export function clearCssBookmark(
@@ -82,10 +103,16 @@ export function clearCssBookmark(
     delete bookmarks[bookmarkKey(tabId, scriptId)];
   });
 }
-export function clearCssBookmarksForTab(tabId: number): Promise<void> {
+export function clearCssBookmarksForTab(
+  tabId: number,
+  keepDocumentId?: string
+): Promise<void> {
   return mutateBookmarks((bookmarks) => {
     for (const key of Object.keys(bookmarks)) {
-      if (key.startsWith(`${tabId}:`)) {
+      if (
+        key.startsWith(`${tabId}:`) &&
+        (!keepDocumentId || bookmarks[key].documentId !== keepDocumentId)
+      ) {
         delete bookmarks[key];
       }
     }

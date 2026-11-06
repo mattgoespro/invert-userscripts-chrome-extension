@@ -138,7 +138,7 @@ export function ModulesPage() {
 
   return (
     <div className="scrollbar-thin-6 min-w-0 flex-1 overflow-y-auto p-(--page-padding)">
-      <div className="max-w-6xl mx-auto flex flex-col gap-xl">
+      <div className="mx-auto flex max-w-6xl flex-col gap-xl">
         <div className="flex flex-wrap items-end justify-between gap-md">
           <div className="flex flex-col gap-1">
             <Typography variant="subtitle">Modules</Typography>

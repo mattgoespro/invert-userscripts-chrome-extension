@@ -1,14 +1,20 @@
 .ujs-toast {
-  .ujs-toast-info {
+  transition: opacity 500ms;
+
+  &.ujs-toast-info {
     background-color: blue;
   }
 
-  .ujs-toast-warn {
+  &.ujs-toast-warn {
     background-color: yellow;
   }
 
-  .ujs-toast-error {
+  &.ujs-toast-error {
     background-color: red;
+  }
+
+  &.ujs-toast-dismissing {
+    opacity: 0;
   }
 }
 

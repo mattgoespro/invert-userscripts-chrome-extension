@@ -240,9 +240,11 @@ let acquisitionController: AbortController | undefined;
  * to the active script — otherwise switching scripts disposes libs and causes
  * brief "cannot find module" diagnostics.
  *
- * Fetching and registration are asynchronous and incremental: each package's
- * files are registered as soon as they resolve. Disposes registrations for
- * modules no longer in the list (e.g. deleted from storage).
+ * Fetching and registration are asynchronous. A module that fails to resolve
+ * does not block the others: successes are registered first, then the failure
+ * is rethrown for the acquisition notice. Disposes registrations for modules no
+ * longer in the list (e.g. deleted from storage), but only after a complete
+ * acquisition, because a failed module's existing declarations are still valid.
  */
 const registeredFiles = new Map<
   string,
@@ -255,7 +257,7 @@ export async function syncCdnModuleLibs(
   acquisitionController?.abort();
   const controller = new AbortController();
   acquisitionController = controller;
-  const packages = await Promise.all(
+  const settled = await Promise.allSettled(
     modules
       .filter((module) => module.packageName)
       .map((module) =>
@@ -269,9 +271,14 @@ export async function syncCdnModuleLibs(
   if (generation !== syncGeneration) {
     return;
   }
+  const failures: unknown[] = [];
   const desired = new Map<string, string>();
-  for (const packageSet of packages) {
-    for (const [packageName, files] of packageSet) {
+  for (const packageSet of settled) {
+    if (packageSet.status === "rejected") {
+      failures.push(packageSet.reason);
+      continue;
+    }
+    for (const [packageName, files] of packageSet.value) {
       const path = packageName.startsWith("@")
         ? packageName.slice(1).replace("/", "__")
         : packageName;
@@ -289,7 +296,12 @@ export async function syncCdnModuleLibs(
   }
   // Single ownership avoids one module disposing another module's shared declarations.
   for (const [uri, entry] of registeredFiles) {
-    if (desired.get(uri) !== entry.contents) {
+    const contents = desired.get(uri);
+    if (
+      contents === undefined
+        ? failures.length === 0
+        : contents !== entry.contents
+    ) {
       entry.disposable.dispose();
       registeredFiles.delete(uri);
     }
@@ -301,5 +313,14 @@ export async function syncCdnModuleLibs(
         disposable: addTypeLib(contents, uri),
       });
     }
+  }
+  if (failures.length === 1) {
+    throw failures[0];
+  }
+  if (failures.length > 1) {
+    const messages = failures.map((failure) =>
+      failure instanceof Error ? failure.message : String(failure)
+    );
+    throw new Error([...new Set(messages)].join("; "));
   }
 }

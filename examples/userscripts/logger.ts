@@ -126,7 +126,10 @@ function createLogger(name: string, options?: LoggerOptions): Logger {
 
   const createLogMessage: CreateLogMessageFn = (
     message: LogMessage,
-    createOptions: CreateLogMessageOptions
+    createOptions: CreateLogMessageOptions = {
+      level: "info",
+      addPrefix: coercedOptions.prefix,
+    }
   ) => {
     return prettyStringify(message, options)
       .split("\n")

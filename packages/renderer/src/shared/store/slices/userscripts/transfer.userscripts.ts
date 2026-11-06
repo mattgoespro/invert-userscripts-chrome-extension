@@ -1,5 +1,10 @@
 import { getSharedImportModuleNames } from "@shared/shared-module-imports";
-import { GlobalModules, Userscript, Userscripts } from "@shared/model";
+import {
+  GlobalModules,
+  sanitizeModuleName,
+  Userscript,
+  Userscripts,
+} from "@shared/model";
 
 const TRANSFER_SCHEMA_URL = "https://json-schema.org/draft/2020-12/schema";
 const TRANSFER_FILE_TITLE = "Userscripts";
@@ -221,14 +226,9 @@ export function getEffectiveTransferSharedImports(
   );
 }
 
-function getImportedSharedModuleNames(
-  file: UserscriptsTransferFile
-): Set<string> {
-  return new Set(
-    file.userscripts
-      .map((script) => script.moduleName.trim())
-      .filter((moduleName) => moduleName.length > 0)
-  );
+/** The `scripts/<path>/main` segment of a name; empty when it falls back to the ID. */
+function getTransferModulePath(moduleName: string): string {
+  return sanitizeModuleName(moduleName.trim());
 }
 
 export function validateUserscriptsTransferFile(
@@ -264,38 +264,62 @@ export function validateUserscriptsTransferFile(
     ),
   };
 
-  const duplicateModuleNames = new Set<string>();
-  const importedModuleNames = new Set<string>();
+  const duplicateModulePaths = new Set<string>();
+  const importedModulePaths = new Set<string>();
 
   for (const script of file.userscripts) {
-    const moduleName = script.moduleName.trim();
+    const modulePath = getTransferModulePath(script.moduleName);
 
-    if (!moduleName) {
+    if (!modulePath) {
       continue;
     }
 
-    if (importedModuleNames.has(moduleName)) {
-      duplicateModuleNames.add(moduleName);
+    if (importedModulePaths.has(modulePath)) {
+      duplicateModulePaths.add(modulePath);
       continue;
     }
 
-    importedModuleNames.add(moduleName);
+    importedModulePaths.add(modulePath);
   }
 
-  for (const moduleName of duplicateModuleNames) {
+  for (const modulePath of duplicateModulePaths) {
     errors.push(
-      `Shared module name \"${moduleName}\" appears more than once in the imported file.`
+      `Shared module name \"${modulePath}\" appears more than once in the imported file.`
     );
   }
 
-  const resolvableSharedModuleNames = new Set([
-    ...getImportedSharedModuleNames(file),
-    ...(options?.existingSharedModuleNames ?? []),
+  const existingModulePaths = new Set(
+    [...(options?.existingSharedModuleNames ?? [])]
+      .map(getTransferModulePath)
+      .filter((modulePath) => modulePath.length > 0)
+  );
+
+  for (const modulePath of importedModulePaths) {
+    if (existingModulePaths.has(modulePath)) {
+      errors.push(
+        `Module path \"${modulePath}\" is already used by an existing script. Rename it in the file or in this workspace before importing.`
+      );
+    }
+  }
+
+  const resolvableModulePaths = new Set([
+    ...importedModulePaths,
+    ...existingModulePaths,
   ]);
 
   for (const script of file.userscripts) {
+    // Source specifiers are already paths and only resolve verbatim. The
+    // explicit list holds module names, which resolve through their paths.
+    const sourceImports = new Set(
+      getSharedImportModuleNames(script.sources.typescript)
+    );
+
     for (const sharedImport of getEffectiveTransferSharedImports(script)) {
-      if (resolvableSharedModuleNames.has(sharedImport)) {
+      const modulePath = sourceImports.has(sharedImport)
+        ? sharedImport
+        : getTransferModulePath(sharedImport);
+
+      if (resolvableModulePaths.has(modulePath)) {
         continue;
       }
 

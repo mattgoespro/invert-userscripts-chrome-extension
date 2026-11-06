@@ -12,6 +12,8 @@ import { setCurrentUserscript } from "../userscripts";
 import { persistScriptBuffers } from "../userscripts/thunks.userscripts";
 import {
   commitDraftForSave,
+  confirmDraftSaveWrite,
+  mergeRemoteIntoDraft,
   removeDraft,
   syncDraftFromRemoteScript,
   enqueueConflict,
@@ -19,10 +21,15 @@ import {
 import {
   applyCommitDraftForSave,
   applyFlushModelToDraft,
+  applyMergeRemoteIntoDraft,
+  applyPruneCleanDrafts,
   applyResolveAllConflictsTakeRemote,
   applyResolveConflictKeepLocal,
   applyResolveConflictTakeRemote,
+  applySaveSettled,
+  applySaveStarted,
   applyUpdateDraftBuffer,
+  clearSaveBaseline,
 } from "./editor-drafts-transitions";
 import {
   bumpDraftRevision,
@@ -47,23 +54,6 @@ function ensureDraftFromScript(
   const created = draftFromScript(script);
   state.drafts[script.id] = created;
   return created;
-}
-
-function pruneCleanDrafts(
-  state: typeof initialState,
-  keepScriptIds: Iterable<string>
-) {
-  const keep = new Set(keepScriptIds);
-
-  for (const scriptId of Object.keys(state.drafts)) {
-    if (keep.has(scriptId)) {
-      continue;
-    }
-
-    if (!isDraftDirty(state.drafts[scriptId])) {
-      delete state.drafts[scriptId];
-    }
-  }
 }
 
 const editorDraftsSlice = createSlice({
@@ -167,6 +157,12 @@ const editorDraftsSlice = createSlice({
           state.drafts[script.id] = bumpDraftRevision(existing, script);
         }
       })
+      .addCase(mergeRemoteIntoDraft, (state, action) => {
+        const draft = state.drafts[action.payload.id];
+        if (draft) {
+          applyMergeRemoteIntoDraft(draft, action.payload);
+        }
+      })
       .addCase(removeDraft, (state, action) => {
         delete state.drafts[action.payload];
         delete state.pendingConflicts[action.payload];
@@ -198,11 +194,17 @@ const editorDraftsSlice = createSlice({
           snapshotCode
         );
       })
+      .addCase(confirmDraftSaveWrite, (state, action) => {
+        const draft = state.drafts[action.payload.scriptId];
+        if (draft) {
+          clearSaveBaseline(draft, action.payload.saveRequestId);
+        }
+      })
       .addCase(setCurrentUserscript, (state, action) => {
         // Draft ensure for the newly selected script happens in the listener
         // (needs the userscripts entity). Here we only prune clean offscreen
         // drafts so the map stays open-document sized.
-        pruneCleanDrafts(state, [
+        applyPruneCleanDrafts(state, [
           action.payload.id,
           ...Object.keys(state.drafts).filter((scriptId) =>
             isDraftDirty(state.drafts[scriptId])
@@ -220,7 +222,11 @@ const editorDraftsSlice = createSlice({
         delete state.drafts[action.payload];
         delete state.pendingConflicts[action.payload];
       })
+      .addCase(persistScriptBuffers.pending, (state, action) => {
+        applySaveStarted(state, action.meta.arg.scriptId);
+      })
       .addCase(persistScriptBuffers.fulfilled, (state, action) => {
+        applySaveSettled(state, action.meta.arg.scriptId);
         completeDraftSave(
           state,
           action.payload.script,
@@ -229,6 +235,7 @@ const editorDraftsSlice = createSlice({
         );
       })
       .addCase(persistScriptBuffers.rejected, (state, action) => {
+        applySaveSettled(state, action.meta.arg.scriptId);
         rejectDraftSave(state, action.meta.arg.scriptId, action.meta.requestId);
       });
   },

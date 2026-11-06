@@ -90,6 +90,7 @@ export function mergeGlobalState(stored?: GlobalState | null): GlobalState {
 
 export class GlobalStateManager {
   private static readonly storageKey = "globalState";
+  private static readonly lastLocalKey = "globalState:last";
 
   /**
    * The default UI state used when no persisted state is found. Must be kept in sync with the
@@ -114,12 +115,16 @@ export class GlobalStateManager {
     }
     if (await transactionalEnabled()) {
       const key = this.localKey();
-      const local = await chrome.storage.local.get(key);
+      const local = await chrome.storage.local.get([key, this.lastLocalKey]);
       if (local[key]) {
         return mergeGlobalState(local[key]);
       }
-      const legacy = await chrome.storage.sync.get(this.storageKey);
-      const state = mergeGlobalState(legacy[this.storageKey]);
+      // A new tab session: earlier tabs' keys are no longer needed to restore layout.
+      await this.removeOtherSessionKeys(key).catch(console.error);
+      const stored =
+        local[this.lastLocalKey] ??
+        (await chrome.storage.sync.get(this.storageKey))[this.storageKey];
+      const state = mergeGlobalState(stored);
       await chrome.storage.local.set({ [key]: state });
       return state;
     }
@@ -145,11 +150,27 @@ export class GlobalStateManager {
     if (await transactionalEnabled()) {
       await chrome.storage.local.set({
         [this.localKey()]: state,
-        "globalState:last": state,
+        [this.lastLocalKey]: state,
       });
       return;
     }
     await chrome.storage.sync.set({ [this.storageKey]: state });
+  }
+  /**
+   * Session keys have no owner liveness or age, so they are removed whenever a tab
+   * session starts. A live tab recreates its key on its next save, and until then a
+   * reload restores `globalState:last`.
+   */
+  private static async removeOtherSessionKeys(key: string): Promise<void> {
+    const stale = Object.keys(await chrome.storage.local.get(null)).filter(
+      (name) =>
+        name.startsWith(this.storageKey + ":") &&
+        name !== key &&
+        name !== this.lastLocalKey
+    );
+    if (stale.length) {
+      await chrome.storage.local.remove(stale);
+    }
   }
   private static localKey(): string {
     if (typeof sessionStorage === "undefined") {

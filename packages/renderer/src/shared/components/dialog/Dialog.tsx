@@ -2,6 +2,7 @@ import { PropsWithChildren, useEffect, useRef } from "react";
 import { X } from "lucide-react";
 import clsx from "clsx";
 import { IconButton } from "../icon-button/IconButton";
+import { isBackdropPointer } from "./backdrop";
 
 type DialogProps = PropsWithChildren<{
   open: boolean;
@@ -22,6 +23,9 @@ export function Dialog({
   children,
 }: DialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
+  // A click ending on the backdrop may be a drag or text selection that started
+  // inside the dialog, so the press has to start on the backdrop too.
+  const pressStartedOnBackdropRef = useRef(false);
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -57,16 +61,16 @@ export function Dialog({
         event.preventDefault();
         onClose();
       }}
+      onMouseDown={(event) => {
+        pressStartedOnBackdropRef.current = isBackdropPointer(event);
+      }}
       onClick={(event) => {
-        if (!dismissOnBackdrop || event.target !== event.currentTarget) {
-          return;
-        }
-        const rect = event.currentTarget.getBoundingClientRect();
+        const pressStartedOnBackdrop = pressStartedOnBackdropRef.current;
+        pressStartedOnBackdropRef.current = false;
         if (
-          event.clientX < rect.left ||
-          event.clientX > rect.right ||
-          event.clientY < rect.top ||
-          event.clientY > rect.bottom
+          dismissOnBackdrop &&
+          pressStartedOnBackdrop &&
+          isBackdropPointer(event)
         ) {
           onClose();
         }

@@ -1,7 +1,13 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { Userscript } from "@shared/model";
 import { useAppDispatch } from "@/shared/store/hooks";
 import { useToast } from "@/shared/components/toast/ToastProvider";
+import {
+  createKeyedDebouncer,
+  rebaseListUpdates,
+  toggleListItem,
+  type MetadataUpdates,
+} from "@/shared/services/metadata-edits";
 import {
   deleteUserscript,
   updateUserscript,
@@ -41,22 +47,14 @@ export function useScriptMetadataActions(
   const scriptId = script?.id ?? "";
   const scriptName = script?.name ?? "";
   const scriptModules = script?.globalModules;
+  const scriptUrlPatterns = script?.urlPatterns;
   const dispatch = useAppDispatch();
   const { toast } = useToast();
-  const moduleNameDebounceRef = useRef<ReturnType<typeof setTimeout>>(null);
 
-  useEffect(() => {
-    return () => {
-      if (moduleNameDebounceRef.current) {
-        clearTimeout(moduleNameDebounceRef.current);
-      }
-    };
-  }, []);
-
-  const updateScript = useCallback(
-    async (updates: Partial<Userscript>) => {
+  const publish = useCallback(
+    async (id: string, updates: MetadataUpdates) => {
       try {
-        await dispatch(updateUserscript({ id: scriptId, updates })).unwrap();
+        await dispatch(updateUserscript({ id, updates })).unwrap();
       } catch (error) {
         toast({
           variant: "error",
@@ -64,32 +62,52 @@ export function useScriptMetadataActions(
         });
       }
     },
-    [dispatch, scriptId, toast]
+    [dispatch, toast]
+  );
+
+  const moduleNameDebouncer = useMemo(
+    () =>
+      createKeyedDebouncer<string>((id, value) => {
+        void publish(id, {
+          moduleName: value,
+          shared: value.trim().length > 0,
+        });
+      }, MODULE_NAME_DEBOUNCE_MS),
+    [publish]
+  );
+
+  useEffect(() => () => moduleNameDebouncer.flush(), [moduleNameDebouncer]);
+
+  // Callers compute whole lists from what they rendered, which can lag behind
+  // edits still publishing. Rebasing applies only what this edit changed.
+  const updateScript = useCallback(
+    (updates: Partial<Userscript>) =>
+      publish(
+        scriptId,
+        rebaseListUpdates(
+          { urlPatterns: scriptUrlPatterns, globalModules: scriptModules },
+          updates
+        )
+      ),
+    [publish, scriptId, scriptModules, scriptUrlPatterns]
   );
 
   const updateModuleName = useCallback(
-    (value: string) => {
-      if (moduleNameDebounceRef.current) {
-        clearTimeout(moduleNameDebounceRef.current);
-      }
-
-      moduleNameDebounceRef.current = setTimeout(() => {
-        const trimmed = value.trim();
-        void updateScript({ moduleName: value, shared: trimmed.length > 0 });
-      }, MODULE_NAME_DEBOUNCE_MS);
-    },
-    [updateScript]
+    (value: string) => moduleNameDebouncer.schedule(scriptId, value),
+    [moduleNameDebouncer, scriptId]
   );
 
   const toggleModule = useCallback(
     (moduleId: string, selected: boolean) => {
-      const currentModules = scriptModules ?? [];
-      const updatedModules = selected
-        ? [...currentModules, moduleId]
-        : currentModules.filter((id) => id !== moduleId);
-      void updateScript({ globalModules: updatedModules });
+      void publish(scriptId, (latest) => ({
+        globalModules: toggleListItem(
+          latest.globalModules ?? [],
+          moduleId,
+          selected
+        ),
+      }));
     },
-    [scriptModules, updateScript]
+    [publish, scriptId]
   );
 
   const deleteScript = useCallback(() => {
@@ -97,8 +115,9 @@ export function useScriptMetadataActions(
       return;
     }
 
+    moduleNameDebouncer.cancel(scriptId);
     dispatch(deleteUserscript(scriptId));
-  }, [dispatch, scriptId, scriptName]);
+  }, [dispatch, moduleNameDebouncer, scriptId, scriptName]);
 
   return { updateScript, updateModuleName, toggleModule, deleteScript };
 }

@@ -28,7 +28,20 @@ function useButton(
   button.setAttributeNode(buttonCustomDataAttr);
   button.setAttribute("data", JSON.stringify({ text, ...data }));
 
-  button.onclick = (event) => {
+  button.onclick = createButtonClickHandler(button, onClickFn);
+
+  const updateButton = (updateData: UseButtonUpdateData) => {
+    applyButtonUpdate(button, updateData);
+  };
+
+  return [button, updateButton];
+}
+
+function createButtonClickHandler(
+  button: HTMLButtonElement,
+  onClickFn: UseButtonOptions["onClickFn"]
+): HTMLButtonOnClick {
+  return (event) => {
     // When the consumer requires an instance of the button before it has been
     // initialized, a new callback function without parameters must be returned,
     // so we add the return value of the provided callback function as the click listener.
@@ -43,12 +56,6 @@ function useButton(
       result.call(button, event);
     }
   };
-
-  const updateButton = (updateData: UseButtonUpdateData) => {
-    applyButtonUpdate(button, updateData);
-  };
-
-  return [button, updateButton];
 }
 
 function applyButtonUpdate(
@@ -70,10 +77,9 @@ function applyButtonUpdate(
     button.innerText = updateText(button);
   }
 
-  button.onclick =
-    updateEventOnClickFn != null
-      ? updateEventOnClickFn.bind(button)
-      : button.onclick;
+  if (updateEventOnClickFn != null) {
+    button.onclick = createButtonClickHandler(button, updateEventOnClickFn);
+  }
 
   const currentData = getDataAttributeObject(button);
   const updatedData = { ...currentData, ...updateEventData };

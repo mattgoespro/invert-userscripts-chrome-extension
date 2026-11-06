@@ -102,13 +102,10 @@ export function projectWorkspace(
   const desired = {
     models,
     typeDefinitionLibs: scripts.flatMap((script) => {
+      // Pending analysis keeps the last good declaration: dropping it on every
+      // types-pane keystroke would report its names missing from main.ts.
       const declaration = input.declarations?.[script.id];
-      const source = getDraftBuffer(
-        script,
-        drafts[script.id],
-        "typeDefinitions"
-      );
-      return declaration?.source === source.contents && declaration.contents
+      return declaration?.contents
         ? [
             {
               id: script.id,

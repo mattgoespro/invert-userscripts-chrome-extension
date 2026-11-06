@@ -70,3 +70,71 @@ test("acquisition rejects excess bytes instead of returning a silently truncated
     /limit/
   );
 });
+function packageFetcher(files) {
+  return async (url) => {
+    const path = url.split("/sample@1.0.0/")[1] ?? "package.json";
+    return new Response(files[path] ?? "", {
+      status: files[path] === undefined ? 404 : 200,
+    });
+  };
+}
+function resolveExports(exports, declarations) {
+  return resolveTypePackage(
+    { packageName: "sample", version: "1.0.0" },
+    packageFetcher({
+      "package.json": JSON.stringify({ version: "1.0.0", exports }),
+      ...declarations,
+    })
+  );
+}
+test("nested export conditions select the declaration entry", async () => {
+  const cases = [
+    [{ ".": { import: { types: "./a.d.ts", default: "./a.js" } } }, "a.d.ts"],
+    [{ node: { import: { types: "./a.d.ts" } } }, "a.d.ts"],
+    [{ ".": { types: { import: "./a.d.ts", require: "./b.d.ts" } } }, "a.d.ts"],
+    [{ ".": { types: "./a.d.ts", import: { types: "./b.d.ts" } } }, "a.d.ts"],
+    [{ ".": { import: { types: "./b.d.ts" }, types: "./a.d.ts" } }, "b.d.ts"],
+  ];
+  for (const [exports, entry] of cases) {
+    const result = await resolveExports(exports, {
+      "a.d.ts": "export {};",
+      "b.d.ts": "export {};",
+    });
+    assert.equal(result.entry, entry);
+  }
+});
+test("nested subpath conditions pull in their declarations", async () => {
+  const result = await resolveExports(
+    {
+      ".": { types: "./a.d.ts" },
+      "./sub": { import: { types: "./sub.d.ts", default: "./sub.js" } },
+      "./runtime": { import: "./runtime.js" },
+    },
+    { "a.d.ts": "export {};", "sub.d.ts": "export {};" }
+  );
+  assert.deepEqual(Object.keys(result.files).sort(), ["a.d.ts", "sub.d.ts"]);
+});
+test("a subpath-only export map does not become the root entry", async () => {
+  const result = await resolveExports(
+    { "./sub": { types: "./sub.d.ts" } },
+    { "index.d.ts": "export {};", "sub.d.ts": "export {};" }
+  );
+  assert.equal(result.entry, "index.d.ts");
+});
+test("dependency specifiers with runtime extensions resolve and comments are not fetched", async () => {
+  const result = await resolveTypePackage(
+    { packageName: "sample", version: "1.0.0" },
+    packageFetcher({
+      "package.json": JSON.stringify({ version: "1.0.0", types: "index.d.ts" }),
+      "index.d.ts":
+        '/** await import("./chunk") */\nexport * from "./foo.js";\nexport * from "./bar.mjs";',
+      "foo.d.ts": "export {};",
+      "bar.d.mts": "export {};",
+    })
+  );
+  assert.deepEqual(Object.keys(result.files).sort(), [
+    "bar.d.mts",
+    "foo.d.ts",
+    "index.d.ts",
+  ]);
+});

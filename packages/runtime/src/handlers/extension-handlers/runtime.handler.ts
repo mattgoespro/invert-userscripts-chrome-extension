@@ -69,7 +69,7 @@ export const onMessage = (
     if (message.type === "setEnabled" && !message.data.enabled) {
       const result = await removeScriptFromMatchingTabs(message.data.scriptId);
       response = {
-        success: true,
+        success: !result.failedTabCount,
         appliedTabCount: 0,
         removedTabCount: result.removedTabCount,
       };

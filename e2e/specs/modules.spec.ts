@@ -111,3 +111,73 @@ test.describe("Global Modules", () => {
     await expect(checkbox).not.toBeChecked();
   });
 });
+
+test("cancelling during URL validation doesn't add the module", async ({
+  optionsPage,
+  extensionContext,
+  clearStorage,
+}) => {
+  let release = (): void => {};
+  const released = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  let reached = (): void => {};
+  const requested = new Promise<void>((resolve) => {
+    reached = resolve;
+  });
+  await extensionContext.route(
+    "https://slow-cdn.invert.test/**",
+    async (route) => {
+      reached();
+      await released;
+      await route.fulfill({ status: 200, body: "" });
+    }
+  );
+  await clearStorage(optionsPage);
+  await optionsPage.reload();
+  const options = new OptionsPage(optionsPage);
+  await options.waitForReady();
+  await options.clickTab("modules");
+
+  const modules = new ModulesPage(optionsPage);
+  await modules.openAddModuleDialog();
+  await optionsPage.getByPlaceholder("e.g. Moment.js").fill("Abandoned");
+  await optionsPage
+    .getByPlaceholder(/cdnjs|jsdelivr/i)
+    .fill("https://slow-cdn.invert.test/lib.js");
+  const dialog = optionsPage.getByRole("dialog");
+  await dialog.getByRole("button", { name: /^Add Module$/i }).click();
+  await requested;
+  await dialog.getByRole("button", { name: "Cancel", exact: true }).click();
+  await expect(dialog).toHaveCount(0);
+
+  release();
+  await optionsPage.waitForTimeout(500);
+  await expect(modules.moduleRow("Abandoned")).toHaveCount(0);
+});
+
+test("only a press that starts on the backdrop dismisses a dialog", async ({
+  optionsPage,
+  clearStorage,
+}) => {
+  await clearStorage(optionsPage);
+  await optionsPage.reload();
+  const options = new OptionsPage(optionsPage);
+  await options.waitForReady();
+  await options.clickTab("modules");
+  await new ModulesPage(optionsPage).openAddModuleDialog();
+
+  const dialog = optionsPage.getByRole("dialog");
+  const box = await dialog.boundingBox();
+  if (!box) {
+    throw new Error("Dialog is not visible");
+  }
+  await optionsPage.mouse.move(box.x + box.width / 2, box.y + 12);
+  await optionsPage.mouse.down();
+  await optionsPage.mouse.move(5, 5, { steps: 5 });
+  await optionsPage.mouse.up();
+  await expect(dialog).toBeVisible();
+
+  await optionsPage.mouse.click(5, 5);
+  await expect(dialog).toHaveCount(0);
+});

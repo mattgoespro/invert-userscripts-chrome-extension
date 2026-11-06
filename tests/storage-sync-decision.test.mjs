@@ -131,4 +131,41 @@ describe("decideStorageSyncAction", () => {
       "export const same = 1;"
     );
   });
+
+  it("merges when a dirty draft's clean buffer changed remotely", () => {
+    const base = buildUserscriptFixture({
+      id: "s1",
+      code: { source: { typescript: "base", scss: "old" } },
+    });
+    const remote = buildUserscriptFixture({
+      id: "s1",
+      code: { source: { typescript: "base", scss: "new" } },
+    });
+
+    const decision = decideStorageSyncAction(
+      "s1",
+      dirtyDraft(base, "typescript"),
+      remote
+    );
+    assert.equal(decision.action, "merge-clean");
+    assert.equal(decision.script.code.source.scss, "new");
+  });
+
+  it("still reports a conflict when a dirty buffer also changed remotely", () => {
+    const base = buildUserscriptFixture({
+      id: "s1",
+      code: { source: { typescript: "base", scss: "old" } },
+    });
+    const remote = buildUserscriptFixture({
+      id: "s1",
+      code: { source: { typescript: "remote", scss: "new" } },
+    });
+
+    const decision = decideStorageSyncAction(
+      "s1",
+      dirtyDraft(base, "typescript"),
+      remote
+    );
+    assert.equal(decision.action, "conflict");
+  });
 });

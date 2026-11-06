@@ -1,6 +1,8 @@
 window.log = createLogger("Main | View Video Source");
 window.toaster = null;
 
+let isPreviewOpen = false;
+
 const [viewSourceButton, updateViewSourceButton] = useButton("Open URL", {
   classes: ["ujs-view-src-btn"],
   disabled: true,
@@ -72,9 +74,10 @@ function applyVideoDetailsToBanner(
   });
 
   updateOpenPreviewBoxButton({
-    disabled: false,
+    disabled: isPreviewOpen,
     onClickFn: () => {
       document.body.appendChild(createVideoPreview(details.src));
+      isPreviewOpen = true;
       updateOpenPreviewBoxButton({ disabled: true });
     },
   });
@@ -148,13 +151,11 @@ function onOpenVideoSourceClick(srcUrl: string) {
 
     if (srcUrl.startsWith("blob:")) {
       alert(
-        window.log.createLogMessage(
-          `
-					The resolved video has a blob file source URL.
-					Search for the m3u8 stream file in the DevTools Network tab and download the video using the \`lux\` video downloader CLI.
-					Example: \`lux -m -O '<downloaded_file_name>' '<m3u8_url>'\`
-				`
-        )
+        [
+          "The resolved video has a blob file source URL.",
+          "Search for the m3u8 stream file in the DevTools Network tab and download the video using the `lux` video downloader CLI.",
+          "Example: `lux -m -O '<downloaded_file_name>' '<m3u8_url>'`",
+        ].join("\n")
       );
       return;
     }

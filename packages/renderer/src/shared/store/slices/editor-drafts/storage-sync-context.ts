@@ -10,6 +10,7 @@ export interface StorageSyncState {
 }
 import {
   enqueueConflict,
+  mergeRemoteIntoDraft,
   removeDraft,
   syncDraftFromRemoteScript,
 } from "./actions";
@@ -36,6 +37,9 @@ export function storageSyncContext(
     },
     syncDraft: (script) => {
       dispatch(syncDraftFromRemoteScript(script));
+    },
+    mergeDraft: (script) => {
+      dispatch(mergeRemoteIntoDraft(script));
     },
     removeScripts: (ids) => {
       dispatch(removeRemoteScripts(ids));

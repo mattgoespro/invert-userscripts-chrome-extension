@@ -223,7 +223,7 @@ describe("workspace projection", () => {
 });
 
 describe("workspace invalidation", () => {
-  it("accepts only current owner declaration analysis and removes it with the script", () => {
+  it("accepts only the owner's declaration analysis and removes it with the script", () => {
     const script = buildUserscriptFixture({
       id: "owner",
       typeDefinitions: "export type T = number;",
@@ -246,13 +246,68 @@ describe("workspace invalidation", () => {
     draft.typeDefinitions = "export type T = string;";
     draft.dirty.typeDefinitions = true;
     input.drafts.owner = draft;
-    assert.deepEqual(projectWorkspace(input).typeDefinitionLibs, []);
+    assert.equal(
+      projectWorkspace(input).typeDefinitionLibs[0].contents,
+      first.typeDefinitionLibs[0].contents
+    );
     input.declarations.owner = {
       source: draft.typeDefinitions,
       contents: "export {}; declare module './main' { type T = string; }",
     };
     assert.equal(projectWorkspace(input).typeDefinitionLibs.length, 1);
     delete input.scripts.owner;
+    assert.deepEqual(projectWorkspace(input).typeDefinitionLibs, []);
+  });
+  it("does not project analysis belonging to another owner", () => {
+    const script = buildUserscriptFixture({
+      id: "owner",
+      typeDefinitions: "export type T = number;",
+    });
+    const input = projectionInput([script], {
+      declarations: {
+        other: {
+          source: script.typeDefinitions,
+          contents: "export {}; declare module './main' { type T = number; }",
+        },
+      },
+    });
+    assert.deepEqual(projectWorkspace(input).typeDefinitionLibs, []);
+  });
+  it("keeps the last good declaration while a stale draft awaits analysis", () => {
+    const script = buildUserscriptFixture({
+      id: "owner",
+      typeDefinitions: "export type T = number;",
+    });
+    const contents = "export {}; declare module './main' { type T = number; }";
+    const input = projectionInput([script], {
+      declarations: {
+        owner: { source: script.typeDefinitions, contents },
+      },
+    });
+    const first = projectWorkspace(input);
+    const draft = draftFromScript(script);
+    draft.typeDefinitions = "export type T = number; export type U";
+    draft.dirty.typeDefinitions = true;
+    input.drafts.owner = draft;
+    const typing = projectWorkspace(input);
+    assert.deepEqual(typing.typeDefinitionLibs, first.typeDefinitionLibs);
+    assert.equal(typing.typeDefinitionLibs[0].contents, contents);
+  });
+  it("drops the declaration once analysis finds nothing to bind", () => {
+    const script = buildUserscriptFixture({
+      id: "owner",
+      typeDefinitions: "export type T = number;",
+    });
+    const input = projectionInput([script], {
+      declarations: {
+        owner: {
+          source: script.typeDefinitions,
+          contents: "export {}; declare module './main' { type T = number; }",
+        },
+      },
+    });
+    assert.equal(projectWorkspace(input).typeDefinitionLibs.length, 1);
+    input.declarations.owner = { source: "export {};", contents: "" };
     assert.deepEqual(projectWorkspace(input).typeDefinitionLibs, []);
   });
   it("includes SCSS and CDN associations even when timestamps are unchanged", () => {

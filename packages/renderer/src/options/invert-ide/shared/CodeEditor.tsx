@@ -19,6 +19,25 @@ import * as monaco from "monaco-editor";
 import { useEffect, useRef } from "react";
 import { attachErrorLens } from "./error-lens";
 
+/** Compiled previews are JavaScript; only source buffers can be formatted. */
+export type CodeEditorLanguage = FormatterLanguage | "javascript";
+
+const DEFAULT_TAB_SIZE = 2;
+
+function getSaveErrorMessage(error: unknown): string {
+  if (
+    error &&
+    typeof error === "object" &&
+    "message" in error &&
+    typeof error.message === "string" &&
+    error.message
+  ) {
+    return error.message;
+  }
+
+  return "Unknown error";
+}
+
 export type CodeEditorProps = {
   modelId: string;
   /**
@@ -32,7 +51,7 @@ export type CodeEditorProps = {
    */
   scriptId?: string;
   contents: string;
-  language: FormatterLanguage;
+  language: CodeEditorLanguage;
   editable?: boolean;
   settingsOverride?: Partial<EditorSettings>;
   onCodeModified?: (value: string) => void;
@@ -65,6 +84,7 @@ export function CodeEditor(props: CodeEditorProps) {
     ? { ...appEditorSettings, ...settingsOverride }
     : appEditorSettings;
   const editorTheme = resolveEditorTheme(settings.theme, settings.appTheme);
+  const tabSize = settings.tabSize ?? DEFAULT_TAB_SIZE;
 
   const editorRootRef = useRef<HTMLDivElement>(null);
   const editorInstanceRef = useRef<monaco.editor.IStandaloneCodeEditor>(null);
@@ -168,10 +188,20 @@ export function CodeEditor(props: CodeEditorProps) {
       return;
     }
 
-    const uri = buildModelUri(modelId, language);
-    const model = isWorkspaceModel
-      ? attachWorkspaceModel(editorInstance, uri, language, contents)
-      : getOrCreateDetachedModel(uri, language, contents);
+    let model: monaco.editor.ITextModel;
+    if (language === "javascript") {
+      // The workspace helpers only know source languages. A javascript model
+      // stays out of the TypeScript program that eager model sync builds.
+      const uri = monaco.Uri.parse(`file:///${modelId}.js`);
+      model =
+        monaco.editor.getModel(uri) ??
+        monaco.editor.createModel(contents, language, uri);
+    } else {
+      const uri = buildModelUri(modelId, language);
+      model = isWorkspaceModel
+        ? attachWorkspaceModel(editorInstance, uri, language, contents)
+        : getOrCreateDetachedModel(uri, language, contents);
+    }
 
     if (editorInstance.getModel() !== model) {
       editorInstance.setModel(model);
@@ -191,6 +221,12 @@ export function CodeEditor(props: CodeEditorProps) {
     // down onDidChangeContent and dropped unsaved text on script switch.
   }, [modelId, language, isWorkspaceModel]);
 
+  // Tab size is a model option, and Monaco's indentation detection would
+  // otherwise replace it for each new model. Runs after the model is attached.
+  useEffect(() => {
+    editorInstanceRef.current?.getModel()?.updateOptions({ tabSize });
+  }, [tabSize, modelId, language, isWorkspaceModel]);
+
   // Detached preview models have no workspace sync; mirror the contents prop.
   useEffect(() => {
     if (isWorkspaceModel) {
@@ -205,7 +241,12 @@ export function CodeEditor(props: CodeEditorProps) {
   }, [contents, isWorkspaceModel, modelId, language]);
 
   useEffect(() => {
-    if (!editable || !scriptId || !editorRootRef.current) {
+    if (
+      !editable ||
+      !scriptId ||
+      language === "javascript" ||
+      !editorRootRef.current
+    ) {
       return;
     }
 
@@ -238,60 +279,68 @@ export function CodeEditor(props: CodeEditorProps) {
         }
         const code = editorInstance.getValue();
 
-        const result = onSave
-          ? await onSave({
-              code,
-              language,
-              autoFormat,
-              scriptId,
-            })
-          : await dispatch(
-              saveEditorCode({
-                scriptId,
-                language,
+        try {
+          const result = onSave
+            ? await onSave({
                 code,
+                language,
                 autoFormat,
+                scriptId,
               })
-            ).unwrap();
+            : await dispatch(
+                saveEditorCode({
+                  scriptId,
+                  language,
+                  code,
+                  autoFormat,
+                })
+              ).unwrap();
 
-        if (
-          result &&
-          typeof result === "object" &&
-          "appliedTabCount" in result &&
-          typeof result.appliedTabCount === "number"
-        ) {
-          const applySuccess =
-            "applySuccess" in result && result.applySuccess === false
-              ? false
-              : true;
-          const staleSkipCount =
-            "staleSkipCount" in result &&
-            typeof result.staleSkipCount === "number"
-              ? result.staleSkipCount
-              : 0;
-          const feedback = describeApplyResult({
-            success: applySuccess,
-            appliedTabCount: result.appliedTabCount,
-            staleSkipCount,
-          });
+          if (
+            result &&
+            typeof result === "object" &&
+            "appliedTabCount" in result &&
+            typeof result.appliedTabCount === "number"
+          ) {
+            const applySuccess =
+              "applySuccess" in result && result.applySuccess === false
+                ? false
+                : true;
+            const staleSkipCount =
+              "staleSkipCount" in result &&
+              typeof result.staleSkipCount === "number"
+                ? result.staleSkipCount
+                : 0;
+            const feedback = describeApplyResult({
+              success: applySuccess,
+              appliedTabCount: result.appliedTabCount,
+              staleSkipCount,
+            });
 
+            toast({
+              variant: feedback.variant,
+              message: feedback.message,
+            });
+          }
+
+          const savedCode =
+            typeof result === "string"
+              ? result
+              : result &&
+                  typeof result === "object" &&
+                  "code" in result &&
+                  typeof result.code === "string"
+                ? result.code
+                : code;
+
+          applyFormattedCode(savedCode);
+        } catch (error) {
+          console.error("Failed to save script:", error);
           toast({
-            variant: feedback.variant,
-            message: feedback.message,
+            variant: "error",
+            message: `Failed to save: ${getSaveErrorMessage(error)}`,
           });
         }
-
-        const savedCode =
-          typeof result === "string"
-            ? result
-            : result &&
-                typeof result === "object" &&
-                "code" in result &&
-                typeof result.code === "string"
-              ? result.code
-              : code;
-
-        applyFormattedCode(savedCode);
       }
     };
 

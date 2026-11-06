@@ -12,7 +12,12 @@ import {
   keepAllLocalConflictsAndPersist,
   keepLocalConflictAndPersist,
 } from "@/shared/store/slices/editor-drafts/thunks.conflicts";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import {
+  getConflictDialogCloseAction,
+  getPersistErrorMessage,
+  isConflictDialogOpen,
+} from "./conflict-dialog-state";
 
 const BUFFER_LABELS: Record<DraftBuffer, string> = {
   typescript: "TypeScript",
@@ -35,8 +40,21 @@ export function ConflictDialog() {
   const conflicts = useAppSelector(selectPendingConflicts);
   const conflictList = useMemo(() => Object.values(conflicts), [conflicts]);
   const [isPersisting, setIsPersisting] = useState(false);
+  const [persistError, setPersistError] = useState<string | null>(null);
+  const [dismissedIds, setDismissedIds] = useState<ReadonlySet<string>>(
+    () => new Set()
+  );
 
-  const open = conflictList.length > 0;
+  const open = isConflictDialogOpen(
+    conflictList.map((conflict) => conflict.conflictId),
+    dismissedIds
+  );
+
+  useEffect(() => {
+    if (!open) {
+      setPersistError(null);
+    }
+  }, [open]);
 
   // Taking remote replaces the drafts (clean, revision-bumped); the
   // WorkspaceService observes the store change and updates the Monaco models,
@@ -48,16 +66,19 @@ export function ConflictDialog() {
       return;
     }
 
+    setPersistError(null);
     dispatch(resolveConflictTakeRemote(conflict.remoteScript));
   };
 
   const onKeepLocal = async (scriptId: string) => {
     setIsPersisting(true);
+    setPersistError(null);
 
     try {
       await dispatch(keepLocalConflictAndPersist(scriptId)).unwrap();
     } catch (error) {
       console.error("Failed to persist local draft for conflict:", error);
+      setPersistError(getPersistErrorMessage(error));
     } finally {
       setIsPersisting(false);
     }
@@ -66,29 +87,46 @@ export function ConflictDialog() {
   const onTakeAllRemote = () => {
     const scripts = conflictList.map((conflict) => conflict.remoteScript);
 
+    setPersistError(null);
     dispatch(resolveAllConflictsTakeRemote(scripts));
   };
 
   const onKeepAllLocal = async () => {
     setIsPersisting(true);
+    setPersistError(null);
 
     try {
       await dispatch(keepAllLocalConflictsAndPersist()).unwrap();
     } catch (error) {
       console.error("Failed to persist local drafts for conflicts:", error);
+      setPersistError(getPersistErrorMessage(error));
     } finally {
       setIsPersisting(false);
+    }
+  };
+
+  // Leaves every draft and pending conflict as it is, without saving.
+  const onDismiss = () => {
+    setDismissedIds(
+      new Set(conflictList.map((conflict) => conflict.conflictId))
+    );
+    setPersistError(null);
+  };
+
+  const onClose = () => {
+    const action = getConflictDialogCloseAction(isPersisting, persistError);
+
+    if (action === "dismiss") {
+      onDismiss();
+    } else if (action === "keep-all-local") {
+      void onKeepAllLocal();
     }
   };
 
   return (
     <Dialog
       open={open}
-      onClose={() => {
-        if (!isPersisting) {
-          void onKeepAllLocal();
-        }
-      }}
+      onClose={onClose}
       title="Storage sync conflict"
       minWidth="32rem"
     >
@@ -96,9 +134,30 @@ export function ConflictDialog() {
         <Typography variant="body" className="text-text-muted">
           Another browser or tab updated saved script content while you have
           unsaved local edits. Keep local saves your draft against this observed
-          version. Take remote loads the saved version into the editor. Closing
-          this dialog keeps all local drafts.
+          version. Take remote loads the saved version into the editor.
+          {persistError === null &&
+            " Closing this dialog keeps all local drafts."}
         </Typography>
+
+        {persistError !== null && (
+          <div
+            role="alert"
+            className="flex flex-col gap-sm rounded-default border border-error-border bg-error-surface px-md py-sm text-xs text-error-accent"
+          >
+            <span className="font-semibold">
+              Couldn’t save your local draft: {persistError}
+            </span>
+            <span>
+              Your edits are still in the editor, unsaved. Try again, take
+              remote, or close without saving to leave this conflict unresolved.
+            </span>
+            <div>
+              <Button variant="secondary" onClick={onDismiss}>
+                Close without saving
+              </Button>
+            </div>
+          </div>
+        )}
 
         <div className="flex max-h-[50vh] flex-col gap-sm overflow-y-auto">
           {conflictList.map((conflict) => (
@@ -127,7 +186,7 @@ export function ConflictDialog() {
                       {truncatePreview(entry.local)}
                     </div>
                     <div>
-                      <span className="text-syntax-string">remote</span>{" "}
+                      <span className="text-syntax-function">remote</span>{" "}
                       {truncatePreview(entry.remote)}
                     </div>
                   </div>

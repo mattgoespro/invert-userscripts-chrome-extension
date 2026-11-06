@@ -93,3 +93,33 @@ test("drawer collapse actions only dispatch when the collapsed state changes", a
   await expect(optionsPage.getByTitle("Expand drawer")).toBeVisible();
   await expect.poll(collapseActions).toBe(3);
 });
+
+test("a collapsed drawer stays collapsed after a reload", async ({
+  optionsPage,
+  clearStorage,
+  seedStorage,
+}) => {
+  const script = buildUserscript({ name: "Drawer restore" });
+  await clearStorage(optionsPage);
+  await seedStorage(optionsPage, {
+    [`userscript:${script.id}`]: script,
+    globalState: {
+      activeSidebarTab: "scripts",
+      selectedScriptId: script.id,
+      outputDrawerCollapsed: true,
+    },
+  });
+  await installReduxAudit(optionsPage);
+  await optionsPage.reload();
+  await new ScriptsPage(optionsPage).selectScript(script.name);
+  await expect(optionsPage.getByTitle("Expand drawer")).toBeVisible();
+  await optionsPage.waitForTimeout(500);
+  await expect(optionsPage.getByTitle("Expand drawer")).toBeVisible();
+  const actions = await readReduxActions(optionsPage);
+  expect(
+    actions.filter((action) => action.type === "ui/setOutputDrawerCollapsed")
+  ).toHaveLength(0);
+
+  await optionsPage.getByTitle("Expand drawer").click();
+  await expect(optionsPage.getByTitle("Collapse drawer")).toBeVisible();
+});

@@ -8,6 +8,23 @@ const consoleFns = {
 };
 let websocket;
 
+function stringifyLogArg(arg) {
+  if (typeof arg === "string") {
+    return arg;
+  }
+
+  if (arg instanceof Error) {
+    return arg.stack ?? arg.message;
+  }
+
+  try {
+    return JSON.stringify(arg) ?? String(arg);
+  } catch {
+    // Circular objects and BigInts can't be serialized.
+    return Object.prototype.toString.call(arg);
+  }
+}
+
 function configureConsole(consoleOptions) {
   for (const level of consoleOptions.captureLevels) {
     console[level] = (...args) => {
@@ -26,7 +43,12 @@ function configureConsole(consoleOptions) {
         return;
       }
 
-      websocket.send(JSON.stringify({ type: "log", level, data: args }));
+      websocket.send(
+        JSON.stringify({
+          type: "log",
+          data: { level, message: args.map(stringifyLogArg).join(" ") },
+        })
+      );
     };
   }
 }
@@ -80,6 +102,13 @@ function connect() {
         break;
       }
       case "reload": {
+        if (message.data?.backgroundChanged) {
+          // Only an extension reload restarts the service worker. Chrome closes
+          // every open extension tab when this happens, including this one.
+          chrome.runtime.reload();
+          break;
+        }
+
         reloadCSS();
         location.reload();
         break;

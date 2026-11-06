@@ -16,6 +16,11 @@ export type EditorDraft = {
   revision: number;
   /** Request id of the most recent commitDraftForSave per buffer. */
   lastSaveRequestId: Partial<Record<DraftBuffer, string>>;
+  /**
+   * `lastSynced` from before a commit whose source write has not landed, owned
+   * by `lastSaveRequestId`. A failed write restores it to avoid a false conflict.
+   */
+  saveBaseline?: Partial<Record<DraftBuffer, string>>;
 };
 
 export type RemoteDraftConflictBuffer = {
@@ -39,6 +44,8 @@ export interface PendingDraftConflict extends RemoteDraftConflict {
 export type EditorDraftsState = {
   drafts: Record<string, EditorDraft>;
   pendingConflicts: Record<string, PendingDraftConflict>;
+  /** Saves dispatched but not settled, per script. Their drafts are not pruned. */
+  inFlightSaves?: Record<string, number>;
 };
 
 export const initialState: EditorDraftsState = {

@@ -5,6 +5,7 @@ import {
   DraftBuffer,
   EditorDraft,
   EditorDraftsState,
+  isDraftDirty,
   PendingDraftConflict,
 } from "./state.editor-drafts";
 
@@ -62,6 +63,7 @@ export function applyCommitDraftForSave(
   snapshotCode?: string
 ): boolean {
   draft.lastSaveRequestId[buffer] = saveRequestId;
+  (draft.saveBaseline ??= {})[buffer] = draft.lastSynced[buffer];
 
   if (snapshotCode !== undefined && draft[buffer] !== snapshotCode) {
     // Saving an older snapshot must not erase edits made while compiling.
@@ -80,6 +82,105 @@ export function applyCommitDraftForSave(
   draft.lastSynced[buffer] = code;
   draft.revision += 1;
   return true;
+}
+
+/** Drop rollback baselines owned by a request whose write landed or failed. */
+export function clearSaveBaseline(draft: EditorDraft, requestId: string): void {
+  if (!draft.saveBaseline) {
+    return;
+  }
+
+  for (const buffer of Object.keys(draft.saveBaseline) as DraftBuffer[]) {
+    if (draft.lastSaveRequestId[buffer] === requestId) {
+      delete draft.saveBaseline[buffer];
+    }
+  }
+
+  if (Object.keys(draft.saveBaseline).length === 0) {
+    delete draft.saveBaseline;
+  }
+}
+
+/**
+ * Merge a conflict-free remote observation into a draft with unsaved edits:
+ * clean buffers take the remote text, and every baseline moves to remote. Only
+ * valid without a conflict, where a dirty buffer's remote either matches its
+ * local text or its existing baseline.
+ */
+export function applyMergeRemoteIntoDraft(
+  draft: EditorDraft,
+  script: Userscript
+): void {
+  const remote: Record<DraftBuffer, string> = {
+    typescript: script.code.source.typescript,
+    scss: script.code.source.scss,
+    typeDefinitions: script.typeDefinitions ?? "",
+  };
+  let changed = false;
+
+  for (const buffer of Object.keys(remote) as DraftBuffer[]) {
+    if (draft.lastSynced[buffer] !== remote[buffer]) {
+      draft.lastSynced[buffer] = remote[buffer];
+      delete draft.lastSaveRequestId[buffer];
+      delete draft.saveBaseline?.[buffer];
+      changed = true;
+    }
+
+    if (!draft.dirty[buffer] && draft[buffer] !== remote[buffer]) {
+      draft[buffer] = remote[buffer];
+      changed = true;
+    }
+  }
+
+  if (script.storageRevision) {
+    draft.baseSavedRevision = script.storageRevision;
+  }
+
+  if (changed) {
+    draft.revision += 1;
+  }
+}
+
+/**
+ * Drop clean drafts outside the keep set, so the map stays open-document sized.
+ * A clean draft with a save in flight stays: a failed write restores its edits.
+ */
+export function applyPruneCleanDrafts(
+  state: EditorDraftsState,
+  keepScriptIds: Iterable<string>
+): void {
+  const keep = new Set(keepScriptIds);
+
+  for (const scriptId of Object.keys(state.drafts)) {
+    if (keep.has(scriptId) || state.inFlightSaves?.[scriptId]) {
+      continue;
+    }
+
+    if (!isDraftDirty(state.drafts[scriptId])) {
+      delete state.drafts[scriptId];
+    }
+  }
+}
+
+export function applySaveStarted(
+  state: EditorDraftsState,
+  scriptId: string
+): void {
+  const inFlightSaves = (state.inFlightSaves ??= {});
+  inFlightSaves[scriptId] = (inFlightSaves[scriptId] ?? 0) + 1;
+}
+
+export function applySaveSettled(
+  state: EditorDraftsState,
+  scriptId: string
+): void {
+  const remaining = (state.inFlightSaves?.[scriptId] ?? 0) - 1;
+
+  if (remaining > 0) {
+    state.inFlightSaves[scriptId] = remaining;
+  } else {
+    delete state.inFlightSaves?.[scriptId];
+  }
 }
 
 /**
@@ -147,8 +248,8 @@ export function applyResolveAllConflictsTakeRemote(
 }
 
 /**
- * Restore dirty after a rejected save when the request id is still current.
- * Returns true when dirty was restored.
+ * Restore dirty, and the baseline of an unwritten commit, after a rejected save
+ * when the request id is still current. Returns true when dirty was restored.
  */
 export function applySaveRejectionDirtyRestore(
   draft: EditorDraft,
@@ -157,6 +258,11 @@ export function applySaveRejectionDirtyRestore(
 ): boolean {
   if (draft.lastSaveRequestId[buffer] !== rejectedRequestId) {
     return false;
+  }
+
+  const baseline = draft.saveBaseline?.[buffer];
+  if (baseline !== undefined) {
+    draft.lastSynced[buffer] = baseline;
   }
 
   draft.dirty[buffer] = true;
